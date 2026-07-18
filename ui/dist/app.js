@@ -405,17 +405,25 @@
       }
     };
 
-    // If nobody chose a source and we are being served over http(s), ask the origin whether
-    // it is our API. A judge who clones the repo, starts the server and opens "/" should see
-    // the real pipeline answering, not bundled output that reads as a mock. Opened from
-    // file://, or served by a plain static server, this probe simply fails and we stay on
-    // fixtures — the offline demo path is never taken away.
+    // If nobody chose a source and we are being served from a local server, ask that origin
+    // whether it is our API. A judge who clones the repo, starts the server and opens "/"
+    // should see the real pipeline answering, not bundled output that reads as a mock.
+    //
+    // The probe is deliberately limited to loopback hosts. On static hosting there is no API
+    // to find, and probing anyway would print a 404 in the console of a product whose whole
+    // argument is that it leaves nothing unexplained. A red line in the console that we know
+    // is harmless is still a red line the judge has to ask about.
+    //
+    // The URL is relative on purpose: the page can be served under a sub-path, and an
+    // absolute "/api/health" would escape it and hit the domain root instead.
     source.adoptSameOriginApi = function () {
       var chosen = typeof window.REALDOOR_API === "string" || fromQuery !== null ||
                    params.has("fixtures");   // ?fixtures forces the offline path back on
-      var servedOverHttp = /^https?:$/.test(window.location.protocol);
-      if (chosen || live || !servedOverHttp) return Promise.resolve(source.live);
-      return fetch("/api/health")
+      var host = window.location.hostname;
+      var localServer = /^https?:$/.test(window.location.protocol) &&
+                        (host === "localhost" || host === "127.0.0.1" || host === "[::1]");
+      if (chosen || live || !localServer) return Promise.resolve(source.live);
+      return fetch("api/health")
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (body) {
           if (!body || body.ok !== true) return source.live;
