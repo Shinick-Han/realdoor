@@ -1,0 +1,197 @@
+{
+ "tool": "axe-core",
+ "axe_version": "4.12.1",
+ "standard": "WCAG 2.2 AA",
+ "tags": [
+  "wcag2a",
+  "wcag2aa",
+  "wcag21a",
+  "wcag21aa",
+  "wcag22aa"
+ ],
+ "page": "ui/dist/index.html",
+ "loaded_over": "file:// (offline, bundled fixtures)",
+ "generated_at": "2026-07-18T21:13:34.351Z",
+ "screens_scanned": 7,
+ "total_violations": 0,
+ "violations_by_impact": {},
+ "page_errors": [
+  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "Failed to load resource: net::ERR_FAILED",
+  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "Failed to load resource: net::ERR_FAILED",
+  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "Failed to load resource: net::ERR_FAILED",
+  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "Failed to load resource: net::ERR_FAILED",
+  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "Failed to load resource: net::ERR_FAILED",
+  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "Failed to load resource: net::ERR_FAILED",
+  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "Failed to load resource: net::ERR_FAILED"
+ ],
+ "results": [
+  {
+   "screen": "documents",
+   "violations": [],
+   "incomplete": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": [
+      {
+       "target": [
+        "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      },
+      {
+       "target": [
+        ".schematic-text:nth-child(1)"
+       ]
+      },
+      {
+       "target": [
+        ".schematic-text:nth-child(2)"
+       ]
+      },
+      {
+       "target": [
+        ".schematic-text:nth-child(3)"
+       ]
+      },
+      {
+       "target": [
+        ".schematic-text:nth-child(4)"
+       ]
+      },
+      {
+       "target": [
+        "div > .table-scroll > table > caption"
+       ]
+      },
+      {
+       "target": [
+        "tr:nth-child(2) > .num:nth-child(6)"
+       ]
+      },
+      {
+       "target": [
+        "tr:nth-child(2) > .num.mono"
+       ]
+      },
+      {
+       "target": [
+        "tr:nth-child(3) > .num:nth-child(6)"
+       ]
+      },
+      {
+       "target": [
+        "tr:nth-child(3) > .num.mono"
+       ]
+      },
+      {
+       "target": [
+        "tr:nth-child(4) > .num:nth-child(6)"
+       ]
+      },
+      {
+       "target": [
+        "tr:nth-child(4) > .num.mono"
+       ]
+      }
+     ]
+    }
+   ],
+   "passes": 33
+  },
+  {
+   "screen": "correct",
+   "violations": [],
+   "incomplete": [],
+   "passes": 32
+  },
+  {
+   "screen": "ask",
+   "violations": [],
+   "incomplete": [],
+   "passes": 28
+  },
+  {
+   "screen": "calculation",
+   "violations": [],
+   "incomplete": [],
+   "passes": 30
+  },
+  {
+   "screen": "packet",
+   "violations": [],
+   "incomplete": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": [
+      {
+       "target": [
+        ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      },
+      {
+       "target": [
+        ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      },
+      {
+       "target": [
+        ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      }
+     ]
+    }
+   ],
+   "passes": 28
+  },
+  {
+   "screen": "controls",
+   "violations": [],
+   "incomplete": [],
+   "passes": 26
+  },
+  {
+   "screen": "measurements",
+   "violations": [],
+   "incomplete": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": [
+      {
+       "target": [
+        "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      },
+      {
+       "target": [
+        "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      },
+      {
+       "target": [
+        "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      },
+      {
+       "target": [
+        "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+       ]
+      }
+     ]
+    }
+   ],
+   "passes": 28
+  }
+ ]
+}
