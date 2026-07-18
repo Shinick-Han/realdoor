@@ -127,7 +127,20 @@ def _check_presence(items: Sequence[ChecklistItem]) -> list[ReadinessReason]:
     """
     reasons: list[ReadinessReason] = []
     for item in items:
-        if item.state != "missing" or not item.required or item.substituted:
+        if not item.required:
+            continue
+        # A document we cannot read at all presents no evidence, whatever the file
+        # listing says. It fails presence, not currency: there is nothing on the page we
+        # could date, reconcile, or point a reviewer at.
+        if item.state == "unreadable":
+            for problem in item.abstentions:
+                if problem.trigger == "document_unreadable":
+                    reasons.append(ReadinessReason(
+                        "present", _code_for(problem, item.item_id),
+                        f"{item.label}: {item.detail}",
+                    ))
+            continue
+        if item.state != "missing" or item.substituted:
             continue
         for problem in item.abstentions:
             if problem.trigger == "required_document_missing":
@@ -149,8 +162,7 @@ def _check_currency(items: Sequence[ChecklistItem]) -> list[ReadinessReason]:
         if item.state not in ("expired", "undatable"):
             continue
         for problem in item.abstentions:
-            if problem.trigger in ("document_not_current", "document_date_month_precision",
-                                  "document_unreadable"):
+            if problem.trigger in ("document_not_current", "document_date_month_precision"):
                 reasons.append(ReadinessReason(
                     "current", _code_for(problem, item.item_id),
                     f"{item.label}: {item.detail}",

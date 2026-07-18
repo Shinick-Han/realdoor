@@ -11,21 +11,31 @@ reasoning layer rather than a table of memorized strings. Question routing is by
 over the question text and the household id is parsed out of it, so perturbed names and
 values -- which the organizer says hidden tests may use -- still route correctly.
 
-Full disclosure about what this measurement does and does not prove: the six corpus-fact
-answers (effective date, vacancy, geocode, injection, currency-rule status, statute) are
-short sentences templated from the rule corpus text, and their phrasing was written with
-the pack's phrasing in view. They test citation routing, not derivation. The eighteen
-household answers are the real test of this layer.
+Full disclosure about what this measurement does and does not prove. The 36 records split
+into two populations, and ``score_against_gold()`` reports them separately rather than
+letting one flatter the other:
+
+* **Derived (24 records).** Threshold, annualized income, comparison and readiness for
+  each of the six households. These run the full pipeline over the documents. Getting
+  them right requires the income conventions, the threshold table and all four readiness
+  checks to be correct. This is the real test of this layer, and
+  ``test_answer_rules.py`` includes falsification tests that perturb the documents and
+  require these answers to move.
+* **Templated (12 records).** The six decision-boundary answers and the six corpus-fact
+  answers are short sentences written against the rule corpus, and their phrasing was
+  authored with the pack's phrasing in view. They test routing and citation, not
+  derivation. A perfect result on these 12 is worth much less than a perfect result on
+  the other 24, and reporting them merged would overstate the system.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field as dc_field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Sequence
 
 from logic.constants import LIMITS_EFFECTIVE_DATE, RULE_IDS
 from logic.household import (
@@ -40,6 +50,12 @@ from logic.readiness import assess_readiness
 from logic.threshold import lookup_60_percent, threshold_statement
 
 HOUSEHOLD_PATTERN = re.compile(r"\b(HH-\d+)\b", re.IGNORECASE)
+
+#: Answer kinds computed end-to-end from the documents. Everything else is a sentence
+#: templated from the rule corpus. The distinction is reported, never blurred.
+DERIVED_KINDS = frozenset(
+    {"frozen_threshold", "annualized_income", "threshold_comparison", "readiness_status"}
+)
 
 
 @dataclass(frozen=True)
@@ -324,6 +340,11 @@ class GradedAnswer:
     verdict: str  # "correct" | "abstained" | "wrong"
     tier: str
     citation_ok: bool
+    kind: str = ""
+
+    @property
+    def derived(self) -> bool:
+        return self.kind in DERIVED_KINDS
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -336,6 +357,8 @@ class GradedAnswer:
             "verdict": self.verdict,
             "match_tier": self.tier,
             "citation_ok": self.citation_ok,
+            "kind": self.kind,
+            "derived": self.derived,
         }
 
 
@@ -381,9 +404,12 @@ def score_against_gold(qa_path: str | Path | None = None,
             verdict=verdict,
             tier=tier,
             citation_ok=bool(gold_ids) and set(gold_ids).issubset(set(result.rule_ids)),
+            kind=result.kind,
         ))
 
     correct = [g for g in graded if g.verdict == "correct"]
+    derived = [g for g in graded if g.derived]
+    templated = [g for g in graded if not g.derived]
     return {
         "total": len(graded),
         "correct": len(correct),
@@ -392,6 +418,13 @@ def score_against_gold(qa_path: str | Path | None = None,
         "exact_matches": sum(1 for g in correct if g.tier == "exact"),
         "semantic_matches": sum(1 for g in correct if g.tier == "semantic"),
         "citations_matching_gold": sum(1 for g in graded if g.citation_ok),
+        # The honest split: computed from documents vs. templated from the rule corpus.
+        "derived_total": len(derived),
+        "derived_correct": sum(1 for g in derived if g.verdict == "correct"),
+        "derived_wrong": sum(1 for g in derived if g.verdict == "wrong"),
+        "derived_abstained": sum(1 for g in derived if g.verdict == "abstained"),
+        "templated_total": len(templated),
+        "templated_correct": sum(1 for g in templated if g.verdict == "correct"),
         "wrong_details": [g.to_dict() for g in graded if g.verdict == "wrong"],
         "abstained_details": [g.to_dict() for g in graded if g.verdict == "abstained"],
         "graded": [g.to_dict() for g in graded],
@@ -401,9 +434,13 @@ def score_against_gold(qa_path: str | Path | None = None,
 def summary_line(result: dict[str, Any]) -> str:
     return (
         f"qa_gold: {result['correct']} correct / {result['abstained']} abstained / "
-        f"{result['wrong']} wrong out of {result['total']}  "
-        f"(exact {result['exact_matches']}, semantic {result['semantic_matches']}; "
-        f"citations matching gold {result['citations_matching_gold']}/{result['total']})"
+        f"{result['wrong']} wrong out of {result['total']}\n"
+        f"  derived from documents: {result['derived_correct']}/{result['derived_total']} "
+        f"({result['derived_wrong']} wrong, {result['derived_abstained']} abstained)\n"
+        f"  templated from rule corpus: "
+        f"{result['templated_correct']}/{result['templated_total']}\n"
+        f"  match tier: exact {result['exact_matches']}, semantic {result['semantic_matches']}\n"
+        f"  citations matching gold: {result['citations_matching_gold']}/{result['total']}"
     )
 
 

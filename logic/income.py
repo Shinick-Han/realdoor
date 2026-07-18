@@ -24,7 +24,7 @@ weekly_hours, monthly_benefit, benefit_frequency, gross_receipts, statement_mont
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field as dc_field
+from dataclasses import dataclass
 from typing import Any
 
 from logic import abstain

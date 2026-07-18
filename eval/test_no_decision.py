@@ -67,7 +67,9 @@ ENUMS = {
     "readiness_status": {"READY_TO_REVIEW", "NEEDS_REVIEW"},
     "evidence_kind": {"extracted", "confirmed_by_renter", "corrected_by_renter"},
     "certainty": {"high", "low", "abstain"},
-    "state": {"present", "missing", "expired", "expiring_soon", "unreadable"},
+    # 계약 개정(04:55) 반영: 'expiring_soon' 삭제(팩에 'soon'의 임계가 없음),
+    # 'undatable' 신설(문서는 읽었으나 날짜에 일(日) 정밀도가 없음).
+    "state": {"present", "missing", "expired", "undatable", "unreadable"},
 }
 
 EXCLUDED_DIRS = {
