@@ -320,6 +320,19 @@ def build_report(
         "ruleset_version": ruleset_version,
         "reference_date": REFERENCE_DATE.isoformat(),
         "readiness_status": assessment.readiness_status,
+
+        # ── 팩 스키마(`starter/schemas/submission.schema.json`)가 최상위에 요구하는 두 필드.
+        #    참가자 가이드: "Produce output conforming to starter/schemas/submission.schema.json."
+        #    값은 여기서 다시 계산하지 않고 위에서 만든 비교 결과를 **그대로** 싣는다. 같은
+        #    숫자가 두 경로로 계산되면 언젠가 갈라지고, 갈라진 순간 어느 쪽이 참인지 말할 수
+        #    없게 된다.
+        #
+        #    ⚠️ `annualized_income` 은 스키마상 **기권할 수 없는 필드**다(bare number, minimum 0).
+        #    소득을 계산할 수 없으면 여기엔 null 이 실리고 그 레코드는 스키마를 만족하지 않는다.
+        #    그 상황을 숨기지 않는다 — `scripts/export_submission.py` 가 검증에서 걸러내고
+        #    무엇이 왜 빠졌는지 출력한다. eval/CONTRACT_CONFLICTS.md §6 에 기록된 충돌이다.
+        "annualized_income": assessment.comparison.annual_income,
+        "comparison": assessment.comparison.comparison,
         "review_reasons": [r.to_dict() for r in assessment.reasons],
         "documents": [
             {

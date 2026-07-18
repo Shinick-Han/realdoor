@@ -84,7 +84,10 @@ a:hover { text-decoration-thickness: 2px; }
   grid-template-columns: minmax(12rem, auto) 1fr minmax(14rem, auto);
   align-items: start;
 }
-@media (max-width: 860px) { .site-header { grid-template-columns: 1fr; } }
+/* `1fr` 은 `minmax(auto, 1fr)` 이고 auto 의 최소값은 min-content 다. 그래서 좁은 폭에서
+   컬럼이 내용의 min-content(여기서는 select 의 가장 긴 option 폭)까지 부풀어 뷰포트를
+   넘겼다. minmax(0, 1fr) 로 최소값을 0 으로 내려야 컬럼이 실제로 줄어든다. */
+@media (max-width: 860px) { .site-header { grid-template-columns: minmax(0, 1fr); } }
 
 .wordmark { font-size: 1.4rem; font-weight: 700; margin: 0; letter-spacing: .01em; }
 .tagline  { margin: 0; color: var(--ink-soft); font-style: italic; }
@@ -98,7 +101,10 @@ a:hover { text-decoration-thickness: 2px; }
   max-width: 62ch;
 }
 
-.header-controls { display: grid; gap: .6rem; }
+/* grid 자식의 기본 min-width 는 auto(=min-content) 라서, 안쪽에 긴 것이 하나라도 있으면
+   컨테이너가 줄어들지 않는다. min-width:0 으로 그 사슬을 끊는다. */
+.header-controls { display: grid; gap: .6rem; min-width: 0; }
+.header-controls > * { min-width: 0; }
 
 /* One click to the judge-facing material, from anywhere, and one level only. */
 .meta-nav { margin: 0; }
@@ -117,6 +123,12 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .meta-link:hover { text-decoration-thickness: 2px; }
 
+/* The Korean/English switch. It reuses .meta-link so it carries the same colour and the
+   same focus treatment as the one other header control -- it is a reading aid, not a
+   second call to action, and nothing about it should out-shout the household picker. */
+.lang-switch { margin: 0; }
+
+.household-picker { min-width: 0; }
 .household-picker label { display: block; font-weight: 600; font-size: .9rem; }
 .household-picker select {
   font: inherit;
@@ -125,7 +137,11 @@ a:hover { text-decoration-thickness: 2px; }
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
-  min-width: 14rem;
+  /* select 의 고유 폭은 가장 긴 option 의 폭이고, min-width:14rem 은 그 위에 바닥을 하나 더
+     깔았다. 둘 다 320px 에서 컨테이너를 밀어낸다. min() 으로 "14rem 을 원하되 부모보다는
+     넓지 않게" 로 바꾸고, max-width 로 고유 폭도 부모에 가둔다. 목록 자체는 그대로 열린다. */
+  min-width: min(14rem, 100%);
+  max-width: 100%;
 }
 .mode-line { margin: .35rem 0 0; font-size: .82rem; color: var(--ink-soft); }
 
@@ -466,7 +482,10 @@ button.secondary:hover { background: #e6eef4; }
 
 /* ── document viewer ──────────────────────────────────────────────── */
 .doc-layout { display: grid; grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr); gap: 1rem; }
-@media (max-width: 900px) { .doc-layout { grid-template-columns: 1fr; } }
+/* 헤더와 같은 이유: 1fr 의 최소값이 min-content 라서 안쪽 표의 min-content 만큼 컬럼이
+   부풀었다. 표는 .table-scroll 안에서 스스로 가로 스크롤하므로 컬럼은 0 까지 줄어도 된다. */
+@media (max-width: 900px) { .doc-layout { grid-template-columns: minmax(0, 1fr); } }
+.doc-layout > * { min-width: 0; }
 
 .doc-list { list-style: none; margin: 0; padding: 0; }
 .doc-list li { margin-bottom: .4rem; }
@@ -577,11 +596,23 @@ tr.is-active td { background: #fdf0ea; }
 .hint { font-size: .82rem; color: var(--ink-soft); margin: .2rem 0 0; }
 
 .ask-input-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem; }
-.ask-input-row > div { flex: 1 1 22rem; }
+/* flex 자식의 기본 min-width 도 auto 다. 22rem(352px) 은 320px 뷰포트보다 넓으므로
+   min-width:0 이 없으면 basis 아래로 줄어들지 못한다. */
+.ask-input-row > div { flex: 1 1 22rem; min-width: 0; }
 
-dl.kv { display: grid; grid-template-columns: minmax(9rem, auto) 1fr; gap: .3rem .8rem; margin: 0 0 .8rem; }
+dl.kv { display: grid; grid-template-columns: minmax(9rem, auto) minmax(0, 1fr); gap: .3rem .8rem; margin: 0 0 .8rem; }
 dl.kv dt { font-weight: 600; color: var(--ink-soft); }
-dl.kv dd { margin: 0; }
+/* 값 쪽에는 파일명·규칙 id·URL 처럼 공백이 없는 긴 토큰이 들어온다. 그런 토큰의 min-content
+   는 토큰 전체 폭이라 컬럼을 밀어낸다. anywhere 는 (break-word 와 달리) min-content 계산에
+   반영되므로 실제로 컬럼이 줄어든다. 글자는 잘리지 않고 줄만 바뀐다. */
+dl.kv dd { margin: 0; overflow-wrap: anywhere; }
+/* 좁은 폭에서 9rem 을 이름에 떼어주면 값에 남는 폭이 절반도 안 된다. 두 줄로 세우면
+   두 쪽 다 온전한 폭을 쓴다. 내용은 하나도 사라지지 않고 위치만 바뀐다. */
+@media (max-width: 700px) {
+  dl.kv { grid-template-columns: minmax(0, 1fr); gap: 0 0; }
+  dl.kv dt { margin-top: .5rem; }
+  dl.kv dt:first-of-type { margin-top: 0; }
+}
 
 .status-line { font-size: .9rem; color: var(--ink-soft); }
 
