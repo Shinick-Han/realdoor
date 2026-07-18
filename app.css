@@ -421,6 +421,20 @@ details.tech > * { margin-top: .4rem; }
 
 table { border-collapse: collapse; width: 100%; font-size: .92rem; }
 .table-scroll { overflow-x: auto; margin-bottom: 1rem; }
+
+/* 표 캡션은 스크롤러 **밖**에 산다. <caption> 은 박스 폭이 표 폭과 같아서, 좁은 화면에서
+   표가 자기 컨테이너 안으로 가로 스크롤되면 캡션 문장도 함께 화면 밖으로 끌려간다.
+   320px 실측에서 문장의 절반 이상이 옆으로 밀지 않으면 읽히지 않았다. 표에는
+   aria-labelledby 로 다시 묶여 있으므로 접근 가능한 이름은 그대로다.
+   생김새는 기존 caption 규칙(431행)과 같게 두어 화면상 달라진 것이 없게 한다. */
+.table-block { margin-bottom: 1rem; }
+.table-block .table-scroll { margin-bottom: 0; }
+.table-caption {
+  text-align: left;
+  font-weight: 600;
+  padding: .3rem 0;
+  margin: 0;
+}
 th, td {
   border: 1px solid var(--line);
   padding: .4rem .55rem;
