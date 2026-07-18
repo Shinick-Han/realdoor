@@ -8,7 +8,7 @@ no example of any of them.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Sequence
 
 import pytest
 
@@ -21,8 +21,14 @@ BOX = [40.0, 648.0, 94.0, 662.0]
 
 def make_document(document_id: str, document_type: str, *, page: int = 1,
                   traceable: bool = True, certainty: str = "high",
+                  corrected: Sequence[str] = (),
                   **fields: Any) -> dict[str, Any]:
-    """A DocumentView with the given fields. ``value=None`` marks an abstained field."""
+    """A DocumentView with the given fields. ``value=None`` marks an abstained field.
+
+    ``corrected`` names fields a renter typed rather than the machine reading, exactly as
+    ``api/store.py::apply_correction`` records them. The reasoning layer must be able to
+    tell the two apart, so tests must be able to build both.
+    """
     items = []
     for name, value in fields.items():
         items.append({
@@ -31,6 +37,7 @@ def make_document(document_id: str, document_type: str, *, page: int = 1,
             "page": page if traceable else None,
             "bbox": list(BOX) if traceable else None,
             "certainty": "abstain" if value is None else certainty,
+            "evidence_kind": "corrected_by_renter" if name in corrected else "extracted",
         })
     return {
         "document_id": document_id,

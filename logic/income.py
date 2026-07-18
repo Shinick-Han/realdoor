@@ -173,8 +173,26 @@ class _StubReading:
     reconciles: bool | None
     ref: FieldRef
 
+    #: The three fields the reconciliation check reads. A correction to ANY of them can
+    #: decide whether this stub becomes the recurring base, so all three are watched.
+    RECONCILIATION_FIELDS = ("gross_pay", "regular_hours", "hourly_rate")
+
+    @property
+    def corrected_fields(self) -> tuple[str, ...]:
+        """Which reconciliation inputs on this stub a person typed rather than the machine."""
+        return tuple(
+            name
+            for name in self.RECONCILIATION_FIELDS
+            for ref in [self.ref if name == "gross_pay" else self.doc.get(name)]
+            if ref is not None and ref.corrected_by_renter
+        )
+
     @property
     def corrected(self) -> bool:
+        return bool(self.corrected_fields)
+
+    @property
+    def gross_corrected(self) -> bool:
         return self.ref.corrected_by_renter
 
     @property
@@ -286,6 +304,10 @@ def derive_wage_source(house: Household) -> IncomeSource | None:
     elif reconciling:
         reconciled_values = sorted({c.gross for c in reconciling})
         if len(reconciled_values) > 1:
+            # A correction can land us here: two stubs that each reconcile but disagree.
+            # We refuse to pick, and we name the correction rather than let it vanish
+            # into a bare "irreconcilable".
+            problems.extend(_correction_abstentions(candidates, None, about))
             return IncomeSource(
                 "wage", None, "abstained", [], tuple(d.document_id for d in stubs),
                 tuple(problems + [abstain.raise_abstention(
@@ -321,9 +343,11 @@ def derive_wage_source(house: Household) -> IncomeSource | None:
             problems.append(
                 abstain.raise_abstention(
                     "corrected_value_is_the_recurring_base", about,
-                    f"gross_pay {base:,.2f} on {reading.doc.document_id} was entered by "
-                    f"the renter, and {reading.own_arithmetic()}, so it IS used as the "
-                    f"recurring base and the annualized figure reflects it",
+                    f"{' and '.join(reading.corrected_fields)} on "
+                    f"{reading.doc.document_id} was entered by the renter; gross_pay "
+                    f"{base:,.2f} now agrees with that document ({reading.own_arithmetic()}"
+                    f"), so it IS used as the recurring base and the annualized figure "
+                    f"reflects it",
                 )
             )
 
@@ -396,19 +420,23 @@ def _correction_abstentions(
     for reading in excluded:
         if not reading.corrected:
             continue
+        what = (
+            f"gross_pay on {reading.doc.document_id} was corrected to {reading.gross:,.2f}"
+            if reading.gross_corrected
+            else f"{' and '.join(reading.corrected_fields)} on {reading.doc.document_id} "
+                 f"was corrected, against a stated gross_pay of {reading.gross:,.2f}"
+        )
         where = (
             f"the recurring base was taken from {used_instead} instead, so the corrected "
-            f"{reading.gross:,.2f} does not change the annualized amount"
+            f"figure does not change the annualized amount"
             if used_instead
             else "no stub could be used as a recurring base at all, so the corrected "
-                 f"{reading.gross:,.2f} does not produce an annualized amount"
+                 "figure does not produce an annualized amount"
         )
         out.append(
             abstain.raise_abstention(
                 "corrected_value_not_used", about,
-                f"gross_pay on {reading.doc.document_id} was corrected to "
-                f"{reading.gross:,.2f}, but {reading.own_arithmetic()} on that same "
-                f"document; {where}",
+                f"{what}, but {reading.own_arithmetic()} on that same document; {where}",
             )
         )
     return out

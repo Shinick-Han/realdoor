@@ -247,10 +247,9 @@ POLICY: tuple[Trigger, ...] = (
         grade=ADVISORY,
         rule_id="CH-INCOME-001",
         reason=(
-            "a value the renter corrected was NOT used as the recurring base, because the "
-            "corrected amount no longer agrees with its own document's "
-            "regular_hours * hourly_rate; the annualized figure comes from a different "
-            "document and did not change"
+            "a value the renter corrected was NOT used as the recurring base, because "
+            "after the correction that document no longer settles what the recurring pay "
+            "is; the annualized amount does not reflect the correction"
         ),
         what_would_resolve_it=(
             "the renter also corrects regular_hours or hourly_rate on that document so the "
