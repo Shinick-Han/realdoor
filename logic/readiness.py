@@ -56,6 +56,8 @@ PACK_CODE_BY_TRIGGER = {
 }
 
 GENERIC_CODE_BY_TRIGGER = {
+    "corrected_value_not_used": "RENTER_CORRECTION_NOT_USED",
+    "corrected_value_is_the_recurring_base": "RENTER_CORRECTION_IN_USE",
     "required_document_missing": "REQUIRED_DOCUMENT_MISSING",
     "document_not_current": "DOCUMENT_NOT_CURRENT",
     "document_date_month_precision": "DOCUMENT_UNDATABLE",
@@ -179,8 +181,18 @@ def _check_consistency(house: Household, income: AnnualizedIncome) -> list[Readi
     """
     reasons: list[ReadinessReason] = []
 
+    # A correction the engine declined to use is an inconsistency between what the renter
+    # asserts and what their own document says -- and, unlike the machine-vs-machine
+    # case, a person is waiting on it. It becomes a review reason so a human resolves it.
+    #
+    # Its symmetric twin, `corrected_value_is_the_recurring_base`, is deliberately NOT
+    # here. A correction that makes a stub reconcile is supposed to move the number;
+    # holding the packet open for it would penalise the renter for correcting the record.
+    # It still reaches the report as an abstentions[] entry, which is where a reviewer
+    # looks to see that a human, not a page, is behind the base amount.
     for problem in income.abstentions:
-        if problem.trigger in ("pay_stub_totals_conflict", "pay_stub_totals_irreconcilable"):
+        if problem.trigger in ("pay_stub_totals_conflict", "pay_stub_totals_irreconcilable",
+                               "corrected_value_not_used"):
             reasons.append(ReadinessReason("consistent", _code_for(problem), problem.reason))
 
     names = {str(doc.value("person_name")).strip()

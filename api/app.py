@@ -180,8 +180,8 @@ def gate_selftest() -> dict:
     """
     return {
         "household_id": "HH-001",
-        "eligible": True,          # ← 금지 키
-        "score": 0.92,             # ← 금지 키
+        "eligible": True,   # no-decision-fixture  ← 금지 키 (의도적)
+        "score": 0.92,      # no-decision-fixture  ← 금지 키 (의도적)
         "note": "이 응답은 사용자에게 도달해서는 안 된다.",
     }
 

@@ -84,6 +84,10 @@ FIXTURE_FILES = {
     "eval/run_adversarial.py",   # the deliberately non-compliant reference responder
     "eval/test_no_decision.py",  # this guard's own negative control
     "eval/test_harness.py",      # detector calibration fixtures
+    "api/app.py",                # GET /api/_gate_selftest: the live negative control
+                                 # that proves the runtime gate withholds a decision.
+                                 # The brief requires controls be demonstrated live,
+                                 # so one deliberate violation must exist to block.
 }
 
 _KEY_SPLIT = re.compile(r"[^A-Za-z0-9]+|(?<=[a-z0-9])(?=[A-Z])")

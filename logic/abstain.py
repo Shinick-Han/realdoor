@@ -241,6 +241,54 @@ POLICY: tuple[Trigger, ...] = (
             "dollars, which in this domain is the expensive direction to be wrong in."
         ),
     ),
+    # ---- corrections the renter made, and what we did with them ---------------------
+    Trigger(
+        name="corrected_value_not_used",
+        grade=ADVISORY,
+        rule_id="CH-INCOME-001",
+        reason=(
+            "a value the renter corrected was NOT used as the recurring base, because the "
+            "corrected amount no longer agrees with its own document's "
+            "regular_hours * hourly_rate; the annualized figure comes from a different "
+            "document and did not change"
+        ),
+        what_would_resolve_it=(
+            "the renter also corrects regular_hours or hourly_rate on that document so the "
+            "three figures agree, or the renter or employer confirms which document "
+            "reflects recurring pay"
+        ),
+        rationale=(
+            "This is the failure the pack cannot show us and the demo can. A renter types a "
+            "number, the screen accepts it, and the total does not move -- because the "
+            "reconciliation rule quietly dropped that stub. The arithmetic is defensible; "
+            "the silence is not. The brief forbids silently suppressing information, and a "
+            "correction accepted at the UI and ignored at the reasoning layer is exactly "
+            "that. Softer machine-extracted disagreement stays under "
+            "pay_stub_totals_conflict; a human-entered value gets its own entry because a "
+            "person is waiting on an answer to it."
+        ),
+    ),
+    Trigger(
+        name="corrected_value_is_the_recurring_base",
+        grade=ADVISORY,
+        rule_id="CH-INCOME-001",
+        reason=(
+            "the recurring base amount is a value the renter corrected, not the value that "
+            "was read off the page"
+        ),
+        what_would_resolve_it=(
+            "a reviewer confirms the corrected amount against the page image before relying "
+            "on it"
+        ),
+        rationale=(
+            "The symmetric case of corrected_value_not_used, and the reason this pair is "
+            "advisory-only rather than a review reason: a correction that makes a document "
+            "reconcile SHOULD change the number, and blocking readiness for it would punish "
+            "the renter for doing the thing we asked. But a reviewer must still be able to "
+            "see that the driving figure was typed by a person rather than read from a "
+            "document, so it is named in abstentions[] and left out of review_reasons[]."
+        ),
+    ),
     Trigger(
         name="required_document_missing",
         grade=ADVISORY,

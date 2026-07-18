@@ -31,6 +31,17 @@ class FieldRef:
     page: int | None = None
     bbox: tuple[float, ...] | None = None
     certainty: str = "high"
+    #: contracts/CONTRACTS.md section 1 ``EvidenceKind``: "extracted" |
+    #: "confirmed_by_renter" | "corrected_by_renter". Carried into this layer because the
+    #: reasoning must be able to tell a number a person typed from a number a machine
+    #: read. Without it, discarding a renter's correction is indistinguishable from
+    #: discarding an OCR reading, and the report cannot say which happened.
+    evidence_kind: str = "extracted"
+
+    @property
+    def corrected_by_renter(self) -> bool:
+        """True when a person typed this value over what was extracted."""
+        return self.evidence_kind == "corrected_by_renter"
 
     @property
     def traceable(self) -> bool:
@@ -189,6 +200,9 @@ def document_from_view(view: dict[str, Any]) -> Document:
             # A prediction with no certainty key is an ANSWER, not an abstention -- the
             # same reading eval/CONTRACT_CONFLICTS.md section 2 settled on.
             certainty=item.get("certainty", "high"),
+            # A record with no evidence_kind is a machine reading. Only api/store.py's
+            # apply_correction() writes "corrected_by_renter".
+            evidence_kind=item.get("evidence_kind") or "extracted",
         )
     return Document(
         document_id=view["document_id"],

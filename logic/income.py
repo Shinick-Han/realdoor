@@ -159,6 +159,41 @@ def _reconciles(gross: float | None, hours: Any, rate: Any) -> bool | None:
     return round(h * r, 2) == round(gross, 2)
 
 
+@dataclass(frozen=True)
+class _StubReading:
+    """One pay stub's gross, whether it reconciles, and where the gross came from.
+
+    ``ref`` is kept (rather than just the number) so the reasoning can tell a value a
+    renter typed from a value a machine read. That distinction is what lets the report
+    say "the amount you corrected was not used" instead of nothing at all.
+    """
+
+    doc: Document
+    gross: float
+    reconciles: bool | None
+    ref: FieldRef
+
+    @property
+    def corrected(self) -> bool:
+        return self.ref.corrected_by_renter
+
+    @property
+    def implied(self) -> float | None:
+        """This stub's own regular_hours * hourly_rate, when both are readable."""
+        h = _as_number(self.doc.value("regular_hours"))
+        r = _as_number(self.doc.value("hourly_rate"))
+        return None if h is None or r is None else round(h * r, 2)
+
+    def own_arithmetic(self) -> str:
+        """`76 * 28.5 = 2,166.00`, or a plain statement when the factors are unreadable."""
+        h = self.doc.value("regular_hours")
+        r = self.doc.value("hourly_rate")
+        implied = self.implied
+        if implied is None:
+            return "its own regular_hours * hourly_rate could not be read"
+        return f"its own regular_hours * hourly_rate is {h} * {r} = {implied:,.2f}"
+
+
 # =====================================================================================
 # source derivations
 # =====================================================================================
@@ -207,7 +242,7 @@ def derive_wage_source(house: Household) -> IncomeSource | None:
         )
 
     # -- read each stub's gross and check it against its own hours * rate -------------
-    candidates: list[tuple[Document, float, bool | None]] = []
+    candidates: list[_StubReading] = []
     for stub in stubs:
         ref, missing = _require_traceable(stub.get("gross_pay"), about, "gross_pay")
         if ref is None:
@@ -220,21 +255,27 @@ def derive_wage_source(house: Household) -> IncomeSource | None:
                                          f"gross_pay on {stub.document_id} is not numeric")
             )
             continue
-        candidates.append((stub, gross, _reconciles(gross, stub.value("regular_hours"),
-                                                    stub.value("hourly_rate"))))
+        candidates.append(_StubReading(
+            doc=stub,
+            gross=gross,
+            reconciles=_reconciles(gross, stub.value("regular_hours"),
+                                   stub.value("hourly_rate")),
+            ref=ref,
+        ))
 
     if not candidates:
         return IncomeSource("wage", None, "abstained", [],
                             tuple(d.document_id for d in stubs), tuple(problems))
 
-    distinct = sorted({gross for _, gross, _ in candidates})
-    reconciling = [(d, g) for d, g, ok in candidates if ok]
+    distinct = sorted({c.gross for c in candidates})
+    reconciling = [c for c in candidates if c.reconciles]
 
     if len(distinct) == 1:
-        chosen_doc, base = candidates[0][0], distinct[0]
+        chosen = candidates[0]
+        chosen_doc, base = chosen.doc, distinct[0]
         # All stubs agree. If none of them reconciles with hours * rate we still use the
         # agreed figure -- it is what every document says -- but we say so.
-        if candidates[0][2] is False:
+        if chosen.reconciles is False:
             problems.append(
                 abstain.raise_abstention(
                     "pay_stub_totals_conflict", about,
@@ -243,7 +284,7 @@ def derive_wage_source(house: Household) -> IncomeSource | None:
                 )
             )
     elif reconciling:
-        reconciled_values = sorted({g for _, g in reconciling})
+        reconciled_values = sorted({c.gross for c in reconciling})
         if len(reconciled_values) > 1:
             return IncomeSource(
                 "wage", None, "abstained", [], tuple(d.document_id for d in stubs),
@@ -251,21 +292,40 @@ def derive_wage_source(house: Household) -> IncomeSource | None:
                     "pay_stub_totals_irreconcilable", about,
                     f"multiple reconciling stubs disagree: {reconciled_values}")]),
             )
-        chosen_doc, base = reconciling[0]
+        chosen = reconciling[0]
+        chosen_doc, base = chosen.doc, chosen.gross
+        excluded = [c for c in candidates if c.doc.document_id != chosen_doc.document_id]
         problems.append(
             abstain.raise_abstention(
                 "pay_stub_totals_conflict", about,
                 f"stub totals {[f'{v:,.2f}' for v in distinct]}; using {base:,.2f} from "
-                f"{chosen_doc.document_id}, which reconciles with its own hours and rate",
+                f"{chosen_doc.document_id}, which reconciles with its own hours and rate; "
+                + _excluded_phrase(excluded),
             )
         )
+        problems.extend(_correction_abstentions(excluded, chosen_doc.document_id, about))
     else:
+        problems.extend(_correction_abstentions(candidates, None, about))
         return IncomeSource(
             "wage", None, "abstained", [], tuple(d.document_id for d in stubs),
             tuple(problems + [abstain.raise_abstention(
                 "pay_stub_totals_irreconcilable", about,
                 f"stub totals {[f'{v:,.2f}' for v in distinct]}, none reconciling")]),
         )
+
+    # The symmetric case: the figure we DID use is one a person typed. That is not a gap
+    # -- a correction that makes a stub reconcile is supposed to move the number -- but a
+    # reviewer must be able to see that a human, not a page, is behind the base amount.
+    for reading in candidates:
+        if reading.corrected and round(reading.gross, 2) == round(base, 2):
+            problems.append(
+                abstain.raise_abstention(
+                    "corrected_value_is_the_recurring_base", about,
+                    f"gross_pay {base:,.2f} on {reading.doc.document_id} was entered by "
+                    f"the renter, and {reading.own_arithmetic()}, so it IS used as the "
+                    f"recurring base and the annualized figure reflects it",
+                )
+            )
 
     annual = annualize(base, frequency)
 
@@ -301,6 +361,57 @@ def derive_wage_source(house: Household) -> IncomeSource | None:
         documents=tuple(d.document_id for d in stubs + letters),
         abstentions=tuple(problems),
     )
+
+
+def _excluded_phrase(excluded: list[_StubReading]) -> str:
+    """Name the stub(s) dropped from the recurring base, and the sum that dropped them.
+
+    Previously the conflict entry listed the totals and named only the WINNER. A reader
+    could see that two numbers disagreed and which one survived, but not which document
+    had been set aside or on what arithmetic -- so a renter looking at their own
+    corrected stub had no way to find it in the report.
+    """
+    if not excluded:
+        return "no other stub was set aside"
+    parts = [
+        f"{c.doc.document_id} ({c.gross:,.2f}) was not used as the recurring base because "
+        f"{c.own_arithmetic()}"
+        for c in excluded
+    ]
+    return "; ".join(parts)
+
+
+def _correction_abstentions(
+    excluded: list[_StubReading], used_instead: str | None, about: str
+) -> list[Abstention]:
+    """Say out loud when a value the RENTER typed was the one we set aside.
+
+    Machine-extracted disagreement is already covered, more softly, by
+    ``pay_stub_totals_conflict``: two documents differ and we explain which won. A
+    correction is a different event. Someone read our number, decided it was wrong, typed
+    a replacement, and is now looking at a total that did not move. Only an entry that
+    names their document and their number tells them what happened.
+    """
+    out: list[Abstention] = []
+    for reading in excluded:
+        if not reading.corrected:
+            continue
+        where = (
+            f"the recurring base was taken from {used_instead} instead, so the corrected "
+            f"{reading.gross:,.2f} does not change the annualized amount"
+            if used_instead
+            else "no stub could be used as a recurring base at all, so the corrected "
+                 f"{reading.gross:,.2f} does not produce an annualized amount"
+        )
+        out.append(
+            abstain.raise_abstention(
+                "corrected_value_not_used", about,
+                f"gross_pay on {reading.doc.document_id} was corrected to "
+                f"{reading.gross:,.2f}, but {reading.own_arithmetic()} on that same "
+                f"document; {where}",
+            )
+        )
+    return out
 
 
 def _letter_implied_annual(letter: Document) -> float | None:
