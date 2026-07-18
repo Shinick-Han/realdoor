@@ -810,12 +810,23 @@
       ]);
     });
 
-    return h("div", { class: "table-scroll" }, [
-      h("table", null, [
-        h("caption", null, [
-          "Extracted values on " + doc.document_id + ". Choose a field name to highlight its box on the page. ",
-          "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1]."
-        ]),
+    // 캡션을 스크롤러 **밖**에 둔다.
+    //
+    // <caption> 의 박스 폭은 정의상 표의 폭이다. 표가 좁은 화면에서 자기 컨테이너 안으로
+    // 가로 스크롤되면(SC 1.4.10 이 허용하는 예외), 캡션 문장도 함께 스크롤 밖으로 끌려간다.
+    // 320px 에서 실측하면 화면 폭 276px 에 캡션 569px — 문장의 절반 이상이 화면 밖에 있고,
+    // 옆으로 밀지 않으면 읽을 수 없었다. 조항은 통과하는데 사람은 못 읽는 상태였다.
+    //
+    // 그래서 문장은 표 앞의 <p> 로 옮기고, 표에는 `aria-labelledby` 로 다시 묶는다.
+    // 지원기술이 얻는 접근 가능한 이름은 그대로이고, 눈으로 읽는 경로만 스크롤에서 풀린다.
+    var captionId = "evidence-caption-" + doc.document_id;
+    return h("div", { class: "table-block" }, [
+      h("p", { class: "table-caption", id: captionId }, [
+        "Extracted values on " + doc.document_id + ". Choose a field name to highlight its box on the page. ",
+        "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1]."
+      ]),
+      h("div", { class: "table-scroll" }, [
+      h("table", { "aria-labelledby": captionId }, [
         h("thead", null, [h("tr", null, [
           h("th", { scope: "col", text: "Field" }),
           h("th", { scope: "col", text: "Value" }),
@@ -826,6 +837,7 @@
           h("th", { scope: "col", class: "num", text: "Box (pt)" })
         ])]),
         h("tbody", null, rows)
+      ])
       ])
     ]);
   }
@@ -1197,9 +1209,13 @@
     ]));
 
     (state.report.calculations || []).forEach(function (calc) {
-      var inputs = h("div", { class: "table-scroll" }, [
-        h("table", null, [
-          h("caption", { text: "Inputs to " + calc.name.replace(/_/g, " ") }),
+      // 위 근거 표와 같은 이유로 캡션을 스크롤러 밖에 둔다.
+      var inputsCaptionId = "calc-inputs-caption-" + calc.name;
+      var inputs = h("div", { class: "table-block" }, [
+        h("p", { class: "table-caption", id: inputsCaptionId,
+                 text: "Inputs to " + calc.name.replace(/_/g, " ") }),
+        h("div", { class: "table-scroll" }, [
+        h("table", { "aria-labelledby": inputsCaptionId }, [
           h("thead", null, [h("tr", null, [
             h("th", { scope: "col", text: "Input" }),
             h("th", { scope: "col", text: "Value" }),
@@ -1212,6 +1228,7 @@
               h("td", { class: "mono", text: input.from_document || "—" })
             ]);
           }))
+        ])
         ])
       ]);
 
