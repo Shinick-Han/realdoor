@@ -64,10 +64,25 @@ ItemState       = "present" | "missing" | "expired" | "expiring_soon" | "unreada
   "fields": [ ExtractedField, ... ],
   "document_date": "2026-07-10",
   "state": "present",
-  "days_until_stale": 118,
-  "stale_rule_id": "CH-DOC-120DAY"
+  "days_until_stale": 52,
+  "stale_rule_id": "CH-READINESS-001"
 }
 ```
+
+### ⚠️ 신선도 규칙 — 팩이 동결한 값만 쓴다
+```
+REFERENCE_DATE = 2026-07-18          # 이벤트 날짜. 오늘(07-19)이 아니다.
+CURRENCY_WINDOW_DAYS = 60            # 팩 RULES_README 동결 관행
+→ 문서가 current 하려면 document_date >= 2026-05-19
+```
+출처: `pack/rules/RULES_README.md` — *"A document is current for this simulation when dated
+no more than **60 days** before 2026-07-18. **This is a challenge convention, not a universal
+LIHTC rule.**"* 및 `CH-READINESS-001` (*"current under the challenge's 60-day convention"*).
+
+🚫 **실제 HUD 규정(4350.3의 120일 검증 유효기간)을 쓰지 마라.** 그것은 현실에서는 맞지만
+이 과제에서는 **틀린 답**이다. 채점은 동결된 관행 기준으로 이뤄진다.
+*(이 항목은 최초 계약 작성 시 지휘자가 외부 사전지식으로 120일을 잘못 기입했다가 팩 원문
+대조에서 발견해 정정한 것이다. 인용 없는 지식이 인용된 출처를 덮어쓴 사례로 기록해 둔다.)*
 
 ## 4. `RuleCitation` — 모든 주장에 붙는 근거
 
