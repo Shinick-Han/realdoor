@@ -166,6 +166,78 @@ def page_png(document_id: str, page: int,
                              "X-Image-Height": str(img.height_px)})
 
 
+# ── 규칙 질문 + 적대적 입력 (데모 3·6단계) ─────────────────────────────
+@app.post("/api/ask")
+def ask(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
+    """규칙 질문에 인용과 함께 답하거나, 명시적으로 거부한다.
+
+    판단 경로에 LLM이 없으므로, 문서나 질문에 삽입된 지시는 원리적으로
+    계산을 바꿀 수 없다. 여기서는 그 위에 명시적 거부 세 가지를 얹는다.
+    """
+    from api import ask as ask_mod
+    from logic.household import households_from_views
+
+    s = _session(x_session_id)
+    question = payload.get("question", "")
+    hid = payload.get("household_id")
+    houses = households_from_views(list(s.views.values()))
+    s.log("question_asked", household_id=hid)   # 질문 원문은 남기지 않는다
+    return ask_mod.handle(question, hid, houses)
+
+
+# ── 패킷 내보내기 (데모 5단계) ─────────────────────────────────────────
+@app.post("/api/packet/{household_id}")
+def packet(household_id: str, x_session_id: str | None = Header(default=None)) -> Response:
+    """신청자가 통제하는 준비 패킷. **어디에도 자동 전송되지 않는다.**"""
+    import io
+    import zipfile
+
+    s = _session(x_session_id)
+    rep = STORE.report(s, household_id)
+    if rep is None:
+        raise HTTPException(404, f"unknown household {household_id}")
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("readiness_report.json",
+                   json.dumps(rep, ensure_ascii=False, indent=1, default=str))
+        z.writestr("README.txt",
+                   "RealDoor readiness packet\n"
+                   "=========================\n\n"
+                   "This packet describes what your documents show and what is still\n"
+                   "missing or expired. It is NOT an eligibility decision. A qualified\n"
+                   "housing professional makes that determination.\n\n"
+                   "Nothing here has been sent to any property or provider. Sharing it\n"
+                   "is your choice.\n")
+        for doc in rep.get("documents", []):
+            src = DOCS / doc["file_name"]
+            if src.exists():
+                z.write(src, f"documents/{doc['file_name']}")
+    s.log("packet_exported", household_id=household_id)
+    return Response(
+        content=buf.getvalue(), media_type="application/zip",
+        headers={"Content-Disposition":
+                 f'attachment; filename="realdoor_{household_id}_packet.zip"'})
+
+
+# ── 자기 성적표 (데모 마지막 화면) ─────────────────────────────────────
+@app.get("/api/selftest")
+def selftest(x_session_id: str | None = Header(default=None)) -> dict:
+    """측정을 지금 다시 돌려서 낸 숫자. 이전 실행 결과를 옮겨 적지 않는다."""
+    from api import ask as ask_mod
+    from api import selftest as selftest_mod
+    from logic.household import households_from_views
+
+    s = _session(x_session_id)
+    views = list(s.views.values())
+    houses = households_from_views(views)
+
+    def respond(text: str) -> dict:
+        return ask_mod.handle(text, None, houses)
+
+    return selftest_mod.build(views, respond)
+
+
 # ── 게이트 자기시험 (데모: 통제가 동작함을 눈앞에서 증명) ───────────────
 @app.get("/api/_gate_selftest")
 def gate_selftest() -> dict:
