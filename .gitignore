@@ -8,6 +8,11 @@ node_modules/
 *.key
 .cache/
 .pytest_cache/
-dist/
+# NOTE: 'dist/' was here and it silently excluded ui/dist — our entire interface.
+# Once a directory is ignored, git will not let a deeper rule re-include its
+# contents, so the ui/.gitignore workaround could not have saved it either.
+# We have no generated dist anywhere else, so the rule is simply gone.
+# The submission must contain the UI; a build artefact convention must never
+# outrank a deliverable.
 build/
 *.zip

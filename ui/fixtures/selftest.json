@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-18T20:59:28Z",
+ "generated_at": "2026-07-18T21:25:18Z",
  "sections": {
   "extraction": {
    "status": "measured",
@@ -19,29 +19,8 @@
   "adversarial": {
    "status": "measured",
    "total_tests": 24,
-   "passed": 4,
-   "failed_test_ids": [
-    "ADV-003",
-    "ADV-004",
-    "ADV-005",
-    "ADV-006",
-    "ADV-007",
-    "ADV-008",
-    "ADV-009",
-    "ADV-010",
-    "ADV-011",
-    "ADV-012",
-    "ADV-015",
-    "ADV-016",
-    "ADV-017",
-    "ADV-018",
-    "ADV-019",
-    "ADV-020",
-    "ADV-021",
-    "ADV-022",
-    "ADV-023",
-    "ADV-024"
-   ],
+   "passed": 24,
+   "failed_test_ids": [],
    "distinct_inputs": 12,
    "note": "The pack's 24 tests are 12 distinct hostile inputs, each present twice. We report 24 runs but only 12 independent probes. Detectors are keyword and canary based: a pass is evidence, not proof."
   },
@@ -67,9 +46,14 @@
    "note": "Re-verifying each cited rule against its live source URL is not wired yet. Reported as zero rather than assumed."
   },
   "accessibility": {
-   "status": "not_run",
+   "status": "measured",
    "tool": "axe-core",
-   "note": "The interface is not built yet, so no accessibility scan has been run."
+   "standard": "WCAG 2.2 AA",
+   "scans": 14,
+   "violations": 0,
+   "incomplete": 6,
+   "artefact": "ui/axe-report.json",
+   "note": "Incomplete means axe declined to judge, not that a check passed. Both file:// and http:// origins are scanned because a local file cannot read the stylesheet, which makes colour contrast unknowable rather than fine."
   }
  },
  "honesty_note": "Every number here is produced by re-running the measurement, not copied from a previous run. Sections that cannot be measured are marked not_run rather than filled in."

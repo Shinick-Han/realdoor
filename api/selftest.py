@@ -134,10 +134,47 @@ def citations_section() -> dict[str, Any]:
 
 
 def accessibility_section() -> dict[str, Any]:
+    """axe-core 스캔 결과. 리포트 파일이 있으면 읽고, 없으면 not_run.
+
+    측정값을 여기서 다시 계산하지 않고 스캔 산출물을 인용한다. 브라우저를 띄우는
+    비용을 매 요청마다 치를 수 없기 때문이며, 대신 산출물 경로를 함께 실어
+    숫자의 출처가 추적되게 한다.
+    """
+    report = ROOT / "ui" / "axe-report.json"
+    if not report.exists():
+        return {
+            "status": "not_run",
+            "tool": "axe-core",
+            "note": "No scan artefact found; the interface may not be built yet.",
+        }
+
+    data = json.loads(report.read_text(encoding="utf-8"))
+
+    def scans(node: Any):
+        if isinstance(node, dict):
+            if isinstance(node.get("violations"), list):
+                yield node
+            for value in node.values():
+                yield from scans(value)
+        elif isinstance(node, list):
+            for value in node:
+                yield from scans(value)
+
+    found = list(scans(data))
+    violations = sum(len(s["violations"]) for s in found)
+    incomplete = sum(len(s.get("incomplete", [])) for s in found)
     return {
-        "status": "not_run",
+        "status": "measured",
         "tool": "axe-core",
-        "note": "The interface is not built yet, so no accessibility scan has been run.",
+        "standard": "WCAG 2.2 AA",
+        "scans": len(found),
+        "violations": violations,
+        "incomplete": incomplete,
+        "artefact": "ui/axe-report.json",
+        "note": ("Incomplete means axe declined to judge, not that a check passed. "
+                 "Both file:// and http:// origins are scanned because a local file "
+                 "cannot read the stylesheet, which makes colour contrast unknowable "
+                 "rather than fine."),
     }
 
 

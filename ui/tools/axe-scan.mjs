@@ -76,79 +76,96 @@ const SCREENS = [
 ];
 
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-const page = await context.newPage();
-
 const consoleErrors = [];
-page.on("pageerror", (error) => consoleErrors.push(String(error)));
-page.on("console", (message) => {
-  if (message.type() === "error") consoleErrors.push(message.text());
-});
+const runs = [];
+let axeVersion = null;
 
-await page.goto(pageUrl);
-await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);
-await page.addInitScript({ content: axeSource });
+for (const origin of ORIGINS) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => consoleErrors.push(`[${origin.id}] ${error}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(`[${origin.id}] ${message.text()}`);
+  });
 
-const results = [];
-for (const screen of SCREENS) {
-  await page.locator(screen.tab).click();
-  if (screen.setUp) await screen.setUp(page);
-  await page.waitForTimeout(120);
+  await page.goto(origin.url);
+  await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);
 
-  await page.evaluate(axeSource);
-  const run = await page.evaluate(async (tags) => {
-    const outcome = await window.axe.run(document, {
-      runOnly: { type: "tag", values: tags },
-      resultTypes: ["violations", "incomplete"]
-    });
-    return {
-      violations: outcome.violations.map((v) => ({
-        id: v.id, impact: v.impact, help: v.help, helpUrl: v.helpUrl,
-        nodes: v.nodes.map((n) => ({ target: n.target, failureSummary: n.failureSummary }))
-      })),
-      incomplete: outcome.incomplete.map((v) => ({
-        id: v.id, impact: v.impact, help: v.help,
-        nodes: v.nodes.map((n) => ({ target: n.target }))
-      })),
-      passes: outcome.passes ? outcome.passes.length : null
-    };
-  }, WCAG_TAGS);
+  const results = [];
+  for (const screen of SCREENS) {
+    await page.locator(screen.tab).click();
+    if (screen.setUp) await screen.setUp(page);
+    await page.waitForTimeout(120);
 
-  results.push({ screen: screen.id, ...run });
-  const worst = run.violations.map((v) => v.impact).join(",");
-  console.log(
-    `${screen.id.padEnd(14)} violations=${String(run.violations.length).padStart(2)} ` +
-    `incomplete=${String(run.incomplete.length).padStart(2)} ${worst}`
-  );
-  for (const violation of run.violations) {
-    console.log(`    - [${violation.impact}] ${violation.id}: ${violation.help}`);
-    for (const node of violation.nodes) console.log(`        ${node.target}`);
+    await page.evaluate(axeSource);
+    const run = await page.evaluate(async (tags) => {
+      const outcome = await window.axe.run(document, {
+        runOnly: { type: "tag", values: tags },
+        resultTypes: ["violations", "incomplete"]
+      });
+      return {
+        violations: outcome.violations.map((v) => ({
+          id: v.id, impact: v.impact, help: v.help, helpUrl: v.helpUrl,
+          nodes: v.nodes.map((n) => ({ target: n.target, failureSummary: n.failureSummary }))
+        })),
+        incomplete: outcome.incomplete.map((v) => ({
+          id: v.id, impact: v.impact, help: v.help,
+          nodes: v.nodes.map((n) => ({
+            target: n.target,
+            reason: (n.any || []).map((check) => check.message).join(" / ")
+          }))
+        })),
+        rules_passed: outcome.passes ? outcome.passes.length : null
+      };
+    }, WCAG_TAGS);
+
+    results.push({ screen: screen.id, ...run });
+    console.log(
+      `${origin.id}  ${screen.id.padEnd(14)} violations=${String(run.violations.length).padStart(2)} ` +
+      `incomplete=${String(run.incomplete.length).padStart(2)}`
+    );
+    for (const violation of run.violations) {
+      console.log(`      - [${violation.impact}] ${violation.id}: ${violation.help}`);
+      for (const node of violation.nodes) console.log(`          ${node.target}`);
+    }
   }
+
+  axeVersion = await page.evaluate(() => window.axe.version);
+  runs.push({
+    origin: origin.id,
+    url: origin.id === "file" ? "file:// (offline, bundled fixtures)" : "http:// (as FastAPI serves ui/dist)",
+    total_violations: results.reduce((sum, r) => sum + r.violations.length, 0),
+    total_incomplete: results.reduce((sum, r) => sum + r.incomplete.length, 0),
+    results
+  });
+  await context.close();
 }
 
-const total = results.reduce((sum, r) => sum + r.violations.length, 0);
+const total = runs.reduce((sum, r) => sum + r.total_violations, 0);
 const report = {
   tool: "axe-core",
-  axe_version: await page.evaluate(() => window.axe.version),
+  axe_version: axeVersion,
   standard: "WCAG 2.2 AA",
   tags: WCAG_TAGS,
   page: "ui/dist/index.html",
-  loaded_over: "file:// (offline, bundled fixtures)",
   generated_at: new Date().toISOString(),
-  screens_scanned: results.length,
+  screens_per_origin: SCREENS.length,
   total_violations: total,
-  violations_by_impact: results.flatMap((r) => r.violations).reduce((acc, v) => {
-    acc[v.impact || "unknown"] = (acc[v.impact || "unknown"] || 0) + 1;
-    return acc;
-  }, {}),
+  violations_by_impact: runs.flatMap((r) => r.results).flatMap((r) => r.violations)
+    .reduce((acc, v) => { acc[v.impact || "unknown"] = (acc[v.impact || "unknown"] || 0) + 1; return acc; }, {}),
+  incomplete_note:
+    "Over file:// Chromium blocks axe-core from reading the stylesheet, so colour-contrast is " +
+    "reported as incomplete (unknown) rather than passing. The http:// run reads the same CSS " +
+    "and gives the real contrast verdict; compare the two blocks below.",
   page_errors: consoleErrors,
-  results
+  runs
 };
 writeFileSync(resolve(uiDir, "axe-report.json"), JSON.stringify(report, null, 1) + "\n");
 
-console.log(`\ntotal violations: ${total} across ${results.length} screens`);
+console.log(`\ntotal violations: ${total} across ${runs.length} origin(s) x ${SCREENS.length} screens`);
 if (consoleErrors.length) console.log(`page errors: ${consoleErrors.length}\n  ${consoleErrors.join("\n  ")}`);
 console.log("written: ui/axe-report.json");
 
 await browser.close();
+staticServer.close();
 process.exit(total === 0 ? 0 : 1);

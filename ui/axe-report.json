@@ -10,188 +10,403 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "loaded_over": "file:// (offline, bundled fixtures)",
- "generated_at": "2026-07-18T21:13:34.351Z",
- "screens_scanned": 7,
+ "generated_at": "2026-07-18T21:21:01.792Z",
+ "screens_per_origin": 7,
  "total_violations": 0,
  "violations_by_impact": {},
+ "incomplete_note": "Over file:// Chromium blocks axe-core from reading the stylesheet, so colour-contrast is reported as incomplete (unknown) rather than passing. The http:// run reads the same CSS and gives the real contrast verdict; compare the two blocks below.",
  "page_errors": [
-  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "Failed to load resource: net::ERR_FAILED",
-  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "Failed to load resource: net::ERR_FAILED",
-  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "Failed to load resource: net::ERR_FAILED",
-  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "Failed to load resource: net::ERR_FAILED",
-  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "Failed to load resource: net::ERR_FAILED",
-  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "Failed to load resource: net::ERR_FAILED",
-  "Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "Failed to load resource: net::ERR_FAILED"
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED"
  ],
- "results": [
+ "runs": [
   {
-   "screen": "documents",
-   "violations": [],
-   "incomplete": [
+   "origin": "file",
+   "url": "file:// (offline, bundled fixtures)",
+   "total_violations": 0,
+   "total_incomplete": 3,
+   "results": [
     {
-     "id": "color-contrast",
-     "impact": "serious",
-     "help": "Elements must meet minimum color contrast ratio thresholds",
-     "nodes": [
+     "screen": "documents",
+     "violations": [],
+     "incomplete": [
       {
-       "target": [
-        "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
-       ]
-      },
-      {
-       "target": [
-        ".schematic-text:nth-child(1)"
-       ]
-      },
-      {
-       "target": [
-        ".schematic-text:nth-child(2)"
-       ]
-      },
-      {
-       "target": [
-        ".schematic-text:nth-child(3)"
-       ]
-      },
-      {
-       "target": [
-        ".schematic-text:nth-child(4)"
-       ]
-      },
-      {
-       "target": [
-        "div > .table-scroll > table > caption"
-       ]
-      },
-      {
-       "target": [
-        "tr:nth-child(2) > .num:nth-child(6)"
-       ]
-      },
-      {
-       "target": [
-        "tr:nth-child(2) > .num.mono"
-       ]
-      },
-      {
-       "target": [
-        "tr:nth-child(3) > .num:nth-child(6)"
-       ]
-      },
-      {
-       "target": [
-        "tr:nth-child(3) > .num.mono"
-       ]
-      },
-      {
-       "target": [
-        "tr:nth-child(4) > .num:nth-child(6)"
-       ]
-      },
-      {
-       "target": [
-        "tr:nth-child(4) > .num.mono"
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(1)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(2)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(3)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "div > .table-scroll > table > caption"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(2) > .num:nth-child(6)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(2) > .num.mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(3) > .num:nth-child(6)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(3) > .num.mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .num:nth-child(6)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .num.mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        }
        ]
       }
-     ]
-    }
-   ],
-   "passes": 33
-  },
-  {
-   "screen": "correct",
-   "violations": [],
-   "incomplete": [],
-   "passes": 32
-  },
-  {
-   "screen": "ask",
-   "violations": [],
-   "incomplete": [],
-   "passes": 28
-  },
-  {
-   "screen": "calculation",
-   "violations": [],
-   "incomplete": [],
-   "passes": 30
-  },
-  {
-   "screen": "packet",
-   "violations": [],
-   "incomplete": [
+     ],
+     "rules_passed": 33
+    },
     {
-     "id": "color-contrast",
-     "impact": "serious",
-     "help": "Elements must meet minimum color contrast ratio thresholds",
-     "nodes": [
+     "screen": "correct",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 32
+    },
+    {
+     "screen": "ask",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 28
+    },
+    {
+     "screen": "calculation",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 30
+    },
+    {
+     "screen": "packet",
+     "violations": [],
+     "incomplete": [
       {
-       "target": [
-        ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
-       ]
-      },
-      {
-       "target": [
-        ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
-       ]
-      },
-      {
-       "target": [
-        ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        }
        ]
       }
-     ]
-    }
-   ],
-   "passes": 28
-  },
-  {
-   "screen": "controls",
-   "violations": [],
-   "incomplete": [],
-   "passes": 26
-  },
-  {
-   "screen": "measurements",
-   "violations": [],
-   "incomplete": [
+     ],
+     "rules_passed": 28
+    },
     {
-     "id": "color-contrast",
-     "impact": "serious",
-     "help": "Elements must meet minimum color contrast ratio thresholds",
-     "nodes": [
+     "screen": "controls",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 26
+    },
+    {
+     "screen": "measurements",
+     "violations": [],
+     "incomplete": [
       {
-       "target": [
-        "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
-       ]
-      },
-      {
-       "target": [
-        "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
-       ]
-      },
-      {
-       "target": [
-        "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
-       ]
-      },
-      {
-       "target": [
-        "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        }
        ]
       }
-     ]
+     ],
+     "rules_passed": 28
     }
-   ],
-   "passes": 28
+   ]
+  },
+  {
+   "origin": "http",
+   "url": "http:// (as FastAPI serves ui/dist)",
+   "total_violations": 0,
+   "total_incomplete": 3,
+   "results": [
+    {
+     "screen": "documents",
+     "violations": [],
+     "incomplete": [
+      {
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(1)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(2)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(3)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "div > .table-scroll > table > caption"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(2) > .num:nth-child(6)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(2) > .num.mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(3) > .num:nth-child(6)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(3) > .num.mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .num:nth-child(6)"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .num.mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        }
+       ]
+      }
+     ],
+     "rules_passed": 33
+    },
+    {
+     "screen": "correct",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 32
+    },
+    {
+     "screen": "ask",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 28
+    },
+    {
+     "screen": "calculation",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 30
+    },
+    {
+     "screen": "packet",
+     "violations": [],
+     "incomplete": [
+      {
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        }
+       ]
+      }
+     ],
+     "rules_passed": 28
+    },
+    {
+     "screen": "controls",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 26
+    },
+    {
+     "screen": "measurements",
+     "violations": [],
+     "incomplete": [
+      {
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        }
+       ]
+      }
+     ],
+     "rules_passed": 28
+    }
+   ]
   }
  ]
 }

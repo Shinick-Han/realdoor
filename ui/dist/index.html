@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RealDoor — application readiness copilot</title>
+<meta name="description" content="RealDoor reads a household's documents, shows where every value came from, and reports readiness. It never decides eligibility.">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="brand">
+    <p class="wordmark">RealDoor</p>
+    <p class="tagline">Ready, not eligible.</p>
+  </div>
+
+  <p class="notice notice--standing" id="standing-notice">
+    This service reports document readiness only. It does not decide eligibility, and nothing
+    on this screen means approved, denied, or ineligible. A qualified housing professional
+    makes that determination.
+  </p>
+
+  <div class="household-picker">
+    <label for="household-select">Household</label>
+    <select id="household-select"></select>
+    <p class="mode-line" id="mode-line">Data source: loading…</p>
+  </div>
+</header>
+
+<div class="layout">
+  <main id="main" tabindex="-1">
+    <h1 class="visually-hidden">RealDoor application readiness copilot</h1>
+
+    <div class="tabs">
+      <div role="tablist" aria-label="Demo steps" id="tablist">
+        <button role="tab" id="tab-documents"  aria-controls="panel-documents"  aria-selected="true"  tabindex="0"><span class="tab-num">1</span> Documents and evidence</button>
+        <button role="tab" id="tab-correct"    aria-controls="panel-correct"    aria-selected="false" tabindex="-1"><span class="tab-num">2</span> Correct a field</button>
+        <button role="tab" id="tab-ask"        aria-controls="panel-ask"        aria-selected="false" tabindex="-1"><span class="tab-num">3</span> Ask about a rule</button>
+        <button role="tab" id="tab-calc"       aria-controls="panel-calc"       aria-selected="false" tabindex="-1"><span class="tab-num">4</span> The calculation</button>
+        <button role="tab" id="tab-packet"     aria-controls="panel-packet"     aria-selected="false" tabindex="-1"><span class="tab-num">5</span> Readiness packet</button>
+        <button role="tab" id="tab-controls"   aria-controls="panel-controls"   aria-selected="false" tabindex="-1"><span class="tab-num">6</span> Controls, demonstrated</button>
+        <button role="tab" id="tab-measure"    aria-controls="panel-measure"    aria-selected="false" tabindex="-1"><span class="tab-num">7</span> Our own numbers</button>
+      </div>
+    </div>
+
+    <section role="tabpanel" id="panel-documents" aria-labelledby="tab-documents" tabindex="0">
+      <h2>1. Documents and evidence</h2>
+      <p class="lede">Every value below is shown together with the place on the page it was read
+      from. Nothing here is inferred about the person.</p>
+      <div id="documents-body"></div>
+    </section>
+
+    <section role="tabpanel" id="panel-correct" aria-labelledby="tab-correct" tabindex="0" hidden>
+      <h2>2. Correct a field</h2>
+      <p class="lede">Change a value the system read, and watch the numbers underneath it move —
+      or watch the system explain why your correction was <em>not</em> used.</p>
+      <div id="correct-body"></div>
+    </section>
+
+    <section role="tabpanel" id="panel-ask" aria-labelledby="tab-ask" tabindex="0" hidden>
+      <h2>3. Ask about a rule</h2>
+      <p class="lede">Every answer carries its rule id, the authority behind it, the date it took
+      effect, and where in the source it is written.</p>
+      <div id="ask-body"></div>
+    </section>
+
+    <section role="tabpanel" id="panel-calc" aria-labelledby="tab-calc" tabindex="0" hidden>
+      <h2>4. The calculation</h2>
+      <p class="lede">Inputs, formula, result, threshold, comparison, effective date. A comparison
+      is not a determination.</p>
+      <div id="calc-body"></div>
+    </section>
+
+    <section role="tabpanel" id="panel-packet" aria-labelledby="tab-packet" tabindex="0" hidden>
+      <h2>5. Readiness packet</h2>
+      <p class="lede">What is present, what is missing, what has expired, and what could not be
+      dated — then a download you choose to make.</p>
+      <div id="packet-body"></div>
+    </section>
+
+    <section role="tabpanel" id="panel-controls" aria-labelledby="tab-controls" tabindex="0" hidden>
+      <h2>6. The controls, demonstrated live</h2>
+      <p class="lede">A disclaimer is not a control. Each control below can be triggered here and
+      its actual response shown.</p>
+      <div id="controls-body"></div>
+    </section>
+
+    <section role="tabpanel" id="panel-measure" aria-labelledby="tab-measure" tabindex="0" hidden>
+      <h2>7. Our own numbers</h2>
+      <p class="lede">Our measured results, including the parts that were not run and the ones that
+      came out badly. Published as measured.</p>
+      <div id="measure-body"></div>
+    </section>
+  </main>
+
+  <aside class="open-questions" aria-labelledby="open-questions-heading">
+    <h2 id="open-questions-heading">What this system is unsure about</h2>
+    <p class="aside-note">Always visible, never folded away. A system that knows something and does
+    not say it is the failure this product exists to prevent.</p>
+    <div id="open-questions-body"></div>
+  </aside>
+</div>
+
+<p aria-live="polite" class="visually-hidden" id="live-status"></p>
+
+<footer class="site-footer">
+  <h2 class="visually-hidden">About this build</h2>
+  <p id="footer-meta"></p>
+  <p>No external fonts, scripts, images, or analytics. This page makes no network request
+  unless you point it at a local API.</p>
+</footer>
+
+<script src="fixtures.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

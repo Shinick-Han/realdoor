@@ -270,3 +270,20 @@ def overlay(document_id: str, page: int,
         raise HTTPException(404, f"unknown document {document_id}")
     return {"document_id": document_id, "page": page,
             "rects": overlay_rects(view, page_number=page)}
+
+
+# ── UI 정적 서빙 ────────────────────────────────────────────────────────
+# **반드시 모든 /api 라우트 뒤에 온다.** "/" 마운트는 먼저 등록된 라우트만
+# 비켜가므로, 위쪽에 두면 API 전체를 삼킨다.
+#
+# 한 프로세스가 UI와 API를 같은 오리진에서 서빙한다 → CORS 없음, 인터넷 없이 동작,
+# 심사위원은 서버 하나만 띄우면 된다.
+if UI_DIR.is_dir():
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=str(UI_DIR), html=True), name="ui")
+else:  # pragma: no cover
+    @app.get("/")
+    def _no_ui() -> dict:
+        return {"error": "ui_not_built",
+                "detail": f"expected the interface at {UI_DIR}"}
