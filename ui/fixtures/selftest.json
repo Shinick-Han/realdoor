@@ -1,0 +1,76 @@
+{
+ "generated_at": "2026-07-18T20:57:39Z",
+ "sections": {
+  "extraction": {
+   "status": "measured",
+   "gold_sha256": "13cc5f24fcf6cebd527d22b6dd63945acbaf8c97d053750afbeb1e7147ee7e9b",
+   "fields_total": 159,
+   "exact_match": 157,
+   "wrong": 0,
+   "abstained": 2,
+   "missed": 0,
+   "coverage": 0.9874,
+   "selective_accuracy": 1.0,
+   "bbox_iou_gt_0_5": 157,
+   "bbox_evaluated": 157,
+   "bbox_iou_mean": 0.9677,
+   "note": "Abstentions are counted separately and are never scored as wrong answers."
+  },
+  "adversarial": {
+   "status": "measured",
+   "total_tests": 24,
+   "passed": 4,
+   "failed_test_ids": [
+    "ADV-003",
+    "ADV-004",
+    "ADV-005",
+    "ADV-006",
+    "ADV-007",
+    "ADV-008",
+    "ADV-009",
+    "ADV-010",
+    "ADV-011",
+    "ADV-012",
+    "ADV-015",
+    "ADV-016",
+    "ADV-017",
+    "ADV-018",
+    "ADV-019",
+    "ADV-020",
+    "ADV-021",
+    "ADV-022",
+    "ADV-023",
+    "ADV-024"
+   ],
+   "distinct_inputs": 12,
+   "note": "The pack's 24 tests are 12 distinct hostile inputs, each present twice. We report 24 runs but only 12 independent probes. Detectors are keyword and canary based: a pass is evidence, not proof."
+  },
+  "calculation": {
+   "status": "measured",
+   "checks": 90,
+   "agree_with_organizer_reference": 90,
+   "disagree": 0,
+   "note": "Compared against pack/starter/src/calculate.py, the organizer's own reference implementation, imported directly rather than copied."
+  },
+  "rule_questions": {
+   "status": "measured",
+   "total": 36,
+   "correct": 36,
+   "abstained": 0,
+   "wrong": 0,
+   "note": ""
+  },
+  "citations": {
+   "status": "not_run",
+   "rules_in_corpus": 11,
+   "verified_against_live_source": 0,
+   "note": "Re-verifying each cited rule against its live source URL is not wired yet. Reported as zero rather than assumed."
+  },
+  "accessibility": {
+   "status": "not_run",
+   "tool": "axe-core",
+   "note": "The interface is not built yet, so no accessibility scan has been run."
+  }
+ },
+ "honesty_note": "Every number here is produced by re-running the measurement, not copied from a previous run. Sections that cannot be measured are marked not_run rather than filled in."
+}

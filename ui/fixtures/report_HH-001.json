@@ -1,0 +1,639 @@
+{
+ "household_id": "HH-001",
+ "generated_at": "2026-07-18T20:57:39Z",
+ "ruleset_version": "pack-v1/2026-05-01",
+ "reference_date": "2026-07-18",
+ "readiness_status": "READY_TO_REVIEW",
+ "review_reasons": [],
+ "documents": [
+  {
+   "document_id": "HH-001-D01",
+   "document_type": "application_summary",
+   "file_name": "hh-001_d01_application_summary.pdf",
+   "document_date": "2026-07-10",
+   "days_until_stale": 52,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Mara North",
+     "page": 1,
+     "bbox": [
+      40.0,
+      648.0,
+      94.01,
+      662.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "Mara North",
+     "notes": null
+    },
+    {
+     "field": "household_size",
+     "value": 1,
+     "page": 1,
+     "bbox": [
+      360.0,
+      648.0,
+      384.0,
+      662.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "1",
+     "notes": null
+    },
+    {
+     "field": "address",
+     "value": "14 Lantern Way, Boston, MA 02118",
+     "page": 1,
+     "bbox": [
+      40.0,
+      588.0,
+      202.42,
+      602.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "14 Lantern Way, Boston, MA 02118",
+     "notes": null
+    },
+    {
+     "field": "application_date",
+     "value": "2026-07-10",
+     "page": 1,
+     "bbox": [
+      40.0,
+      518.0,
+      95.14,
+      532.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-07-10",
+     "notes": null
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "present",
+   "source": "text_layer"
+  },
+  {
+   "document_id": "HH-001-D02",
+   "document_type": "pay_stub",
+   "file_name": "hh-001_d02_pay_stub.pdf",
+   "document_date": "2026-06-27",
+   "days_until_stale": 39,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Mara North",
+     "page": 1,
+     "bbox": [
+      39.96,
+      657.88,
+      93.83,
+      671.88
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "Mara North",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | engine confidence 0.958"
+    },
+    {
+     "field": "pay_date",
+     "value": "2026-06-27",
+     "page": 1,
+     "bbox": [
+      330.82,
+      659.08,
+      384.69,
+      673.08
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-27",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "pay_period_start",
+     "value": "2026-06-10",
+     "page": 1,
+     "bbox": [
+      40.36,
+      608.38,
+      95.03,
+      622.38
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-10",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "pay_period_end",
+     "value": "2026-06-23",
+     "page": 1,
+     "bbox": [
+      200.13,
+      608.38,
+      254.8,
+      622.38
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-23",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "pay_frequency",
+     "value": "biweekly",
+     "page": 1,
+     "bbox": [
+      360.3,
+      607.18,
+      401.83,
+      621.18
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "biweekly",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "regular_hours",
+     "value": 76,
+     "page": 1,
+     "bbox": [
+      51.51,
+      528.14,
+      75.51,
+      542.14
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "76",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "hourly_rate",
+     "value": 28.5,
+     "page": 1,
+     "bbox": [
+      189.77,
+      527.74,
+      224.92,
+      541.74
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$28.50",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "gross_pay",
+     "value": 2166.0,
+     "page": 1,
+     "bbox": [
+      339.98,
+      527.74,
+      397.44,
+      541.74
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$2,166.00",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "net_pay",
+     "value": 1689.48,
+     "page": 1,
+     "bbox": [
+      459.51,
+      527.74,
+      509.01,
+      541.74
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$1,689.48",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "present",
+   "source": "text_layer"
+  },
+  {
+   "document_id": "HH-001-D03",
+   "document_type": "pay_stub",
+   "file_name": "hh-001_d03_pay_stub.pdf",
+   "document_date": "2026-06-20",
+   "days_until_stale": 32,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Mara North",
+     "page": 1,
+     "bbox": [
+      40.0,
+      658.0,
+      94.01,
+      672.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "Mara North",
+     "notes": null
+    },
+    {
+     "field": "pay_date",
+     "value": "2026-06-20",
+     "page": 1,
+     "bbox": [
+      330.0,
+      658.0,
+      385.14,
+      672.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-20",
+     "notes": null
+    },
+    {
+     "field": "pay_period_start",
+     "value": "2026-06-03",
+     "page": 1,
+     "bbox": [
+      40.0,
+      608.0,
+      95.14,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-03",
+     "notes": null
+    },
+    {
+     "field": "pay_period_end",
+     "value": "2026-06-16",
+     "page": 1,
+     "bbox": [
+      200.0,
+      608.0,
+      255.14,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-16",
+     "notes": null
+    },
+    {
+     "field": "pay_frequency",
+     "value": "biweekly",
+     "page": 1,
+     "bbox": [
+      360.0,
+      608.0,
+      402.34,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "biweekly",
+     "notes": null
+    },
+    {
+     "field": "regular_hours",
+     "value": 76,
+     "page": 1,
+     "bbox": [
+      52.0,
+      528.0,
+      76.0,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "76",
+     "notes": null
+    },
+    {
+     "field": "hourly_rate",
+     "value": 28.5,
+     "page": 1,
+     "bbox": [
+      190.0,
+      528.0,
+      224.58,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$28.50",
+     "notes": null
+    },
+    {
+     "field": "gross_pay",
+     "value": 2166.0,
+     "page": 1,
+     "bbox": [
+      340.0,
+      528.0,
+      397.38,
+      544.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$2,166.00",
+     "notes": null
+    },
+    {
+     "field": "net_pay",
+     "value": 1689.48,
+     "page": 1,
+     "bbox": [
+      460.0,
+      528.0,
+      508.48,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$1,689.48",
+     "notes": null
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "present",
+   "source": "text_layer"
+  },
+  {
+   "document_id": "HH-001-D04",
+   "document_type": "employment_letter",
+   "file_name": "hh-001_d04_employment_letter.pdf",
+   "document_date": "2026-07-06",
+   "days_until_stale": 48,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Mara North",
+     "page": 1,
+     "bbox": [
+      40.0,
+      648.0,
+      94.01,
+      662.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "Mara North",
+     "notes": null
+    },
+    {
+     "field": "document_date",
+     "value": "2026-07-06",
+     "page": 1,
+     "bbox": [
+      360.0,
+      648.0,
+      415.14,
+      662.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-07-06",
+     "notes": null
+    },
+    {
+     "field": "weekly_hours",
+     "value": 38,
+     "page": 1,
+     "bbox": [
+      40.0,
+      478.0,
+      64.0,
+      492.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "38",
+     "notes": null
+    },
+    {
+     "field": "hourly_rate",
+     "value": 28.5,
+     "page": 1,
+     "bbox": [
+      250.0,
+      478.0,
+      290.7,
+      494.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$28.50",
+     "notes": null
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "present",
+   "source": "text_layer"
+  }
+ ],
+ "calculations": [
+  {
+   "name": "annualized_wage_income",
+   "household_id": "HH-001",
+   "inputs": [
+    {
+     "label": "gross_pay",
+     "value": 2166.0,
+     "from_document": "HH-001-D02"
+    },
+    {
+     "label": "pay_frequency",
+     "value": "biweekly",
+     "from_document": "HH-001-D02"
+    },
+    {
+     "label": "corroborating_weekly_hours_x_rate",
+     "value": 1083.0,
+     "from_document": "HH-001-D04"
+    }
+   ],
+   "formula": "2166.0 * 26",
+   "result": 56316.0,
+   "threshold": null,
+   "threshold_rule_id": null,
+   "comparison": "no_frozen_threshold",
+   "effective_date": "2026-05-01",
+   "rule_id": "CH-INCOME-001"
+  },
+  {
+   "name": "annualized_income",
+   "household_id": "HH-001",
+   "inputs": [
+    {
+     "label": "gross_pay",
+     "value": 2166.0,
+     "from_document": "HH-001-D02"
+    },
+    {
+     "label": "pay_frequency",
+     "value": "biweekly",
+     "from_document": "HH-001-D02"
+    },
+    {
+     "label": "corroborating_weekly_hours_x_rate",
+     "value": 1083.0,
+     "from_document": "HH-001-D04"
+    }
+   ],
+   "formula": "2166.0 * 26",
+   "result": 56316.0,
+   "threshold": 72000.0,
+   "threshold_rule_id": "HUD-MTSP-002",
+   "comparison": "below_or_equal",
+   "effective_date": "2026-05-01",
+   "rule_id": "CH-INCOME-001"
+  }
+ ],
+ "checklist": [
+  {
+   "item_id": "CHK-APPLICATION-SUMMARY",
+   "label": "Application summary",
+   "required_because_rule_id": "CH-READINESS-001",
+   "state": "present",
+   "satisfied_by": [
+    "HH-001-D01"
+   ],
+   "detail": "HH-001-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+   "action_for_renter": null
+  },
+  {
+   "item_id": "CHK-PAY-STUB",
+   "label": "Recent pay stubs",
+   "required_because_rule_id": "CH-READINESS-001",
+   "state": "present",
+   "satisfied_by": [
+    "HH-001-D02",
+    "HH-001-D03"
+   ],
+   "detail": "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-001-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+   "action_for_renter": null
+  },
+  {
+   "item_id": "CHK-EMPLOYMENT-LETTER",
+   "label": "Employment verification letter",
+   "required_because_rule_id": "CH-READINESS-001",
+   "state": "present",
+   "satisfied_by": [
+    "HH-001-D04"
+   ],
+   "detail": "HH-001-D04 is dated 2026-07-06, current with 48 day(s) of the window remaining",
+   "action_for_renter": null
+  }
+ ],
+ "citations": [
+  {
+   "rule_id": "CH-READINESS-001",
+   "authority": "hackathon_simulation",
+   "effective_date": "2026-07-18",
+   "text": "Return READY_TO_REVIEW only when required evidence is present, current under the challenge's 60-day convention, internally consistent, and traceable to page-level source boxes. Otherwise return NEEDS_REVIEW with reasons.",
+   "source_url": "rules/RULES_README.md",
+   "source_locator": "Frozen challenge convention",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "CH-INCOME-001",
+   "authority": "hackathon_simulation",
+   "effective_date": "2026-07-18",
+   "text": "For scoring only, annualize recurring gross income using the explicit pay frequency. Sum independently documented recurring sources. Do not infer protected traits or undocumented income.",
+   "source_url": "rules/RULES_README.md",
+   "source_locator": "Frozen challenge convention",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "CH-DECISION-001",
+   "authority": "hackathon_simulation",
+   "effective_date": "2026-07-18",
+   "text": "Outputs may compare an annualized amount with a frozen threshold, but must not label a person eligible, ineligible, approved, denied, or prioritized. Final determinations remain human and program-specific.",
+   "source_url": "governance/DATA_USE_AND_SAFETY.md",
+   "source_locator": "Human-decision boundary",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "HUD-MTSP-002",
+   "authority": "official_hud",
+   "effective_date": "2026-05-01",
+   "text": "For the Boston-Cambridge-Quincy, MA-NH HMFA, the FY 2026 median family income is $164,600 and the 60% limits for household sizes 1-8 are 72,000; 82,320; 92,580; 102,840; 111,120; 119,340; 127,560; and 135,780 dollars.",
+   "source_url": "https://www.huduser.gov/portal/datasets/mtsp/mtsp26/HERA-Income-Limits-Report-FY26.pdf",
+   "source_locator": "PDF page 130",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "HUD-MTSP-001",
+   "authority": "official_hud",
+   "effective_date": "2026-05-01",
+   "text": "FY 2026 Multifamily Tax Subsidy Project income limits are effective May 1, 2026.",
+   "source_url": "https://www.huduser.gov/portal/datasets/mtsp.html",
+   "source_locator": "FY 2026 effective date notice",
+   "verified_against_source": null
+  }
+ ],
+ "abstentions": [],
+ "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
+ "engine_version": "sha:2f7616801588",
+ "session_id": "6d2bf9e79a5f"
+}
