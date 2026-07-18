@@ -26,8 +26,17 @@ Comparison      = "below_or_equal" | "above" | "no_frozen_threshold"
 ReadinessStatus = "READY_TO_REVIEW" | "NEEDS_REVIEW"
 EvidenceKind    = "extracted" | "confirmed_by_renter" | "corrected_by_renter"
 Certainty       = "high" | "low" | "abstain"
-ItemState       = "present" | "missing" | "expired" | "expiring_soon" | "unreadable"
+ItemState       = "present" | "missing" | "expired" | "undatable" | "unreadable"
 ```
+
+### 개정 이력 (04:55) — 팩에 없는 값 제거
+- ~~`expiring_soon`~~ **삭제.** 팩 어디에도 "soon"의 임계가 없다. 우리가 임계를 만들면
+  그건 **인용 없는 규칙**이고, 우리가 하지 말자고 한 바로 그 짓이다. UI에 남은 일수를
+  숫자로 보여주는 것으로 충분하다.
+- `undatable` **신설.** 문서를 읽는 데는 성공했으나 날짜 정밀도가 부족한 경우
+  (예: gig statement의 `statement_month = "2026-06"` — 일(日)이 없음).
+  `unreadable`로 뭉뚱그리면 "우리가 못 읽었다"는 거짓 신호가 된다.
+  **일자를 지어내지 않고, 못 읽었다고도 말하지 않는다.**
 
 `no_frozen_threshold` 와 `abstain` 이 **기권 슬롯**이다. 불확실하면 여기로 간다.
 
@@ -120,11 +129,15 @@ LIHTC rule.**"* 및 `CH-READINESS-001` (*"current under the challenge's 60-day c
 
 ## 6. `ChecklistItem` — 준비도 항목 1건
 
+⚠️ `required_because_rule_id`는 **팩의 11개 규칙 ID 중 하나여야 한다.**
+(`CH-DOC-STUBS`는 존재하지 않는 ID였다 — 지휘자가 지어낸 것으로, 아래 예시에서 정정했다.
+필요 서류의 근거는 `pack/evaluation/application_checklists.json`과 `CH-READINESS-001`이다.)
+
 ```json
 {
   "item_id": "CHK-PAYSTUB",
   "label": "Recent pay stubs",
-  "required_because_rule_id": "CH-DOC-STUBS",
+  "required_because_rule_id": "CH-READINESS-001",
   "state": "missing",
   "satisfied_by": [],
   "detail": "0 of 2 required pay stubs found",
