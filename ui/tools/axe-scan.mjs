@@ -1,9 +1,12 @@
 /* Accessibility measurement for the RealDoor UI.
  *
  * Drives ui/dist/index.html in headless Chromium over file:// -- the same way a judge
- * with no server would open it -- walks all seven screens, puts each one into the state
- * a user actually reaches (probe run, correction applied, packet section rendered), and
- * runs axe-core against each.
+ * with no server would open it -- walks the landing screen, all six ordered steps and the
+ * secondary "how this works" route, puts each one into the state a user actually reaches
+ * (correction applied, probe run, packet section rendered), and runs axe-core against each.
+ *
+ * The walk is a real forward walk through the flow, using the same Back/Next controls a
+ * user has, rather than jumping between panels: the flow is the thing being measured.
  *
  * Output: ui/axe-report.json. Violations are written whether or not they are zero.
  *
@@ -49,30 +52,45 @@ const ORIGINS = [
 
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
-/** Each screen: the tab to open, plus any interaction that must happen before scanning. */
+/** Each screen in flow order: how the user arrives, plus any interaction that must
+ *  happen before scanning. `enter` uses only controls that exist on the previous screen. */
 const SCREENS = [
-  { id: "documents", tab: "#tab-documents", setUp: async (page) => {
+  { id: "landing", enter: async () => {} },
+
+  { id: "step1-documents", enter: async (page) => page.locator("#start-demo").click(),
+    setUp: async (page) => {
       await page.locator("#documents-body .field-row-btn").first().click();
     } },
-  { id: "correct", tab: "#tab-correct", setUp: async (page) => {
-      // load the rejected-correction scenario: the case that must be prominent
+
+  { id: "step2-correct", enter: async (page) => page.locator("#step-next").click(),
+    setUp: async (page) => {
+      // load the rejected-correction scenario: the case that must be prominent, and the
+      // one that puts an error summary above the H1 with an inline item to match it
       await page.getByRole("button", { name: /Gross pay on the newer stub/ }).click();
       await page.locator("#correct-apply").click();
       await page.locator("#correction-outcome-heading").waitFor();
     } },
-  { id: "ask", tab: "#tab-ask", setUp: async (page) => {
+
+  { id: "step3-ask", enter: async (page) => page.locator("#step-next").click(),
+    setUp: async (page) => {
       await page.getByRole("button", { name: "What annualized income should the scorer use for HH-001?" }).click();
     } },
-  { id: "calculation", tab: "#tab-calc" },
-  { id: "packet", tab: "#tab-packet" },
-  { id: "controls", tab: "#tab-controls", setUp: async (page) => {
+
+  { id: "step4-calculation", enter: async (page) => page.locator("#step-next").click() },
+
+  { id: "step5-checklist", enter: async (page) => page.locator("#step-next").click() },
+
+  { id: "step6-check-and-packet", enter: async (page) => page.locator("#step-next").click() },
+
+  // the secondary route, reached in one click from wherever the user happens to be
+  { id: "how-this-works", enter: async (page) => page.locator("#go-how").click(),
+    setUp: async (page) => {
       for (const button of await page.getByRole("button", { name: "Run this probe" }).all()) {
         await button.click();
       }
       await page.getByRole("button", { name: /Try to make the server return a decision/ }).click();
       await page.locator("#gate-output .callout").waitFor();
-    } },
-  { id: "measurements", tab: "#tab-measure" }
+    } }
 ];
 
 const browser = await chromium.launch();
@@ -93,7 +111,7 @@ for (const origin of ORIGINS) {
 
   const results = [];
   for (const screen of SCREENS) {
-    await page.locator(screen.tab).click();
+    await screen.enter(page);
     if (screen.setUp) await screen.setUp(page);
     await page.waitForTimeout(120);
 

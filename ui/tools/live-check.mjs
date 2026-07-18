@@ -30,8 +30,12 @@ record("Page served by FastAPI at the same origin as /api/*",
 const households = await page.locator("#household-select option").count();
 record("Households listed from the live API", households > 0, `${households} households`);
 
+/* The flow is linear now, so this walk is linear too: start, then Next, using the same
+ * controls a user has. Screens are no longer reachable by jumping to a tab. */
+const next = async () => { await page.locator("#step-next").click(); await page.waitForTimeout(120); };
+
 // 1. rendered page image with overlay boxes on top of it
-await page.locator("#tab-documents").click();
+await page.locator("#start-demo").click();
 await page.locator(".page-frame img").waitFor({ timeout: 15000 }).catch(() => {});
 const imageOk = await page.evaluate(() => {
   const img = document.querySelector(".page-frame img");
@@ -60,7 +64,7 @@ record("Step 1 — every box lands inside the page (no y-flip)",
   geometry.map((g) => `${g.field}@${(g.topFraction * 100).toFixed(1)}%`).join(" "));
 
 // 2. an arbitrary correction, not one of the two recorded offline
-await page.locator("#tab-correct").click();
+await next();
 await page.selectOption("#correct-doc", "HH-001-D01");
 await page.selectOption("#correct-field", "household_size");
 await page.fill("#correct-value", "5");
@@ -72,7 +76,7 @@ record("Step 2 — arbitrary correction accepted and threshold recomputed by the
   /\$111,120\.00/.test(diff) ? "household size 5 -> frozen threshold $111,120.00" : diff.slice(0, 90));
 
 // 3. free-text rule question
-await page.locator("#tab-ask").click();
+await next();
 await page.fill("#ask-input", "What is the frozen 60% threshold for HH-001?");
 await page.locator("#ask-body button[type=submit]").click();
 await page.waitForTimeout(600);
@@ -81,8 +85,10 @@ record("Step 3 — free-text question answered live with a citation",
   /HUD-MTSP-002/.test(askBody) && /2026-05-01/.test(askBody),
   askBody.slice(0, 80).replace(/\s+/g, " ").trim());
 
-// 5. packet zip from the server
-await page.locator("#tab-packet").click();
+// 5. packet zip from the server -- reached by walking steps 4, 5 and 6 in order
+await next();   // step 4, the calculation
+await next();   // step 5, what is missing or out of date
+await next();   // step 6, check what we found and take the packet
 const download = page.waitForEvent("download", { timeout: 15000 }).catch(() => null);
 await page.locator("#packet-download").click();
 const file = await download;
@@ -90,8 +96,9 @@ record("Step 5 — packet downloaded from the server as a zip",
   Boolean(file) && /\.zip$/.test(file ? file.suggestedFilename() : ""),
   file ? file.suggestedFilename() : "no download");
 
-// 6. the output gate, live: HTTP 500 shown as a demonstration, not a console error
-await page.locator("#tab-controls").click();
+// 6. the controls, on the secondary route, reached in one click from step 6
+await page.locator("#go-how").click();
+await page.waitForTimeout(150);
 await page.getByRole("button", { name: /Try to make the server return a decision/ }).click();
 await page.locator("#gate-output .callout").waitFor({ timeout: 8000 });
 const gateText = (await page.locator("#gate-output").textContent()) || "";
@@ -123,8 +130,7 @@ if (deletedId) {
 record("Step 6 — deleted session is really gone (follow-up request 404s)",
   /deleted/i.test(sessionText) && gone, `session ${deletedId} -> follow-up ${gone ? "404" : "still answering"}`);
 
-// 7. live measurements
-await page.locator("#tab-measure").click();
+// 7. live measurements -- same secondary route, further down the page
 await page.waitForTimeout(400);
 const measureText = (await page.locator("#measure-body").textContent()) || "";
 record("Step 7 — measurements fetched from /api/selftest",

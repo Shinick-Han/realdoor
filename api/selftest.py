@@ -178,6 +178,52 @@ def accessibility_section() -> dict[str, Any]:
     }
 
 
+def plain_language_section() -> dict[str, Any]:
+    """세입자용 평문 계층의 규칙 준수 측정.
+
+    하나만 의무다: **문제 메시지는 전부 구체적 다음 행동을 달고 나가야 한다**
+    (WCAG 2.2 SC 3.3.3 Error Suggestion, Level AA). 나머지 — 2인칭·능동태·가독성
+    등급 — 은 자발적으로 채택한 FPLG 스타일 목표이고, AA가 요구하는 것처럼
+    표시하지 않는다. 특히 SC 3.1.5 Reading Level 은 **AAA**이며 AA 의무가 아니다.
+
+    가독성은 등급 하나로 내놓지 않는다. Flesch-Kincaid 와 SMOG 를 **함께**, 그리고
+    둘의 **격차**까지 화면 단위로 싣는다. 같은 글에 대해 공식마다 몇 학년씩 갈리는
+    것이 알려진 사실이므로, 하나만 뽑아 쓰는 것 자체가 없는 정밀도를 파는 짓이다.
+    """
+    from api import plain
+
+    measured = plain.measure()
+    checklist = measured["rules_checklist"]
+    return {
+        "status": "measured",
+        "codes_with_plain_wording": measured["codes_covered"],
+        "situations_with_plain_wording": measured["situations_covered"],
+        "messages_checked": checklist["messages"],
+        "renter_facing_strings": checklist["renter_facing_strings"],
+        "free_of_raw_identifiers": checklist["free_of_raw_identifiers"],
+        "uses_second_person_per_string": checklist["uses_second_person"],
+        "uses_second_person_per_message": checklist["messages_using_second_person"],
+        "active_voice_best_effort": checklist["active_voice_best_effort"],
+        "problem_messages_carrying_an_action":
+            checklist["problem_messages_with_an_action_fraction"],
+        "action_gaps": checklist["action_gaps"],
+        "actions_needing_a_trained_person": checklist["actions_needing_a_trained_person"],
+        "household_id_leaks": checklist["household_id_leaks"],
+        "readability": measured["readability"],
+        "note": (
+            "Only 'problem_messages_carrying_an_action' is a requirement: WCAG 2.2 "
+            "SC 3.3.3 Error Suggestion is Level AA, and it must read 1.0. Second person "
+            "and active voice are Federal Plain Language Guidelines style goals we "
+            "adopted voluntarily; the FPLG sets no reading-grade target and no "
+            "sentence-length rule. SC 3.1.5 Reading Level is Level AAA and is not "
+            "required at AA. The active-voice figure is a regex heuristic with "
+            "documented blind spots, not a measurement of grammar. Readability is "
+            "reported as two formulas plus their spread, per screen, on samples of at "
+            "least 100 words, because a single per-string grade is not defensible."
+        ),
+    }
+
+
 def build(views: list[dict[str, Any]], respond) -> dict[str, Any]:
     sections: dict[str, Any] = {}
     for name, fn in (
@@ -187,6 +233,7 @@ def build(views: list[dict[str, Any]], respond) -> dict[str, Any]:
         ("rule_questions", qa_section),
         ("citations", citations_section),
         ("accessibility", accessibility_section),
+        ("plain_language", plain_language_section),
     ):
         try:
             sections[name] = fn()

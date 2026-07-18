@@ -10,8 +10,8 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-18T21:21:01.792Z",
- "screens_per_origin": 7,
+ "generated_at": "2026-07-18T22:14:01.868Z",
+ "screens_per_origin": 8,
  "total_violations": 0,
  "violations_by_impact": {},
  "incomplete_note": "Over file:// Chromium blocks axe-core from reading the stylesheet, so colour-contrast is reported as incomplete (unknown) rather than passing. The http:// run reads the same CSS and gives the real contrast verdict; compare the two blocks below.",
@@ -29,7 +29,10 @@
   "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
   "[file] Failed to load resource: net::ERR_FAILED",
   "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "[file] Failed to load resource: net::ERR_FAILED"
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+  "[file] Failed to load resource: net::ERR_FAILED",
+  "[http] Failed to load resource: the server responded with a status of 404 (Not Found)"
  ],
  "runs": [
   {
@@ -39,7 +42,13 @@
    "total_incomplete": 3,
    "results": [
     {
-     "screen": "documents",
+     "screen": "landing",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 25
+    },
+    {
+     "screen": "step1-documents",
      "violations": [],
      "incomplete": [
       {
@@ -122,28 +131,28 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 31
     },
     {
-     "screen": "correct",
+     "screen": "step2-correct",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 32
+     "rules_passed": 31
     },
     {
-     "screen": "ask",
+     "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 28
+     "rules_passed": 29
     },
     {
-     "screen": "calculation",
+     "screen": "step4-calculation",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 30
+     "rules_passed": 31
     },
     {
-     "screen": "packet",
+     "screen": "step5-checklist",
      "violations": [],
      "incomplete": [
       {
@@ -172,16 +181,16 @@
        ]
       }
      ],
-     "rules_passed": 28
+     "rules_passed": 29
     },
     {
-     "screen": "controls",
+     "screen": "step6-check-and-packet",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 26
+     "rules_passed": 29
     },
     {
-     "screen": "measurements",
+     "screen": "how-this-works",
      "violations": [],
      "incomplete": [
       {
@@ -212,11 +221,17 @@
           "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
         }
        ]
       }
      ],
-     "rules_passed": 28
+     "rules_passed": 29
     }
    ]
   },
@@ -227,7 +242,13 @@
    "total_incomplete": 3,
    "results": [
     {
-     "screen": "documents",
+     "screen": "landing",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 25
+    },
+    {
+     "screen": "step1-documents",
      "violations": [],
      "incomplete": [
       {
@@ -310,28 +331,28 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 31
     },
     {
-     "screen": "correct",
+     "screen": "step2-correct",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 32
+     "rules_passed": 31
     },
     {
-     "screen": "ask",
+     "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 28
+     "rules_passed": 29
     },
     {
-     "screen": "calculation",
+     "screen": "step4-calculation",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 30
+     "rules_passed": 31
     },
     {
-     "screen": "packet",
+     "screen": "step5-checklist",
      "violations": [],
      "incomplete": [
       {
@@ -360,16 +381,16 @@
        ]
       }
      ],
-     "rules_passed": 28
+     "rules_passed": 29
     },
     {
-     "screen": "controls",
+     "screen": "step6-check-and-packet",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 26
+     "rules_passed": 29
     },
     {
-     "screen": "measurements",
+     "screen": "how-this-works",
      "violations": [],
      "incomplete": [
       {
@@ -400,11 +421,17 @@
           "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
         }
        ]
       }
      ],
-     "rules_passed": 28
+     "rules_passed": 29
     }
    ]
   }

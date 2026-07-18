@@ -124,11 +124,108 @@
     ]);
   }
 
+  // ── the linear flow ─────────────────────────────────────────────────────────────
+  // Six ordered steps, not seven parallel tabs. The order is the product: you cannot
+  // sensibly correct a value you have not seen, or read a calculation built on a value
+  // you have not corrected. USWDS ships no tabs component; GOV.UK says not to use tabs
+  // when content must be read in sequence. So: process list, then back/next, then a
+  // check-answers screen. The step indicator below reports progress and never navigates.
+  var STEPS = [
+    { n: 1, screen: "screen-1", short: "Your documents",
+      title: "Check the values we read from your documents",
+      blurb: "See each value we read and the exact box on the page it came from." },
+    { n: 2, screen: "screen-2", short: "Corrections",
+      title: "Correct a value we read wrong",
+      blurb: "Change anything we got wrong, and see whether it changed the numbers." },
+    { n: 3, screen: "screen-3", short: "Rules",
+      title: "Ask what a housing rule says",
+      blurb: "Get an answer with the rule id, the authority, and the date it took effect." },
+    { n: 4, screen: "screen-4", short: "The calculation",
+      title: "See how your yearly income figure was worked out",
+      blurb: "Inputs, formula, result and the threshold it is compared against." },
+    { n: 5, screen: "screen-5", short: "Missing or expired",
+      title: "See what is missing or out of date",
+      blurb: "The full checklist, and the one thing you can do about each open item." },
+    { n: 6, screen: "screen-6", short: "Your packet",
+      title: "Check what we found, then take your packet",
+      blurb: "Review everything in one place, change what is wrong, then download it." }
+  ];
+  function stepByScreen(screenId) {
+    return STEPS.filter(function (s) { return s.screen === screenId; })[0] || null;
+  }
+
+  // ── review reasons: a human heading, the API's own words, and the code kept but demoted ──
+  // GOV.UK lists error codes among the things not to show a user; NN/g says show them for
+  // technical diagnosis only. The code is never the headline and never disappears — it moves
+  // behind a "Technical details" disclosure so a judge can still verify we are not
+  // paraphrasing meaning away. The `message` string is the API's, reproduced verbatim.
+  var REASON_HEADINGS = {
+    RENTER_CORRECTION_NOT_USED: "Your correction was recorded, but it was not used in the calculation",
+    PAY_STUB_TOTAL_CONFLICT:    "Two figures on the same pay stub do not agree",
+    GIG_INCOME_UNCORROBORATED:  "The gig income has nothing else to corroborate it",
+    DOCUMENT_UNDATABLE:         "A document has no date precise enough to use",
+    EMPLOYMENT_LETTER_EXPIRED:  "The employment letter is outside the 60-day window"
+  };
+  // Which step each open item belongs to, so it is raised where the user can act on it
+  // rather than in one undifferentiated pile.
+  var REASON_STEP = {
+    RENTER_CORRECTION_NOT_USED: 2,
+    PAY_STUB_TOTAL_CONFLICT:    2,
+    GIG_INCOME_UNCORROBORATED:  4,
+    DOCUMENT_UNDATABLE:         5,
+    EMPLOYMENT_LETTER_EXPIRED:  5
+  };
+  function reasonStep(reason) {
+    if (REASON_STEP[reason.code]) return REASON_STEP[reason.code];
+    if (reason.check === "consistent") return 2;
+    return 5;   // "present" and "current" are both checklist matters
+  }
+  function reasonHeading(reason) {
+    return REASON_HEADINGS[reason.code] || "This item needs a person to look at it";
+  }
+  function reasonsForStep(n) {
+    if (!state.report) return [];
+    return (state.report.review_reasons || []).filter(function (r) { return reasonStep(r) === n; });
+  }
+
+  /** The inline message, next to the thing it concerns. Its text is the same string the
+   *  error summary at the top of the page links with — character for character. */
+  function reasonCard(reason) {
+    return h("div", { class: "reason", id: "reason-" + reason.code, tabindex: "-1" }, [
+      h("p", { class: "reason-heading", text: reasonHeading(reason) }),
+      h("p", { class: "reason-message", text: reason.message }),
+      h("details", { class: "tech" }, [
+        h("summary", { text: "Technical details" }),
+        h("dl", { class: "kv" }, [
+          h("dt", { text: "Code" }),  h("dd", { class: "mono", text: reason.code }),
+          h("dt", { text: "Check" }), h("dd", { class: "mono", text: reason.check }),
+          h("dt", { text: "Rule" }),  h("dd", { class: "mono", text: reason.rule_id })
+        ])
+      ])
+    ]);
+  }
+
+  /** All open items belonging to one step, rendered inline beneath that step's content. */
+  function stepReasonBlock(n) {
+    var reasons = reasonsForStep(n);
+    if (!reasons.length) return null;
+    var headingId = "step-open-" + n;
+    return h("section", { class: "reason-block", "aria-labelledby": headingId }, [
+      h("h3", { id: headingId, style: { marginTop: "0" },
+        text: reasons.length === 1
+          ? "One thing on this step needs a person to look at it"
+          : reasons.length + " things on this step need a person to look at them" }),
+      h("div", null, reasons.map(reasonCard))
+    ]);
+  }
+
   // ── data source: the single switch between fixtures and the live API ────────────
   var Source = (function () {
-    // One switch, two ways to throw it: set window.REALDOOR_API before this script, or
-    // append ?live (same origin) / ?api=http://host:port to the URL. Everything below
-    // this object is written against the same shapes either way.
+    // One switch, several ways to throw it: set window.REALDOOR_API before this script, or
+    // append ?live (same origin) / ?api=http://host:port / ?fixtures to the URL. If none of
+    // those is present and the page is served over http, `adoptSameOriginApi` below probes
+    // the origin and switches to live when our API answers. Everything below this object is
+    // written against the same shapes either way.
     var params = new URLSearchParams(window.location.search);
     var fromQuery = params.has("api") ? params.get("api")
                   : params.has("live") ? ""
@@ -178,7 +275,7 @@
       }
     ];
 
-    return {
+    var source = {
       live: live,
       apiBase: apiBase,
       offlineCorrections: OFFLINE_CORRECTIONS,
@@ -307,6 +404,31 @@
           });
       }
     };
+
+    // If nobody chose a source and we are being served over http(s), ask the origin whether
+    // it is our API. A judge who clones the repo, starts the server and opens "/" should see
+    // the real pipeline answering, not bundled output that reads as a mock. Opened from
+    // file://, or served by a plain static server, this probe simply fails and we stay on
+    // fixtures — the offline demo path is never taken away.
+    source.adoptSameOriginApi = function () {
+      var chosen = typeof window.REALDOOR_API === "string" || fromQuery !== null ||
+                   params.has("fixtures");   // ?fixtures forces the offline path back on
+      var servedOverHttp = /^https?:$/.test(window.location.protocol);
+      if (chosen || live || !servedOverHttp) return Promise.resolve(source.live);
+      return fetch("/api/health")
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (body) {
+          if (!body || body.ok !== true) return source.live;
+          apiBase = "";
+          live = true;
+          source.live = true;
+          source.apiBase = "";
+          return true;
+        })
+        .catch(function () { return source.live; });
+    };
+
+    return source;
   })();
 
   // ── application state ───────────────────────────────────────────────────────────
@@ -319,8 +441,170 @@
     documentId: null,
     activeField: null,
     pageImageUrl: null,
-    selftest: null
+    selftest: null,
+    lastQuestion: null,     // for the step 6 check-answers row
+    screen: "screen-start", // the one screen currently on show
+    returnTo: null          // set by a "Change" link so the step returns straight to step 6
   };
+
+  // ── router: one screen at a time, focus moved to its unique H1 ──────────────────
+  function showScreen(screenId, options) {
+    options = options || {};
+    state.screen = screenId;
+
+    Array.prototype.forEach.call(document.querySelectorAll(".screen"), function (section) {
+      section.hidden = section.id !== screenId;
+    });
+
+    renderStepIndicator();
+    renderErrorSummary();
+    renderStepNav();
+
+    if (options.focus !== false) {
+      var heading = document.querySelector("#" + screenId + " h1");
+      if (heading) heading.focus();
+    }
+    if (options.announce !== false) {
+      var step = stepByScreen(screenId);
+      var heading2 = document.querySelector("#" + screenId + " h1");
+      announce((step ? "Step " + step.n + " of 6. " : "") +
+               (heading2 ? heading2.textContent : ""));
+    }
+    if (window.scrollTo) window.scrollTo(0, 0);
+  }
+
+  function goToStep(n, options) {
+    var step = STEPS.filter(function (s) { return s.n === n; })[0];
+    if (step) showScreen(step.screen, options);
+  }
+
+  /** USWDS step indicator, deliberately non-navigable: no links, no buttons, no click
+   *  targets. It reports where you are. Back/Next below does the moving. */
+  function renderStepIndicator() {
+    var host = byId("step-indicator-host");
+    clear(host);
+    var current = stepByScreen(state.screen);
+    if (!current) return;
+
+    host.appendChild(h("div", { class: "step-indicator", role: "group", "aria-label": "Progress" }, [
+      h("ol", { class: "step-indicator__segments" }, STEPS.map(function (step) {
+        var status = step.n < current.n ? "complete" : (step.n === current.n ? "current" : "todo");
+        return h("li", {
+          class: "segment segment--" + status,
+          "aria-current": status === "current" ? "step" : null
+        }, [
+          h("span", { class: "segment__label" }, [
+            step.short,
+            h("span", { class: "visually-hidden", text:
+              status === "complete" ? " — completed"
+              : status === "current" ? " — current step"
+              : " — not completed" })
+          ])
+        ]);
+      }))
+    ]));
+  }
+
+  /** Error summary: top of the main container, above the H1, one link per open item.
+   *  Each link's text is the identical string rendered inline further down the page. */
+  function renderErrorSummary() {
+    var host = byId("error-summary-host");
+    clear(host);
+    var step = stepByScreen(state.screen);
+    if (!step) return;
+    var reasons = reasonsForStep(step.n);
+    if (!reasons.length) return;
+
+    host.appendChild(h("div", {
+      class: "error-summary", role: "region", "aria-labelledby": "error-summary-title"
+    }, [
+      h("h2", { id: "error-summary-title", style: { marginTop: "0" },
+        text: reasons.length === 1
+          ? "There is one open item on this step"
+          : "There are " + reasons.length + " open items on this step" }),
+      h("p", { class: "error-summary-lede", text:
+        "These are not refusals and nothing is wrong with you. They are the things the system " +
+        "will not settle on its own, listed so a person can settle them." }),
+      // The link text is the same short heading the inline item carries, word for word,
+      // so the two never read as two different problems. The API's own `message` string is
+      // not paraphrased and not shortened — it is the detail directly under that heading,
+      // one jump away. Using the raw message here would put a sixty-word technical
+      // paragraph in the one place on the page the eye is meant to land.
+      h("ul", { class: "error-summary-list" }, reasons.map(function (reason) {
+        return h("li", null, [
+          h("a", {
+            href: "#reason-" + reason.code,
+            onclick: function (event) {
+              event.preventDefault();
+              var target = byId("reason-" + reason.code);
+              if (target) target.focus();
+            }
+          }, [reasonHeading(reason)])
+        ]);
+      }))
+    ]));
+  }
+
+  /** Back / Next as the real navigation, at the foot of every screen. */
+  function renderStepNav() {
+    ["nav-start", "nav-1", "nav-2", "nav-3", "nav-4", "nav-5", "nav-6", "nav-how"]
+      .forEach(function (id) { var node = byId(id); if (node) clear(node); });
+
+    if (state.screen === "screen-start") {
+      byId("nav-start").appendChild(h("button", {
+        type: "button", class: "action action--lead", id: "start-demo",
+        onclick: function () { goToStep(1); }
+      }, ["Start step 1"]));
+      return;
+    }
+
+    if (state.screen === "screen-how") {
+      byId("nav-how").appendChild(h("button", {
+        type: "button", class: "action action--lead", id: "how-back",
+        onclick: function () { showScreen(state.returnScreen || "screen-start"); }
+      }, ["Go back to where you were"]));
+      return;
+    }
+
+    var step = stepByScreen(state.screen);
+    if (!step) return;
+    var host = byId("nav-" + step.n);
+
+    // A "Change" link on step 6 sets returnTo, so the step it lands on offers a way
+    // straight back to the check page rather than making the user walk forward again.
+    if (state.returnTo === "screen-6" && step.n !== 6) {
+      host.appendChild(h("button", {
+        type: "button", class: "action action--lead", id: "step-return",
+        onclick: function () { state.returnTo = null; showScreen("screen-6"); }
+      }, ["Return to what we found"]));
+    }
+
+    host.appendChild(h("button", {
+      type: "button", class: "action secondary", id: "step-back",
+      onclick: function () {
+        if (step.n === 1) showScreen("screen-start");
+        else goToStep(step.n - 1);
+      }
+    }, [step.n === 1 ? "Back to the start" : "Back to step " + (step.n - 1)]));
+
+    if (step.n < 6 && state.returnTo !== "screen-6") {
+      host.appendChild(h("button", {
+        type: "button", class: "action action--lead", id: "step-next",
+        onclick: function () { goToStep(step.n + 1); }
+      }, ["Continue to step " + (step.n + 1)]));
+    }
+  }
+
+  function renderProcessList() {
+    var list = byId("process-list");
+    clear(list);
+    STEPS.forEach(function (step) {
+      list.appendChild(h("li", { class: "process-item" }, [
+        h("h3", { class: "process-item__title", text: step.title }),
+        h("p", { class: "process-item__blurb", text: step.blurb })
+      ]));
+    });
+  }
 
   // ── panel 1: documents and evidence ─────────────────────────────────────────────
   function currentDocument() {
@@ -624,6 +908,8 @@
     ]);
     root.appendChild(form);
     root.appendChild(h("div", { id: "correct-outcome" }));
+    var openItems = stepReasonBlock(2);
+    if (openItems) root.appendChild(openItems);
 
     // must run after the selects are in the document
     if (state.correction) {
@@ -703,14 +989,17 @@
     ]));
 
     if (rejected) {
-      var reasons = (after.review_reasons || []).filter(function (r) { return r.code === "RENTER_CORRECTION_NOT_USED"; });
+      // The reason strings themselves live in exactly one place on this screen — the open-items
+      // block below — so that the error summary at the top can quote them verbatim without the
+      // user meeting the same sentence twice in two different wordings.
       outcome.appendChild(h("div", { class: "callout callout--stop" }, [
         h("h4", { text: "Why the number did not move", style: { marginTop: "0" } }),
-        h("ul", { class: "plain" }, reasons.map(function (r) { return h("li", { text: r.message }); })),
-        h("p", null, [
-          "This is the honest case, and it is the one that matters: the system kept your correction on " +
-          "the record, refused to fold it into the annualized amount, and told you exactly why. Rule: ",
-          h("span", { class: "mono", text: (reasons[0] && reasons[0].rule_id) || "CH-READINESS-001" }), "."
+        h("p", { style: { marginBottom: "0" } }, [
+          "This is the honest case, and it is the one that matters: the system kept your correction " +
+          "on the record, refused to fold it into the annualized amount, and said exactly why. The " +
+          "reason is set out under ",
+          h("strong", { text: "“Open items on this step”" }),
+          " below, in the system's own words."
         ])
       ]));
     } else {
@@ -766,8 +1055,11 @@
   function citationBlock(citation) {
     var isUrl = /^https?:\/\//i.test(citation.source_url || "");
     return h("div", { class: "card" }, [
+      // A citation id is the name of the thing being cited, the way "Section 8" is — so it
+      // stays prominent, as the contract requires. It is labelled rather than left as a bare
+      // token, which is what makes it a reference and not a machine code thrown at the reader.
       h("h4", { style: { marginTop: "0" } }, [
-        h("span", { class: "mono", text: citation.rule_id })
+        "Rule ", h("span", { class: "mono", text: citation.rule_id })
       ]),
       h("dl", { class: "kv" }, [
         h("dt", { text: "Authority" }), h("dd", { text: (citation.authority || "").replace(/_/g, " ") }),
@@ -789,8 +1081,9 @@
     ]);
   }
 
-  function renderAskResponse(host, question, response) {
+  function renderAskResponse(host, question, response, options) {
     clear(host);
+    if (!(options && options.silent)) state.lastQuestion = question;
     if (!response) {
       host.appendChild(h("div", { class: "callout callout--warn" }, [
         h("h3", { text: "No recorded answer for that wording", tabindex: "-1", id: "ask-answer-heading" }),
@@ -877,7 +1170,7 @@
     var first = examples.filter(function (e) { return e.key === "answer_threshold"; })[0] || examples[0];
     if (first) {
       var host = byId("ask-answer");
-      renderAskResponse(host, first.question, first.response);
+      renderAskResponse(host, first.question, first.response, { silent: true });
       byId("live-status").textContent = "";   // do not announce on first paint
       if (document.activeElement === byId("ask-answer-heading")) byId("ask-answer-heading").blur();
     }
@@ -939,32 +1232,66 @@
       ]));
     });
 
+    var openItems = stepReasonBlock(4);
+    if (openItems) root.appendChild(openItems);
+
     root.appendChild(h("h3", { text: "Rules cited by this report" }));
     (state.report.citations || []).forEach(function (citation) { root.appendChild(citationBlock(citation)); });
   }
 
-  // ── panel 5: readiness packet ───────────────────────────────────────────────────
-  function renderPacket() {
-    var root = byId("packet-body");
-    clear(root);
-    if (!state.report) { root.appendChild(noReportNotice()); return; }
-
+  // ── step 5: what is missing or out of date ──────────────────────────────────────
+  /** The readiness line, as a USWDS-style alert: new information, stated in words first.
+   *  The machine token is kept but demoted behind a disclosure, never used as the headline. */
+  function readinessAlert() {
     var readiness = READINESS[state.report.readiness_status] || {
       title: String(state.report.readiness_status), detail: ""
     };
-    root.appendChild(h("div", {
-      class: "callout " + (state.report.readiness_status === "READY_TO_REVIEW" ? "callout--ok" : "callout--warn")
-    }, [
-      h("h3", { style: { marginTop: "0" } }, [
-        readiness.title,
-        h("span", { class: "mono", text: "  [" + state.report.readiness_status + "]" })
-      ]),
+    var ready = state.report.readiness_status === "READY_TO_REVIEW";
+    return h("div", { class: "alert " + (ready ? "alert--ok" : "alert--warn") }, [
+      h("h3", { style: { marginTop: "0" }, text: readiness.title }),
       h("p", { text: readiness.detail }),
-      h("p", { style: { marginBottom: "0" }, text: state.report.human_decision_notice })
-    ]));
+      h("p", { text: state.report.human_decision_notice }),
+      h("details", { class: "tech" }, [
+        h("summary", { text: "Technical details" }),
+        h("dl", { class: "kv" }, [
+          h("dt", { text: "readiness_status" }),
+          h("dd", { class: "mono", text: state.report.readiness_status })
+        ])
+      ])
+    ]);
+  }
+
+  function renderChecklist() {
+    var root = byId("checklist-body");
+    clear(root);
+    if (!state.report) { root.appendChild(noReportNotice()); return; }
+
+    root.appendChild(readinessAlert());
 
     var order = ["missing", "expired", "undatable", "unreadable", "present"];
     var checklist = state.report.checklist || [];
+
+    // USWDS summary box: a short checklist of what to do next, and nothing else in it.
+    var todo = checklist.filter(function (item) {
+      return item.state !== "present" && item.action_for_renter;
+    });
+    if (todo.length) {
+      root.appendChild(h("div", {
+        class: "summary-box", role: "region", "aria-labelledby": "next-steps-heading"
+      }, [
+        h("h3", { id: "next-steps-heading", style: { marginTop: "0" }, text: "What you can do next" }),
+        h("ul", { class: "summary-box__list" }, todo.slice(0, 5).map(function (item) {
+          return h("li", null, [
+            h("strong", { text: item.label + ": " }), item.action_for_renter
+          ]);
+        })),
+        todo.length > 5
+          ? h("p", { class: "status-line", style: { marginBottom: "0" },
+              text: "The remaining " + (todo.length - 5) + " open item(s) are listed in full below." })
+          : null
+      ]));
+    }
+
     order.forEach(function (stateName) {
       var items = checklist.filter(function (item) { return item.state === stateName; });
       if (!items.length) return;
@@ -985,7 +1312,92 @@
       });
     });
 
-    root.appendChild(h("h3", { text: "Take your packet" }));
+    var openItems = stepReasonBlock(5);
+    if (openItems) root.appendChild(openItems);
+  }
+
+  // ── step 6a: check what we found (GOV.UK "check answers") ───────────────────────
+  /** One row: what it is, what we have, and a Change link whose accessible name says
+   *  which thing it changes. Change returns the user to the step, then straight back here. */
+  function answerRow(label, value, stepNumber, changeDescription) {
+    return h("div", { class: "answer-row" }, [
+      h("dt", { class: "answer-row__key", text: label }),
+      h("dd", { class: "answer-row__value" }, Array.isArray(value) ? value : [value]),
+      h("dd", { class: "answer-row__action" }, [
+        stepNumber
+          ? h("button", {
+              type: "button", class: "change-link",
+              onclick: function () {
+                state.returnTo = "screen-6";
+                goToStep(stepNumber);
+              }
+            }, [
+              "Change",
+              h("span", { class: "visually-hidden", text: " " + changeDescription })
+            ])
+          : h("span", { class: "status-line", text: "—" })
+      ])
+    ]);
+  }
+
+  function renderSummary() {
+    var root = byId("summary-body");
+    clear(root);
+    if (!state.report) { root.appendChild(noReportNotice()); return; }
+
+    var report = state.report;
+    var calc = findCalculation(report, "annualized_income");
+    var checklist = report.checklist || [];
+    var open = checklist.filter(function (item) { return item.state !== "present"; });
+    var docs = report.documents || [];
+    var fieldCount = docs.reduce(function (sum, d) { return sum + (d.fields || []).length; }, 0);
+    var abstentions = report.abstentions || [];
+    var reasons = report.review_reasons || [];
+
+    root.appendChild(readinessAlert());
+
+    var correctionText = state.correction
+      ? state.correction.field + " = " + plain(state.correction.value) + " on " +
+        state.correction.document_id +
+        (correctionWasRejected(report)
+          ? " — recorded, but not used in the calculation"
+          : " — used in the calculation")
+      : "You have not corrected anything.";
+
+    root.appendChild(h("dl", { class: "answer-list" }, [
+      answerRow("Household", report.household_id + " · " + docs.length + " documents", 1,
+        "the household documents we read"),
+      answerRow("Values read from the documents",
+        fieldCount + " values, each one traced to a box on a page", 1,
+        "the values we read from your documents"),
+      answerRow("Your corrections", correctionText, 2,
+        "the correction you made to a value we read"),
+      answerRow("Rule you asked about", state.lastQuestion || "You have not asked about a rule.", 3,
+        "the housing rule you asked about"),
+      answerRow("Yearly income figure",
+        calc ? money(calc.result) + " — " + (COMPARISON[calc.comparison] || String(calc.comparison))
+             : "No income calculation is present in this report.", 4,
+        "how the yearly income figure was worked out"),
+      answerRow("Still missing or out of date",
+        open.length
+          ? open.length + " item(s): " + open.map(function (i) { return i.label; }).join(", ")
+          : "Nothing. Every required item is present and current.", 5,
+        "what is missing or out of date"),
+      answerRow("Questions the system will not answer on its own",
+        abstentions.length + " abstention(s) and " + reasons.length +
+        " reason(s) this needs review. All of them are listed in full under " +
+        "“What this system is unsure about”, and all of them travel with your packet.",
+        null, null)
+    ]));
+  }
+
+  // ── step 6b: the packet ─────────────────────────────────────────────────────────
+  function renderPacket() {
+    var root = byId("packet-body");
+    clear(root);
+    if (!state.report) return;
+
+    root.appendChild(h("h2", { text: "Take your packet" }));
     root.appendChild(h("div", { class: "callout" }, [
       h("p", null, [
         h("strong", { text: "Nothing is sent anywhere. " }),
@@ -999,7 +1411,7 @@
     ]));
     root.appendChild(h("div", { class: "button-row" }, [
       h("button", {
-        type: "button", class: "action", id: "packet-download",
+        type: "button", class: "action action--lead", id: "packet-download",
         onclick: function () {
           Source.packet(state.householdId, state.report).then(function (result) {
             var url = URL.createObjectURL(result.blob);
@@ -1286,6 +1698,19 @@
   }
 
   // ── the always-visible open-questions rail ──────────────────────────────────────
+  /** A readable heading for an abstention. `about` is either a snake_case subject such as
+   *  annualized_wage_income, or a checklist id such as CHK-EMPLOYMENT-LETTER; the second
+   *  kind is looked up so the renter reads "Employment verification letter" instead. */
+  function abstentionHeading(item) {
+    var about = String(item.about);
+    var match = ((state.report && state.report.checklist) || []).filter(function (entry) {
+      return entry.item_id === about;
+    })[0];
+    if (match && match.label) return match.label;
+    if (/^[a-z0-9_]+$/.test(about)) return about.replace(/_/g, " ");
+    return about.replace(/^CHK-/, "").replace(/[-_]/g, " ").toLowerCase();
+  }
+
   function renderOpenQuestions() {
     var root = byId("open-questions-body");
     clear(root);
@@ -1307,9 +1732,16 @@
     }
     abstentions.forEach(function (item) {
       root.appendChild(h("div", { class: "q-item" }, [
-        h("h3", { text: String(item.about).replace(/_/g, " ") }),
+        // `about` is sometimes a checklist id such as CHK-EMPLOYMENT-LETTER. A machine id is
+        // never the headline: it is resolved to that item's own human label where one exists,
+        // and kept verbatim under Technical details either way.
+        h("h3", { text: abstentionHeading(item) }),
         h("p", { text: item.reason }),
-        h("p", { class: "q-resolve", text: "Resolved by: " + item.what_would_resolve_it })
+        h("p", { class: "q-resolve", text: "Resolved by: " + item.what_would_resolve_it }),
+        h("details", { class: "tech" }, [
+          h("summary", { text: "Technical details" }),
+          h("p", { class: "mono", style: { marginBottom: "0" }, text: "about: " + String(item.about) })
+        ])
       ]));
     });
 
@@ -1318,10 +1750,25 @@
       root.appendChild(h("p", { class: "q-empty", text: "None recorded for this household." }));
     }
     reasons.forEach(function (reason) {
+      var n = reasonStep(reason);
       root.appendChild(h("div", { class: "q-item" }, [
-        h("h3", { class: "mono", text: reason.code }),
+        // A human heading, not the machine code. The code stays available one disclosure away.
+        h("h3", { text: reasonHeading(reason) }),
         h("p", { text: reason.message }),
-        h("p", { class: "status-line", text: "check: " + reason.check + " · rule: " + reason.rule_id })
+        h("p", { style: { marginBottom: "0" } }, [
+          h("button", {
+            type: "button", class: "change-link",
+            onclick: function () { state.returnTo = null; goToStep(n); }
+          }, [
+            "Go to step " + n,
+            h("span", { class: "visually-hidden", text: " to see this item in context" })
+          ])
+        ]),
+        h("details", { class: "tech" }, [
+          h("summary", { text: "Technical details" }),
+          h("p", { class: "mono", style: { marginBottom: "0" },
+            text: reason.code + " · check: " + reason.check + " · rule: " + reason.rule_id })
+        ])
       ]));
     });
   }
@@ -1362,35 +1809,23 @@
     renderDocuments();
     renderCorrect();
     renderCalc();
+    renderChecklist();
+    renderSummary();
     renderPacket();
     renderFooter();
+    // The error summary and the indicator depend on the report, so they are refreshed
+    // whenever the report changes, not only when the screen changes.
+    renderErrorSummary();
+    renderStepIndicator();
   }
 
-  // ── tabs: roving tabindex, arrows/Home/End, panel focus ────────────────────────
-  function setUpTabs() {
-    var tablist = byId("tablist");
-    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
-
-    function select(tab, moveFocus) {
-      tabs.forEach(function (candidate) {
-        var selected = candidate === tab;
-        candidate.setAttribute("aria-selected", selected ? "true" : "false");
-        candidate.tabIndex = selected ? 0 : -1;
-        byId(candidate.getAttribute("aria-controls")).hidden = !selected;
-      });
-      if (moveFocus) tab.focus();
-    }
-
-    tabs.forEach(function (tab, index) {
-      tab.addEventListener("click", function () { select(tab, true); });
-      tab.addEventListener("keydown", function (event) {
-        var next = null;
-        if (event.key === "ArrowRight") next = tabs[(index + 1) % tabs.length];
-        else if (event.key === "ArrowLeft") next = tabs[(index - 1 + tabs.length) % tabs.length];
-        else if (event.key === "Home") next = tabs[0];
-        else if (event.key === "End") next = tabs[tabs.length - 1];
-        if (next) { event.preventDefault(); select(next, true); }
-      });
+  // ── the secondary route ─────────────────────────────────────────────────────────
+  // One level of disclosure and one level only: everything judge-facing lives on this
+  // single screen, reachable in one click from anywhere and returning to where you were.
+  function setUpMetaNav() {
+    byId("go-how").addEventListener("click", function () {
+      if (state.screen !== "screen-how") state.returnScreen = state.screen;
+      showScreen("screen-how");
     });
   }
 
@@ -1408,9 +1843,11 @@
   }
 
   function boot() {
-    setUpTabs();
+    setUpMetaNav();
+    renderProcessList();
     renderAsk();
     renderControls();
+    showScreen("screen-start", { focus: false, announce: false });
 
     Source.selftest().then(function (data) {
       state.selftest = data;
@@ -1448,6 +1885,10 @@
     });
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  // The probe must settle before boot: the data-source label and every fetch have to agree
+  // about which source they are describing.
+  function start() { Source.adoptSameOriginApi().then(boot, boot); }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
 })();

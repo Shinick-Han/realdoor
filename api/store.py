@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from api import plain
 from core.extract import extract_document
 from logic.household import (households_from_views, load_pack_checklists,
                              required_document_types)
@@ -168,6 +169,11 @@ class Store:
             doc["state"] = v.get("state")
             doc["source"] = "ocr" if v.get("rasterized") else "text_layer"
         rep["session_id"] = s.session_id
+
+        # 세입자용 평문 계층. **덧붙이기만 한다** — 로직층이 만든 정밀한 문자열은
+        # 하나도 바꾸지 않고, 그 옆에 사람이 읽을 문장과 "그래서 뭘 하면 되는지"를
+        # 얹는다. 기계 코드와 원문은 각 항목의 code/detail 로 계속 꺼낼 수 있다.
+        rep["plain"] = plain.for_report(rep)
         return rep
 
     def apply_correction(self, s: Session, document_id: str, field_name: str,

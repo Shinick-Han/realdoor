@@ -33,7 +33,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from api import situations
+from api import plain, situations
 from logic.answer_rules import answer as answer_rule, route as canonical_route
 from logic.household import load_pack_checklists, load_rule_corpus
 
@@ -141,7 +141,7 @@ def _with_aliases(question: str, canonical_kind: str | None) -> str:
 
 
 def _refusal(kind: str, text: str, resolve: str, rule_ids: list[str]) -> dict[str, Any]:
-    return {
+    return _with_plain({
         "kind": kind,
         "answer": text,
         "abstained": True,
@@ -150,7 +150,20 @@ def _refusal(kind: str, text: str, resolve: str, rule_ids: list[str]) -> dict[st
         "what_would_resolve_it": resolve,
         "citations": _citations(rule_ids),
         "notice": NOTICE,
-    }
+    })
+
+
+def _with_plain(response: dict[str, Any]) -> dict[str, Any]:
+    """세입자용 평문 문장을 응답에 **덧붙인다**.
+
+    정밀한 `answer` 는 그대로 둔다. 그 옆에 headline·body·action 을 얹어서, 화면 맨
+    위에 읽을 수 있는 문장이 오고 정밀한 원문은 그 아래 남게 한다. 평문이 없는
+    종류면 아무것도 붙이지 않는다 — 지어내느니 비워 둔다.
+    """
+    said = plain.for_situation(str(response.get("kind", "")))
+    if said:
+        response["plain"] = said
+    return response
 
 
 #: `_DECIDE`(1·2인칭)와 팩의 3인칭 서술이 **같은 문구**로 답하도록 라우트를 공유한다.
@@ -159,7 +172,7 @@ _ELIGIBILITY_ROUTE = next(r for r in situations.ROUTES if r.kind == "eligibility
 
 def _situation(found: situations.Situation) -> dict[str, Any]:
     """상황 응답을 API 모양으로. 실측/인용 구분을 지우지 않고 그대로 싣는다."""
-    return {
+    return _with_plain({
         "kind": found.kind,
         "answer": found.text,
         "abstained": False,
@@ -169,7 +182,7 @@ def _situation(found: situations.Situation) -> dict[str, Any]:
         "citations": _citations(list(found.rule_ids)),
         "evidence": [e.to_dict() for e in found.evidence],
         "notice": NOTICE,
-    }
+    })
 
 
 def _citations(rule_ids: list[str]) -> list[dict[str, Any]]:
