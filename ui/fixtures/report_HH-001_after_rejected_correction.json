@@ -1,6 +1,6 @@
 {
  "household_id": "HH-001",
- "generated_at": "2026-07-18T20:57:39Z",
+ "generated_at": "2026-07-18T20:59:28Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
@@ -658,6 +658,6 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:2f7616801588",
- "session_id": "1e8d032658c3"
+ "engine_version": "sha:5c4c4201c28e",
+ "session_id": "dbe008826af9"
 }
