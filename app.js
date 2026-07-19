@@ -918,7 +918,12 @@
     lastQuestion: null,     // for the step 6 check-answers row
     screen: "screen-start", // the one screen currently on show
     returnTo: null,         // set by a "Change" link so the step returns straight to step 6
-    sessionDeleted: false   // the renter deleted the session; the page holds nothing
+    sessionDeleted: false,  // the renter deleted the session; the page holds nothing
+    /* step 4, region comparison panel. Read-only: it selects which published HUD table is
+     * drawn *beside* the frozen Boston one and is never an input to anything. It lives in
+     * `state` rather than in the DOM because `renderCalc` runs inside `renderAll`, so any
+     * unrelated redraw would otherwise throw the reader's choice away mid-read. */
+    compareRegionId: null
   };
 
   // Read-only window on the report currently rendered, for the checking harnesses in
@@ -2723,6 +2728,281 @@
     citationsInTrustOrder(state.report.citations).forEach(function (citation) {
       root.appendChild(citationBlock(citation));
     });
+
+    // 참고 패널. 위의 어떤 값에도 손대지 않는다 — 자기 host 안에서만 그린다.
+    root.appendChild(h("div", { id: "region-compare-host" }));
+    renderRegionCompare();
+  }
+
+  /* ── the same household, somewhere else ────────────────────────────────────────────
+   *
+   * WHAT THIS IS NOT
+   * ================
+   * It is not part of the calculation. Nothing below writes to `state.report`, and the
+   * only state it owns is which row the reader asked to look at. Every figure on this
+   * screen above this panel came from the Boston table the pack froze, and still does
+   * after you use this control. That is the whole design: the panel exists to show that
+   * the frozen table is *a choice of region*, not a law of nature, and the cheapest
+   * honest way to show it is to put a second region beside the first and change nothing.
+   *
+   * WHY IT IS HERE AT ALL
+   * =====================
+   * The 60% figure this file compares against is $102,840 for a household of four in
+   * Boston and $43,200 for the same household in Coahoma County, Mississippi. Same
+   * household, same federal program, same fiscal year, 2.38x apart. A reader who sees
+   * only Boston can reasonably conclude the number is *the* number. It is not, and a
+   * product that hides that is teaching the wrong thing about its own output.
+   *
+   * WHAT IT REFUSES TO DO
+   * =====================
+   * - It never recomputes the comparison. Choosing a region does not move `calc.result`,
+   *   `calc.threshold` or `calc.comparison`, and does not touch the report at all.
+   * - It never shows one unconditional number for an area HUD publishes two tables for.
+   *   See the HERA Special handling below — that condition is the point, not a footnote.
+   * - It never shows median family income. New York's MFI is far below Boston's while its
+   *   limits are within a percent of Boston's, because New York is a high-cost exception
+   *   area. Printing both columns invites the reader to check one against the other and
+   *   conclude, wrongly, that we got a number backwards.
+   * - It never derives a household size it was not given. See `frozenHouseholdSize`.
+   */
+
+  /** The bundled HUD extract, or null if this build has no copy of it.
+   *
+   *  Read straight off `window.REALDOOR_FIXTURES` rather than through `Source`: it is the
+   *  same verbatim file in live and offline mode, it is not session data, and there is no
+   *  endpoint that serves it. Going through `Source` would imply the server has an opinion
+   *  about it, and the server has never been asked. */
+  function regionData() {
+    var bundle = (window.REALDOOR_FIXTURES || {}).mtsp_regions;
+    return bundle && bundle.regions && bundle.regions.length ? bundle : null;
+  }
+
+  function packFrozenRegion(data) {
+    return data.regions.filter(function (r) { return r.is_pack_frozen; })[0] || null;
+  }
+
+  /** Which household size the frozen threshold on this report belongs to — read back out
+   *  of the number the pipeline actually used, never assumed.
+   *
+   *  The report does not carry a household size; it carries the threshold that size
+   *  selected. So we invert the frozen Boston table: find the size whose published 60%
+   *  limit is exactly the threshold this file compared against. That is a lookup against
+   *  the same table `logic/constants.py` froze, so a match is the size the pipeline used,
+   *  and a miss means we do not know it.
+   *
+   *  On a miss we return null and the panel says so rather than guessing. That covers the
+   *  cases that matter: a report with no frozen threshold, and — the reason this is a
+   *  lookup and not arithmetic — a household above 8 people, whose limits HUD does not
+   *  publish and which must therefore not be extrapolated onto any region in this list. */
+  function frozenHouseholdSize(data) {
+    var boston = packFrozenRegion(data);
+    if (!boston) return null;
+    var calcs = (state.report && state.report.calculations) || [];
+    for (var i = 0; i < calcs.length; i++) {
+      var threshold = calcs[i].threshold;
+      if (threshold === null || threshold === undefined) continue;
+      for (var size = 1; size <= 8; size++) {
+        if (boston.limits_60_percent[String(size)] === threshold) return size;
+      }
+    }
+    return null;
+  }
+
+  /** One row of the comparison table. `when` is never blank — a figure with no statement
+   *  of when it applies is the exact thing this panel exists not to produce. */
+  function regionRow(name, table, amount, when) {
+    return h("tr", null, [
+      h("th", { scope: "row", text: name }),
+      h("td", { text: table }),
+      h("td", { text: money(amount) }),
+      h("td", { text: when })
+    ]);
+  }
+
+  /** The source card for a region, in the shape `citationBlock` uses for a rule.
+   *
+   *  Deliberately the same furniture: a reader who has already learned what "Where it says
+   *  so" means on a rule card should not have to learn a second vocabulary to check a
+   *  number. The locator is `.mono` because it is a machine coordinate into a spreadsheet
+   *  — and because `.mono` is an i18n skip zone, so it stays checkable in either language. */
+  function regionSourceCard(region) {
+    var isUrl = /^https?:\/\//i.test(region.source_url || "");
+    return h("div", { class: "card" }, [
+      h("h4", { style: { marginTop: "0" }, text: region.display_name }),
+      h("dl", { class: "kv" }, [
+        h("dt", { text: "Authority" }),
+        h("dd", { text: (region.authority || "").replace(/_/g, " ") }),
+        h("dt", { text: "Effective date" }), h("dd", { text: region.effective_date || "—" }),
+        h("dt", { text: "Where it says so" }),
+        h("dd", { class: "mono", text: region.source_locator || "—" }),
+        h("dt", { text: "Source" }),
+        h("dd", null, [
+          isUrl
+            ? h("a", { href: region.source_url, rel: "noopener noreferrer", target: "_blank" },
+                [region.source_url, h("span", { class: "visually-hidden", text: " (opens in a new tab)" })])
+            : h("span", { class: "mono", text: region.source_url || "—" })
+        ])
+      ])
+    ]);
+  }
+
+  /** Draws into `#region-compare-host` only. Called from `renderCalc` on every redraw and
+   *  from the select's own change handler; the chosen region lives in `state` so that a
+   *  redraw triggered by anything else does not silently discard the reader's choice. */
+  function renderRegionCompare() {
+    var host = byId("region-compare-host");
+    if (!host) return;
+    clear(host);
+
+    var data = regionData();
+    if (!data) return;                       // no bundled extract: say nothing, invent nothing
+    var boston = packFrozenRegion(data);
+    if (!boston) return;
+
+    host.appendChild(h("h3", { text: "The same household, in another HUD region" }));
+
+    // 못 하는 것을 먼저. 이 문단이 패널의 존재 이유이고, 숫자보다 위에 있어야 한다.
+    host.appendChild(h("div", { class: "callout" }, [
+      h("p", null, [
+        h("strong", { text: "This does not change anything on this page. " }),
+        "This pack is frozen to Boston. Every figure above was worked out against the Boston " +
+        "table and stays exactly as it is, whichever region you pick here. Nothing you choose " +
+        "below is sent anywhere, recorded, or used to prepare your packet."
+      ]),
+      h("p", { style: { marginBottom: "0" } }, [
+        "It is here for one reason: the limit a household is measured against depends on where " +
+        "the home is, and this walkthrough only ever shows one place."
+      ])
+    ]));
+
+    var size = frozenHouseholdSize(data);
+
+    var select = h("select", {
+      id: "region-compare-select",
+      "aria-describedby": "region-compare-hint",
+      onchange: function (event) {
+        state.compareRegionId = event.target.value || null;
+        renderRegionCompare();
+        var picked = data.regions.filter(function (r) {
+          return r.region_id === state.compareRegionId;
+        })[0];
+        announce(picked
+          ? picked.display_name + " is shown beside Boston for comparison. The figures for this " +
+            "household are unchanged."
+          : "Comparison cleared. This file still uses the Boston table.");
+      }
+    }, [h("option", { value: "", text: "Choose a region to set beside Boston…" })].concat(
+      data.regions.filter(function (r) { return !r.is_pack_frozen; }).map(function (r) {
+        return h("option", {
+          value: r.region_id,
+          text: r.display_name,
+          selected: state.compareRegionId === r.region_id ? true : null
+        });
+      })
+    ));
+
+    host.appendChild(h("p", { class: "upload-field" }, [
+      h("label", { for: "region-compare-select", text: "Compare with another HUD region" }),
+      select,
+      h("span", { class: "hint", id: "region-compare-hint",
+        text: "Boston is always the left-hand row, because Boston is what this file used." })
+    ]));
+
+    // 세대 크기를 모르면 숫자를 아예 내지 않는다. 8인 초과가 여기로 떨어진다.
+    if (size === null) {
+      host.appendChild(h("p", { class: "hint" }, [
+        "We cannot line this household up against another region. The figures above are not " +
+        "compared against a frozen limit for a household size we hold, and HUD does not publish " +
+        "these limits for households of more than eight people. We will not estimate one."
+      ]));
+      return;
+    }
+
+    var region = data.regions.filter(function (r) {
+      return r.region_id === state.compareRegionId;
+    })[0];
+    if (!region) return;                     // nothing chosen yet: the control is the whole panel
+
+    var key = String(size);
+    var bostonAmount = boston.limits_60_percent[key];
+    var regionAmount = region.limits_60_percent[key];
+    var heraAmount = region.hera_special_60_percent
+      ? region.hera_special_60_percent[key] : null;
+
+    var captionId = "region-compare-caption";
+    var rows = [
+      regionRow(boston.display_name, "Standard", bostonAmount,
+        "Frozen for this pack. This is the figure used above.")
+    ];
+
+    /* HERA Special: two published tables, so two rows and never one number.
+     *
+     * HUD publishes a second, higher table for a small set of areas, and it applies only
+     * to projects placed in service in 2007 or 2008. Chicago and Atlanta are both in that
+     * set. Showing either area's standard figure alone would be wrong for a 2007 building
+     * and showing the HERA figure alone would be wrong for every other building — and the
+     * fact that decides between them, when the project was placed in service, is not in
+     * this household's documents and is not ours to assume. So both rows go on screen with
+     * the condition attached to each, and the panel declines to pick. */
+    if (heraAmount !== null && heraAmount !== undefined) {
+      rows.push(regionRow(region.display_name, "Standard", regionAmount,
+        "Every project in this area except those placed in service in 2007 or 2008."));
+      rows.push(regionRow(region.display_name, "HERA Special", heraAmount,
+        "Only projects placed in service in 2007 or 2008."));
+    } else {
+      rows.push(regionRow(region.display_name, "Standard", regionAmount,
+        "Every project in this area."));
+    }
+
+    host.appendChild(h("div", { class: "table-block" }, [
+      h("p", { class: "table-caption", id: captionId,
+        text: "Published 60% limit for a household of " + size }),
+      h("div", { class: "table-scroll" }, [
+        h("table", { "aria-labelledby": captionId }, [
+          h("thead", null, [h("tr", null, [
+            h("th", { scope: "col", text: "Region" }),
+            h("th", { scope: "col", text: "Which HUD table" }),
+            h("th", { scope: "col", text: "60% limit" }),
+            h("th", { scope: "col", text: "When this table applies" })
+          ])]),
+          h("tbody", null, rows)
+        ])
+      ])
+    ]));
+
+    if (heraAmount !== null && heraAmount !== undefined) {
+      host.appendChild(h("div", { class: "callout callout--warn" }, [
+        h("p", { style: { marginBottom: "0" } }, [
+          h("strong", { text: "This area has two published tables, so there is no single figure to set beside Boston. " }),
+          "Which one applies depends on when the building was placed in service — a fact this " +
+          "household's documents do not carry. We will not choose between them for you."
+        ])
+      ]));
+    } else if (bostonAmount && regionAmount) {
+      var higher = bostonAmount >= regionAmount;
+      var ratio = (higher ? bostonAmount / regionAmount : regionAmount / bostonAmount);
+      host.appendChild(h("p", null, [
+        "For a household of " + size + ", the frozen Boston figure this file used is " +
+        money(bostonAmount) + " and " + region.display_name + " publishes " +
+        money(regionAmount) + " — " +
+        (higher ? "Boston is " : "that is ") + ratio.toFixed(2) + " times the other. " +
+        "The same documents, read the same way, meet a different figure in each place."
+      ]));
+    }
+
+    host.appendChild(regionSourceCard(region));
+    host.appendChild(regionSourceCard(boston));
+
+    /* 이 목록이 무엇을 뺐는지도 같이 낸다. 7개는 전부가 아니라 슬라이스다. */
+    var omitted = data.not_included || [];
+    if (omitted.length) {
+      host.appendChild(h("details", { class: "tech" }, [
+        h("summary", { text: "What this list leaves out" }),
+        h("dl", { class: "kv" }, omitted.reduce(function (acc, row) {
+          return acc.concat([h("dt", { text: row.region }), h("dd", { text: row.reason })]);
+        }, []))
+      ]));
+    }
   }
 
   // ── step 5: what is missing or out of date ──────────────────────────────────────
