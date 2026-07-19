@@ -1290,6 +1290,33 @@
     ]);
   }
 
+  /** Official sources first, our own frozen rules after them.
+   *
+   *  Some citations are real external authority — an authority of `official_hud`, an
+   *  effective date, and an https link into huduser.gov. Others are the challenge's own
+   *  frozen convention, whose authority reads `hackathon simulation` and whose source is a
+   *  path inside this repository. Both are true and both stay on the screen. But the
+   *  answer above them claims a rule id, an authority and an effective date, and leading
+   *  with the weakest one invites the reader to discount the sentence before reaching the
+   *  strong citation underneath it.
+   *
+   *  Ordering only. Nothing is hidden, nothing is relabelled, and the count is unchanged —
+   *  our own rules have to be readable as ours, which is why the authority line stays
+   *  exactly as the API sent it. Array.prototype.sort is stable in every browser this
+   *  build targets, so citations of equal rank keep the order the API returned them in. */
+  function citationsInTrustOrder(citations) {
+    return (citations || []).slice().sort(function (a, b) {
+      return citationRank(a) - citationRank(b);
+    });
+  }
+  function citationRank(citation) {
+    var external = /^https?:\/\//i.test(citation.source_url || "");
+    var selfIssued = /hackathon|simulation|challenge/i.test(citation.authority || "");
+    if (external && !selfIssued) return 0;   // outside authority, reachable and checkable
+    if (external) return 1;                  // linkable, but the authority is our own
+    return 2;                                // our own frozen convention, in-repo source
+  }
+
   function renderAskResponse(host, question, response, options) {
     clear(host);
     if (!(options && options.silent)) state.lastQuestion = question;
@@ -1310,16 +1337,52 @@
     var headline = response.refused ? "Refused, on purpose"
       : (response.abstained ? "Abstained — no answer given" : "Answer");
 
+    /* Several situation texts open with the bare machine status they resolve to —
+     * "NEEDS_REVIEW. An expired document is stale evidence, and…". That token is the
+     * answer's first word, so a reader meets an enum before a sentence. Lift it off the
+     * front and keep it, verbatim, under Technical details.
+     *
+     * The pattern is deliberately narrow: SCREAMING_SNAKE followed by a full stop and a
+     * space. Rule ids such as CH-READINESS-001 contain hyphens and are never matched, and
+     * an answer that opens with an ordinary word is left exactly as the API sent it. */
+    var body = response.answer || "No answer is given for this question.";
+    var statusPrefix = null;
+    var prefixMatch = /^([A-Z][A-Z0-9_]{2,})\.\s+/.exec(body);
+    if (prefixMatch) {
+      statusPrefix = prefixMatch[1];
+      body = body.slice(prefixMatch[0].length);
+    }
+
+    /* The renter-facing sentence for this response kind, written in api/plain.py and
+     * already carried on the response as `plain`. It is not invented here and it does not
+     * replace the precise answer — it goes above it, which is the arrangement _with_plain
+     * in api/ask.py was written to produce and which this screen had simply never used. */
+    var said = response.plain || null;
+
     host.appendChild(h("div", { class: "callout " + flavour }, [
       h("h3", { id: "ask-answer-heading", tabindex: "-1", text: headline }),
       h("p", { class: "status-line", text: "Question asked: " + question }),
-      h("p", { text: response.answer || "No answer is given for this question." }),
+      said && said.headline ? h("p", { class: "answer-lead", text: said.headline }) : null,
+      h("p", { text: body }),
       response.what_would_resolve_it
         ? h("p", null, [h("strong", { text: "What would resolve it: " }), response.what_would_resolve_it])
         : null,
-      h("p", { class: "status-line" }, [
-        "Response kind: ", h("span", { class: "mono", text: response.kind }),
-        " · abstained: " + String(response.abstained) + " · refused: " + String(response.refused)
+      /* The machine fields move behind the same "Technical details" disclosure the
+       * readiness alert and every checklist card already use. They are demoted, not
+       * deleted: a judge who wants the response kind can still read it, and the status
+       * token lifted off the answer above is reunited with it here. */
+      h("details", { class: "tech" }, [
+        h("summary", { text: "Technical details" }),
+        h("p", { class: "status-line" }, [
+          "Response kind: ", h("span", { class: "mono", text: response.kind }),
+          " · abstained: " + String(response.abstained) + " · refused: " + String(response.refused)
+        ]),
+        statusPrefix
+          ? h("p", { class: "status-line" }, [
+              "Readiness status this answer opened with: ",
+              h("span", { class: "mono", text: statusPrefix })
+            ])
+          : null
       ])
     ]));
 
@@ -1332,9 +1395,11 @@
               "product exists to avoid."
       }));
     }
-    (response.citations || []).forEach(function (citation) { host.appendChild(citationBlock(citation)); });
+    citationsInTrustOrder(response.citations).forEach(function (citation) {
+      host.appendChild(citationBlock(citation));
+    });
     byId("ask-answer-heading").focus();
-    announce(headline + ". " + (response.answer || ""));
+    announce(headline + ". " + body);
   }
 
   function renderAsk() {
@@ -1343,7 +1408,20 @@
     var examples = Source.askExamples();
 
     if (Source.live) {
-      var input = h("input", { id: "ask-input", type: "text", autocomplete: "off" });
+      /* A two-row textarea, not a one-line input.
+       *
+       * Pressing an example chip fills this box, and the whole question has to stay
+       * readable afterwards. A one-line box 165px wide cut every starter question off
+       * mid-sentence, which made the one screen that demonstrates "the system reads what
+       * you typed" the one screen where you could not see what you typed.
+       *
+       * Enter still submits. That is what the surrounding <form> gave us for free with an
+       * <input>, and losing it would be a real regression for anyone who types a question
+       * and reaches for the return key; Shift+Enter inserts a newline, which is the
+       * conventional escape hatch. The submit button remains the visible, clickable path
+       * and the form's own submit handler is untouched, so nothing depends on this
+       * listener firing. */
+      var input = h("textarea", { id: "ask-input", rows: "2", autocomplete: "off" });
 
       var submitQuestion = function (question) {
         if (!question) return;
@@ -1355,6 +1433,12 @@
         });
       };
 
+      input.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" || event.shiftKey) return;
+        event.preventDefault();
+        submitQuestion(input.value.trim());
+      });
+
       root.appendChild(h("form", {
         class: "ask-input-row",
         onsubmit: function (event) {
@@ -1362,12 +1446,20 @@
           submitQuestion(input.value.trim());
         }
       }, [
-        h("div", null, [
-          h("label", { for: "ask-input", text: "Ask about a rule" }),
+        /* Label on its own line above the box, box and button on one row underneath, so
+         * the three read as one control group. The button sits beside the box rather than
+         * adrift next to the hint text, which is where it was. */
+        h("label", { for: "ask-input", class: "ask-label", text: "Ask about a rule" }),
+        h("div", { class: "ask-control" }, [
           input,
-          h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." })
+          h("button", { type: "submit", class: "action", text: "Ask" })
         ]),
-        h("button", { type: "submit", class: "action", text: "Ask" })
+        h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }),
+        /* One line, next to the box, because this is where the renter decides what to
+         * type. It says what is not needed rather than what is dangerous: the honest
+         * position is that a rule question works without personal details, not that
+         * typing them is a hazard. The footer carries the fuller account. */
+        h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." })
       ]));
 
       /* Starter questions, directly under the box they fill.
@@ -1483,7 +1575,9 @@
     if (openItems) root.appendChild(openItems);
 
     root.appendChild(h("h3", { text: "Rules cited by this report" }));
-    (state.report.citations || []).forEach(function (citation) { root.appendChild(citationBlock(citation)); });
+    citationsInTrustOrder(state.report.citations).forEach(function (citation) {
+      root.appendChild(citationBlock(citation));
+    });
   }
 
   // ── step 5: what is missing or out of date ──────────────────────────────────────
@@ -1943,6 +2037,107 @@
     rendered_screens: "Plain wording, measured on the rendered screen"
   };
 
+  /* ── scorecard values ──────────────────────────────────────────────────────────
+   *
+   *  The scorecard rows used to be `String(value)`, which for a nested object is the
+   *  literal text "[object Object]". Two sections carry one — plain_language.readability
+   *  and intent_router.anchor_audit_detail — so the page whose whole argument is "we
+   *  measured this and we print what came out" printed a JavaScript artefact instead of a
+   *  measurement, on the screen a judge is most likely to check.
+   *
+   *  An empty list and an unmeasured value are different claims and must not look alike.
+   *  `[]` means the check ran and found nothing, which for lists such as anchors_missing
+   *  or household_id_leaks is the result we want; `not_run` means no one looked, and says
+   *  so on the section's own chip. A blank cell would erase that difference, which is the
+   *  exact confusion this product exists to prevent, so an empty list says "none found"
+   *  in words. */
+  function isPlainObject(value) {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  }
+
+  /** A one-line reading of a nested object, so the row still says something before the
+   *  reader opens anything. Scalars are given whole; lists are counted, because a count is
+   *  a fact and a truncated list is a half-truth. `note` is left out — it is prose, it is
+   *  long, and it is shown in full inside the disclosure. */
+  function measureSummary(value) {
+    return Object.keys(value).filter(function (key) { return key !== "note"; })
+      .map(function (key) {
+        var inner = value[key];
+        var label = key.replace(/_/g, " ");
+        if (Array.isArray(inner)) return label + ": " + (inner.length ? inner.length + " entries" : "none found");
+        if (isPlainObject(inner)) return label + ": " + Object.keys(inner).length + " fields";
+        return label + " " + plain(inner);
+      }).join(" · ");
+  }
+
+  /** A list of same-shaped objects — readability.screens is one — read as a table rather
+   *  than as a run-on sentence. The per-screen grades are real measurements and the point
+   *  of publishing them is that they can be compared, which needs columns. */
+  function objectListTable(rows) {
+    var columns = [];
+    rows.forEach(function (row) {
+      Object.keys(row).forEach(function (key) { if (columns.indexOf(key) < 0) columns.push(key); });
+    });
+    var cellText = function (cell) {
+      if (cell === null || cell === undefined) return "—";
+      if (Array.isArray(cell)) return cell.length ? cell.join(", ") : "none found";
+      if (isPlainObject(cell)) return measureSummary(cell);
+      return plain(cell);
+    };
+    // 표는 조항이 허용하는 2차원 콘텐츠지만, 자기 컨테이너 안에서만 가로 스크롤해야 한다.
+    return h("div", { class: "table-scroll" }, [
+      h("table", null, [
+        h("thead", null, [h("tr", null, columns.map(function (column) {
+          return h("th", { scope: "col", text: column.replace(/_/g, " ") });
+        }))]),
+        h("tbody", null, rows.map(function (row) {
+          return h("tr", null, columns.map(function (column, index) {
+            return index === 0
+              ? h("th", { scope: "row", text: cellText(row[column]) })
+              : h("td", { text: cellText(row[column]) });
+          }));
+        }))
+      ])
+    ]);
+  }
+
+  function measureValueNode(value) {
+    if (Array.isArray(value)) {
+      if (!value.length) return h("span", { class: "measure-none", text: "none found" });
+      if (value.every(isPlainObject)) return objectListTable(value);
+      return h("ul", { class: "measure-list" }, value.map(function (entry) {
+        return h("li", { class: "mono", text: plain(entry) });
+      }));
+    }
+    if (isPlainObject(value)) return measureObjectRows(value);
+    return h("span", { text: plain(value) });
+  }
+
+  function measureObjectRows(value) {
+    var pairs = [];
+    Object.keys(value).forEach(function (key) {
+      pairs.push(h("dt", { text: key.replace(/_/g, " ") }));
+      pairs.push(h("dd", null, [measureValueNode(value[key])]));
+    });
+    return h("dl", { class: "kv" }, pairs);
+  }
+
+  /** One value cell. A nested object gets a summary line on the row itself and its whole
+   *  contents inside the same "Technical details" disclosure used everywhere else in this
+   *  build. Nothing is dropped and nothing is summarised away. */
+  function measureCell(value) {
+    if (isPlainObject(value)) {
+      return h("td", null, [
+        h("p", { class: "status-line", style: { margin: "0" }, text: measureSummary(value) }),
+        h("details", { class: "tech" }, [
+          h("summary", { text: "Technical details" }),
+          measureObjectRows(value)
+        ])
+      ]);
+    }
+    return h("td", null, [measureValueNode(value)]);
+  }
+
   function renderMeasure() {
     var root = byId("measure-body");
     clear(root);
@@ -1960,10 +2155,9 @@
       var rows = Object.keys(section).filter(function (name) {
         return name !== "status" && name !== "note";
       }).map(function (name) {
-        var value = section[name];
         return h("tr", null, [
           h("th", { scope: "row", text: name.replace(/_/g, " ") }),
-          h("td", { text: Array.isArray(value) ? (value.length ? value.join(", ") : "none") : plain(value) })
+          measureCell(section[name])
         ]);
       });
 
