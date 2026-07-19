@@ -528,6 +528,31 @@
       }
     ];
 
+    /* Offline only: put (or take back) the mark that says a person read this value.
+     *
+     * This is deliberately the *only* thing the page ever computes about a field on its
+     * own, and it is safe to compute here for one reason: confirming changes no value, no
+     * certainty and no arithmetic. It writes one enum on one field. Everything that could
+     * move a number offline still comes from recorded pipeline output.
+     */
+    function remarkLocally(report, documentId, field, kind) {
+      var copy = JSON.parse(JSON.stringify(report));
+      (copy.documents || []).forEach(function (doc) {
+        if (doc.document_id !== documentId) return;
+        (doc.fields || []).forEach(function (f) {
+          if (f.field === field) f.evidence_kind = kind;
+        });
+      });
+      delete copy.confirmation;   // recounted for display; see confirmationTally()
+      return copy;
+    }
+    function markConfirmedLocally(report, documentId, field) {
+      return remarkLocally(report, documentId, field, "confirmed_by_renter");
+    }
+    function markExtractedLocally(report, documentId, field) {
+      return remarkLocally(report, documentId, field, "extracted");
+    }
+
     var source = {
       live: live,
       apiBase: apiBase,
@@ -565,9 +590,33 @@
         return json("/api/report/" + encodeURIComponent(householdId));
       },
 
-      // Returns { report, applied:boolean, unsupported:boolean }
-      confirm: function (householdId, documentId, field, value) {
+      /* One request, two outcomes. Returns { report, unsupported }.
+       *
+       * The renter sends back the value that was already sitting in the box. If it is the
+       * same value, that is a confirmation; if it is a different one, that is a correction.
+       * **This page does not decide which.** It posts the value and reads the resulting
+       * `evidence_kind` back off the report, because a claim that a human checked a value
+       * must not be something the client can assert on its own -- one bug here and a value
+       * nobody looked at is marked as looked at.
+       *
+       * `opts.together` records that this was one of a document's remaining values
+       * confirmed in a single action, so the activity log can tell the two apart.
+       *
+       * Offline is the one place the page must resolve it locally, because there is no
+       * server to ask. A confirmation changes no value and no calculation -- only the mark
+       * saying a person read it -- so `opts.unchanged` carries that mark onto the report the
+       * page is already holding. A *correction* still recomputes numbers, which offline can
+       * only come from the two recorded fixtures.
+       */
+      confirm: function (householdId, documentId, field, value, opts) {
+        opts = opts || {};
         if (!live) {
+          if (opts.unchanged && opts.report) {
+            return Promise.resolve({
+              report: markConfirmedLocally(opts.report, documentId, field),
+              unsupported: false
+            });
+          }
           var match = OFFLINE_CORRECTIONS.filter(function (c) {
             return c.document_id === documentId && c.field === field &&
                    String(c.value) === String(value);
@@ -578,7 +627,10 @@
         return json("/api/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ document_id: documentId, field: field, value: value })
+          body: JSON.stringify({
+            document_id: documentId, field: field, value: value,
+            together: Boolean(opts.together)
+          })
         }).then(function (report) { return { report: report, unsupported: false }; });
       },
 
@@ -595,8 +647,19 @@
        * pipeline output and nothing on a server changed, so rewinding the page is the
        * whole of the undo and is honest. `server:false` says which of the two happened.
        */
-      undo: function (householdId, documentId, field) {
-        if (!live) return Promise.resolve({ report: null, server: false });
+      undo: function (householdId, documentId, field, opts) {
+        opts = opts || {};
+        if (!live) {
+          // Withdrawing a confirmation offline is the mirror of making one: one enum on
+          // one field, nothing else. Undoing a *correction* offline still rewinds to the
+          // recorded baseline report, which is what `server:false` tells the caller.
+          if (opts.confirmed && opts.report) {
+            return Promise.resolve({
+              report: markExtractedLocally(opts.report, documentId, field), server: false
+            });
+          }
+          return Promise.resolve({ report: null, server: false });
+        }
         return json("/api/undo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1330,7 +1393,23 @@
 
     var pageHost = h("div", { id: "page-host" });
     detail.appendChild(pageHost);
-    detail.appendChild(fieldTable(doc));
+    // The instruction sits between the page image and the boxes it is about, because that
+    // is the order the work happens in: look at the page, then check the box under it.
+    detail.appendChild(h("div", { class: "callout" }, [
+      h("h4", { style: { marginTop: "0" }, text: "Check each value, then confirm it" }),
+      h("p", {
+        style: { marginBottom: "0" },
+        text: "Every box below already holds what we read off this page. If a value is " +
+              "right, choose Confirm and leave the box alone. If it is wrong, change the " +
+              "box and choose the same button — that records a correction instead. " +
+              "Confirming does not change the value or any number below it; it records " +
+              "that you read it."
+      }),
+      confirmationSummary(state.report)
+    ]));
+    detail.appendChild(fieldTable(doc, { confirmable: true }));
+    var rest = confirmRemaining(doc, doc.document_id);
+    if (rest) detail.appendChild(rest);
 
     root.appendChild(h("div", { class: "doc-layout" }, [
       h("nav", { "aria-label": "Documents in this household" }, [
@@ -1452,6 +1531,289 @@
     }
   }
 
+  // ── confirming a value: one flow, two outcomes ───────────────────────────────────
+  /* The brief's own headline is "turns synthetic household documents into a
+   * human-confirmed profile", and Required Build 01 is "Require confirmation or
+   * correction before reuse". Until this block existed, `confirmed_by_renter` was a name
+   * in an enum that no code path could ever produce: a renter could correct a value, but
+   * there was no way to say "yes, you read that one right", so every value the machine got
+   * right went into the income arithmetic with nobody having looked at it.
+   *
+   * WHY CONFIRMING AND CORRECTING ARE THE SAME CONTROL
+   * Splitting them into two modes would ask the renter a question they cannot answer yet:
+   * "do you want to confirm, or to correct?" — you only know which once you have compared
+   * the box to the page. So the box is pre-filled with what we read, and there is one
+   * button. Leave the box alone and press it: that is a confirmation. Change the box and
+   * press it: that is a correction. The renter performs one action either way; which of
+   * the two it was is a fact about the value, and the server decides it by comparing.
+   *
+   * WHAT CONFIRMING DOES NOT DO
+   * It does not change the value, the certainty, or any number below it. A confirmed value
+   * is the extracted value, with a mark saying a person read it. The wording here never
+   * says confirming makes a value more true.
+   */
+  function fieldInputId(tableId, field) { return "confirm-value-" + tableId + "-" + field; }
+  function fieldButtonId(tableId, field) { return "confirm-do-" + tableId + "-" + field; }
+
+  /** The pre-filled box holding what we read. Empty only when nothing was read. */
+  function valueBox(doc, field, tableId) {
+    var wasRead = !(field.value === null || field.value === undefined);
+    var input = h("input", {
+      type: "text",
+      class: "value-box",
+      id: fieldInputId(tableId, field.field),
+      value: wasRead ? plain(field.value) : "",
+      autocomplete: "off",
+      // The row header names the field and the caption names the document, but a screen
+      // reader landing on the box out of that context needs both in one string.
+      "aria-label": (wasRead ? "Value read for " : "Value to supply for ") +
+                    field.field + " on " + doc.document_id,
+      onkeydown: function (event) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        submitFieldValue(doc, field, tableId, false);
+      }
+    });
+    if (wasRead) return input;
+    return h("div", null, [
+      input,
+      h("p", { class: "hint", text: "Not read — type what this should say, then choose Confirm." })
+    ]);
+  }
+
+  /** The single button, plus the way back out of a confirmation once it is made. */
+  function confirmControl(doc, field, tableId) {
+    var kind = field.evidence_kind;
+    var marked = kind === "confirmed_by_renter" || kind === "corrected_by_renter";
+    if (marked) {
+      return h("div", { class: "confirm-cell" }, [
+        h("span", { class: "chip chip--present" }, [
+          h("span", { "aria-hidden": "true", text: "✓ " }),
+          kind === "confirmed_by_renter" ? "Confirmed" : "Corrected"
+        ]),
+        /* The row context goes in `aria-label`, not in a .visually-hidden span.
+         * Both give a screen reader the same sentence, but the span is real text in the
+         * document: ui/tools/screen-scan.mjs counts machine identifiers in the text these
+         * screens carry, and fifteen hidden copies of "person_name on HH-001-D01" made
+         * that count jump without a single one of them appearing on screen. A metric that
+         * counts what a renter reads must not be fed text the renter cannot read. */
+        h("button", {
+          type: "button",
+          class: "field-row-btn",
+          id: fieldButtonId(tableId, field.field),
+          "aria-label": (kind === "confirmed_by_renter"
+            ? "Undo the confirmation of " : "Undo the correction of ") +
+            field.field + " on " + doc.document_id,
+          onclick: function () { withdrawField(doc, field, tableId); }
+        }, ["Undo"])
+      ]);
+    }
+    return h("button", {
+      type: "button",
+      class: "action secondary confirm-one",
+      id: fieldButtonId(tableId, field.field),
+      "aria-label": "Confirm the value for " + field.field + " on " + doc.document_id,
+      onclick: function () { submitFieldValue(doc, field, tableId, false); }
+    }, ["Confirm"]);
+  }
+
+  /** Send whatever is in the box back. Same call for both outcomes. */
+  function submitFieldValue(doc, field, tableId, together) {
+    var box = byId(fieldInputId(tableId, field.field));
+    if (!box) return Promise.resolve(false);
+    var raw = String(box.value).trim();
+    if (!raw) {
+      announce("Type the value this field should hold, then choose Confirm.");
+      box.focus();
+      return Promise.resolve(false);
+    }
+    var value = /^-?\d+(\.\d+)?$/.test(raw.replace(/,/g, "")) ? Number(raw.replace(/,/g, "")) : raw;
+    var unchanged = sameAsRead(value, field.value);
+
+    return Source.confirm(state.householdId, doc.document_id, field.field, value, {
+      unchanged: unchanged, together: together, report: state.report
+    }).then(function (result) {
+      if (result.unsupported) {
+        announce("Changing " + field.field + " to " + raw + " is not available without the server. " +
+                 "Step 2 lists the corrections this offline build can replay.");
+        return false;
+      }
+      // A correction moves numbers, so the before/after view on step 2 needs a baseline.
+      // A confirmation moves nothing, so it must not disturb one that is already set.
+      if (!unchanged) {
+        if (!state.baselineReport) state.baselineReport = state.report;
+        state.correction = { document_id: doc.document_id, field: field.field, value: value };
+      }
+      state.report = result.report;
+      renderAll();
+      var kind = evidenceKindOf(state.report, doc.document_id, field.field);
+      announce(kind === "confirmed_by_renter"
+        ? field.field + " on " + doc.document_id + " is confirmed. The value is unchanged — " +
+          "it is now marked as read by you."
+        : field.field + " on " + doc.document_id + " is recorded as corrected to " + raw +
+          ". The numbers below have been worked out again.");
+      var back = byId(fieldButtonId(tableId, field.field));
+      if (back) back.focus();
+      return true;
+    }).catch(function (error) {
+      announce("That value could not be recorded: " + error.message);
+      return false;
+    });
+  }
+
+  /* Undoing after a confirmation.
+   *
+   * The same button takes back either mark, and it takes it back the whole way: the field
+   * returns to "Read from the document". Confirming is something a person did, so undo has
+   * to be able to remove it — a confirmation you cannot withdraw is a claim the renter is
+   * stuck with, and it would leave the row saying a person checked a value when the person
+   * has just said they had not. `confirmed_by_renter` is not the extracted state, so
+   * leaving it in place while announcing "back to the extracted value" would be a lie. */
+  function withdrawField(doc, field, tableId) {
+    var wasConfirmed = field.evidence_kind === "confirmed_by_renter";
+    Source.undo(state.householdId, doc.document_id, field.field, {
+      confirmed: wasConfirmed, report: state.report
+    }).then(function (result) {
+      if (result.report) {
+        state.report = result.report;
+      } else if (state.baselineReport) {
+        state.report = state.baselineReport;
+      }
+      if (!wasConfirmed) {
+        state.baselineReport = null;
+        state.correction = null;
+      }
+      renderAll();
+      announce(wasConfirmed
+        ? field.field + " on " + doc.document_id + " is no longer marked as confirmed. " +
+          "The value never changed, and it is back to being only the machine reading."
+        : field.field + " on " + doc.document_id + " is back to the extracted value, and any " +
+          "other correction is still in place.");
+      var back = byId(fieldButtonId(tableId, field.field));
+      if (back) back.focus();
+    }).catch(function (error) {
+      announce("That could not be undone: " + error.message);
+    });
+  }
+
+  /** The same comparison the server makes, used only to tell the two announcements apart
+   *  and to pick the offline path. The server's answer is what the report carries. */
+  function sameAsRead(submitted, read) {
+    if (submitted === null || read === null || submitted === undefined || read === undefined) return false;
+    var a = Number(String(submitted).replace(/,/g, "").trim());
+    var b = Number(String(read).replace(/,/g, "").trim());
+    if (!isNaN(a) && !isNaN(b)) return a === b;
+    return String(submitted).trim() === String(read).trim();
+  }
+  function evidenceKindOf(report, documentId, fieldName) {
+    var found = null;
+    ((report || {}).documents || []).forEach(function (d) {
+      if (d.document_id !== documentId) return;
+      (d.fields || []).forEach(function (f) { if (f.field === fieldName) found = f.evidence_kind; });
+    });
+    return found;
+  }
+
+  /* How many values a person has actually looked at.
+   *
+   * The server counts this on every report (`report.confirmation`) so that the screen and
+   * the packet cannot drift apart. The local count below is a fallback for the bundled
+   * fixtures, which were exported before the count existed. */
+  function confirmationTally(report) {
+    if (report && report.confirmation) return report.confirmation;
+    var t = { confirmed: 0, corrected: 0, not_confirmed: 0, not_read: 0, fields: 0 };
+    ((report || {}).documents || []).forEach(function (doc) {
+      (doc.fields || []).forEach(function (f) {
+        t.fields += 1;
+        if (f.evidence_kind === "confirmed_by_renter") t.confirmed += 1;
+        else if (f.evidence_kind === "corrected_by_renter") t.corrected += 1;
+        else if (f.value === null || f.value === undefined) t.not_read += 1;
+        else t.not_confirmed += 1;
+      });
+    });
+    return t;
+  }
+
+  /** The fields on one document that are still only a machine reading. */
+  function unconfirmedFields(doc) {
+    return (doc.fields || []).filter(function (f) {
+      return f.evidence_kind !== "confirmed_by_renter" &&
+             f.evidence_kind !== "corrected_by_renter" &&
+             !(f.value === null || f.value === undefined);
+    });
+  }
+
+  /* Confirming what is left on ONE document, in one action.
+   *
+   * A button that confirms everything everywhere is not a confirmation, it is a formality:
+   * nobody has looked at four documents at once, and a mark that says they did is worse
+   * than no mark. Three things keep this one honest, and they are the reason it exists at
+   * all rather than being left out:
+   *
+   *   1. It is scoped to the document whose page image is on screen above it, and it sits
+   *      below that document's table — you scroll past every value it covers to reach it.
+   *      There is no control anywhere that reaches across documents.
+   *   2. It names the count and the fields it is about to mark, and states what pressing it
+   *      asserts, before it is pressed. It never covers a value that was not read.
+   *   3. The activity log records these as confirmed together, not one at a time, so a
+   *      reader of the packet can see how the confirmation was made and weigh it. Every
+   *      row it marks can still be undone individually.
+   */
+  function confirmRemaining(doc, tableId) {
+    var pending = unconfirmedFields(doc);
+    if (!pending.length) return null;
+    var names = pending.map(function (f) { return f.field; }).join(", ");
+    return h("div", { class: "card" }, [
+      h("h4", { style: { marginTop: "0" }, text: "Confirm the rest of this document" }),
+      h("p", {
+        class: "card-why",
+        // The document id is not repeated here: the heading and the table caption directly
+        // above already name it, and ui/tools/screen-scan.mjs counts every machine
+        // identifier a renter is made to read. The field names stay — you cannot honestly
+        // press a button that confirms values it will not name.
+        text: "You have " + pending.length + " value(s) left on this document that only " +
+              "the machine has read: " + names + ". Confirming them together " +
+              "records that you compared each one against the page shown above and found it " +
+              "right. It changes none of the values. Anything you are unsure about, leave — " +
+              "you can confirm the others one at a time."
+      }),
+      h("button", {
+        type: "button",
+        class: "action secondary",
+        id: "confirm-remaining",
+        onclick: function () {
+          // Sequentially, so the log keeps its order and one failure does not hide the rest.
+          var chain = Promise.resolve();
+          pending.forEach(function (f) {
+            chain = chain.then(function () { return submitFieldValue(doc, f, tableId, true); });
+          });
+          chain.then(function () {
+            announce(pending.length + " value(s) on " + doc.document_id +
+                     " are now marked as confirmed by you. Each one can be undone on its own row.");
+            var again = byId("confirm-remaining") || byId("doc-detail-heading");
+            if (again) again.focus();
+          });
+        }
+      }, ["Confirm the " + pending.length + " remaining value(s) on this document"])
+    ]);
+  }
+
+  /** One line, on every step, saying how much of this profile a person has actually seen. */
+  function confirmationSummary(report) {
+    var t = confirmationTally(report);
+    var tail = t.not_confirmed === 0
+      ? "No value is waiting on you."
+      : t.not_confirmed + " still carry only the machine reading.";
+    if (t.not_read) tail += " " + t.not_read + " could not be read at all.";
+    // No id: this line appears on more than one screen, and two nodes with one id is a
+    // defect in itself.
+    return h("p", { class: "hint confirmation-summary" }, [
+      h("strong", { text: (t.confirmed + t.corrected) + " of " + (t.fields - t.not_read) +
+                          " read values checked by you. " }),
+      tail
+    ]);
+  }
+
   /* `opts` mirrors renderPage's: the upload panel gets the same table, tracking its own
    * highlighted field and re-rendering its own panel. Called with no opts it behaves
    * exactly as it did before. */
@@ -1485,11 +1847,18 @@
       h("label", { for: toggleId, text: "Show the box coordinates column" })
     ]);
 
+    var confirmable = Boolean(opts.confirmable);
+
     var rows = (doc.fields || []).map(function (field) {
       var isActive = activeField === field.field;
-      var valueCell = field.value === null || field.value === undefined
-        ? h("td", { class: "abstain-cell" }, ["Not read — a person must supply this"])
-        : h("td", { text: plain(field.value) });
+      var valueCell;
+      if (confirmable) {
+        valueCell = h("td", null, [valueBox(doc, field, tableId)]);
+      } else if (field.value === null || field.value === undefined) {
+        valueCell = h("td", { class: "abstain-cell" }, ["Not read — a person must supply this"]);
+      } else {
+        valueCell = h("td", { text: plain(field.value) });
+      }
 
       return h("tr", { class: isActive ? "is-active" : null }, [
         h("th", { scope: "row" }, [
@@ -1509,6 +1878,7 @@
             : h("span", { text: field.field })
         ]),
         valueCell,
+        confirmable ? h("td", null, [confirmControl(doc, field, tableId)]) : null,
         h("td", { text: EVIDENCE_WORDS[field.evidence_kind] || field.evidence_kind }),
         h("td", { text: CERTAINTY_WORDS[field.certainty] || field.certainty }),
         h("td", { class: "mono", text: field.source_text === null ? "—" : String(field.source_text) }),
@@ -1543,6 +1913,7 @@
         h("thead", null, [h("tr", null, [
           h("th", { scope: "col", text: "Field" }),
           h("th", { scope: "col", text: "Value" }),
+          confirmable ? h("th", { scope: "col", text: "Is this right?" }) : null,
           h("th", { scope: "col", text: "How we got it" }),
           h("th", { scope: "col", text: "Certainty" }),
           h("th", { scope: "col", text: "Text on the page" }),
@@ -1682,6 +2053,18 @@
         announce("That correction is not available offline.");
         return;
       }
+      // The same endpoint answers both ways, so this form can land on a confirmation too:
+      // type back the value that is already there and nothing was corrected. Saying "your
+      // correction was used" over a before/after table with identical columns would be
+      // false, so the confirmation is reported as what it is and no baseline is taken.
+      if (evidenceKindOf(result.report, documentId, field) === "confirmed_by_renter") {
+        state.report = result.report;
+        state.correction = null;
+        renderAll();
+        announce(field + " on " + documentId + " matches what we read, so it is recorded as " +
+                 "confirmed by you. Nothing was corrected and no number moved.");
+        return;
+      }
       state.baselineReport = baseline;
       state.report = result.report;
       state.correction = { document_id: documentId, field: field, value: value };
@@ -1710,7 +2093,7 @@
     if (!state.correction) { announce("There is no correction to undo."); return; }
     var undone = state.correction;
     Source.undo(state.householdId, undone.document_id, undone.field).then(function (result) {
-      if (result.server && result.report) {
+      if (result.report) {
         state.report = result.report;
       } else if (state.baselineReport) {
         state.report = state.baselineReport;
@@ -2541,10 +2924,20 @@
         "This button writes a file to your own device and nothing else. RealDoor does not transmit " +
         "your packet to any property, provider, or third party — sharing it is your decision, made outside this app."
       ]),
-      h("p", { style: { marginBottom: "0" } }, [
+      h("p", null, [
         "The packet contains what your documents show, what is still missing or expired, and every open " +
         "question below. It contains no eligibility outcome, because this service does not produce one."
-      ])
+      ]),
+      /* The packet is where this profile stops being a screen and becomes a file someone
+       * else reads, so this is the last honest moment to say how much of it a person has
+       * checked. The same counts travel inside the packet, next to a log of what was done
+       * in this session — so the reader on the other end is told too, not just the renter. */
+      h("p", { style: { marginBottom: "0" } }, [
+        "It also states how many values you checked and lists the actions taken in this " +
+        "session, with the rule versions that applied. That log holds no document contents " +
+        "and none of the values themselves."
+      ]),
+      confirmationSummary(state.report)
     ]));
     root.appendChild(h("div", { class: "button-row" }, [
       h("button", {

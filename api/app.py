@@ -133,18 +133,41 @@ def report(household_id: str, x_session_id: str | None = Header(default=None)) -
     return rep
 
 
-# ── 정정 (데모 2단계) ───────────────────────────────────────────────────
+# ── 확인과 정정 (데모 1·2단계) ─────────────────────────────────────────
 @app.post("/api/confirm")
 def confirm(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
-    """사람이 값을 확인·정정하면 하위 계산이 즉시 따라 움직인다."""
+    """세입자가 값을 되돌려 보낸다. **한 엔드포인트, 두 결과.**
+
+    화면은 읽은 값을 입력칸에 미리 채워 둔다. 세입자가 그대로 보내면 그 값이 사람의 눈을
+    거쳤다는 표시(`confirmed_by_renter`)가 붙고, 고쳐서 보내면 정정(`corrected_by_renter`)이
+    된다. 어느 쪽인지는 **서버가 값을 비교해서 정한다** — 화면이 "이건 확인입니다" 라고
+    선언할 수 있게 두면, 화면 버그 하나가 확인해 준 적 없는 값을 확인된 것으로 만든다.
+
+    브리프 Required Build 01: "Require confirmation or correction before reuse".
+    확인·정정 어느 쪽이든 하위 계산은 즉시 다시 돌아 나간다.
+
+    `together` 는 세입자가 한 문서의 남은 값들을 한 번에 확인했음을 기록에 남기기 위한
+    것이다. 표시(`evidence_kind`)는 같지만, **어떻게 확인했는지**는 감사 기록에서 구분되어야
+    한다. 한 번에 확인한 것을 하나씩 본 것처럼 적으면 그 기록이 실제보다 강해 보인다.
+    """
     s = _session(x_session_id)
     for key in ("document_id", "field", "value"):
         if key not in payload:
             raise HTTPException(400, f"missing `{key}`")
-    ok = STORE.apply_correction(s, payload["document_id"], payload["field"],
-                                payload["value"])
-    if not ok:
+    # 빈 칸은 확인도 정정도 아니다. 입력칸을 미리 채워 두면 사용자는 그것을 지울 수도
+    # 있는데, 빈 문자열을 값으로 받아들이면 읽은 값을 사람이 "정정해서 지웠다"는 기록이
+    # 남는다. 그건 사용자가 한 일이 아니다.
+    if isinstance(payload["value"], str) and not payload["value"].strip():
+        raise HTTPException(400, "`value` is empty; send the value this field should hold")
+    outcome = STORE.apply_correction(s, payload["document_id"], payload["field"],
+                                     payload["value"],
+                                     together=bool(payload.get("together")))
+    if outcome == "no_such_field":
         raise HTTPException(404, "no such field on that document")
+    if outcome == "nothing_was_read":
+        raise HTTPException(
+            400, "this field was not read from the document, so there is nothing to "
+                 "confirm; send the value it should hold instead")
     hid = payload["document_id"].rsplit("-", 1)[0]
     rep = STORE.report(s, hid)
     if rep is None:
@@ -286,12 +309,31 @@ def packet(household_id: str, x_session_id: str | None = Header(default=None)) -
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("readiness_report.json",
                    json.dumps(rep, ensure_ascii=False, indent=1, default=str))
+        # 활동 기록을 **따로** 싣는다. 리포트 안에도 있지만, 이 파일을 열어 본 사람이
+        # 리포트 전체를 뒤지지 않고도 "이 프로필의 어느 값이 사람의 눈을 거쳤는지" 를
+        # 볼 수 있어야 한다. 브리프: "log consent, actions, and rule versions - not raw
+        # document contents" — 그래서 값도, 파일 이름도, 질문 원문도 여기 없다.
+        z.writestr("activity_log.json",
+                   json.dumps({"household_id": household_id,
+                               "confirmation": rep.get("confirmation"),
+                               "activity_log": rep.get("activity_log")},
+                              ensure_ascii=False, indent=1, default=str))
+        tally = rep.get("confirmation") or {}
         z.writestr("README.txt",
                    "RealDoor readiness packet\n"
                    "=========================\n\n"
                    "This packet describes what your documents show and what is still\n"
                    "missing or expired. It is NOT an eligibility decision. A qualified\n"
                    "housing professional makes that determination.\n\n"
+                   "What a person checked\n"
+                   "---------------------\n"
+                   f"  {tally.get('confirmed', 0)} value(s) confirmed as read correctly\n"
+                   f"  {tally.get('corrected', 0)} value(s) corrected by the renter\n"
+                   f"  {tally.get('not_confirmed', 0)} value(s) still carry only the machine reading\n"
+                   f"  {tally.get('not_read', 0)} value(s) could not be read at all\n\n"
+                   "activity_log.json lists the actions taken in this session, in order.\n"
+                   "It records what was done and which rule versions applied. It does not\n"
+                   "record the contents of any document or any value that was typed.\n\n"
                    "Nothing here has been sent to any property or provider. Sharing it\n"
                    "is your choice.\n")
         for doc in rep.get("documents", []):

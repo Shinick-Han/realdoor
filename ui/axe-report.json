@@ -10,7 +10,7 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-19T05:49:50.920Z",
+ "generated_at": "2026-07-19T06:40:03.912Z",
  "screens_per_origin": 8,
  "total_violations": 0,
  "violations_by_impact": {},
@@ -105,15 +105,69 @@
         },
         {
          "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
           "tr:nth-child(2) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
           "tr:nth-child(3) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
@@ -124,7 +178,7 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 34
     },
     {
      "screen": "step2-correct",
@@ -299,15 +353,69 @@
         },
         {
          "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
           "tr:nth-child(2) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
           "tr:nth-child(3) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
@@ -318,7 +426,7 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 34
     },
     {
      "screen": "step2-correct",
@@ -490,11 +598,65 @@
           ".schematic-text:nth-child(4)"
          ],
          "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(2) > .num"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(3) > .num"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .num"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
         }
        ]
       }
      ],
-     "rules_passed": 32
+     "rules_passed": 34
     },
     {
      "screen": "step2-correct",
@@ -666,11 +828,65 @@
           ".schematic-text:nth-child(4)"
          ],
          "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr:nth-child(2) > .num"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(3) > .num"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .mono"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr:nth-child(4) > .num"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
         }
        ]
       }
      ],
-     "rules_passed": 32
+     "rules_passed": 34
     },
     {
      "screen": "step2-correct",

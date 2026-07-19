@@ -486,7 +486,14 @@ details.tech .table-scroll td { white-space: nowrap; }
 details.tech .table-scroll { margin-bottom: 0; }
 
 table { border-collapse: collapse; width: 100%; font-size: .92rem; }
-.table-scroll { overflow-x: auto; margin-bottom: 1rem; }
+/* position:relative 는 장식이 아니라 **가로 스크롤을 이 상자 안에 가두는 조건**이다.
+   overflow-x:auto 는 스크롤 컨테이너를 만들지만, 위치 지정이 없으면 그 안의
+   position:absolute 자손의 컨테이닝 블록이 되지 못한다. 표 안에 .visually-hidden
+   (position:absolute) 를 하나 넣었더니, 그 1px 상자가 스크롤된 좌표(x≈370)에 그대로
+   놓이면서 **문서 전체**의 scrollWidth 를 320px 화면에서 371px 로 밀어냈다. 표는
+   SC 1.4.10 이 허용하는 자기 컨테이너 내부 스크롤인데, 페이지가 통째로 옆으로 밀리면
+   그 예외가 아니라 위반이다. 이 한 줄이 자손을 다시 상자 안에 묶는다. */
+.table-scroll { overflow-x: auto; margin-bottom: 1rem; position: relative; }
 
 /* 표 캡션은 스크롤러 **밖**에 산다. <caption> 은 박스 폭이 표 폭과 같아서, 좁은 화면에서
    표가 자기 컨테이너 안으로 가로 스크롤되면 캡션 문장도 함께 화면 밖으로 끌려간다.
@@ -686,6 +693,27 @@ tr.is-active td { background: #fdf0ea; }
   color: var(--ink);
 }
 .hint { font-size: .82rem; color: var(--ink-soft); margin: .2rem 0 0; }
+
+/* ── the pre-filled value box and its one button ──────────────────────
+   새 시각언어를 만들지 않는다: 입력칸은 .field-grid input 과 같은 계열(2px 테두리,
+   var(--radius), font:inherit)이고 버튼은 기존 .action.secondary 그대로다.
+   표 안에 들어가므로 폭만 그 칸에 맞춘다 — 고정 폭을 주면 좁은 화면에서 표가
+   자기 스크롤러보다 넓어지는 것이 아니라 칸 자체가 밀린다. */
+.value-box {
+  font: inherit;
+  width: 100%;
+  /* 확인하라고 내놓은 값이 칸 안에서 잘려 보이면 그건 확인이 아니다 — 1280px 에서
+     "302 Glass Stre" 까지만 보였다. 표는 .table-scroll 안에서 스스로 가로 스크롤하므로
+     이 칸은 값이 읽히는 폭을 먼저 가져간다. */
+  min-width: 11rem;
+  padding: .35rem .45rem;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+.confirm-cell { display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
+button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
 
 /* 업로드 폼. 새 시각언어를 만들지 않는다 — 컨트롤은 .field-grid 와 같은 계열(2px 테두리,
    var(--radius), font:inherit)이고, 라벨은 위, 도움말은 아래 한 줄이다.

@@ -114,6 +114,113 @@ def extract_all() -> list[dict[str, Any]]:
     return views
 
 
+def same_value(submitted: Any, extracted: Any) -> bool:
+    """세입자가 보낸 값이 기계가 읽은 값과 **같은 값인가**.
+
+    입력칸을 미리 채워 두면 사용자는 `2280` 을 그대로 돌려보내는데, HTML 입력칸은 그것을
+    문자열 `"2280"` 으로 돌려준다. 이걸 그대로 비교하면 아무것도 고치지 않은 사람이 전부
+    "정정" 으로 기록되고, 확인이라는 상태는 영원히 도달할 수 없게 된다. 그래서 표기가
+    아니라 값으로 비교한다: 양쪽이 수로 읽히면 수로, 아니면 공백을 다듬은 문자열로.
+
+    ⚠️ 관대함의 상한: 숫자 표기(쉼표·앞뒤 공백·`2280` 대 `2280.0`)만 흡수한다. 내용이
+    다르면 무조건 정정이다 — 애매하면 정정이 안전한 쪽이다. 확인은 "사람이 이 값을 보고
+    맞다고 했다" 는 주장이므로, 잘못 붙으면 없느니만 못하다.
+    """
+    if submitted is None or extracted is None:
+        return submitted is None and extracted is None
+    if isinstance(submitted, bool) or isinstance(extracted, bool):
+        return submitted is extracted
+    try:
+        return (float(str(submitted).replace(",", "").strip())
+                == float(str(extracted).replace(",", "").strip()))
+    except (TypeError, ValueError):
+        pass
+    return str(submitted).strip() == str(extracted).strip()
+
+
+def confirmation_tally(rep: dict[str, Any]) -> dict[str, Any]:
+    """이 세대의 필드가 각각 어느 상태인지 **세어서** 리포트에 싣는다.
+
+    브리프 표제가 요구하는 것은 "human-confirmed profile" 이다. 화면이 "무엇이 아직
+    확인되지 않았는가" 를 말하려면 그 수를 스스로 셀 수 있어야 하고, 세는 규칙이 화면과
+    서버에 각각 있으면 언젠가 갈라진다. 그래서 여기서 한 번 센다.
+
+    `not_read` 는 따로 센다 — 기계가 읽지 못한 필드는 '아직 확인 안 함' 이 아니라 애초에
+    확인할 대상이 아니다. 둘을 한 칸에 합치면 화면이 도달할 수 없는 목표를 제시하게 된다.
+    """
+    confirmed = corrected = not_confirmed = not_read = 0
+    for doc in rep.get("documents", []):
+        for f in doc.get("fields", []):
+            kind = f.get("evidence_kind")
+            if kind == "confirmed_by_renter":
+                confirmed += 1
+            elif kind == "corrected_by_renter":
+                corrected += 1
+            elif f.get("value") is None:
+                not_read += 1
+            else:
+                not_confirmed += 1
+    return {
+        "confirmed": confirmed,
+        "corrected": corrected,
+        "not_confirmed": not_confirmed,
+        "not_read": not_read,
+        "fields": confirmed + corrected + not_confirmed + not_read,
+        "seen_by_a_person": confirmed + corrected,
+    }
+
+
+#: 이벤트를 세입자가 읽을 수 있는 한 줄로. 값은 절대 넣지 않는다 — 무엇을 했는지는 남기고,
+#: 무엇이라고 적었는지는 남기지 않는다.
+EVENT_WORDS = {
+    "session_created": "This session was created",
+    "document_uploaded": "A document was uploaded and read in memory",
+    "field_confirmed": "A value was confirmed as read",
+    "fields_confirmed_together": "A value was confirmed as part of one document's remaining values",
+    "field_corrected": "A value was corrected",
+    "correction_undone": "A correction was undone",
+    "confirmation_withdrawn": "A confirmation was withdrawn",
+    "question_asked": "A rule question was asked",
+    "packet_exported": "A packet was exported by the renter",
+}
+
+
+def activity_log(s: Session, ruleset_version: str = "") -> dict[str, Any]:
+    """세션에 쌓인 이벤트 요약. **문서 원문은 들어가지 않는다.**
+
+    브리프 CONSENT AND CORRECTION: "log consent, actions, and rule versions - not raw
+    document contents". `Session.log()` 는 처음부터 있었지만 **아무도 읽지 않았다** —
+    기록만 하고 어디에도 내보내지 않는 로그는 요구의 절반만 만족한 상태다. 여기서
+    리포트와 패킷으로 나간다.
+
+    실리는 것은 동작·대상 필드 이름·규칙 버전뿐이다. 값도, 파일 이름도, 질문 원문도
+    `Session.log()` 호출부에서 이미 빠져 있고 여기서도 만들지 않는다.
+    """
+    counts: dict[str, int] = {}
+    entries = []
+    for index, event in enumerate(s.events, 1):
+        action = str(event.get("action", ""))
+        counts[action] = counts.get(action, 0) + 1
+        entry = {
+            "n": index,
+            "action": action,
+            "what_happened": EVENT_WORDS.get(action, action.replace("_", " ")),
+        }
+        for key in ("document_id", "field", "household_id", "document_type",
+                    "extraction_path", "evidence_kind"):
+            if event.get(key) is not None:
+                entry[key] = event[key]
+        entries.append(entry)
+    return {
+        "notice": ("Actions only. This log never holds the contents of a document, a file "
+                   "name, or a value you typed."),
+        "ruleset_version": ruleset_version,
+        "engine_version": engine_version(),
+        "counts": counts,
+        "events": entries,
+    }
+
+
 @dataclass
 class Session:
     """한 사용자의 작업 공간. 메모리에만 존재한다."""
@@ -220,36 +327,80 @@ class Store:
         # 하나도 바꾸지 않고, 그 옆에 사람이 읽을 문장과 "그래서 뭘 하면 되는지"를
         # 얹는다. 기계 코드와 원문은 각 항목의 code/detail 로 계속 꺼낼 수 있다.
         rep["plain"] = plain.for_report(rep)
+        # 사람이 무엇을 보았는지. 아래 두 블록은 브리프의 서로 다른 두 요구다.
+        rep["confirmation"] = confirmation_tally(rep)
+        rep["activity_log"] = activity_log(s, rep.get("ruleset_version", ""))
         return rep
 
     def apply_correction(self, s: Session, document_id: str, field_name: str,
-                         value: Any) -> bool:
-        """사람이 확인/정정한 값을 반영한다.
+                         value: Any, together: bool = False) -> str:
+        """사람이 **확인하거나 정정한** 값을 반영한다. 한 경로, 두 결과.
 
-        정정된 값은 `evidence_kind`를 바꿔 기록한다 — 기계가 읽은 값과 사람이 고친 값을
-        리포트에서 구분할 수 있어야 하기 때문이다.
+        브리프 표제: "turns synthetic household documents into a human-confirmed profile",
+        Required Build 01: "Require confirmation or correction before reuse". 확인과 정정은
+        **같은 동작의 두 결과**다 — 세입자는 미리 채워진 값을 보고, 맞으면 그대로 보내고
+        틀리면 고쳐서 보낸다. 그래서 엔드포인트도 하나다.
+
+        ⚠️ **확인은 사실을 바꾸지 않는다.** 받은 값이 기계가 읽은 값과 같으면 값도
+        `certainty` 도 건드리지 않는다. 바뀌는 것은 `evidence_kind` — 그 값이 사람의 눈을
+        거쳤다는 표시 — 하나뿐이다. 정정은 다르다: 값이 바뀌었으므로 사람이 댄 값이
+        기계가 읽은 값을 대신하고, 그 사실이 `corrected_by_renter` 로 남는다.
+
+        반환값:
+          "confirmed_by_renter" | "corrected_by_renter"  적용된 결과
+          "no_such_field"                                 그 문서에 그 필드가 없다
+          "nothing_was_read"                              읽히지 않은 필드를 확인하려 했다
         """
         view = s.views.get(document_id)
         if view is None:
-            return False
+            return "no_such_field"
         for f in view.get("fields", []):
-            if f.get("field") == field_name:
-                key = (document_id, field_name)
-                # 추출된 원값은 **첫 정정 때 한 번만** 보관한다. 같은 필드를 두 번 고쳐도
-                # 취소는 기계가 읽은 값까지 돌아가야지, 직전 정정값에서 멈추면 안 된다.
-                if key not in s.originals:
+            if f.get("field") != field_name:
+                continue
+            key = (document_id, field_name)
+            # 추출된 원값은 **첫 조작 때 한 번만** 보관한다. 같은 필드를 두 번 고쳐도
+            # 취소는 기계가 읽은 값까지 돌아가야지, 직전 정정값에서 멈추면 안 된다.
+            snapshot = s.originals.get(key)
+            extracted = snapshot["value"] if snapshot else f.get("value")
+
+            if same_value(value, extracted):
+                # 기권한 필드(값이 없음)는 확인할 수 있는 대상이 아니다. 읽히지 않은 것을
+                # "사람이 확인했다"고 표시하면 그 표시는 거짓이고, 하필 사람 손이 가장
+                # 필요한 자리에서 거짓이 된다. 확인 대신 값을 채워 넣어야 한다.
+                if extracted is None:
+                    return "nothing_was_read"
+                if snapshot is None:
                     s.originals[key] = {
                         "value": f.get("value"),
                         "certainty": f.get("certainty"),
                         "evidence_kind": f.get("evidence_kind"),
                     }
-                f["value"] = value
-                f["certainty"] = "high"
-                f["evidence_kind"] = "corrected_by_renter"
-                s.corrections[key] = value
-                s.log("field_corrected", document_id=document_id, field=field_name)
-                return True
-        return False
+                # 값도 certainty 도 그대로 둔다 — 확인은 사실이 아니라 그 사실을 누가
+                # 보았는지를 바꾼다. 값을 되돌려 놓는 것은, 같은 필드를 고쳤다가 원래
+                # 값으로 되돌려 확인한 경우를 위해서다.
+                f["value"] = s.originals[key]["value"]
+                f["certainty"] = s.originals[key]["certainty"]
+                f["evidence_kind"] = "confirmed_by_renter"
+                s.corrections.pop(key, None)
+                s.log("field_confirmed" if not together else "fields_confirmed_together",
+                      document_id=document_id, field=field_name,
+                      evidence_kind="confirmed_by_renter")
+                return "confirmed_by_renter"
+
+            if snapshot is None:
+                s.originals[key] = {
+                    "value": f.get("value"),
+                    "certainty": f.get("certainty"),
+                    "evidence_kind": f.get("evidence_kind"),
+                }
+            f["value"] = value
+            f["certainty"] = "high"
+            f["evidence_kind"] = "corrected_by_renter"
+            s.corrections[key] = value
+            s.log("field_corrected", document_id=document_id, field=field_name,
+                  evidence_kind="corrected_by_renter")
+            return "corrected_by_renter"
+        return "no_such_field"
 
     # ── 업로드 (인수 데모 1단계: 문서를 올리고 추출 근거를 보인다) ─────────
     def add_upload(self, s: Session, data: bytes, file_name: str,
@@ -274,12 +425,24 @@ class Store:
         return view
 
     def undo_correction(self, s: Session, document_id: str, field_name: str) -> bool:
-        """한 정정만 되돌린다 — 그 필드를 추출된 값으로, 다른 정정은 건드리지 않고.
+        """한 필드의 **사람 표시를 걷어낸다** — 그 필드를 추출 상태로, 다른 필드는 그대로.
 
         화면은 취소 버튼 옆에서 "the report is back to the extracted values" 라고 말한다.
         그 문장이 사실이 되려면 되돌리기가 **서버 세션에서** 일어나야 한다. 정정은 세션의
         DocumentView 를 제자리에서 덮어쓰므로, 클라이언트가 자기 화면의 리포트만 되돌리면
         서버는 여전히 정정된 값을 들고 있고 다음 정정 때 그 값이 되살아난다.
+
+        ── 확인한 값을 취소하면?  (이 조합은 확인 기능이 생기기 전까지 정의되지 않았다)
+        **확인도 걷힌다.** 필드는 `extracted` 로 돌아가고, 값은 어차피 처음부터 바뀐 적이
+        없으므로 그대로다. 근거 셋:
+          1. 취소의 뜻은 "내가 이 필드에 한 일을 무르기" 다. 확인은 사람이 한 일이다.
+             정정만 무르고 확인은 남긴다면, 취소 버튼이 어떤 때는 듣고 어떤 때는 안 듣는다.
+          2. 잘못 누른 확인을 되돌릴 길이 있어야 한다. 확인은 "내가 이 값을 봤고 맞다"는
+             주장이므로, 철회할 수 없는 주장으로 만들면 오히려 신뢰가 떨어진다.
+          3. `confirmed_by_renter` 는 추출 상태가 **아니다**. 확인을 남긴 채 "추출된 값으로
+             돌아갔다"고 말하면 화면이 거짓말을 한다.
+        정정 후 확인(값을 되돌려 확인)한 필드도 마찬가지로 한 번의 취소로 `extracted` 가
+        된다 — 사람이 남긴 흔적은 그 필드에 하나뿐이고, 취소는 그 하나를 지운다.
         """
         key = (document_id, field_name)
         snapshot = s.originals.get(key)
@@ -290,12 +453,16 @@ class Store:
             return False
         for f in view.get("fields", []):
             if f.get("field") == field_name:
+                was = f.get("evidence_kind")
                 f["value"] = snapshot["value"]
                 f["certainty"] = snapshot["certainty"]
                 f["evidence_kind"] = snapshot["evidence_kind"]
                 s.originals.pop(key, None)
                 s.corrections.pop(key, None)
-                s.log("correction_undone", document_id=document_id, field=field_name)
+                s.log("confirmation_withdrawn" if was == "confirmed_by_renter"
+                      else "correction_undone",
+                      document_id=document_id, field=field_name,
+                      evidence_kind=f.get("evidence_kind"))
                 return True
         return False
 

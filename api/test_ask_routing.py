@@ -378,3 +378,54 @@ def test_an_unroutable_question_still_abstains_with_a_reason(households):
     assert result["abstained"] is True
     assert result["answer"] is None
     assert result["what_would_resolve_it"]
+
+
+# =====================================================================================
+# household size named in the question, through the whole API layer
+# =====================================================================================
+#
+# The unit-level tests for this live in `logic/test_answer_rules.py`. These assert the
+# same behaviour survives the layers above it: the situation router (which has its own
+# "household of 9" pattern) must not swallow a question the canonical router already
+# owns, and the response must keep its citation.
+
+
+def test_size_in_question_beats_the_session_household_through_handle(households):
+    out = ask_mod.handle("What is the frozen 60% threshold for a household of 3?",
+                         "HH-001", households)
+    assert out["kind"] == "frozen_threshold"
+    assert out["abstained"] is False
+    assert "92,580" in out["answer"] and "72,000" not in out["answer"]
+    assert "household of 1" in out["answer"], "the mismatch with the session must be said"
+    assert "HUD-MTSP-002" in out["rule_ids"] and out["citations"]
+
+
+def test_size_in_question_is_answered_with_no_session_household(households):
+    out = ask_mod.handle("What is the frozen 60% threshold for a household of 3?",
+                         None, households)
+    assert out["abstained"] is False
+    assert out["answer"] == "$92,580 for household size 3."
+
+
+def test_size_nine_gets_the_range_not_silence_and_not_a_number(households):
+    """The canonical router owns this question, so `situations.match` must not take it;
+    the range answer has to come from the threshold path itself."""
+    question = "What is the frozen 60% threshold for a household of 9?"
+    assert canonical_route(question) == "frozen_threshold"
+    assert situations.match(question, canonical_route(question)) is None
+
+    out = ask_mod.handle(question, None, households)
+    assert out["kind"] == "frozen_threshold"
+    assert out["abstained"] is True
+    assert out["answer"] and "1 to 8" in out["answer"]
+    assert "extrapolate" in out["answer"]
+    assert "$" not in out["answer"], "no invented amount"
+
+
+def test_the_size_path_does_not_leak_decision_vocabulary(households):
+    for question in ("What is the frozen 60% threshold for a household of 3?",
+                     "What is the frozen 60% threshold for a household of 9?"):
+        out = ask_mod.handle(question, "HH-001", households)
+        lowered = (out["answer"] or "").lower()
+        for word in ("eligible", "ineligible", "qualif", "approved", "denied"):
+            assert word not in lowered

@@ -172,6 +172,24 @@ def threshold_statement(threshold: Threshold) -> str:
     )
 
 
+def out_of_table_statement(household_size: Any) -> str:
+    """What we say when a question names a size the frozen table has no row for.
+
+    It says what we hold and where its edges are, so the asker can ask something we can
+    answer, instead of stopping at "unknown". It does NOT compute the missing row: HUD's
+    extrapolation rule for households above 8 is real and is deliberately not applied
+    here, because a number sourced from outside the pack would break the one promise this
+    service makes about its figures.
+    """
+    return (
+        f"The frozen table we hold covers households of {MIN_FROZEN_SIZE} to "
+        f"{MAX_FROZEN_SIZE}. For a household of {household_size} it has no row, and we "
+        f"will not extrapolate one. Ask about a size from {MIN_FROZEN_SIZE} to "
+        f"{MAX_FROZEN_SIZE} and the figure is available; for size {household_size} a "
+        f"housing professional can supply the published limit with its source."
+    )
+
+
 def median_family_income() -> tuple[int, str]:
     return MEDIAN_FAMILY_INCOME, SCORED_BAND_RULE_ID
 
@@ -186,5 +204,6 @@ __all__ = [
     "compare_to_threshold",
     "lookup_50_percent",
     "lookup_60_percent",
+    "out_of_table_statement",
     "threshold_statement",
 ]

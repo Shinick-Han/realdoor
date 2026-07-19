@@ -47,9 +47,56 @@ from logic.household import (
 )
 from logic.income import annualize_household
 from logic.readiness import assess_readiness
-from logic.threshold import lookup_60_percent, threshold_statement
+from logic.threshold import (
+    MAX_FROZEN_SIZE,
+    MIN_FROZEN_SIZE,
+    lookup_60_percent,
+    out_of_table_statement,
+    threshold_statement,
+)
 
 HOUSEHOLD_PATTERN = re.compile(r"\b(HH-\d+)\b", re.IGNORECASE)
+
+#: Number words a person actually uses for a household size. Bounded on purpose: past
+#: twelve nobody writes it out, and every token here has to be one a size can be.
+NUMBER_WORDS: dict[str, int] = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+}
+
+_SIZE_TOKEN = r"(\d{1,2}|" + "|".join(NUMBER_WORDS) + r")"
+
+#: A household size stated **in the question itself** ("for a household of 3").
+#:
+#: Every alternative below requires a household word touching the number -- "household",
+#: "family", "person", "people", "occupants", or the literal word "size". A bare integer
+#: never matches. That is what keeps it off the ``qa_gold`` questions, which carry
+#: numbers in ``HH-001``, ``60%``, ``60-day`` and ``FY 2026`` and no size phrase at all;
+#: ``test_answer_rules.py`` asserts non-matching over the whole gold set rather than
+#: trusting this comment.
+QUESTION_SIZE_PATTERN = re.compile(
+    rf"\bhouseholds?\s+(?:size\s+)?of\s+{_SIZE_TOKEN}\b"
+    rf"|\bhouseholds?\s+size\s+(?:is\s+|of\s+)?{_SIZE_TOKEN}\b"
+    rf"|\bfamily\s+of\s+{_SIZE_TOKEN}\b"
+    rf"|\bsize\s+{_SIZE_TOKEN}\b"
+    rf"|\b{_SIZE_TOKEN}[-\s]person\b"
+    rf"|\b{_SIZE_TOKEN}\s+(?:people|persons|occupants)\b",
+    re.IGNORECASE,
+)
+
+
+def question_household_size(question: str) -> int | None:
+    """The household size the question names, or ``None`` if it names none.
+
+    This is the number that used to be thrown away. The threshold is a function of
+    household size, not a property of a particular household, so a size stated in the
+    question is answerable on its own -- with or without a session household.
+    """
+    match = QUESTION_SIZE_PATTERN.search(question or "")
+    if match is None:
+        return None
+    token = next(g for g in match.groups() if g)
+    return int(token) if token.isdigit() else NUMBER_WORDS[token.lower()]
 
 #: Answer kinds computed end-to-end from the documents. Everything else is a sentence
 #: templated from the rule corpus. The distinction is reported, never blurred.
@@ -158,6 +205,46 @@ def _threshold_answer(house: Household) -> Answer:
     return Answer(threshold_statement(result), ("HUD-MTSP-002",), "frozen_threshold")
 
 
+def _asked_size_threshold_answer(asked_size: int, session_size: Any = None) -> Answer:
+    """The threshold for a size the question named, not the size of the session file.
+
+    Two things this owes the reader. First, if the session's own household is a different
+    size, the answer says so outright -- silently answering a different question than the
+    one asked is the defect this path exists to close, and quietly answering the right one
+    while the reader believes it is about their file would be the same defect mirrored.
+    Second, if the size is outside 1-8 it names the range we hold instead of returning
+    nothing, and it still does not invent the row.
+
+    Nothing here says anything about any person. A threshold is a number to compare
+    against; the comparison and the determination are somewhere else and stay there.
+    """
+    result = lookup_60_percent(asked_size)
+    if not result.available:
+        return Answer(
+            text=out_of_table_statement(asked_size),
+            rule_ids=("HUD-MTSP-002",),
+            kind="frozen_threshold",
+            abstained=True,
+            what_would_resolve_it=(
+                result.abstention.what_would_resolve_it if result.abstention else
+                f"ask about a household size from {MIN_FROZEN_SIZE} to {MAX_FROZEN_SIZE}"
+            ),
+        )
+
+    text = threshold_statement(result)
+    try:
+        differs = session_size is not None and int(session_size) != asked_size
+    except (TypeError, ValueError):
+        differs = False
+    if differs:
+        text = (
+            f"{text} Note that this is the figure for the household size of "
+            f"{asked_size} in the question, not for this session's file, which is a "
+            f"household of {int(session_size)}."
+        )
+    return Answer(text, ("HUD-MTSP-002",), "frozen_threshold")
+
+
 def _income_answer(house: Household) -> Answer:
     result = annualize_household(house)
     if result.total is None:
@@ -255,6 +342,19 @@ def answer(question: str, household_id: str | None = None,
 
     found = household_id or (HOUSEHOLD_PATTERN.search(question).group(1).upper()
                              if HOUSEHOLD_PATTERN.search(question) else None)
+
+    # A size stated in the question is answerable on its own -- the frozen limit is a
+    # function of household size, not an attribute of a particular household file. This
+    # runs BEFORE the "no household" abstention on purpose: refusing to read a row that
+    # is sitting in the table, because no session was named, was the second half of the
+    # defect this branch closes.
+    if kind == "frozen_threshold":
+        asked_size = question_household_size(question)
+        if asked_size is not None:
+            session = households.get(found) if found else None
+            return _asked_size_threshold_answer(
+                asked_size, session.size if session is not None else None)
+
     if found is None or found not in households:
         return _abstain(
             kind, "",
@@ -447,9 +547,11 @@ def summary_line(result: dict[str, Any]) -> str:
 __all__ = [
     "Answer",
     "GradedAnswer",
+    "QUESTION_SIZE_PATTERN",
     "answer",
     "equivalent",
     "load_qa_gold",
+    "question_household_size",
     "route",
     "score_against_gold",
     "summary_line",
