@@ -70,9 +70,10 @@ const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
  *  recorded question below: those strings come from the challenge pack and are deliberately
  *  never translated, so matching them by name stays correct in both languages. */
 const SCREENS = [
-  { id: "landing", enter: async () => {} },
-
-  { id: "step1-documents", enter: async (page) => page.locator("#start-demo").click(),
+  // Step 1 is the screen the page opens on. There is no landing screen in front of it any
+  // more: the walkthrough instructions it carried are on the "How this works" page, scanned
+  // at the end of this list.
+  { id: "step1-documents", enter: async () => {},
     setUp: async (page) => {
       await page.locator("#documents-body .field-row-btn").first().click();
     } },

@@ -169,6 +169,59 @@ def _with_aliases(question: str, canonical_kind: str | None) -> str:
     return question
 
 
+# ── 어느 층이 질문을 잡았는가 ────────────────────────────────────────────
+#
+# `handle()` 은 이미 이것을 안다 — 어느 층이 잡았는지에 따라 코드가 갈라지니까. 다만
+# 그 사실이 응답에 실리지 않아서, 정규 라우터가 정확히 잡은 답과 분류기가 닫힌 집합에서
+# 가장 가까운 것을 고른 답이 **화면에서 같은 권위로** 보였다. 아래 `routing` 은 그
+# 구분을 싣는다. **새 판단은 하나도 없다.** 전부 이 함수가 이미 알고 있던 사실이다.
+#
+# 층 이름은 파일 상단 도크스트링의 번호와 같다. `guard` 는 1·2·3 (판정 요구·타 세대·삽입
+# 지시)이다. 이 셋은 라우터가 아니라 정규식 거부라서 `situation` 도 `canonical` 도 아니고,
+# 셋 중 하나라고 적으면 그건 사실이 아니게 된다.
+_PATH_GUARD = "guard"
+_PATH_CANONICAL = "canonical"
+_PATH_SITUATION = "situation"
+_PATH_ALIAS = "alias"
+_PATH_CLASSIFIER = "classifier"
+_PATH_NONE = "none"
+
+
+def _routing(path: str, intent: str | None) -> dict[str, Any]:
+    """어느 층이 이 답을 잡았는지. **표시일 뿐, 정확도 주장이 아니다.**
+
+    `gloss` 는 `route_llm.GLOSSES` 를 읽는다. 없으면 `None` 이다 — 지어내지 않는다.
+    정규식 거부 두 종류(`embedded_instruction_ignored`, `cross_applicant_refused`)는
+    라우터 의도가 아니라 그 표에 없고, 그러면 `None` 이 옳은 값이다.
+
+    `shape_gate` 는 **분류기 경로에만** 붙는다. 다른 층은 형태 게이트를 지나지 않으므로
+    거기에 붙이면 지나가지도 않은 검사의 결과를 보고하는 셈이다. 그 안의 값도 전부
+    `route_llm.PROFILES` 에서 계산된다:
+
+      `shape`/`answers_self`  그 의도의 `AnswerProfile` 그대로. 번역하지 않는다.
+      `shares_profile_with`   같은 쌍을 가진 다른 의도들 (`profile_peers()` 가 그룹핑).
+      `separates_this_intent` 그 목록이 비었는가. **비지 않았다면 형태 게이트는 이
+                              지명을 그 이웃들과 구분할 수 없었다** — 게이트가 통과시킨
+                              것은 "이 의도가 맞다"가 아니라 "이 그룹이 배제되지
+                              않는다"였다는 구조적 사실이다.
+    """
+    field: dict[str, Any] = {
+        "path": path,
+        "intent": intent,
+        "gloss": route_llm.GLOSSES.get(intent or ""),
+    }
+    if path == _PATH_CLASSIFIER:
+        profile = route_llm.PROFILES.get(intent or "")
+        peers = route_llm.profile_peers(intent or "")
+        field["shape_gate"] = {
+            "shape": profile.shape if profile else None,
+            "answers_self": profile.answers_self if profile else None,
+            "separates_this_intent": not peers,
+            "shares_profile_with": list(peers),
+        }
+    return field
+
+
 def _refusal(kind: str, text: str, resolve: str, rule_ids: list[str]) -> dict[str, Any]:
     return _with_plain({
         "kind": kind,
@@ -179,6 +232,7 @@ def _refusal(kind: str, text: str, resolve: str, rule_ids: list[str]) -> dict[st
         "what_would_resolve_it": resolve,
         "citations": _citations(rule_ids),
         "notice": NOTICE,
+        "routing": _routing(_PATH_GUARD, kind),
     })
 
 
@@ -199,8 +253,15 @@ def _with_plain(response: dict[str, Any]) -> dict[str, Any]:
 _ELIGIBILITY_ROUTE = next(r for r in situations.ROUTES if r.kind == "eligibility_refused")
 
 
-def _situation(found: situations.Situation) -> dict[str, Any]:
-    """상황 응답을 API 모양으로. 실측/인용 구분을 지우지 않고 그대로 싣는다."""
+def _situation(found: situations.Situation, path: str = _PATH_SITUATION,
+               intent: str | None = None) -> dict[str, Any]:
+    """상황 응답을 API 모양으로. 실측/인용 구분을 지우지 않고 그대로 싣는다.
+
+    `path` 는 기본이 상황 라우터지만 호출자가 바꿀 수 있다. 같은 상황 문구가 세 경로로
+    도달하기 때문이다 — 상황 라우터가 직접 잡거나, `_DECIDE` 정규식이 잡아 넘기거나
+    (`guard`), 분류기가 지명한 뒤 재확인에서 걸리거나(`classifier`). 답이 같아도
+    **어디서 왔는지는 다르고**, 그 차이가 정확히 이 필드가 싣는 것이다.
+    """
     return _with_plain({
         "kind": found.kind,
         "answer": found.text,
@@ -211,6 +272,7 @@ def _situation(found: situations.Situation) -> dict[str, Any]:
         "citations": _citations(list(found.rule_ids)),
         "evidence": [e.to_dict() for e in found.evidence],
         "notice": NOTICE,
+        "routing": _routing(path, intent if intent is not None else found.kind),
     })
 
 
@@ -265,7 +327,7 @@ def handle(question: str, household_id: str | None,
     # "will not say whether anyone qualifies" 가 들어 있었는데, `qualifies` 는 하네스의
     # 판정 탐지기가 잡는 단어다 — 판정을 거부하는 문장이 판정으로 채점되는 셈이었다.
     if _DECIDE.search(q):
-        return _situation(situations.build(_ELIGIBILITY_ROUTE, households))
+        return _situation(situations.build(_ELIGIBILITY_ROUTE, households), _PATH_GUARD)
 
     # ── 4) 3인칭 상황 서술 ──────────────────────────────────────────────
     # 정규 라우터가 잡은 질문은 가로채지 않는다(알려진 오라우팅 1건 제외).
@@ -288,13 +350,27 @@ def handle(question: str, household_id: str | None,
     # 라우터에게 되물어 동의를 받은 뒤에야 질문이 앵커와 함께 다시 흐른다. 실패·
     # 타임아웃·오프라인은 전부 `None` 이고, `None` 이면 아래 코드가 예전과 똑같이
     # `unrouted` 기권을 낸다.
+    # 여기까지 왔으면 잡은 층은 정규 라우터이거나(canonical), 별칭이거나, 아직 아무도
+    # 아니다. `routed != q` 는 `_with_aliases` 가 실제로 문구를 옮겼다는 뜻이고, 그
+    # 가드가 `canonical is None` 일 때만 돌기 때문에 두 조건은 겹치지 않는다.
+    if canonical is not None:
+        path, intent = _PATH_CANONICAL, canonical
+    elif routed != q:
+        path, intent = _PATH_ALIAS, canonical_route(routed)
+    else:
+        path, intent = _PATH_NONE, None
+
     if canonical is None and routed == q:
         found = route_llm.resolve(q)
         if found is not None:
             routed = found.anchored_question
+            # 지명한 것은 분류기다. 재확인이 상황 라우터로 떨어지든 정규 라우터로
+            # 떨어지든 그 사실은 변하지 않으므로, 경로는 `classifier` 로 남는다.
+            path, intent = _PATH_CLASSIFIER, found.intent
             recheck = situations.match(routed, canonical_route(routed))
             if recheck is not None:
-                return _situation(situations.build(recheck, households))
+                return _situation(situations.build(recheck, households),
+                                  _PATH_CLASSIFIER, found.intent)
 
     ans = answer_rule(routed, household_id, households=households,
                       checklists=load_pack_checklists())
@@ -302,4 +378,5 @@ def handle(question: str, household_id: str | None,
     d["refused"] = False
     d["citations"] = _citations(list(d.get("rule_ids", [])))
     d["notice"] = NOTICE
+    d["routing"] = _routing(path, intent)
     return d

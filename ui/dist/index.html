@@ -53,47 +53,40 @@
          progress and nothing else. Back/Next at the foot of each screen is the navigation. -->
     <div id="step-indicator-host"></div>
 
-    <!-- ── landing ──────────────────────────────────────────────────────────────── -->
-    <section class="screen" id="screen-start" aria-labelledby="h-start">
-      <h1 id="h-start" tabindex="-1">Get your housing documents ready for a person to review</h1>
-      <p class="lede">Hand your file over once, with nothing missing. RealDoor reads the documents
-      for one household, shows you where on the page every value came from, and tells you what is
-      still missing or out of date — so the person who reads it is not sending it back to you for a
-      paper you could have brought the first time. What we cannot tell you is the outcome, and no
-      software can: that decision needs income, household and status checks that are not in these
-      documents. A housing professional makes it.</p>
+    <!-- ── step 1: the first screen ─────────────────────────────────────────────────
+         There used to be a landing screen in front of this one. It carried four things:
+         a heading, a paragraph, the household picker, and two blocks of walkthrough
+         instructions ("Before you start", "What happens, in order"). The instructions were
+         about the demo rather than about the product, and they are now on the "How this
+         works" page, which is where a judge reads that kind of thing. The paragraph said
+         what the standing notice in the header already says on every screen, so it is not
+         repeated here. The picker moved down into this step; the one sentence of the old
+         paragraph the header does *not* carry — what the service actually does with the
+         documents — opens the lede below. The step numbers are unchanged: this was step 1
+         before and it is step 1 now.
+    -->
+    <section class="screen" id="screen-1" aria-labelledby="h-1">
+      <p class="step-caption" id="cap-1">Step 1 of 6</p>
+      <h1 id="h-1" tabindex="-1">Check the values we read from your documents</h1>
+      <p class="lede">RealDoor reads the documents for one household and shows you where on the page
+      every value came from. On this step, each value is shown together with the box it was read
+      from. Choose a field name to light up its box. Nothing here is inferred about the person.</p>
 
-      <!-- The household picker and the data-source line start here, under the H1, rather than
-           in the header: a judge landing on the page should read the heading first, not a
-           control. app.js moves this same element into whichever screen is on show, so it
-           stays reachable from every step without ever sitting above the heading. -->
+      <!-- The household picker and the data-source line sit under the H1 rather than in the
+           header: a judge landing on the page should read the heading first, not a control.
+           app.js moves this same element into whichever screen is on show, so it stays
+           reachable from every step without ever sitting above the heading. -->
       <div class="household-picker">
         <label for="household-select">Household</label>
         <select id="household-select"></select>
         <p class="mode-line" id="mode-line">Data source: loading…</p>
       </div>
 
-      <div class="summary-box" role="region" aria-labelledby="trust-heading">
-        <h2 id="trust-heading">Before you start</h2>
-        <p id="trust-line">This walkthrough takes about ten minutes. The documents for the household
-        you choose above are already loaded, so you can go straight through it without uploading
-        anything. Step 1 also lets you read a synthetic document of your own, held in memory for
-        this session only. Nothing is sent anywhere. You can stop at any step and your work stays
-        on this device.</p>
-      </div>
+      <!-- The pointer to the household that actually shows the checklist doing work. It was
+           under the process list on the landing screen; that list is now on the judges' page,
+           and this sentence is for the renter, so it stays on the first screen they meet. -->
+      <div id="landing-hint"></div>
 
-      <h2>What happens, in order</h2>
-      <ol class="process-list" id="process-list"></ol>
-
-      <div class="step-nav" id="nav-start"></div>
-    </section>
-
-    <!-- ── step 1 ───────────────────────────────────────────────────────────────── -->
-    <section class="screen" id="screen-1" aria-labelledby="h-1" hidden>
-      <p class="step-caption" id="cap-1">Step 1 of 6</p>
-      <h1 id="h-1" tabindex="-1">Check the values we read from your documents</h1>
-      <p class="lede">Each value below is shown together with the box on the page it was read from.
-      Choose a field name to light up its box. Nothing here is inferred about the person.</p>
       <div id="upload-body"></div>
       <div id="documents-body"></div>
       <div class="step-nav" id="nav-1"></div>
@@ -157,6 +150,26 @@
       <p class="lede">This page is for anyone checking the service rather than using it. Every
       control below can be triggered here and its actual response shown — a disclaimer is not a
       control. Underneath are our own measurements, printed as they came out.</p>
+
+      <!-- Both blocks below stood on a landing screen in front of step 1, where they were the
+           first thing a renter met. They are demo instructions — how long the walkthrough
+           takes, what is already loaded, and a table of contents for the six steps — which is
+           material for someone checking the service, not for someone using it. They are moved
+           here rather than deleted: every sentence in them was on screen before and is still
+           on record, and this is the page a judge reads. -->
+      <div class="summary-box" role="region" aria-labelledby="trust-heading">
+        <h2 id="trust-heading">Before you start</h2>
+        <p id="trust-line">This walkthrough takes about ten minutes. The documents for the household
+        you choose above are already loaded, so you can go straight through it without uploading
+        anything. Step 1 also lets you read a synthetic document of your own, held in memory for
+        this session only. Nothing is sent anywhere. You can stop at any step and your work stays
+        on this device.</p>
+      </div>
+
+      <h2>What happens, in order</h2>
+      <p>The six steps of the walkthrough, in the order they are presented. The walkthrough starts
+      on step 1, so this list is a description of it rather than a gate in front of it.</p>
+      <ol class="process-list" id="process-list"></ol>
 
       <div class="summary-box" role="region" aria-labelledby="mapping-heading">
         <h2 id="mapping-heading">Where the challenge's six acceptance steps live</h2>
@@ -230,6 +243,30 @@
       <div id="measure-body"></div>
 
       <div class="step-nav" id="nav-how"></div>
+    </section>
+
+    <!-- ── ask a rule question, from wherever you are ───────────────────────────────
+         Not a `.screen`: it is never hidden and never navigated to, so it is on show on
+         every step and on the judges' page as well. It used to live inside step 3 only,
+         which put the one free-text control in this service three clicks from the first
+         thing anyone saw.
+
+         It sits at the foot of main rather than in the right-hand rail for three reasons.
+         The rail is committed to one subject — what the system is unsure about — and a
+         question box is not that. An answer arrives with citation cards, which need the
+         main column's width and would be unreadable in an 18rem rail. And at 320px the
+         rail stacks under main anyway, so a rail insert would compete for the narrowest
+         screen's space while a full-width band below the step does not.
+
+         Answers render into #ask-answer below, which is part of this section: whichever
+         screen you asked from, the answer appears here, and focus moves to its heading. -->
+    <section class="ask-anywhere" id="ask-anywhere" aria-labelledby="ask-anywhere-heading">
+      <h2 id="ask-anywhere-heading">Ask about a housing rule</h2>
+      <p class="aside-note">You can ask from any step, in your own words. The answer opens
+      below this box, with the rule id, the authority behind it and the date it took effect.
+      Step 3 holds the recorded questions and explains what a citation carries.</p>
+      <div id="ask-box-body"></div>
+      <div id="ask-answer"></div>
     </section>
 
   </main>

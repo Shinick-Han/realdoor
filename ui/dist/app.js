@@ -923,7 +923,7 @@
     uploadActiveField: null,
     selftest: null,
     lastQuestion: null,     // for the step 6 check-answers row
-    screen: "screen-start", // the one screen currently on show
+    screen: "screen-1",     // the one screen currently on show; the walkthrough opens on step 1
     returnTo: null,         // set by a "Change" link so the step returns straight to step 6
     sessionDeleted: false,  // the renter deleted the session; the page holds nothing
     /* step 4, region comparison panel. Read-only: it selects which published HUD table is
@@ -975,8 +975,8 @@
    *  never a second copy to disagree with the first.
    *
    *  It lands under the screen's opening paragraph: below the heading, above the content.
-   *  The landing screen's "the household you choose above" still points backwards, because
-   *  the picker is inserted above the box that says it.
+   *  On the "How this works" page that keeps "the household you choose above" in the
+   *  "Before you start" box pointing backwards, because the picker is inserted above it.
    */
   function placeHouseholdPicker(screenId) {
     var picker = document.querySelector(".household-picker");
@@ -1065,21 +1065,13 @@
 
   /** Back / Next as the real navigation, at the foot of every screen. */
   function renderStepNav() {
-    ["nav-start", "nav-1", "nav-2", "nav-3", "nav-4", "nav-5", "nav-6", "nav-how"]
+    ["nav-1", "nav-2", "nav-3", "nav-4", "nav-5", "nav-6", "nav-how"]
       .forEach(function (id) { var node = byId(id); if (node) clear(node); });
-
-    if (state.screen === "screen-start") {
-      byId("nav-start").appendChild(h("button", {
-        type: "button", class: "action action--lead", id: "start-demo",
-        onclick: function () { goToStep(1); }
-      }, ["Start step 1"]));
-      return;
-    }
 
     if (state.screen === "screen-how") {
       byId("nav-how").appendChild(h("button", {
         type: "button", class: "action action--lead", id: "how-back",
-        onclick: function () { showScreen(state.returnScreen || "screen-start"); }
+        onclick: function () { showScreen(state.returnScreen || "screen-1"); }
       }, ["Go back to where you were"]));
       return;
     }
@@ -1097,13 +1089,15 @@
       }, ["Return to what we found"]));
     }
 
-    host.appendChild(h("button", {
-      type: "button", class: "action secondary", id: "step-back",
-      onclick: function () {
-        if (step.n === 1) showScreen("screen-start");
-        else goToStep(step.n - 1);
-      }
-    }, [step.n === 1 ? "Back to the start" : "Back to step " + (step.n - 1)]));
+    /* Step 1 is the first screen now, so there is nothing behind it to go back to. The
+     * button is dropped rather than pointed at a dead end: "Back to the start" landing you
+     * on the screen you are already standing on is worse than no button. */
+    if (step.n > 1) {
+      host.appendChild(h("button", {
+        type: "button", class: "action secondary", id: "step-back",
+        onclick: function () { goToStep(step.n - 1); }
+      }, ["Back to step " + (step.n - 1)]));
+    }
 
     if (step.n < 6 && state.returnTo !== "screen-6") {
       host.appendChild(h("button", {
@@ -1128,18 +1122,17 @@
    *
    * The default household's file is complete, so a judge who walks straight through meets
    * six screens of "everything is present" and never sees the checklist catch anything —
-   * the one thing this product is for. This says so on the landing screen, and says it only
+   * the one thing this product is for. This says so on the first screen, and says it only
    * while the household on show has nothing open, so it disappears the moment it would stop
    * being true. It names what the other household is missing rather than promising a
-   * better demo. */
+   * better demo.
+   *
+   * Its host used to be created on the fly under the landing screen's process list. That
+   * list is now on the judges' page, where this sentence does not belong — it is renter
+   * advice — so the host is a fixed slot on step 1 instead. */
   function renderLandingHint() {
-    var list = byId("process-list");
-    if (!list || !list.parentNode) return;
     var host = byId("landing-hint");
-    if (!host) {
-      host = h("div", { id: "landing-hint" });
-      list.parentNode.insertBefore(host, list.nextSibling);
-    }
+    if (!host) return;
     clear(host);
     if (!state.report || state.sessionDeleted) return;
     var open = (state.report.checklist || []).filter(function (i) { return i.state !== "present"; });
@@ -2515,10 +2508,61 @@
     announce(headline + ". " + body);
   }
 
-  function renderAsk() {
-    var root = byId("ask-body");
+  /** The empty state of the one answer area.
+   *
+   *  #ask-answer is outside the six .screen sections, so it is on show wherever you are.
+   *  Saying what it is for before anything has been asked is the whole of requirement
+   *  "the renter can tell where the answer will appear": the slot is visible, labelled and
+   *  in the same place on every screen, rather than materialising somewhere off-screen.
+   *
+   *  Nothing is pre-painted into it any more. The old step-3 panel opened with a recorded
+   *  answer already rendered, which was reasonable when the panel was step 3 and only step
+   *  3; now that the area follows you, an answer to a question nobody asked would sit under
+   *  every screen of the walkthrough, and step 6 would have to decide whether to call that
+   *  "the rule you asked about". It does not, and now it does not have to.
+   */
+  function renderAskAnswerEmpty() {
+    var host = byId("ask-answer");
+    if (!host) return;
+    clear(host);
+    host.appendChild(h("p", {
+      class: "hint", style: { marginBottom: "0" },
+      text: state.sessionDeleted
+        ? "You deleted this session, so there is nothing left to answer a question with. " +
+          "Starting again loads the household from the pack as a new session."
+        : "No question has been asked yet. The answer to one appears here, in this same " +
+          "place on every screen, and the page moves you to it when it arrives."
+    }));
+  }
+
+  /** Open or close the question box without redrawing it, so what the renter typed
+   *  survives. Never opens a box the static build had switched off in the first place:
+   *  there is still no server to answer with, and re-enabling it would be a lie about
+   *  which of the two reasons it was closed for. */
+  function setAskEnabled(enabled) {
+    var on = enabled && Source.live;
+    var input = byId("ask-input");
+    if (input) input.disabled = !on;
+    var box = byId("ask-box-body");
+    if (!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll("button"), function (button) {
+      button.disabled = !on;
+    });
+  }
+
+  /** The free-text question box, on every screen.
+   *
+   *  Drawn once at boot into #ask-box-body, which sits outside the six .screen sections and
+   *  is therefore never hidden. It is deliberately *not* redrawn when the household changes:
+   *  the box holds what the renter typed, and emptying it because they touched the picker
+   *  would be a loss nobody asked for. Nothing in it depends on which household is selected
+   *  either — Source.ask reads state.householdId at the moment of asking, so the box always
+   *  asks for whoever is on show, from the one session this page holds.
+   */
+  function renderAskBox() {
+    var root = byId("ask-box-body");
+    if (!root) return;
     clear(root);
-    var examples = Source.askExamples();
 
     if (Source.live) {
       /* A two-row textarea, not a one-line input.
@@ -2612,8 +2656,8 @@
        * all, which is the one thing this step exists to demonstrate.
        *
        * The callout carries what the box cannot do first, then the command that makes it
-       * work, then what the server actually adds here. The recorded-question buttons below
-       * are untouched: they are the path that does work in this build. */
+       * work, then what the server actually adds here. The recorded-question buttons on
+       * step 3 are untouched: they are the path that does work in this build. */
       root.appendChild(h("div", { class: "callout" }, [
         h("h3", { text: "This copy has no server, so it cannot answer a question you type" }),
         h("p", {
@@ -2624,7 +2668,12 @@
                 "becomes live:"
         }),
         h("p", { class: "mono", text: "python -m uvicorn api.app:app --port 8077" }),
-        h("p", { class: "hint", text: "Then open http://127.0.0.1:8077 and return to step 3." }),
+        h("p", { class: "hint", text: "Then open http://127.0.0.1:8077 and ask from any screen." }),
+        h("p", {
+          class: "hint",
+          text: "Without a server, the questions this build did record can still be asked " +
+                "from step 3, and their answers open here."
+        }),
         h("p", {
           text: "Typing here is also the one place a model is involved. The deterministic " +
                 "router only knows a fixed set of phrasings; when you ask in wording it " +
@@ -2653,6 +2702,32 @@
         h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." })
       ]));
     }
+  }
+
+  /** Step 3: the recorded questions, and what makes an answer checkable.
+   *
+   *  The free-text box left this panel for the foot of every screen, and this is the half
+   *  that stayed. The split is by role, not by convenience. Typing a question is something
+   *  you want to do at the moment the question occurs to you, which is on whatever screen
+   *  you happen to be reading — so it follows you. The recorded set is different: those
+   *  questions are the graded ones from pack/evaluation/qa_gold.jsonl, and offline they are
+   *  the only ones this build can answer at all, with the session-bound ones withheld from
+   *  any household but the one they were recorded for. That is a piece of reasoning about
+   *  provenance, it needs a screen with room to explain itself, and step 3 is that screen.
+   *
+   *  Both halves render into the same #ask-answer below, so there is never a second answer
+   *  area to disagree with the first.
+   */
+  function renderAsk() {
+    var root = byId("ask-body");
+    clear(root);
+    var examples = Source.askExamples();
+
+    root.appendChild(h("p", {
+      class: "hint",
+      text: "To ask in your own words, use the box at the foot of this page. It is on every " +
+            "screen, and its answers open in the same place these ones do."
+    }));
 
     root.appendChild(h("h3", { text: "Recorded questions", style: { marginTop: "0" } }));
 
@@ -2700,20 +2775,6 @@
         }
       }, [example.question]);
     })));
-    root.appendChild(h("div", { id: "ask-answer" }));
-
-    /* The answer painted before anyone presses anything. It has to obey the same rule: on
-     * HH-001 it is the recorded threshold answer, and on any other household there is no
-     * recorded answer to open with, so the panel opens with none. */
-    var first = examples.filter(function (e) { return e.key === "answer_threshold"; })[0] || examples[0];
-    var firstIsWithheld = first && first.sessionBound &&
-                          state.householdId !== Source.recordedAskHousehold;
-    if (first && !firstIsWithheld) {
-      var host = byId("ask-answer");
-      renderAskResponse(host, first.question, first.response, { silent: true });
-      byId("live-status").textContent = "";   // do not announce on first paint
-      if (document.activeElement === byId("ask-answer-heading")) byId("ask-answer-heading").blur();
-    }
   }
 
   // ── panel 4: the calculation ────────────────────────────────────────────────────
@@ -3333,6 +3394,13 @@
      * deletion, so the control is closed until the renter starts again. */
     var picker = byId("household-select");
     if (picker) picker.disabled = true;
+    /* The question box follows the renter onto every screen, including this one. Left as it
+     * was, a deleted session would be announced with a live-looking box beside it and a
+     * stale answer underneath it — an answer computed inside the session that no longer
+     * exists. Both are closed here, and the empty state says which of the two reasons it is
+     * closed for. */
+    setAskEnabled(false);
+    renderAskAnswerEmpty();
     renderAll();
   }
 
@@ -3344,6 +3412,7 @@
     state.sessionDeleted = false;
     var picker = byId("household-select");
     if (picker) picker.disabled = false;
+    setAskEnabled(true);
     var householdId = state.householdId ||
       (state.households[0] && state.households[0].household_id);
     return loadHousehold(householdId).then(function () {
@@ -4100,10 +4169,15 @@
      * time. Carrying it across a household change would leave step 6 attributing one
      * household's question to another, so it goes with the rest of the per-household state. */
     state.lastQuestion = null;
+    /* The answer on show was computed for the household that was selected when it was
+     * asked. `state.lastQuestion` is already cleared for exactly that reason; the rendered
+     * answer has to go with it, or the foot of every screen keeps one household's figure
+     * under another household's name — the thing the withholding logic below exists to
+     * stop. The box itself is left alone: it holds what the renter typed. */
+    renderAskAnswerEmpty();
     return Source.report(householdId).then(function (report) {
       state.report = report;
-      /* Step 3 is drawn outside renderAll because it holds what the renter typed. It does
-       * depend on the household, though — which recorded answers can honestly be shown is a
+      /* Step 3 depends on the household — which recorded answers can honestly be shown is a
        * function of who is selected — so a household change has to redraw it. */
       renderAsk();
       renderAll();
@@ -4113,6 +4187,10 @@
   function boot() {
     setUpMetaNav();
     renderProcessList();
+    /* The question box is drawn once and never again: it is outside the .screen sections,
+     * it holds what the renter typed, and nothing in it varies by household or by step. */
+    renderAskBox();
+    renderAskAnswerEmpty();
     renderAsk();
     renderControls();
     // The upload panel is drawn once, outside renderAll: it holds a file the renter chose,
@@ -4126,7 +4204,7 @@
       state.uploadTypes = info;
       renderUpload();
     }).catch(function () { /* the panel is already on screen with the built-in list */ });
-    showScreen("screen-start", { focus: false, announce: false });
+    showScreen("screen-1", { focus: false, announce: false });
 
     Source.selftest().then(function (data) {
       state.selftest = data;

@@ -194,6 +194,32 @@ _SITUATION_PROFILES: dict[str, AnswerProfile] = dict(_SITUATION_PROFILE_TABLE)
 #: 모든 의도 → 답 프로파일. 정규 쪽은 사본이 아니라 **참조**다.
 PROFILES: dict[str, AnswerProfile] = {**CANONICAL_PROFILES, **_SITUATION_PROFILES}
 
+def profile_peers(intent: str) -> tuple[str, ...]:
+    """Other intents carrying the **same** answer profile as this one.
+
+    This is the one structural fact `confirm()`'s docstring already admits in prose but
+    never puts in the response: the shape gate reads `(shape, answers_self)` and nothing
+    else, so two intents sharing that pair are, to that gate, the same intent. It can
+    veto a naming that asks for a date when the answer is money; it cannot tell
+    `frozen_corpus_enforced` from `vacancy_claim`, because both are third-person policy
+    sentences that say nothing about the asker.
+
+    Derived by grouping `PROFILES`, never listed by hand. `AnswerProfile` is a frozen
+    dataclass, so `==` is the pair itself. Add an intent to either profile table and it
+    joins its group here on the next call; move an intent to a different shape and it
+    leaves. There is no second copy to update, which is the same discipline
+    `known_intents()` uses against the label set.
+
+    An intent with no profile returns `()` — indistinguishable from "alone in its
+    group", and deliberately so. Both mean the shape gate had nothing to compare, and
+    inventing a third state here would be exactly the kind of claim this does not make.
+    """
+    mine = PROFILES.get(intent)
+    if mine is None:
+        return ()
+    return tuple(sorted(i for i, p in PROFILES.items() if p == mine and i != intent))
+
+
 _INSTRUCTION = (
     "You are a topic classifier for a housing-document questions service. "
     "Read the renter's question and pick the one label from the list whose topic it "

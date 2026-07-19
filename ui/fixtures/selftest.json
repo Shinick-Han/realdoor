@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-19T09:08:00Z",
+ "generated_at": "2026-07-19T09:51:17Z",
  "sections": {
   "extraction": {
    "status": "measured",
@@ -51,7 +51,7 @@
    "could_not_re_fetch": 1,
    "newest_result_checked_at": "2026-07-19T08:08:34Z",
    "oldest_result_checked_at": "2026-07-19T08:08:05Z",
-   "oldest_result_age_days": 0.042,
+   "oldest_result_age_days": 0.072,
    "outcome_by_citation": "HUD-MTSP-001 matched · HUD-MTSP-002 matched · HUD-MTSP-003 matched · HUD-DATA-001 matched · HUD-GEO-001 matched · FED-LIHTC-001 could not be re-fetched · FED-MONITOR-001 matched · CH-INCOME-001 out of scope, our own rule · CH-READINESS-001 out of scope, our own rule · CH-SAFETY-001 out of scope, our own rule · CH-DECISION-001 out of scope, our own rule",
    "citations_not_confirmed": "FED-LIHTC-001: Nothing was compared, because the source did not answer within the 45 second limit. This is a citation we could not check, not a citation that failed.",
    "artefact": "eval/citation_recheck.json",
@@ -62,7 +62,7 @@
    "status": "measured",
    "tool": "axe-core",
    "standard": "WCAG 2.2 AA",
-   "scans": 32,
+   "scans": 28,
    "violations": 0,
    "incomplete": 12,
    "artefact": "ui/axe-report.json",

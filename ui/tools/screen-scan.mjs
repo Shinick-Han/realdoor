@@ -90,14 +90,14 @@ page.on("pageerror", (error) => pageErrors.push(String(error)));
 const households = [];
 
 for (const householdId of HOUSEHOLDS) {
-  // A fresh load per household, then the app's own controls: #start-demo to enter, the
-  // header picker to choose the file, #step-next to advance. Toggling `.screen[hidden]`
+  // A fresh load per household, then the app's own controls: the walkthrough opens on step
+  // 1, so there is nothing to press to enter it. The picker chooses the file and #step-next
+  // advances. Toggling `.screen[hidden]`
   // directly would be quicker and wrong — the router *moves* the household picker into
   // the current screen, so a hand-hidden screen takes the picker down with it, and more
   // to the point a walk that skips the navigation is not a walk through the flow.
   await page.goto(url);
   await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);
-  await page.locator("#start-demo").click();
   await page.locator("#household-select").waitFor({ state: "visible" });
   await page.selectOption("#household-select", householdId);
   await page.waitForTimeout(250);

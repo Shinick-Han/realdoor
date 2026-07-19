@@ -36,7 +36,6 @@ await page.waitForFunction(() => document.querySelectorAll("#documents-body tabl
 await page.selectOption("#household-select", "HH-004");
 await page.waitForFunction(() => window.REALDOOR_LAST_REPORT &&
   window.REALDOOR_LAST_REPORT.household_id === "HH-004", { timeout: 15000 });
-await page.locator("#start-demo").click();
 await page.waitForTimeout(250);
 await next();   // step 2
 

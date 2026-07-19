@@ -66,7 +66,7 @@ async function hasVisibleFocusRing() {
   });
 }
 
-// ── step 0: the landing screen, and the absence of a tab bar ────────────────────
+// ── step 0: what the first screen is, and the absence of a tab bar ──────────────
 await page.keyboard.press("Tab");
 const firstStop = await focusInfo();
 record("Skip link is the first tab stop", /Skip to main content/.test(firstStop.text), firstStop.text);
@@ -78,28 +78,59 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
   record("No tab bar exists — the flow is linear, not parallel",
     tablists === 0 && tabs === 0, `${tablists} tablists, ${tabs} tabs`);
 
-  const processItems = await page.locator("#process-list .process-item").count();
-  const leadButtons = await page.locator("#screen-start .action--lead").count();
-  const trust = ((await page.locator("#trust-line").textContent()) || "").replace(/\s+/g, " ");
-  record("Landing screen: a six-item process list, one primary button, and a trust line",
-    processItems === 6 && leadButtons === 1 &&
-    /about ten minutes/i.test(trust) && /nothing is sent anywhere/i.test(trust),
-    `${processItems} process items, ${leadButtons} primary button`);
+  /* There used to be a landing screen in front of step 1 carrying a process list and a
+   * "Before you start" trust line. Both were demo instructions, and both now live on the
+   * judges' page. This check is not "the landing is gone" — it is the stronger pair: the
+   * walkthrough opens on step 1, *and* nothing that used to be on the landing was thrown
+   * away, it is on screen-how and still says the same words. */
+  const opensOn = await currentScreen();
+  const processItems = await page.locator("#screen-how #process-list .process-item").count();
+  const trust = ((await page.locator("#screen-how #trust-line").textContent().catch(() => "")) || "")
+    .replace(/\s+/g, " ");
+  record("The walkthrough opens on step 1, with no screen in front of it",
+    opensOn === "screen-1", `first screen on show: ${opensOn}`);
+  record("The landing's process list and trust line were moved to the judges' page, not dropped",
+    processItems === 6 && /about ten minutes/i.test(trust) && /nothing is sent anywhere/i.test(trust),
+    `${processItems} process items and the trust line, both inside #screen-how`);
+
+  /* The point of the whole change: the free-text question control is on the first screen
+   * with nothing pressed. On this static build it is switched off rather than hidden, so
+   * what is asserted is that it is *present and reachable*, and that the page says which of
+   * the two it is. */
+  const askOnFirstScreen = await page.evaluate(() => {
+    const input = document.getElementById("ask-input");
+    if (!input) return null;
+    const box = document.getElementById("ask-anywhere");
+    return {
+      visible: input.offsetHeight > 0 && Boolean(box) && box.offsetHeight > 0,
+      disabled: input.disabled,
+      insideAScreen: Boolean(input.closest(".screen")),
+      saysWhy: /switched off rather than hidden/.test(box ? box.textContent : "")
+    };
+  });
+  record("A question box is on the first screen, with no control pressed to reach it",
+    Boolean(askOnFirstScreen) && askOnFirstScreen.visible && !askOnFirstScreen.insideAScreen,
+    askOnFirstScreen ? `visible, outside every .screen, disabled=${askOnFirstScreen.disabled}` : "no #ask-input");
+  record("Offline the box is switched off rather than hidden, and says so",
+    Boolean(askOnFirstScreen) && askOnFirstScreen.disabled && askOnFirstScreen.saysWhy,
+    "static build: control present, disabled, with the command that turns it on");
 }
 
 // ── step 1: documents and evidence ──────────────────────────────────────────────
 {
-  const started = await pressById("start-demo");
   const screen = await currentScreen();
   const caption = (await page.locator("#cap-1").textContent()) || "";
   const heading = (await page.locator("#screen-1 h1").textContent()) || "";
-  const focusedIsHeading = await page.evaluate(() => document.activeElement.id === "h-1");
   const segments = await page.locator(".segment").count();
   const currentSeg = (await page.locator(".segment--current").textContent()) || "";
   const indicatorControls = await page.locator(".step-indicator a, .step-indicator button").count();
-  record("Step 1 — reached by keyboard, with a step caption, a unique H1 and focus moved to it",
-    started && screen === "screen-1" && /Step 1 of 6/.test(caption) &&
-    /Check the values we read/.test(heading) && focusedIsHeading,
+  /* Focus is not asserted here any more, and deliberately: step 1 is now the screen the
+   * page loads on, and moving focus off the document start on load is a thing to avoid,
+   * not a thing to test for. Focus-on-arrival is still asserted at every step reached by
+   * pressing Next, which is every other step in this walk. */
+  record("Step 1 is the opening screen, with a step caption and a unique H1",
+    screen === "screen-1" && /Step 1 of 6/.test(caption) &&
+    /Check the values we read/.test(heading),
     `${caption.trim()} / "${heading.trim()}"`);
   record("Step 1 — step indicator shows six segments and is not itself navigable",
     segments === 6 && indicatorControls === 0 && /current step/.test(currentSeg),
@@ -375,7 +406,7 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
 
 // ── constraint checks that must hold on every screen ────────────────────────────
 {
-  const SCREEN_IDS = ["screen-start", "screen-1", "screen-2", "screen-3", "screen-4",
+  const SCREEN_IDS = ["screen-1", "screen-2", "screen-3", "screen-4",
                       "screen-5", "screen-6", "screen-how"];
 
   // Every screen must announce itself with its own heading. GOV.UK: do not reuse a page
@@ -409,7 +440,7 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
     const offenders = await page.evaluate((pattern) => {
       const re = new RegExp(pattern);
       const found = [];
-      for (const id of ["screen-start", "screen-1", "screen-2", "screen-3", "screen-4",
+      for (const id of ["screen-1", "screen-2", "screen-3", "screen-4",
                         "screen-5", "screen-6", "screen-how"]) {
         document.querySelectorAll(".screen").forEach((s) => { s.hidden = s.id !== id; });
         // scope to what is actually on show: the current screen, the summary above it,
