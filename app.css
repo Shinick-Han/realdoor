@@ -457,6 +457,21 @@ details.tech > * { margin-top: .4rem; }
 .callout--ok   { border-left-color: var(--ok);   background: var(--ok-bg); }
 .callout h3 { margin-top: 0; }
 .callout > :last-child { margin-bottom: 0; }
+/* api/plain.py 의 세입자용 한 문장. 정밀한 원문 위에 서되 제목을 대신하지는 않으므로,
+   굵기만 올리고 크기는 본문과 같게 둔다. */
+.answer-lead { font-weight: 600; margin-bottom: .5rem; }
+
+/* 성적표의 값 셀. 빈 리스트는 "안 쟀다"가 아니라 "찾았는데 없었다"이므로, 빈 칸이 아니라
+   말로 적히고 회색으로 죽이지 않는다. */
+.measure-none { color: var(--ink-soft); font-style: italic; }
+.measure-list { margin: 0; padding-left: 1.1rem; }
+.measure-list li { overflow-wrap: anywhere; }
+/* 중첩 표는 이미 좁은 dd 칸 안에 들어간다. 거기서 줄바꿈까지 하면 "flesch kincaid grade"
+   가 글자 단위로 쪼개져 읽히지 않는다. 줄바꿈을 막고 넘치는 폭은 .table-scroll 이
+   가져가게 한다 — 표는 SC 1.4.10 이 자기 컨테이너 안 가로 스크롤을 허용하는 콘텐츠다. */
+details.tech .table-scroll th,
+details.tech .table-scroll td { white-space: nowrap; }
+details.tech .table-scroll { margin-bottom: 0; }
 
 table { border-collapse: collapse; width: 100%; font-size: .92rem; }
 .table-scroll { overflow-x: auto; margin-bottom: 1rem; }
@@ -660,10 +675,37 @@ tr.is-active td { background: #fdf0ea; }
 }
 .hint { font-size: .82rem; color: var(--ink-soft); margin: .2rem 0 0; }
 
-.ask-input-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem; }
-/* flex 자식의 기본 min-width 도 auto 다. 22rem(352px) 은 320px 뷰포트보다 넓으므로
-   min-width:0 이 없으면 basis 아래로 줄어들지 못한다. */
-.ask-input-row > div { flex: 1 1 22rem; min-width: 0; }
+/* 질문 입력행. 라벨은 블록으로 위, 입력창+Ask 버튼은 그 아래 한 행.
+   입력창은 페이지의 다른 폼 컨트롤(.household-picker select, .field-grid input)과 같은
+   계열이다 — 2px 테두리, var(--radius), font:inherit. 새 시각언어는 만들지 않는다. */
+.ask-input-row { margin-bottom: 1rem; }
+.ask-label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: .3rem; }
+.ask-control { display: flex; gap: .5rem; align-items: stretch; }
+.ask-control textarea {
+  font: inherit;
+  flex: 1 1 auto;
+  /* flex 자식의 기본 min-width 는 auto 이고, textarea 의 고유 폭(cols 기본값 20)은
+     320px 에서 버튼과 함께 컨테이너를 밀어낸다. min-width:0 이 그것을 푼다. */
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: .4rem .5rem;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  /* 세로로만 늘릴 수 있게: 가로 리사이즈는 320px 리플로우를 사용자가 깨뜨릴 수 있다. */
+  resize: vertical;
+  line-height: 1.4;
+}
+.ask-control .action { flex: 0 0 auto; align-self: stretch; }
+/* 좁은 폭에서는 한 줄에 들어가는 글자 수가 줄어 예시 질문이 2행을 넘긴다. 행을 하나 더
+   주어 칩을 눌렀을 때 질문 전문이 보이게 한다 — 잘린 질문은 이 화면의 논지를 깎는다. */
+@media (max-width: 640px) {
+  .ask-control { flex-wrap: wrap; }
+  .ask-control textarea { min-height: 5rem; flex-basis: 100%; }
+  .ask-control .action { width: 100%; }
+}
 
 /* Example questions under the ask box. Every one of them is a question from the graded set
    in pack/evaluation/qa_gold.jsonl, so pressing one cannot land on an abstention. They are
