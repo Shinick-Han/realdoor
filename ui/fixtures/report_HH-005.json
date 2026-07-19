@@ -1,9 +1,11 @@
 {
  "household_id": "HH-005",
- "generated_at": "2026-07-18T21:25:18Z",
+ "generated_at": "2026-07-19T01:56:38Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
+ "annualized_income": 45968.0,
+ "comparison": "below_or_equal",
  "review_reasons": [
   {
    "check": "current",
@@ -642,6 +644,67 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:5888d56a60f6",
- "session_id": "7e9a4e3a114e"
+ "engine_version": "sha:adae4d0d7f69",
+ "session_id": "485e2962952e",
+ "plain": {
+  "messages": [
+   {
+    "headline": "Your employer's letter is too old to use",
+    "body": "It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it.",
+    "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+    "code": "EMPLOYMENT_LETTER_EXPIRED",
+    "detail": "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+    "kind": "problem"
+   }
+  ],
+  "abstentions": [
+   {
+    "headline": "Your employer's letter is too old to use",
+    "body": "It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it.",
+    "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+    "code": "EMPLOYMENT_LETTER_EXPIRED",
+    "detail": "the document is dated outside the challenge's 60-day currency window (HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18))",
+    "kind": "problem",
+    "what_would_resolve_it": "the renter uploads a document dated on or after 2026-05-19",
+    "about": "CHK-EMPLOYMENT-LETTER"
+   }
+  ],
+  "checklist": {
+   "CHK-APPLICATION-SUMMARY": {
+    "headline": "We have your application form",
+    "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-005-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+    "kind": "status"
+   },
+   "CHK-PAY-STUB": {
+    "headline": "We have your pay stub",
+    "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-005-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-005-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+    "kind": "status"
+   },
+   "CHK-EMPLOYMENT-LETTER": {
+    "headline": "Your employer's letter is too old to use",
+    "body": "It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it.",
+    "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+    "code": "EMPLOYMENT_LETTER_EXPIRED",
+    "detail": "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+    "kind": "problem"
+   }
+  },
+  "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+  "status": {
+   "headline": "Your file needs a few things before a person can read it",
+   "body": "Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork.",
+   "action": "Work through your list below. Each item says exactly what to send or who to ask.",
+   "code": "NEEDS_REVIEW",
+   "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
+   "kind": "status",
+   "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
+  },
+  "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork. Work through your list below. Each item says exactly what to send or who to ask. Your employer's letter is too old to use. It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it. Ask your employer for a new letter dated 19 May 2026 or later, then upload it."
+ }
 }

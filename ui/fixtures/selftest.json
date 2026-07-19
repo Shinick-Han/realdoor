@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-18T21:25:18Z",
+ "generated_at": "2026-07-19T01:56:40Z",
  "sections": {
   "extraction": {
    "status": "measured",
@@ -49,11 +49,135 @@
    "status": "measured",
    "tool": "axe-core",
    "standard": "WCAG 2.2 AA",
-   "scans": 14,
+   "scans": 32,
    "violations": 0,
-   "incomplete": 6,
+   "incomplete": 12,
    "artefact": "ui/axe-report.json",
    "note": "Incomplete means axe declined to judge, not that a check passed. Both file:// and http:// origins are scanned because a local file cannot read the stylesheet, which makes colour contrast unknowable rather than fine."
+  },
+  "plain_language": {
+   "status": "measured",
+   "codes_with_plain_wording": 21,
+   "situations_with_plain_wording": 12,
+   "messages_checked": 35,
+   "renter_facing_strings": 105,
+   "free_of_raw_identifiers": 1.0,
+   "uses_second_person_per_string": 0.9524,
+   "uses_second_person_per_message": 1.0,
+   "active_voice_best_effort": 0.9526,
+   "problem_messages_carrying_an_action": 1.0,
+   "action_gaps": [],
+   "actions_needing_a_trained_person": [
+    "HOUSEHOLD_SIZE_OUTSIDE_FROZEN_TABLE",
+    "NO_FROZEN_THRESHOLD",
+    "PAY_FREQUENCY_NOT_RECOGNIZED",
+    "no_frozen_threshold"
+   ],
+   "household_id_leaks": [],
+   "readability": {
+    "status": "measured",
+    "screens": [
+     {
+      "screen": "answer_screens",
+      "words": 941,
+      "sentences": 70,
+      "flesch_kincaid_grade": 5.35,
+      "smog_grade": 8.01,
+      "spread_between_the_two": 2.66,
+      "smog_is_extrapolated": false
+     },
+     {
+      "screen": "document_problem_screen",
+      "words": 458,
+      "sentences": 37,
+      "flesch_kincaid_grade": 4.59,
+      "smog_grade": 7.11,
+      "spread_between_the_two": 2.52,
+      "smog_is_extrapolated": false
+     },
+     {
+      "screen": "income_problem_screen",
+      "words": 825,
+      "sentences": 60,
+      "flesch_kincaid_grade": 4.98,
+      "smog_grade": 7.46,
+      "spread_between_the_two": 2.48,
+      "smog_is_extrapolated": false
+     },
+     {
+      "screen": "limit_problem_screen",
+      "words": 330,
+      "sentences": 24,
+      "flesch_kincaid_grade": 5.68,
+      "smog_grade": 7.79,
+      "spread_between_the_two": 2.11,
+      "smog_is_extrapolated": true
+     },
+     {
+      "screen": "status_screens",
+      "words": 200,
+      "sentences": 20,
+      "flesch_kincaid_grade": 3.24,
+      "smog_grade": 6.51,
+      "spread_between_the_two": 3.27,
+      "smog_is_extrapolated": true
+     }
+    ],
+    "screens_too_short_to_measure": [],
+    "minimum_sample_words": 100,
+    "widest_spread": 3.27,
+    "note": "Two formulas, reported together with the gap between them. A per-string grade is not defensible and is not produced. SMOG needs 30 sentences to be used as defined; screens below that are marked as extrapolated. WCAG 2.2 SC 3.1.5 Reading Level is Level AAA and is not required at AA -- we adopt it voluntarily and do not claim AA obliges it."
+   },
+   "note": "Only 'problem_messages_carrying_an_action' is a requirement: WCAG 2.2 SC 3.3.3 Error Suggestion is Level AA, and it must read 1.0. Second person and active voice are Federal Plain Language Guidelines style goals we adopted voluntarily; the FPLG sets no reading-grade target and no sentence-length rule. SC 3.1.5 Reading Level is Level AAA and is not required at AA. The active-voice figure is a regex heuristic with documented blind spots, not a measurement of grammar. Readability is reported as two formulas plus their spread, per screen, on samples of at least 100 words, because a single per-string grade is not defensible."
+  },
+  "rendered_screens": {
+   "status": "measured",
+   "tool": "screen-scan",
+   "origin": "file:// (offline, bundled fixtures — the state the submitted build opens in)",
+   "households_walked": [
+    "HH-001",
+    "HH-004",
+    "HH-005"
+   ],
+   "steps_per_household": 6,
+   "identifier_patterns": [
+    "HH-\\d{3}-D\\d{2}",
+    "CHK-[A-Z][A-Z-]+",
+    "CH-[A-Z]+-\\d+"
+   ],
+   "visible_machine_identifiers": 72,
+   "visible_machine_identifiers_by_step": "step1-documents 21, step2-correct 13, step3-ask 0, step4-calculation 37, step5-checklist 0, step6-check-and-packet 1",
+   "screens_needing_older_wording": 0,
+   "plain_wording_gaps": [],
+   "page_errors": 0,
+   "artefact": "ui/screen-scan.json",
+   "note": "This is the DOM-level twin of the plain_language section above, and the two must be read together: that one measures whether the renter-facing wording is clean, this one measures whether it reaches the screen. Text inside a collapsed disclosure is not counted, because it is not visible — every machine code and every original message is still there, one click away. Household ids are counted separately and excluded, because the header picker names the file being read. This number is published, not gated: no target has been agreed for it, and the remaining count is concentrated on the evidence and calculation screens, where a document id is the subject of the row rather than an intrusion into a sentence."
+  },
+  "intent_router": {
+   "status": "measured",
+   "enabled": true,
+   "model": "gpt-4o-mini",
+   "known_intents": 21,
+   "questions_reaching_the_classifier": 0,
+   "calls": 0,
+   "cache_hits": 0,
+   "cache_hit_rate": null,
+   "classifier_said_unknown": 0,
+   "rejected_label_outside_closed_set": 0,
+   "rejected_deterministic_router_disagreed": 0,
+   "rejected_no_anchor": 0,
+   "accepted": 0,
+   "offline_or_uncached": 0,
+   "timeouts": 0,
+   "errors": 0,
+   "anchor_audit_ok": true,
+   "anchor_audit_detail": {
+    "intents": 21,
+    "anchors_missing": [],
+    "anchors_for_unknown_intents": [],
+    "anchors_not_round_tripping": []
+   },
+   "note": "The classifier returns one label from a closed set and never writes a sentence; every sentence a renter reads is still built by deterministic code. A label is only acted on after the deterministic router is asked again and agrees, so the classifier can point at existing answers but cannot create one. It is reached only when every deterministic layer is silent, which is why the graded question set does not touch it. Only the question text is sent; no document content or household data leaves this process. Counters are since process start, not since the pack was written. When the router is switched off these figures read not_run rather than zero-as-success."
   }
  },
  "honesty_note": "Every number here is produced by re-running the measurement, not copied from a previous run. Sections that cannot be measured are marked not_run rather than filled in."

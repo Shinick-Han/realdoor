@@ -78,9 +78,24 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable
 
+from logic.abstain import POLICY
 from logic.checklist import LABELS
 from logic.constants import CURRENCY_FLOOR, CURRENCY_WINDOW_DAYS, REFERENCE_DATE
 from logic.readiness import GENERIC_CODE_BY_TRIGGER, PACK_CODE_BY_TRIGGER
+
+#: A checklist item that is satisfied. Not a code ``logic/`` emits — see `_r_item_present`.
+ITEM_PRESENT_CODE = "DOCUMENT_PRESENT_AND_CURRENT"
+
+#: Which abstention trigger each non-present checklist state raises. Mirrors the branches
+#: in ``logic/checklist.py::evaluate_item``; ``api/test_plain.py`` asserts every state in
+#: the frozen ``ITEM_STATES`` set is accounted for here, so a new state cannot land on
+#: screen with no wording.
+CHECKLIST_STATE_TRIGGER = {
+    "missing": "required_document_missing",
+    "expired": "document_not_current",
+    "undatable": "document_date_month_precision",
+    "unreadable": "document_unreadable",
+}
 
 # =====================================================================================
 # vocabulary — how a person refers to these things
@@ -444,6 +459,28 @@ def _r_required_missing(ctx: Context, detail: str) -> Rendered:
     )
 
 
+def _r_item_present(ctx: Context, detail: str) -> Rendered:
+    """A checklist item that is settled.
+
+    This code is never emitted by ``logic/``: a satisfied item raises nothing, because
+    there is nothing to raise. It exists because the checklist screen still has to say
+    something about the item, and the only alternative on offer was the machine sentence
+    ("HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining"),
+    which puts a document id in front of a renter to tell them good news.
+    """
+    dtype = ctx.type_from_detail(detail)
+    name = DOC_NAMES.get(dtype or "", "document")
+    doc_id = ctx.first_doc(detail or "")
+    when = _pretty_date((ctx.documents.get(doc_id or "") or {}).get("date"))
+    dated = f" It is dated {when}." if when else ""
+    return (
+        f"We have your {name}",
+        f"It is in your file and it is recent enough to use.{dated} "
+        f"{CURRENCY_SENTENCE}",
+        "You do not need to do anything about this one.",
+    )
+
+
 def _r_not_current(ctx: Context, detail: str) -> Rendered:
     dtype = ctx.type_from_detail(detail)
     name = DOC_NAMES.get(dtype or "", "document")
@@ -665,6 +702,10 @@ class Entry:
     sample_detail: str
     action_is_handoff: bool = False
     precision_note: str = ""
+    #: "problem" for anything that holds the file up, "status" for a state that needs
+    #: no correction. Only problems carry the SC 3.3.3 obligation, so a settled
+    #: checklist item is not forced to invent an action it does not have.
+    kind: str = "problem"
 
 
 REGISTRY: dict[str, Entry] = {
@@ -785,21 +826,63 @@ REGISTRY: dict[str, Entry] = {
         _r_income_unavailable,
         "no annualized amount could be computed, so no comparison is possible",
     ),
+    # Not a reason code. See `_r_item_present` for why a settled item still needs wording.
+    ITEM_PRESENT_CODE: Entry(
+        _r_item_present,
+        "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining",
+        kind="status",
+    ),
 }
 
 
-def code_for_trigger(trigger_name: str) -> str:
+def code_for_trigger(trigger_name: str, about: str = "") -> str:
     """Resolve an abstention trigger to the code the reasoning layer would emit.
 
     Imported from ``logic.readiness`` rather than duplicated, so a code renamed there
     cannot silently leave this layer behind. ``api/test_plain.py`` asserts every trigger
     in the policy lands on a registered code.
+
+    ``about`` reproduces the two subject-specific narrowings in
+    ``logic/readiness.py::_code_for``: the pack names one particular expired document and
+    one particular missing one, and uses its own vocabulary for both. Without ``about`` we
+    would show the renter the generic wording for a case the pack has specific wording
+    for. ``api/test_plain.py`` asserts the two layers still agree.
     """
     if trigger_name in PACK_CODE_BY_TRIGGER:
         return PACK_CODE_BY_TRIGGER[trigger_name]
+    if trigger_name == "document_not_current" and "EMPLOYMENT-LETTER" in about:
+        return "EMPLOYMENT_LETTER_EXPIRED"
+    if trigger_name == "required_document_missing" and "GIG-INCOME-CORROBORATION" in about:
+        return "GIG_INCOME_UNCORROBORATED"
     if trigger_name in GENERIC_CODE_BY_TRIGGER:
         return GENERIC_CODE_BY_TRIGGER[trigger_name]
     return trigger_name.upper()
+
+
+#: Longest policy reason text first, so a trigger whose reason is a prefix of another's
+#: cannot shadow the more specific one.
+_TRIGGERS_BY_REASON_LENGTH = tuple(
+    sorted(POLICY, key=lambda t: len(t.reason), reverse=True)
+)
+
+
+def trigger_for_abstention(reason: str) -> str | None:
+    """Recover the trigger name from a serialized ``abstentions[]`` entry.
+
+    The contract shape carries three keys and the trigger is not one of them, so the name
+    has to be read back out of the reason text. ``logic/abstain.py::raise_abstention``
+    builds that text as ``spec.reason`` optionally followed by ``" (case detail)"``, so a
+    prefix match against ``POLICY`` recovers it exactly. The index is built from POLICY
+    rather than transcribed, so reworded policy text cannot leave this behind.
+
+    Returns None rather than guessing when nothing matches; callers surface that as a
+    countable gap.
+    """
+    text = (reason or "").strip()
+    for spec in _TRIGGERS_BY_REASON_LENGTH:
+        if text == spec.reason or text.startswith(spec.reason + " ("):
+            return spec.name
+    return None
 
 
 # =====================================================================================
@@ -1070,9 +1153,65 @@ def message_for(code: str, detail: str, ctx: Context | None = None) -> PlainMess
         action=action,
         code=code,
         detail=detail,
+        kind=entry.kind,
         action_is_handoff=entry.action_is_handoff,
         precision_note=entry.precision_note,
     )
+
+
+def _abstentions_for(report: dict[str, Any], ctx: Context) -> list[dict[str, Any]]:
+    """Plain wording for ``abstentions[]``, positionally aligned with it.
+
+    One entry per abstention, in the same order, so a caller can zip the two lists and
+    never has to match on text. An entry we cannot map is ``None`` — the caller keeps its
+    existing rendering and counts the gap, which is the whole point of not guessing.
+    """
+    out: list[dict[str, Any] | None] = []
+    for item in report.get("abstentions") or []:
+        reason = str(item.get("reason", ""))
+        trigger_name = trigger_for_abstention(reason)
+        if trigger_name is None:
+            out.append(None)
+            continue
+        code = code_for_trigger(trigger_name, str(item.get("about", "")))
+        message = message_for(code, reason, ctx)
+        entry = message.to_dict()
+        # The abstention's own resolution sentence is the audit trail's answer to "what
+        # would clear this". It is kept verbatim next to the plain action, never instead
+        # of it: the two are written for different readers.
+        entry["what_would_resolve_it"] = str(item.get("what_would_resolve_it", ""))
+        entry["about"] = str(item.get("about", ""))
+        out.append(entry)
+    return out
+
+
+def _checklist_for(report: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """Plain wording for every checklist item, keyed by ``item_id``.
+
+    Keyed rather than positional because the checklist screen groups items by state and
+    so does not walk them in report order.
+    """
+    out: dict[str, Any] = {}
+    for item in report.get("checklist") or []:
+        item_id = str(item.get("item_id", ""))
+        if not item_id:
+            continue
+        state = str(item.get("state", ""))
+        detail = str(item.get("detail", ""))
+        if state == "present":
+            out[item_id] = message_for(ITEM_PRESENT_CODE, detail, ctx).to_dict()
+            continue
+        trigger_name = CHECKLIST_STATE_TRIGGER.get(state)
+        if trigger_name is None:
+            continue
+        code = code_for_trigger(trigger_name, item_id)
+        # The label is the checklist's own human name for the item and is how
+        # `Context.type_from_detail` recognises the document type when the detail names
+        # no id -- a missing document has no id to name.
+        label = str(item.get("label", ""))
+        looked_up = f"{label}: {detail}" if label and not detail.startswith(label) else detail
+        out[item_id] = message_for(code, looked_up, ctx).to_dict()
+    return out
 
 
 def for_report(report: dict[str, Any]) -> dict[str, Any]:
@@ -1112,6 +1251,8 @@ def for_report(report: dict[str, Any]) -> dict[str, Any]:
 
     out: dict[str, Any] = {
         "messages": rendered,
+        "abstentions": _abstentions_for(report, ctx),
+        "checklist": _checklist_for(report, ctx),
         "reading_note": (
             "Plain wording sits on top of the precise wording; it never replaces it. "
             "Each item carries the original machine code and message so a reviewer can "
@@ -1407,7 +1548,9 @@ def measure() -> dict[str, Any]:
 __all__ = [
     "Context",
     "DOC_NAMES",
+    "CHECKLIST_STATE_TRIGGER",
     "Entry",
+    "ITEM_PRESENT_CODE",
     "PlainMessage",
     "REGISTRY",
     "SITUATION_MESSAGES",
@@ -1426,4 +1569,5 @@ __all__ = [
     "for_situation",
     "message_for",
     "screen_text",
+    "trigger_for_abstention",
 ]

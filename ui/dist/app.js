@@ -154,18 +154,59 @@
     return STEPS.filter(function (s) { return s.screen === screenId; })[0] || null;
   }
 
-  // ── review reasons: a human heading, the API's own words, and the code kept but demoted ──
+  // ── the plain layer ─────────────────────────────────────────────────────────────
+  // Every renter-facing sentence on this page is written by api/plain.py and arrives on
+  // the report as `report.plain`. This file does not author wording for report items and
+  // must not start: a hand-kept table here covered five of the twenty codes the system can
+  // emit and quietly collapsed the other fifteen into one sentence.
+  //
   // GOV.UK lists error codes among the things not to show a user; NN/g says show them for
-  // technical diagnosis only. The code is never the headline and never disappears — it moves
-  // behind a "Technical details" disclosure so a judge can still verify we are not
-  // paraphrasing meaning away. The `message` string is the API's, reproduced verbatim.
-  var REASON_HEADINGS = {
-    RENTER_CORRECTION_NOT_USED: "Your correction was recorded, but it was not used in the calculation",
-    PAY_STUB_TOTAL_CONFLICT:    "Two figures on the same pay stub do not agree",
-    GIG_INCOME_UNCORROBORATED:  "The gig income has nothing else to corroborate it",
-    DOCUMENT_UNDATABLE:         "A document has no date precise enough to use",
-    EMPLOYMENT_LETTER_EXPIRED:  "The employment letter is outside the 60-day window"
-  };
+  // technical diagnosis only. So the code is never the headline and never disappears — it
+  // moves behind a "Technical details" disclosure, together with the logic layer's own
+  // precise message, so a judge can verify we did not paraphrase the meaning away.
+  //
+  // When `plain` is absent (an old fixture bundled against a new app) we fall back to the
+  // previous behaviour rather than render nothing — but every fallback is recorded on
+  // `window.REALDOOR_PLAIN_GAPS`, where ui/tools/screen-scan.mjs picks it up and the
+  // scorecard reports it as a count. A silent fallback is how the old table hid.
+  var plainGaps = [];
+  window.REALDOOR_PLAIN_GAPS = plainGaps;
+  function notePlainGap(kind, key) {
+    var entry = kind + ":" + key;
+    if (plainGaps.indexOf(entry) === -1) plainGaps.push(entry);
+  }
+  function plainBlock() {
+    return (state.report && state.report.plain) || null;
+  }
+  /** Plain wording for one review reason, matched on its code. */
+  function plainForReason(reason) {
+    var block = plainBlock();
+    var messages = (block && block.messages) || [];
+    for (var i = 0; i < messages.length; i++) {
+      if (messages[i].code === reason.code) return messages[i];
+    }
+    notePlainGap("reason", reason.code);
+    return null;
+  }
+  /** Plain wording for one checklist item, keyed by item id. */
+  function plainForChecklistItem(item) {
+    var block = plainBlock();
+    var found = block && block.checklist && block.checklist[item.item_id];
+    if (!found) notePlainGap("checklist", item.item_id);
+    return found || null;
+  }
+  /** Plain wording for one abstention. Positional: abstentions[] carries no code. */
+  function plainForAbstention(index, item) {
+    var block = plainBlock();
+    var list = (block && block.abstentions) || [];
+    var found = list[index] || null;
+    if (!found) notePlainGap("abstention", String(item && item.about));
+    return found;
+  }
+  //: What we say when the plain layer has no wording for something. Deliberately the same
+  //: sentence api/plain.py uses for an unregistered code, so one voice covers the gap.
+  var NO_PLAIN_WORDING = "Something in your file needs a person to look at it";
+
   // Which step each open item belongs to, so it is raised where the user can act on it
   // rather than in one undifferentiated pile.
   var REASON_STEP = {
@@ -181,7 +222,8 @@
     return 5;   // "present" and "current" are both checklist matters
   }
   function reasonHeading(reason) {
-    return REASON_HEADINGS[reason.code] || "This item needs a person to look at it";
+    var said = plainForReason(reason);
+    return (said && said.headline) || NO_PLAIN_WORDING;
   }
   function reasonsForStep(n) {
     if (!state.report) return [];
@@ -191,16 +233,30 @@
   /** The inline message, next to the thing it concerns. Its text is the same string the
    *  error summary at the top of the page links with — character for character. */
   function reasonCard(reason) {
+    var said = plainForReason(reason);
     return h("div", { class: "reason", id: "reason-" + reason.code, tabindex: "-1" }, [
       h("p", { class: "reason-heading", text: reasonHeading(reason) }),
-      h("p", { class: "reason-message", text: reason.message }),
+      h("p", { class: "reason-message", text: said ? said.body : reason.message }),
+      said && said.action ? h("p", { class: "do-this" }, [
+        h("span", { class: "do-this__label", text: "What you can do: " }),
+        said.action
+      ]) : null,
       h("details", { class: "tech" }, [
         h("summary", { text: "Technical details" }),
         h("dl", { class: "kv" }, [
           h("dt", { text: "Code" }),  h("dd", { class: "mono", text: reason.code }),
           h("dt", { text: "Check" }), h("dd", { class: "mono", text: reason.check }),
-          h("dt", { text: "Rule" }),  h("dd", { class: "mono", text: reason.rule_id })
-        ])
+          h("dt", { text: "Rule" }),  h("dd", { class: "mono", text: reason.rule_id }),
+          // The logic layer's own sentence, verbatim. Demoted, never dropped: this is the
+          // string 300+ tests assert on and the one a judge checks the rewrite against.
+          h("dt", { text: "Message" }), h("dd", { class: "mono", text: reason.message })
+        ]),
+        (said && said.other_details || []).length
+          ? h("p", { class: "mono", text: said.other_details.join("  ·  ") })
+          : null,
+        said && said.precision_note
+          ? h("p", { text: "Why this wording: " + said.precision_note })
+          : null
       ])
     ]);
   }
@@ -448,12 +504,19 @@
     correction: null,       // {document_id, field, value, label}
     documentId: null,
     activeField: null,
+    showBoxCoordinates: false,   // step 1: the Box (pt) column, off until asked for
     pageImageUrl: null,
     selftest: null,
     lastQuestion: null,     // for the step 6 check-answers row
     screen: "screen-start", // the one screen currently on show
     returnTo: null          // set by a "Change" link so the step returns straight to step 6
   };
+
+  // Read-only window on the report currently rendered, for the checking harnesses in
+  // ui/tools. A getter rather than a copy, so it cannot go stale and cannot be written to.
+  Object.defineProperty(window, "REALDOOR_LAST_REPORT", {
+    get: function () { return state.report; }
+  });
 
   // ── router: one screen at a time, focus moved to its unique H1 ──────────────────
   function showScreen(screenId, options) {
@@ -800,6 +863,30 @@
   }
 
   function fieldTable(doc) {
+    // The raw PDF coordinates are for whoever is checking our arithmetic, not for the
+    // person whose pay stub this is: four numbers per row that a renter cannot act on and
+    // that push the columns they can act on off a narrow screen. So the column is off
+    // until it is asked for, and it is asked for once for the whole table rather than
+    // row by row. The boxes themselves are always drawn on the page above — this hides a
+    // numeric restatement of them, not the evidence.
+    var showBoxes = state.showBoxCoordinates;
+    var toggleId = "show-boxes-" + doc.document_id;
+    var toggle = h("p", { class: "table-toggle" }, [
+      h("input", {
+        type: "checkbox", id: toggleId, checked: showBoxes ? true : null,
+        onchange: function (event) {
+          state.showBoxCoordinates = Boolean(event.target.checked);
+          renderDocuments();
+          var restored = byId("show-boxes-" + doc.document_id);
+          if (restored) restored.focus();
+          announce(state.showBoxCoordinates
+            ? "Box coordinates column shown"
+            : "Box coordinates column hidden");
+        }
+      }),
+      h("label", { for: toggleId, text: "Show the box coordinates column" })
+    ]);
+
     var rows = (doc.fields || []).map(function (field) {
       var isActive = state.activeField === field.field;
       var valueCell = field.value === null || field.value === undefined
@@ -828,7 +915,9 @@
         h("td", { text: CERTAINTY_WORDS[field.certainty] || field.certainty }),
         h("td", { class: "mono", text: field.source_text === null ? "—" : String(field.source_text) }),
         h("td", { class: "num", text: field.page }),
-        h("td", { class: "mono num", text: field.bbox ? field.bbox.map(function (n) { return Number(n).toFixed(2); }).join(", ") : "no box" })
+        showBoxes
+          ? h("td", { class: "mono num", text: field.bbox ? field.bbox.map(function (n) { return Number(n).toFixed(2); }).join(", ") : "no box" })
+          : null
       ]);
     });
 
@@ -845,8 +934,11 @@
     return h("div", { class: "table-block" }, [
       h("p", { class: "table-caption", id: captionId }, [
         "Extracted values on " + doc.document_id + ". Choose a field name to highlight its box on the page. ",
-        "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1]."
+        showBoxes
+          ? "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1]."
+          : "The box coordinates behind each highlight can be shown as a column."
       ]),
+      toggle,
       h("div", { class: "table-scroll" }, [
       h("table", { "aria-labelledby": captionId }, [
         h("thead", null, [h("tr", null, [
@@ -856,7 +948,7 @@
           h("th", { scope: "col", text: "Certainty" }),
           h("th", { scope: "col", text: "Text on the page" }),
           h("th", { scope: "col", class: "num", text: "Page" }),
-          h("th", { scope: "col", class: "num", text: "Box (pt)" })
+          showBoxes ? h("th", { scope: "col", class: "num", text: "Box (pt)" }) : null
         ])]),
         h("tbody", null, rows)
       ])
@@ -1341,6 +1433,52 @@
     ]);
   }
 
+  /** One checklist item.
+   *
+   *  Ordered by what the reader came to do, not by what the data structure happens to
+   *  hold. The action is the largest thing in the card because acting on it is the only
+   *  reason a renter is on this screen; the reason why sits under it in plain words; and
+   *  the four machine fields — item id, rule id, the ids that satisfied it, and the logic
+   *  layer's own sentence — move into the same "Technical details" disclosure the alert
+   *  at the top of this screen and every reason card already use. Nothing is dropped.
+   *
+   *  The card previously put fifteen machine identifiers on screen at the same visual
+   *  weight as "What you can do", which is how the one line that matters got lost.
+   */
+  function checklistCard(item) {
+    var said = plainForChecklistItem(item);
+    var action = (said && said.action) || item.action_for_renter;
+    var done = item.state === "present";
+    return h("div", { class: "card" }, [
+      h("h4", { style: { marginTop: "0" } }, [
+        (said && said.headline) || item.label, " ", stateChip(item.state)
+      ]),
+      action && !done
+        ? h("p", { class: "do-this do-this--lead" }, [
+            h("span", { class: "do-this__label", text: "What you can do: " }), action
+          ])
+        : null,
+      said ? h("p", { class: "card-why", text: said.body }) : null,
+      !said && item.detail ? h("p", { class: "card-why", text: item.detail }) : null,
+      done && action ? h("p", { class: "card-why", text: action }) : null,
+      h("details", { class: "tech" }, [
+        h("summary", { text: "Technical details" }),
+        h("dl", { class: "kv" }, [
+          h("dt", { text: "Item" }), h("dd", { class: "mono", text: item.item_id }),
+          h("dt", { text: "Required because" }),
+          h("dd", { class: "mono", text: item.required_because_rule_id }),
+          h("dt", { text: "Satisfied by" }),
+          h("dd", { class: "mono", text: (item.satisfied_by || []).length
+            ? item.satisfied_by.join(", ") : "nothing yet" }),
+          h("dt", { text: "State" }), h("dd", { class: "mono", text: item.state }),
+          h("dt", { text: "Detail" }), h("dd", { class: "mono", text: item.detail || "—" })
+        ].concat(said ? [
+          h("dt", { text: "Code" }), h("dd", { class: "mono", text: said.code })
+        ] : []))
+      ])
+    ]);
+  }
+
   function renderChecklist() {
     var root = byId("checklist-body");
     clear(root);
@@ -1361,8 +1499,10 @@
       }, [
         h("h3", { id: "next-steps-heading", style: { marginTop: "0" }, text: "What you can do next" }),
         h("ul", { class: "summary-box__list" }, todo.slice(0, 5).map(function (item) {
+          var said = plainForChecklistItem(item);
           return h("li", null, [
-            h("strong", { text: item.label + ": " }), item.action_for_renter
+            h("strong", { text: ((said && said.headline) || item.label) + ": " }),
+            (said && said.action) || item.action_for_renter
           ]);
         })),
         todo.length > 5
@@ -1377,19 +1517,7 @@
       if (!items.length) return;
       var words = STATE_WORDS[stateName];
       root.appendChild(h("h3", null, [words.word + " (" + items.length + ")"]));
-      items.forEach(function (item) {
-        root.appendChild(h("div", { class: "card" }, [
-          h("h4", { style: { marginTop: "0" } }, [item.label, " ", stateChip(item.state)]),
-          h("dl", { class: "kv" }, [
-            h("dt", { text: "Item" }), h("dd", { class: "mono", text: item.item_id }),
-            h("dt", { text: "Required because" }), h("dd", { class: "mono", text: item.required_because_rule_id }),
-            h("dt", { text: "Satisfied by" }),
-            h("dd", { class: "mono", text: (item.satisfied_by || []).length ? item.satisfied_by.join(", ") : "nothing yet" }),
-            h("dt", { text: "Detail" }), h("dd", { text: item.detail || "—" }),
-            h("dt", { text: "What you can do" }), h("dd", { text: item.action_for_renter || "Nothing — this one is done." })
-          ])
-        ]));
-      });
+      items.forEach(function (item) { root.appendChild(checklistCard(item)); });
     });
 
     var openItems = stepReasonBlock(5);
@@ -1680,7 +1808,9 @@
     calculation: "Agreement with the organizer's own calculator",
     rule_questions: "Rule questions answered correctly",
     citations: "Citations re-checked against their live source",
-    accessibility: "Accessibility scan"
+    accessibility: "Accessibility scan",
+    plain_language: "Plain wording, measured on the message layer",
+    rendered_screens: "Plain wording, measured on the rendered screen"
   };
 
   function renderMeasure() {
@@ -1810,17 +1940,28 @@
               "item is accounted for. An empty list means nothing was withheld, not that nothing was checked."
       }));
     }
-    abstentions.forEach(function (item) {
+    abstentions.forEach(function (item, index) {
+      // `about` is sometimes a checklist id such as CHK-EMPLOYMENT-LETTER, and `reason` is
+      // the logic layer's precise sentence, ids and all. Neither is what a renter should
+      // meet first: the plain layer's wording leads, and both machine strings stay
+      // verbatim under Technical details.
+      var said = plainForAbstention(index, item);
       root.appendChild(h("div", { class: "q-item" }, [
-        // `about` is sometimes a checklist id such as CHK-EMPLOYMENT-LETTER. A machine id is
-        // never the headline: it is resolved to that item's own human label where one exists,
-        // and kept verbatim under Technical details either way.
-        h("h3", { text: abstentionHeading(item) }),
-        h("p", { text: item.reason }),
-        h("p", { class: "q-resolve", text: "Resolved by: " + item.what_would_resolve_it }),
+        h("h3", { text: (said && said.headline) || abstentionHeading(item) }),
+        h("p", { text: said ? said.body : item.reason }),
+        said && said.action
+          ? h("p", { class: "q-resolve", text: said.action })
+          : h("p", { class: "q-resolve", text: "Resolved by: " + item.what_would_resolve_it }),
         h("details", { class: "tech" }, [
           h("summary", { text: "Technical details" }),
-          h("p", { class: "mono", style: { marginBottom: "0" }, text: "about: " + String(item.about) })
+          h("dl", { class: "kv" }, [
+            h("dt", { text: "About" }), h("dd", { class: "mono", text: String(item.about) }),
+            h("dt", { text: "Reason" }), h("dd", { class: "mono", text: String(item.reason) }),
+            h("dt", { text: "Resolved by" }),
+            h("dd", { class: "mono", text: String(item.what_would_resolve_it) })
+          ].concat(said ? [
+            h("dt", { text: "Code" }), h("dd", { class: "mono", text: said.code })
+          ] : []))
         ])
       ]));
     });
@@ -1831,10 +1972,12 @@
     }
     reasons.forEach(function (reason) {
       var n = reasonStep(reason);
+      var said = plainForReason(reason);
       root.appendChild(h("div", { class: "q-item" }, [
         // A human heading, not the machine code. The code stays available one disclosure away.
         h("h3", { text: reasonHeading(reason) }),
-        h("p", { text: reason.message }),
+        h("p", { text: said ? said.body : reason.message }),
+        said && said.action ? h("p", { class: "q-resolve", text: said.action }) : null,
         h("p", { style: { marginBottom: "0" } }, [
           h("button", {
             type: "button", class: "change-link",
@@ -1846,8 +1989,9 @@
         ]),
         h("details", { class: "tech" }, [
           h("summary", { text: "Technical details" }),
-          h("p", { class: "mono", style: { marginBottom: "0" },
-            text: reason.code + " · check: " + reason.check + " · rule: " + reason.rule_id })
+          h("p", { class: "mono",
+            text: reason.code + " · check: " + reason.check + " · rule: " + reason.rule_id }),
+          h("p", { class: "mono", style: { marginBottom: "0" }, text: reason.message })
         ])
       ]));
     });

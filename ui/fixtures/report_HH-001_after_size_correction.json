@@ -1,9 +1,11 @@
 {
  "household_id": "HH-001",
- "generated_at": "2026-07-18T21:25:18Z",
+ "generated_at": "2026-07-19T01:56:38Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "READY_TO_REVIEW",
+ "annualized_income": 56316.0,
+ "comparison": "below_or_equal",
  "review_reasons": [],
  "documents": [
   {
@@ -634,6 +636,47 @@
  ],
  "abstentions": [],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:5888d56a60f6",
- "session_id": "fb44d45984e7"
+ "engine_version": "sha:adae4d0d7f69",
+ "session_id": "d3a39dc497f5",
+ "plain": {
+  "messages": [],
+  "abstentions": [],
+  "checklist": {
+   "CHK-APPLICATION-SUMMARY": {
+    "headline": "We have your application form",
+    "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-001-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+    "kind": "status"
+   },
+   "CHK-PAY-STUB": {
+    "headline": "We have your pay stub",
+    "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-001-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+    "kind": "status"
+   },
+   "CHK-EMPLOYMENT-LETTER": {
+    "headline": "We have your employer's letter",
+    "body": "It is in your file and it is recent enough to use. It is dated 6 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-001-D04 is dated 2026-07-06, current with 48 day(s) of the window remaining",
+    "kind": "status"
+   }
+  },
+  "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+  "status": {
+   "headline": "Your paperwork is ready for a person to read",
+   "body": "We have what we need to hand your file to a housing worker. They will read it and decide what happens next. This does not tell you what they will say. It means nothing is missing, out of date, or unclear enough to stop them starting.",
+   "action": "You do not need to send anything else right now. Wait for the housing worker to come back to you.",
+   "code": "READY_TO_REVIEW",
+   "detail": "READY_TO_REVIEW: required evidence is present, current under the 60-day convention, internally consistent, and traceable to page-level source boxes.",
+   "kind": "status",
+   "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
+  },
+  "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker. They will read it and decide what happens next. This does not tell you what they will say. It means nothing is missing, out of date, or unclear enough to stop them starting. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+ }
 }

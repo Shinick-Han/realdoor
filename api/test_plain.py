@@ -128,6 +128,73 @@ def test_every_abstention_trigger_resolves_to_a_registered_code():
     )
 
 
+def test_every_checklist_state_has_plain_wording():
+    """A checklist item on screen must never be left with only its machine sentence."""
+    from logic.constants import ITEM_STATES
+
+    unmapped = []
+    for state in ITEM_STATES:
+        if state == "present":
+            assert plain.ITEM_PRESENT_CODE in plain.REGISTRY
+            continue
+        trigger_name = plain.CHECKLIST_STATE_TRIGGER.get(state)
+        if trigger_name is None or plain.code_for_trigger(trigger_name) not in plain.REGISTRY:
+            unmapped.append(state)
+    assert not unmapped, (
+        f"These checklist states would reach a renter with no plain wording: {unmapped}. "
+        f"Add them to api/plain.py CHECKLIST_STATE_TRIGGER."
+    )
+
+
+def test_subject_specific_codes_agree_with_the_reasoning_layer():
+    """`code_for_trigger(trigger, about)` must land where `logic/readiness.py` lands.
+
+    Two layers narrow the same trigger to the same pack-specific code. If they ever
+    disagree, a renter reads wording for a case the report is not describing.
+    """
+    from logic.abstain import raise_abstention
+    from logic.readiness import _code_for
+
+    cases = [
+        ("document_not_current", "CHK-EMPLOYMENT-LETTER"),
+        ("document_not_current", "CHK-PAY-STUB"),
+        ("required_document_missing", "CHK-GIG-INCOME-CORROBORATION"),
+        ("required_document_missing", "CHK-APPLICATION-SUMMARY"),
+        ("document_date_month_precision", "CHK-GIG-STATEMENT"),
+        ("document_unreadable", "CHK-PAY-STUB"),
+        ("self_reported_income_uncorroborated", "annualized_gig_income"),
+    ]
+    for trigger_name, about in cases:
+        theirs = _code_for(raise_abstention(trigger_name, about), about)
+        ours = plain.code_for_trigger(trigger_name, about)
+        assert ours == theirs, f"{trigger_name} on {about}: plain={ours} readiness={theirs}"
+
+
+def test_every_policy_trigger_is_recoverable_from_its_serialized_reason():
+    """`abstentions[]` drops the trigger name, so the UI recovers it from the reason.
+
+    If two triggers ever share a reason prefix badly enough to confuse the lookup, the
+    open-questions rail silently shows one item's wording under another's heading.
+    """
+    for spec in POLICY:
+        bare = raise_abstention_reason(spec, None)
+        detailed = raise_abstention_reason(spec, "HH-001-D02 is dated 2026-01-01")
+        assert plain.trigger_for_abstention(bare) == spec.name, spec.name
+        assert plain.trigger_for_abstention(detailed) == spec.name, spec.name
+
+
+def raise_abstention_reason(spec, detail):
+    """The exact composition `logic/abstain.py::raise_abstention` performs."""
+    return spec.reason if not detail else f"{spec.reason} ({detail})"
+
+
+def test_an_unrecoverable_abstention_is_reported_as_a_gap_not_guessed():
+    assert plain.trigger_for_abstention("something no policy ever wrote") is None
+    report = {"abstentions": [{"about": "x", "reason": "something no policy ever wrote",
+                               "what_would_resolve_it": "y"}]}
+    assert plain.for_report(report)["abstentions"] == [None]
+
+
 def test_every_readiness_reason_code_has_plain_wording():
     """Codes from logic/readiness.py, plus the ones it builds inline."""
     codes = set(PACK_CODE_BY_TRIGGER.values()) | set(GENERIC_CODE_BY_TRIGGER.values())

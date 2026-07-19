@@ -139,10 +139,23 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
   const codeAvailable = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#correct-body details.tech"))
       .some((d) => /RENTER_CORRECTION_NOT_USED/.test(d.textContent)));
+  // The headline must be the plain layer's, not a string this harness or app.js keeps.
+  // Asserting equality with report.plain rather than a snapshot of the wording is the
+  // point: it fails if the screen ever stops reading api/plain.py, and it does not fail
+  // merely because that layer rephrased itself. It replaces a regex that matched a
+  // hand-written heading table in app.js, which no longer exists.
+  const headlineFromPlain = await page.evaluate(() => {
+    const said = (window.REALDOOR_LAST_REPORT?.plain?.messages || [])
+      .find((m) => m.code === "RENTER_CORRECTION_NOT_USED");
+    if (!said) return null;
+    const headings = Array.from(document.querySelectorAll("#correct-body .reason-heading"))
+      .map((n) => n.textContent.trim());
+    return { headline: said.headline, matched: headings.includes(said.headline.trim()) };
+  });
   record("Step 2b — the error code is kept for verification but is never the headline",
-    !codeVisibleUpFront && codeAvailable &&
-    reasonHeadings.some((t) => /correction was recorded/i.test(t)),
-    `${reasonHeadings.length} headlines, none of them a code; code reachable under Technical details`);
+    !codeVisibleUpFront && codeAvailable && headlineFromPlain?.matched === true,
+    `${reasonHeadings.length} headlines, none of them a code; headline is the plain layer's ` +
+    `("${headlineFromPlain?.headline ?? "MISSING"}"); code reachable under Technical details`);
 
   // error summary sits above the H1 and quotes the inline message word for word
   // Each summary link must name the same problem, in the same words, as the inline item it
@@ -228,18 +241,25 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
     (await currentScreen()) === "screen-5" && expiredShown && nextSteps > 0,
     `${expiredShown ? "expired item shown" : "expired item MISSING"}; ${nextSteps} next-step items`);
 
+  // The inline item states the expiry date in words a renter reads; the API's own
+  // sentence, ISO date and document id included, is kept verbatim one disclosure away.
+  // Both halves are asserted, because "plain" must not become "vaguer": if the date
+  // stopped being stated, or the precise string stopped being retrievable, this fails.
   const match = await page.evaluate(() => {
     const link = document.querySelector("#error-summary-host .error-summary-list a");
     if (!link) return null;
     const target = document.querySelector(link.getAttribute("href"));
     const heading = target && target.querySelector(".reason-heading");
     const message = target && target.querySelector(".reason-message");
-    if (!heading || !message) return null;
+    const tech = target && target.querySelector("details.tech");
+    if (!heading || !message || !tech) return null;
     return heading.textContent.trim() === link.textContent.trim() &&
-           /2026-04-14/.test(message.textContent);
+           /14 April 2026|2026-04-14/.test(message.textContent) &&
+           /2026-04-14/.test(tech.textContent) &&
+           /HH-005-D04/.test(tech.textContent);
   });
-  record("Step 5 — the expiry is summarised at the top and detailed inline in the API's own words",
-    match === true, match === null ? "summary or inline item missing" : "heading matches, message intact");
+  record("Step 5 — the expiry is stated plainly inline and the API's own words are kept verbatim",
+    match === true, match === null ? "summary or inline item missing" : "heading matches, date stated inline, precise wording retrievable");
 }
 
 // ── step 6: check what we found, then take the packet ───────────────────────────

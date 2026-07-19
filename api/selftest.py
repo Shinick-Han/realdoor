@@ -224,6 +224,62 @@ def plain_language_section() -> dict[str, Any]:
     }
 
 
+def rendered_screens_section() -> dict[str, Any]:
+    """화면에 **실제로 보이는** 기계 식별자 수. `ui/tools/screen-scan.mjs` 산출물을 인용한다.
+
+    바로 위 `plain_language_section` 과 짝을 이루되 재는 대상이 다르다. 그쪽은 메시지
+    계층의 문자열을 재고, 이쪽은 렌더링된 DOM 을 잰다. 둘을 나눠 싣는 이유는 한동안
+    전자가 100% 인 채로 후자가 화면에 한 글자도 도달하지 않았기 때문이다 — 참인데
+    사용자가 보지 않는 것을 잰 값이었다.
+
+    접힌 `Technical details` 안의 문자열은 세지 않는다. 보이지 않기 때문이며, 그게
+    설계다 — 코드와 원문은 전부 거기 그대로 남아 있다.
+
+    스캔 산출물이 없으면 `not_run`. 브라우저를 매 요청마다 띄울 수 없고, 재지 못한
+    값을 0 으로 적는 것은 성공으로 위장한 미측정이다.
+    """
+    report = ROOT / "ui" / "screen-scan.json"
+    if not report.exists():
+        return {
+            "status": "not_run",
+            "tool": "screen-scan",
+            "note": ("No scan artefact found. Run `node ui/tools/screen-scan.mjs`. "
+                     "Reported as not run rather than as zero."),
+        }
+
+    data = json.loads(report.read_text(encoding="utf-8"))
+    return {
+        "status": "measured",
+        "tool": "screen-scan",
+        "origin": data.get("origin"),
+        "households_walked": data.get("households_walked"),
+        "steps_per_household": data.get("steps_per_household"),
+        "identifier_patterns": data.get("patterns"),
+        "visible_machine_identifiers": data.get("total_visible_identifiers"),
+        # Flattened to a string on purpose: the measurements panel renders one value per
+        # row and a nested object would reach it as "[object Object]".
+        "visible_machine_identifiers_by_step": ", ".join(
+            f"{step} {count}" for step, count in (data.get("by_step") or {}).items()
+        ) or "none",
+        "screens_needing_older_wording": len(data.get("plain_wording_gaps") or []),
+        "plain_wording_gaps": data.get("plain_wording_gaps"),
+        "page_errors": len(data.get("page_errors") or []),
+        "artefact": "ui/screen-scan.json",
+        "note": (
+            "This is the DOM-level twin of the plain_language section above, and the two "
+            "must be read together: that one measures whether the renter-facing wording "
+            "is clean, this one measures whether it reaches the screen. Text inside a "
+            "collapsed disclosure is not counted, because it is not visible — every "
+            "machine code and every original message is still there, one click away. "
+            "Household ids are counted separately and excluded, because the header picker "
+            "names the file being read. This number is published, not gated: no target "
+            "has been agreed for it, and the remaining count is concentrated on the "
+            "evidence and calculation screens, where a document id is the subject of the "
+            "row rather than an intrusion into a sentence."
+        ),
+    }
+
+
 def intent_router_section() -> dict[str, Any]:
     """입구의 LLM 분류기가 실제로 무엇을 했는지. 지어내는 항목이 없다.
 
@@ -284,6 +340,7 @@ def build(views: list[dict[str, Any]], respond) -> dict[str, Any]:
         ("citations", citations_section),
         ("accessibility", accessibility_section),
         ("plain_language", plain_language_section),
+        ("rendered_screens", rendered_screens_section),
         ("intent_router", intent_router_section),
     ):
         try:

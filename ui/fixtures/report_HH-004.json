@@ -1,9 +1,11 @@
 {
  "household_id": "HH-004",
- "generated_at": "2026-07-18T21:25:18Z",
+ "generated_at": "2026-07-19T01:56:38Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
+ "annualized_income": 51008.0,
+ "comparison": "below_or_equal",
  "review_reasons": [
   {
    "check": "present",
@@ -735,6 +737,118 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:5888d56a60f6",
- "session_id": "7e9a4e3a114e"
+ "engine_version": "sha:adae4d0d7f69",
+ "session_id": "485e2962952e",
+ "plain": {
+  "messages": [
+   {
+    "headline": "Nothing in your file backs up your gig earnings",
+    "body": "Your gig earnings statement covers June 2026. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+    "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+    "code": "GIG_INCOME_UNCORROBORATED",
+    "detail": "this income is documented only by a self-reported statement, with no independent corroborating document (HH-004-D04 covers 2026-06; no corroborating document is present)",
+    "kind": "problem",
+    "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction.",
+    "other_details": [
+     "Independent corroboration of gig income: no independent corroboration of gig income found in this file"
+    ]
+   },
+   {
+    "headline": "Your gig earnings statement does not show a full date",
+    "body": "It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line.",
+    "action": "Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent.",
+    "code": "DOCUMENT_UNDATABLE",
+    "detail": "Gig platform earnings statement: HH-004-D04 is dated 2026-06 (month precision); the 60-day convention cannot be applied without inventing a day",
+    "kind": "problem"
+   }
+  ],
+  "abstentions": [
+   {
+    "headline": "Nothing in your file backs up your gig earnings",
+    "body": "Your gig earnings statement covers June 2026. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+    "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+    "code": "GIG_INCOME_UNCORROBORATED",
+    "detail": "this income is documented only by a self-reported statement, with no independent corroborating document (HH-004-D04 covers 2026-06; no corroborating document is present)",
+    "kind": "problem",
+    "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction.",
+    "what_would_resolve_it": "the renter uploads platform earnings records, bank deposits, or a 1099 covering the same period",
+    "about": "annualized_gig_income"
+   },
+   {
+    "headline": "Nothing in your file backs up your gig earnings",
+    "body": "Your gig earnings statement is in your file. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+    "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+    "code": "GIG_INCOME_UNCORROBORATED",
+    "detail": "a required document type is not present in the file (no independent corroboration of gig income found in this file)",
+    "kind": "problem",
+    "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction.",
+    "what_would_resolve_it": "the renter uploads the missing document",
+    "about": "CHK-GIG-INCOME-CORROBORATION"
+   },
+   {
+    "headline": "Your gig earnings statement does not show a full date",
+    "body": "It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line.",
+    "action": "Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent.",
+    "code": "DOCUMENT_UNDATABLE",
+    "detail": "the document states a month but no day, so the 60-day currency convention cannot be applied without inventing a date (HH-004-D04 is dated 2026-06 (month precision); the 60-day convention cannot be applied without inventing a day)",
+    "kind": "problem",
+    "what_would_resolve_it": "the renter supplies a day-precise statement or confirms the date",
+    "about": "CHK-GIG-STATEMENT"
+   }
+  ],
+  "checklist": {
+   "CHK-APPLICATION-SUMMARY": {
+    "headline": "We have your application form",
+    "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-004-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+    "kind": "status"
+   },
+   "CHK-PAY-STUB": {
+    "headline": "We have your pay stub",
+    "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-004-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-004-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+    "kind": "status"
+   },
+   "CHK-EMPLOYMENT-LETTER": {
+    "headline": "We still need your employer's letter",
+    "body": "Your file does not have an employer's letter in it yet. A housing worker needs it before they can start reading your file.",
+    "action": "Ask your employer for a signed letter confirming your job, then upload it.",
+    "code": "REQUIRED_DOCUMENT_MISSING",
+    "detail": "Employment verification letter: no employment verification letter found in this file; two pay stubs reporting the same gross pay already document this wage source",
+    "kind": "problem"
+   },
+   "CHK-GIG-INCOME-CORROBORATION": {
+    "headline": "Nothing in your file backs up your gig earnings",
+    "body": "Your gig earnings statement is in your file. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+    "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+    "code": "GIG_INCOME_UNCORROBORATED",
+    "detail": "Independent corroboration of gig income: no independent corroboration of gig income found in this file",
+    "kind": "problem",
+    "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction."
+   },
+   "CHK-GIG-STATEMENT": {
+    "headline": "Your gig earnings statement does not show a full date",
+    "body": "It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line.",
+    "action": "Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent.",
+    "code": "DOCUMENT_UNDATABLE",
+    "detail": "Gig platform earnings statement: HH-004-D04 is dated 2026-06 (month precision); the 60-day convention cannot be applied without inventing a day",
+    "kind": "problem"
+   }
+  },
+  "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+  "status": {
+   "headline": "Your file needs a few things before a person can read it",
+   "body": "Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork.",
+   "action": "Work through your list below. Each item says exactly what to send or who to ask.",
+   "code": "NEEDS_REVIEW",
+   "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
+   "kind": "status",
+   "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
+  },
+  "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork. Work through your list below. Each item says exactly what to send or who to ask. Nothing in your file backs up your gig earnings. Your gig earnings statement covers June 2026. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it. Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates. Your gig earnings statement does not show a full date. It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line. Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent."
+ }
 }

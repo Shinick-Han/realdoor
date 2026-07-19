@@ -10,7 +10,7 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-19T00:16:45.607Z",
+ "generated_at": "2026-07-19T02:05:06.393Z",
  "screens_per_origin": 8,
  "total_violations": 0,
  "violations_by_impact": {},
@@ -105,44 +105,26 @@
         },
         {
          "target": [
-          "tr:nth-child(2) > .num:nth-child(6)"
+          "tr:nth-child(2) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(2) > .num.mono"
-         ],
-         "reason": "Element's background color could not be determined because it's partially obscured by another element"
-        },
-        {
-         "target": [
-          "tr:nth-child(3) > .num:nth-child(6)"
+          "tr:nth-child(3) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(3) > .num.mono"
-         ],
-         "reason": "Element's background color could not be determined because it's partially obscured by another element"
-        },
-        {
-         "target": [
-          "tr:nth-child(4) > .num:nth-child(6)"
+          "tr:nth-child(4) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
-        },
-        {
-         "target": [
-          "tr:nth-child(4) > .num.mono"
-         ],
-         "reason": "Element's background color could not be determined because it's partially obscured by another element"
         }
        ]
       }
      ],
-     "rules_passed": 32
+     "rules_passed": 33
     },
     {
      "screen": "step2-correct",
@@ -192,7 +174,7 @@
        ]
       }
      ],
-     "rules_passed": 30
+     "rules_passed": 28
     },
     {
      "screen": "step6-check-and-packet",
@@ -236,6 +218,24 @@
         {
          "target": [
           "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -299,44 +299,26 @@
         },
         {
          "target": [
-          "tr:nth-child(2) > .num:nth-child(6)"
+          "tr:nth-child(2) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(2) > .num.mono"
-         ],
-         "reason": "Element's background color could not be determined because it's partially obscured by another element"
-        },
-        {
-         "target": [
-          "tr:nth-child(3) > .num:nth-child(6)"
+          "tr:nth-child(3) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(3) > .num.mono"
-         ],
-         "reason": "Element's background color could not be determined because it's partially obscured by another element"
-        },
-        {
-         "target": [
-          "tr:nth-child(4) > .num:nth-child(6)"
+          "tr:nth-child(4) > .num"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
-        },
-        {
-         "target": [
-          "tr:nth-child(4) > .num.mono"
-         ],
-         "reason": "Element's background color could not be determined because it's partially obscured by another element"
         }
        ]
       }
      ],
-     "rules_passed": 32
+     "rules_passed": 33
     },
     {
      "screen": "step2-correct",
@@ -386,7 +368,7 @@
        ]
       }
      ],
-     "rules_passed": 30
+     "rules_passed": 28
     },
     {
      "screen": "step6-check-and-packet",
@@ -430,6 +412,24 @@
         {
          "target": [
           "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -494,7 +494,7 @@
        ]
       }
      ],
-     "rules_passed": 31
+     "rules_passed": 32
     },
     {
      "screen": "step2-correct",
@@ -544,7 +544,7 @@
        ]
       }
      ],
-     "rules_passed": 30
+     "rules_passed": 28
     },
     {
      "screen": "step6-check-and-packet",
@@ -588,6 +588,24 @@
         {
          "target": [
           "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -652,7 +670,7 @@
        ]
       }
      ],
-     "rules_passed": 31
+     "rules_passed": 32
     },
     {
      "screen": "step2-correct",
@@ -702,7 +720,7 @@
        ]
       }
      ],
-     "rules_passed": 30
+     "rules_passed": 28
     },
     {
      "screen": "step6-check-and-packet",
@@ -746,6 +764,24 @@
         {
          "target": [
           "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }

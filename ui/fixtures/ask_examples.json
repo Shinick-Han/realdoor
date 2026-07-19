@@ -88,7 +88,15 @@
      "basis": "logic.constants.READINESS_STATUSES, read during this request"
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+   "plain": {
+    "headline": "We cannot tell you whether you will get the home",
+    "body": "This service does not determine eligibility and will not label any person. What we do is get your paperwork ready and check the numbers in it. A trained housing worker is the one who makes that call, and only they can make it. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
+    "action": "Ask us what your yearly income comes to, what the limit is for your household size, or what is still missing from your file.",
+    "code": "eligibility_refused",
+    "detail": "CH-DECISION-001: readiness only; the determination is the human handoff.",
+    "kind": "response"
+   }
   }
  },
  "refusal_cross_applicant": {
@@ -113,7 +121,15 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+   "plain": {
+    "headline": "We can only talk about your own file",
+    "body": "This session holds your documents and nobody else's. We never show one person's papers to another person. That holds even if you ask us directly.",
+    "action": "Ask about your own documents. If you are helping someone else, open their own session with them.",
+    "code": "cross_applicant_refused",
+    "detail": "CH-SAFETY-001: cross-applicant disclosure refused.",
+    "kind": "response"
+   }
   }
  },
  "refusal_embedded_instruction": {
@@ -148,7 +164,15 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+   "plain": {
+    "headline": "We read that as text in your document, not as an order",
+    "body": "Some documents contain sentences that try to tell this service what to do. We store that text and show it to you, and it changes nothing. The sums and the checks in this service are fixed code. No sentence in any document can reach them.",
+    "action": "Ask about a rule, a document you need, or one of the numbers we worked out.",
+    "code": "embedded_instruction_ignored",
+    "detail": "CH-SAFETY-001: embedded instruction quarantined as data.",
+    "kind": "response"
+   }
   }
  },
  "abstain_unrouted": {
