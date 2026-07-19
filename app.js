@@ -2325,11 +2325,12 @@
             ? h("a", { href: citation.source_url, rel: "noopener noreferrer", target: "_blank" },
                 [citation.source_url, h("span", { class: "visually-hidden", text: " (opens in a new tab)" })])
             : h("span", { class: "mono", text: citation.source_url || "—" })
-        ]),
-        h("dt", { text: "Re-checked against the live source" }),
-        h("dd", { text: citation.verified_against_source === true ? "Yes"
-                       : citation.verified_against_source === false ? "No"
-                       : "Not checked — reported as unchecked rather than assumed" })
+        ])
+        /* Whether we re-fetched the source is a fact about how we measure, not something
+         * a renter can act on — and the link above already does the useful half of that
+         * job better than a sentence about it can. Left in the scorecard, where
+         * `citations: not_run` is the measurement being reported, and taken off the card
+         * so it does not read as a warning about the rule itself. */
       ]),
       h("p", { text: citation.text })
     ]);
@@ -2428,8 +2429,14 @@
     rememberCitations(response.citations);
 
     var flavour = response.refused ? "callout--stop" : (response.abstained ? "callout--warn" : "callout--ok");
+    /* "No answer given" was wrong wherever an abstention still says something useful.
+     * Asking about a household of nine abstains — HUD publishes limits for sizes one
+     * through eight and we will not extrapolate past the table — but the reply names the
+     * published range, which is an answer to stand on even though it is not a figure.
+     * A heading that calls that "no answer" contradicts the paragraph under it. What we
+     * withhold in every abstention is the value, so the heading says that instead. */
     var headline = response.refused ? "Refused, on purpose"
-      : (response.abstained ? "Abstained — no answer given" : "Answer");
+      : (response.abstained ? "Abstained — no value given" : "Answer");
 
     /* Several situation texts open with the bare machine status they resolve to —
      * "NEEDS_REVIEW. An expired document is stale evidence, and…". That token is the
