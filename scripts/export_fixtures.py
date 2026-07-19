@@ -39,7 +39,7 @@ def main() -> int:
     STORE.warm()
     s = STORE.new_session()
 
-    print("리포트 (화면 1·4·5의 데이터)")
+    print("Reports (the data behind screens 1, 4 and 5)")
     write("households", {"households": STORE.households(s)})
 
     # **전 세대를 돈다.** 예전에는 데모에 쓰는 세 개만 손으로 적어두었는데, 세대 선택기는
@@ -50,7 +50,7 @@ def main() -> int:
         hid = row["household_id"]
         write(f"report_{hid}", STORE.report(s, hid))
 
-    print("정정 후 리포트 (화면 2 — 사용자가 고쳤을 때 무슨 일이 벌어지나)")
+    print("Reports after a correction (screen 2 — what happens when the user fixes a value)")
     s2 = STORE.new_session()
     STORE.apply_correction(s2, "HH-001-D01", "household_size", 3)
     write("report_HH-001_after_size_correction", STORE.report(s2, "HH-001"))
@@ -58,7 +58,7 @@ def main() -> int:
     STORE.apply_correction(s3, "HH-001-D02", "gross_pay", 2500.0)
     write("report_HH-001_after_rejected_correction", STORE.report(s3, "HH-001"))
 
-    print("규칙 질문·거부 (화면 3·6)")
+    print("Rule questions and refusals (screens 3 and 6)")
     houses = households_from_views(list(s.views.values()))
     asks = {}
     for key, (q, hid) in {
@@ -76,7 +76,7 @@ def main() -> int:
         asks[key] = {"question": q, "response": ask_mod.handle(q, hid, houses)}
     write("ask_examples", asks)
 
-    print("자기 성적표 (마지막 화면)")
+    print("Self-scorecard (the last screen)")
 
     def respond(text: str) -> dict:
         return ask_mod.handle(text, None, houses)
@@ -89,11 +89,12 @@ def main() -> int:
     # 참고 자료이고, 참고 자료일수록 원본과 한 글자도 달라지면 안 된다. 보스턴 행은
     # is_pack_frozen=true 이며 pack/data/mtsp_2026_boston_cambridge_quincy.csv 와 일치한다
     # — 화면이 "이 팩이 실제로 쓴 값"이라고 말하는 근거가 그 일치다.
-    print("지역 비교표 (화면 4 참고 패널 — 파이프라인 출력 아님, 원본 그대로 복사)")
+    print("Regional comparison table (screen 4 reference panel — not pipeline output, "
+          "copied verbatim from the source)")
     write("mtsp_regions",
           json.loads((ROOT / "pack_ext" / "mtsp_regions.json").read_text(encoding="utf-8")))
 
-    print("\n픽스처는 실제 파이프라인 출력이다. 손으로 편집하지 말 것.")
+    print("\nThese fixtures are real pipeline output. Do not hand-edit them.")
     return 0
 
 

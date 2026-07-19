@@ -103,6 +103,11 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any, Iterable
 
+# 임포트 시점에 건다. argparse 의 --help 는 main() 보다 먼저 출력하므로,
+# main() 안에서 걸면 UTF-8 이 아닌 콘솔(윈도우 기본값)에서 --help 가 터진다.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GOLD_PATH = REPO_ROOT / "pack" / "synthetic_documents" / "gold" / "document_gold.jsonl"
 
