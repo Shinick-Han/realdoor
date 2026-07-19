@@ -22,7 +22,7 @@
  */
 import { chromium } from "playwright";
 
-const base = process.argv[2] || "http://127.0.0.1:8000";
+const base = process.argv[2] || "http://127.0.0.1:8077";
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
 const page = await context.newPage();

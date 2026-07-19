@@ -917,8 +917,10 @@ READY_MESSAGE = PlainMessage(
         # "Ready" without it reads as an outcome, which is the one thing this product
         # must never imply.
         "We have what we need to hand your file to a housing worker, who will read it and "
-        "decide what happens next. This does not tell you what they will say: it means "
-        "nothing is missing, out of date, or unclear enough to stop them starting."
+        "decide what happens next. Nothing is missing, out of date, or unclear enough to "
+        "stop them starting, so you should not have to send the same thing twice. This "
+        "does not tell you what they will say — that decision needs checks that are not in "
+        "these papers, and no software can stand in for it."
     ),
     action="You do not need to send anything else right now. Wait for the housing worker "
            "to come back to you.",
@@ -938,8 +940,9 @@ NEEDS_REVIEW_MESSAGE = PlainMessage(
     headline="Your file needs a few things before a person can read it",
     body=(
         "Some papers are missing, out of date, or do not agree with each other, and we "
-        "list each one below with what to do about it. None of this is a finding about "
-        "you. It is about the paperwork, and paperwork you can fix."
+        "list each one below with what to do about it. Every one you clear now is one a "
+        "housing worker will not have to send your file back for. None of this is a "
+        "finding about you. It is about the paperwork, and paperwork you can fix."
     ),
     action="Work through your list below. Each item says exactly what to send or who "
            "to ask.",
@@ -970,13 +973,15 @@ STATUS_MESSAGES = {
 #: person who asked a question and got a refusal needs somewhere to go.
 _SITUATIONS: tuple[PlainMessage, ...] = (
     PlainMessage(
-        headline="We cannot tell you whether you will get the home",
+        headline="We get your file ready for the person who decides. We are not that person",
         body=(
-            "This service does not determine eligibility and will not label any person. "
-            "What we do is get your paperwork ready and check the numbers in it. A "
-            "trained housing worker is the one who makes that call, and only they can "
-            "make it. We can tell you what your papers say, what the income limit is for "
-            "your household size, and how the two compare."
+            "What we do is make sure the housing worker who reads your file has everything "
+            "they need the first time you hand it over. What we cannot do is tell you the "
+            "outcome, and no software can: that call needs income checks, household proofs "
+            "and status checks that are not in these papers. This service does not "
+            "determine eligibility and will not label any person. We can tell you what "
+            "your papers say, what the income limit is for your household size, and how "
+            "the two compare."
         ),
         action="Ask us what your yearly income comes to, what the limit is for your "
                "household size, or what is still missing from your file.",

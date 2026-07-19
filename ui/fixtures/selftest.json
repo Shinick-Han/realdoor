@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-19T04:06:15Z",
+ "generated_at": "2026-07-19T05:44:45Z",
  "sections": {
   "extraction": {
    "status": "measured",
@@ -64,7 +64,7 @@
    "free_of_raw_identifiers": 1.0,
    "uses_second_person_per_string": 0.9524,
    "uses_second_person_per_message": 1.0,
-   "active_voice_best_effort": 0.9483,
+   "active_voice_best_effort": 0.9492,
    "problem_messages_carrying_an_action": 1.0,
    "action_gaps": [],
    "actions_needing_a_trained_person": [
@@ -79,11 +79,11 @@
     "screens": [
      {
       "screen": "answer_screens",
-      "words": 941,
-      "sentences": 70,
-      "flesch_kincaid_grade": 5.35,
-      "smog_grade": 8.01,
-      "spread_between_the_two": 2.66,
+      "words": 968,
+      "sentences": 71,
+      "flesch_kincaid_grade": 5.4,
+      "smog_grade": 7.97,
+      "spread_between_the_two": 2.57,
       "smog_is_extrapolated": false
      },
      {
@@ -115,17 +115,17 @@
      },
      {
       "screen": "status_screens",
-      "words": 171,
-      "sentences": 14,
-      "flesch_kincaid_grade": 3.94,
-      "smog_grade": 7.17,
-      "spread_between_the_two": 3.23,
+      "words": 217,
+      "sentences": 16,
+      "flesch_kincaid_grade": 4.27,
+      "smog_grade": 7.41,
+      "spread_between_the_two": 3.14,
       "smog_is_extrapolated": true
      }
     ],
     "screens_too_short_to_measure": [],
     "minimum_sample_words": 100,
-    "widest_spread": 3.23,
+    "widest_spread": 3.14,
     "note": "Two formulas, reported together with the gap between them. A per-string grade is not defensible and is not produced. SMOG needs 30 sentences to be used as defined; screens below that are marked as extrapolated. WCAG 2.2 SC 3.1.5 Reading Level is Level AAA and is not required at AA -- we adopt it voluntarily and do not claim AA obliges it."
    },
    "note": "Only 'problem_messages_carrying_an_action' is a requirement: WCAG 2.2 SC 3.3.3 Error Suggestion is Level AA, and it must read 1.0. Second person and active voice are Federal Plain Language Guidelines style goals we adopted voluntarily; the FPLG sets no reading-grade target and no sentence-length rule. SC 3.1.5 Reading Level is Level AAA and is not required at AA. The active-voice figure is a regex heuristic with documented blind spots, not a measurement of grammar. Readability is reported as two formulas plus their spread, per screen, on samples of at least 100 words, because a single per-string grade is not defensible."

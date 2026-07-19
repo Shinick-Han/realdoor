@@ -53,7 +53,7 @@
   "question": "Am I eligible for this apartment?",
   "response": {
    "kind": "eligibility_refused",
-   "answer": "This service does not determine eligibility and will not label any person. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+   "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
    "abstained": false,
    "refused": true,
    "rule_ids": [
@@ -90,8 +90,8 @@
    ],
    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
    "plain": {
-    "headline": "We cannot tell you whether you will get the home",
-    "body": "This service does not determine eligibility and will not label any person. What we do is get your paperwork ready and check the numbers in it. A trained housing worker is the one who makes that call, and only they can make it. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
+    "headline": "We get your file ready for the person who decides. We are not that person",
+    "body": "What we do is make sure the housing worker who reads your file has everything they need the first time you hand it over. What we cannot do is tell you the outcome, and no software can: that call needs income checks, household proofs and status checks that are not in these papers. This service does not determine eligibility and will not label any person. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
     "action": "Ask us what your yearly income comes to, what the limit is for your household size, or what is still missing from your file.",
     "code": "eligibility_refused",
     "detail": "CH-DECISION-001: readiness only; the determination is the human handoff.",

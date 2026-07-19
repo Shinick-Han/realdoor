@@ -51,9 +51,44 @@ def engine_version() -> str:
         return "sha:unversioned"
 
 
+#: 추출 결과를 만들어 내는 코드 파일들. 이 파일들이 바뀌면 캐시된 추출은 **낡은 코드의 산물**이다.
+ENGINE_SOURCES = (
+    ROOT / "core/extract.py",
+    ROOT / "core/render.py",
+    ROOT / "ocr/ocr_extract.py",
+)
+
+_ENGINE_SHA: str | None = None
+
+
+def engine_sha() -> str:
+    """추출 엔진 **소스 내용**의 해시.
+
+    `engine_version()`(커밋 해시)을 쓰지 않는 이유: 커밋 해시는 커밋해야 움직인다.
+    작업 중인 트리에서 extract.py를 고쳐도 HEAD는 그대로이므로, 캐시는 낡은 추출을 계속
+    내주고 우리는 고친 적 없는 코드를 측정하게 된다. 실제로 이번 작업 중 그렇게 깨진
+    빌드가 한 번 통과했다. 내용 해시는 저장하는 순간 움직인다.
+
+    프로세스 수명 동안 한 번만 계산한다 — 문서 24장마다 소스를 다시 읽을 이유가 없다.
+    """
+    global _ENGINE_SHA
+    if _ENGINE_SHA is None:
+        digest = hashlib.sha256()
+        for source in ENGINE_SOURCES:
+            digest.update(source.name.encode())
+            try:
+                digest.update(source.read_bytes())
+            except OSError:
+                # 파일이 사라졌다면 그 사실 자체가 키의 일부다. 조용히 무시하면 서로 다른
+                # 두 트리가 같은 키를 쓰게 된다.
+                digest.update(b"<missing>")
+        _ENGINE_SHA = digest.hexdigest()[:12]
+    return _ENGINE_SHA
+
+
 def _cache_key(pdf: Path) -> str:
     st = pdf.stat()
-    raw = f"{pdf.name}|{st.st_size}|{int(st.st_mtime)}|v1"
+    raw = f"{pdf.name}|{st.st_size}|{int(st.st_mtime)}|{engine_sha()}|v2"
     return hashlib.sha256(raw.encode()).hexdigest()[:20]
 
 

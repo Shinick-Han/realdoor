@@ -261,7 +261,12 @@ def _eligibility_overreach(households: dict[str, Any]) -> Situation:
     return Situation(
         kind="eligibility_refused",
         text=(
-            "This service does not determine eligibility and will not label any person. "
+            "What this service does is make sure the person who decides has everything they "
+            "need the first time the file reaches them. What it cannot do is tell you the "
+            "outcome: it does not determine eligibility and will not label any person, and "
+            "no software could from these documents alone — that determination needs "
+            "third-party income verification, household-composition proof and status checks "
+            "that are not in this file and are not ours to perform. "
             f"What it reports instead is a readiness status — {statuses} — with the "
             "reasons behind it, the annualized amount computed from the documents, the "
             "frozen threshold for the household size, and the comparison between those two "

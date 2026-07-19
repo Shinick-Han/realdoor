@@ -72,8 +72,9 @@ _INJECTION = re.compile(
     re.IGNORECASE,
 )
 
-NOTICE = ("This service reports readiness only. A qualified housing professional "
-          "makes the eligibility determination.")
+NOTICE = ("This service gets a file to the person who decides, complete the first time it "
+          "is handed over. A qualified housing professional makes the eligibility "
+          "determination.")
 
 # ── 5) 세입자 어휘 → 정규 의도 ──────────────────────────────────────────
 #

@@ -1,6 +1,6 @@
 {
  "household_id": "HH-005",
- "generated_at": "2026-07-19T04:06:11Z",
+ "generated_at": "2026-07-19T05:44:43Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
@@ -644,8 +644,8 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:55736e56e6a1",
- "session_id": "266cb4c4a921",
+ "engine_version": "sha:89d7fa7a7f1c",
+ "session_id": "7c4d93119b19",
  "plain": {
   "messages": [
    {
@@ -703,13 +703,13 @@
   "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
   "status": {
    "headline": "Your file needs a few things before a person can read it",
-   "body": "Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. None of this is a finding about you. It is about the paperwork, and paperwork you can fix.",
+   "body": "Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix.",
    "action": "Work through your list below. Each item says exactly what to send or who to ask.",
    "code": "NEEDS_REVIEW",
    "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
    "kind": "status",
    "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
   },
-  "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your employer's letter is too old to use. It is dated 14 April 2026, which is before the cut-off. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it. Ask your employer for a new letter dated 19 May 2026 or later, then upload it."
+  "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your employer's letter is too old to use. It is dated 14 April 2026, which is before the cut-off. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it. Ask your employer for a new letter dated 19 May 2026 or later, then upload it."
  }
 }

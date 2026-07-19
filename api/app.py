@@ -95,7 +95,10 @@ def health() -> dict:
         "ok": True,
         "engine_version": engine_version(),
         "active_sessions": STORE.session_count,
-        "notice": "This service reports readiness only. It never decides eligibility.",
+        # 화면과 같은 순서로 말한다: 무엇을 하는지 먼저, 경계는 이유와 함께 뒤에.
+        # 서버가 화면과 다른 말을 하면 그것도 어긋남이다.
+        "notice": ("This service gets a file to the person who decides, complete the first "
+                   "time it is handed over. It never decides eligibility itself."),
     }
 
 
