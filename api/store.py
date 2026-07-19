@@ -107,8 +107,11 @@ def _label_model_key() -> str:
 
 
 def _cache_key(pdf: Path) -> str:
+    from ocr.ocr_extract import ocr_max_side
+
     st = pdf.stat()
-    raw = f"{pdf.name}|{st.st_size}|{int(st.st_mtime)}|{engine_sha()}|{_label_model_key()}|v3"
+    raw = (f"{pdf.name}|{st.st_size}|{int(st.st_mtime)}|{engine_sha()}"
+           f"|{_label_model_key()}|ocr{ocr_max_side()}|v3")
     return hashlib.sha256(raw.encode()).hexdigest()[:20]
 
 
