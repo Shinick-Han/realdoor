@@ -24,15 +24,25 @@ EXTERNAL = ROOT / "testdata" / "external_raw"
 PACK = ROOT / "pack" / "synthetic_documents"
 
 
+# Both fixtures pin `REALDOOR_COLUMNS` off, and that is a statement about what this module
+# measures rather than housekeeping. Every test here asks what the *arithmetic* chain does
+# with a field the label geometry could not read, so which fields those are has to be held
+# fixed. `core/columns.py` reads two of them -- ADP's `Gross Pay` and `Net Pay` -- straight
+# off the page's own header row, and when it is on, the arithmetic chain correctly never runs
+# for them and the assertions below have nothing to describe. Leaving the variable ambient
+# made this file's result depend on the shell it was run from, which is the one thing a
+# measurement may not do.
 @pytest.fixture()
 def flag_on(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("REALDOOR_ARITHMETIC", "1")
+    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
     yield
 
 
 @pytest.fixture()
 def flag_off(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
     yield
 
 
@@ -262,6 +272,7 @@ def test_the_flag_moves_nothing_on_the_pack(pdf: Path, monkeypatch: pytest.Monke
     path may not touch it in either direction -- every field there is already answered by the
     label geometry, so there is no blank for it to fill and it must stay silent."""
     document_type = ex.infer_document_type(pdf)
+    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
     monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
     off = _view_signature(pdf, document_type)
     monkeypatch.setenv("REALDOOR_ARITHMETIC", "1")
@@ -322,11 +333,32 @@ def test_les_gross_and_net_stay_refused(flag_on) -> None:
     """The LES is the hard one and it must stay hard rather than be made to pass. Its earnings
     table prints a single row of 1710.00 against a gross of 1813.00, and its own totals do not
     close: 1813.00 - 852.57 = 960.43 where the page prints 960.50. Nothing the document
-    computes supports either figure, so we do not report either figure."""
+    *computes* supports either figure, so this path must never report either figure.
+
+    Narrowed once, deliberately, and here is the whole reason. The claim above is about
+    arithmetic, and it still holds: neither number may be *derived*. It was originally written
+    as "net_pay abstains", which was true of the extractor as a whole only because the
+    label-anchored path could not reach the printed figure either. `TYPED_VALUE_X_TOLERANCE`
+    now reaches it, and page 3 prints `$960.50` in the column under a net-pay label -- so the
+    extractor reads it, at certainty "low", with a box around the glyphs it read. That is
+    reading, not deriving, and `testdata/external_truth.json` -- transcribed from the page
+    image before this file was ever run -- records net_pay as exactly 960.50.
+
+    So the assertion is now made where the argument actually lives: whatever `net_pay` ends up
+    being, it must not carry `ARITHMETIC_NOTE`. Turning "abstain" into "not derived" keeps the
+    refusal this test exists for and stops it also asserting a geometry limitation nobody
+    argued for. `gross_pay` is unchanged and still abstains outright -- nothing on the page
+    prints it under a label we recognise, so there is nothing to read and nothing to derive.
+    """
     view = ex.extract_document(EXTERNAL / "ext_les.pdf", document_type="pay_stub")
     got = {f["field"]: f for f in view["fields"]}
     assert got["gross_pay"]["certainty"] == "abstain"
-    assert got["net_pay"]["certainty"] == "abstain"
+    assert vf.ARITHMETIC_NOTE not in (got["gross_pay"].get("notes") or "")
+    assert vf.ARITHMETIC_NOTE not in (got["net_pay"].get("notes") or "")
+    if got["net_pay"]["certainty"] != "abstain":
+        # Read from the page, so it must be the figure the page prints.
+        assert got["net_pay"]["value"] == 960.50
+        assert got["net_pay"]["certainty"] == "low"
 
 
 def test_ambiguous_factors_abstain_rather_than_guess(flag_on) -> None:

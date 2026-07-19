@@ -17,6 +17,7 @@ import argparse
 import collections
 import json
 import sys
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -42,12 +43,63 @@ def iou(a: Sequence[float] | None, b: Sequence[float] | None) -> float | None:
     return intersection / union if union > 0 else 0.0
 
 
+#: Date formats this comparison will read on either side. Deliberately the same list the
+#: extractor parses (`core.extract._DATE_FORMATS`), not a superset: a scorer that understands
+#: more spellings than the extractor produces would be measuring itself.
+_DATE_FORMATS = ("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y", "%m-%d-%Y", "%B %d, %Y", "%b %d, %Y")
+
+
+def _as_date(value: Any) -> date | None:
+    """The date this value denotes, or None if it does not denote one."""
+    if isinstance(value, date):
+        return value
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 def values_match(predicted: Any, gold: Any) -> bool:
-    """Numeric-aware equality: gold types are inconsistent (850 vs 850.0)."""
+    """Type-aware equality: compare dates as dates and numbers as numbers.
+
+    A value and the truth it is checked against are two spellings of one fact, and the
+    spelling is not the thing being measured. The gold's own number types are already
+    inconsistent (850 vs 850.0), which is why the numeric leg has always been here; dates
+    have exactly the same problem and had no leg at all. `2015-04-10` and `04/10/2015` are
+    the same day, and the extractor normalises every date it reads to ISO while a truth file
+    transcribed from a page render holds whatever the page printed. Comparing those as
+    strings scores a correct reading as a miss.
+
+    Measured before the rule was written, so that it is a rule rather than a fit: across the
+    pack gold, the 26 upload fixtures and the 6 published PDFs, exactly four fields are
+    scored differently by string and by type, and all four are the same date in two
+    spellings -- ADP's pay date and both ends of its pay period, and UTEP's pay date.
+
+    **It recovers nothing today**, and that is worth stating plainly rather than leaving to
+    be discovered. This function's only caller is `summarize` below, which scores the pack,
+    and the pack writes its dates ISO on both sides. All four affected fields live in the
+    external hold-out, which is scored by `eval/score_extraction.normalize` -- already
+    type-aware -- and therefore already counts them correct. What changes is that a latent
+    trap is closed: the day a non-ISO date reaches this comparison it would otherwise report
+    a correct extraction as a wrong value, which is the one error this repository most cares
+    about not making, and it would be the *scorer* making it.
+
+    Implemented here rather than imported from `eval/` on purpose. This module's own
+    docstring keeps the two scorers independent so that a disagreement between them is a
+    finding; sharing the comparator would delete the finding rather than resolve it.
+    """
     if isinstance(predicted, bool) or isinstance(gold, bool):
         return predicted == gold
     if isinstance(predicted, (int, float)) and isinstance(gold, (int, float)):
         return abs(float(predicted) - float(gold)) < 1e-6
+    predicted_date, gold_date = _as_date(predicted), _as_date(gold)
+    if predicted_date is not None and gold_date is not None:
+        return predicted_date == gold_date
     return str(predicted).strip() == str(gold).strip()
 
 

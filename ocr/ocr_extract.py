@@ -259,6 +259,25 @@ class PageImage:
 
 _ENGINE = None
 
+#: The detector resizes the page so its long side is at most this many pixels, then runs a
+#: DBNet whose activations are proportional to that area. Measured peak RSS for one page:
+#: 2000px -> 744 MB, 1600 -> 555, 1400 -> 468, 1200 -> 390. That single allocation, not the
+#: page bitmap (25 MB) and not per-thread arenas (single-threading changed nothing), is what
+#: a 512 MB host kills the process for.
+#:
+#: Lowering it is NOT free: every value below 2000 produced a different read of the eight
+#: rasterized documents. Whether "different" means "worse" is a question for the score, so
+#: this is an env knob and it is part of the cache key -- a measurement taken at one cap must
+#: never be served from a cache filled at another.
+DEFAULT_OCR_MAX_SIDE = 2000
+
+
+def ocr_max_side() -> int:
+    import os
+
+    raw = os.environ.get("REALDOOR_OCR_MAX_SIDE", "")
+    return int(raw) if raw.isdigit() else DEFAULT_OCR_MAX_SIDE
+
 
 def _engine():
     """Lazily construct the OCR engine; model load is ~0.3s and is reused across pages."""
@@ -266,7 +285,7 @@ def _engine():
     if _ENGINE is None:
         from rapidocr_onnxruntime import RapidOCR
 
-        _ENGINE = RapidOCR()
+        _ENGINE = RapidOCR(max_side_len=ocr_max_side())
     return _ENGINE
 
 

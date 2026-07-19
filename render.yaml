@@ -1,0 +1,32 @@
+# Render blueprint. The Dockerfile already reads $PORT and already ships a health check, so
+# this file mostly declares intent: one instance, because sessions live in that process's
+# memory and a second instance would answer requests about a session it has never seen.
+services:
+  - type: web
+    name: realdoor
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free             # 512 MB. A session costs ~0.18 MB measured, so the cap below fits.
+                           # Free instances sleep after 15 minutes idle and cold-start in about
+                           # a minute. A judge arriving cold waits; that is the cost of this tier
+                           # and it is stated rather than hidden. 750 free hours covers one
+                           # service running continuously, so a keep-alive ping is affordable.
+    region: oregon
+    numInstances: 1
+    healthCheckPath: /api/health
+    autoDeploy: false      # deploys are a decision, not a side effect of a push
+    envVars:
+      - key: PORT
+        value: 7860
+      # Set in the dashboard, never here. The repository is public.
+      - key: OPENAI_API_KEY
+        sync: false
+      # 512 MB is a third of what the Space had, so the session ceiling comes down with it.
+      # 300 x 0.18 MB is only 55 MB, but the pack copy is not the whole cost of a session and
+      # the number should follow the box it runs in.
+      - key: REALDOOR_MAX_SESSIONS
+        value: "120"
+      - key: REALDOOR_COLUMNS
+        value: "1"
+      - key: REALDOOR_ARITHMETIC
+        value: "1"

@@ -51,5 +51,8 @@ COPY --chown=user . .
 # `$PORT` 를 주입한다. CMD 를 셸 형식으로 두면 한 이미지가 양쪽에서 다 돈다 —
 # exec 형식(JSON 배열)이면 `${PORT}` 가 확장되지 않고 문자 그대로 넘어간다.
 EXPOSE 7860
+HEALTHCHECK --interval=60s --timeout=10s --start-period=180s --retries=3 \
+  CMD python -c "import os,urllib.request,sys; \
+sys.exit(0 if b'\"ok\":true' in urllib.request.urlopen('http://127.0.0.1:'+os.environ.get('PORT','7860')+'/api/health', timeout=8).read() else 1)"
 
 CMD python -m uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-7860}

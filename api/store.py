@@ -107,8 +107,21 @@ def _label_model_key() -> str:
 
 
 def _cache_key(pdf: Path) -> str:
-    st = pdf.stat()
-    raw = f"{pdf.name}|{st.st_size}|{int(st.st_mtime)}|{engine_sha()}|{_label_model_key()}|v3"
+    """캐시 키. 문서는 **내용**으로 식별한다 -- 수정 시각이 아니라.
+
+    처음에는 `st_mtime` 을 썼는데, 그러면 캐시는 이 기계에서만 맞는다. git 체크아웃은
+    파일의 수정 시각을 체크아웃한 시각으로 새로 찍기 때문에, 컨테이너에 캐시를 실어
+    보내도 키가 전부 어긋나 단 한 건도 적중하지 않는다. 실제로 배포 브랜치는 미리 채운
+    캐시 466개를 싣고 다니면서 매 기동마다 8장을 다시 OCR 했고, 그게 87초짜리 부팅과
+    512MB 호스트에서의 OOM 이었다. 내용 해시는 체크아웃을 견딘다.
+
+    비용은 기동당 24개 PDF를 한 번 읽는 것이고, 그 파일들은 어차피 곧 열린다.
+    """
+    from ocr.ocr_extract import ocr_max_side
+
+    digest = hashlib.sha256(pdf.read_bytes()).hexdigest()[:16]
+    raw = (f"{pdf.name}|{digest}|{engine_sha()}"
+           f"|{_label_model_key()}|ocr{ocr_max_side()}|v4")
     return hashlib.sha256(raw.encode()).hexdigest()[:20]
 
 

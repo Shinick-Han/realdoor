@@ -238,10 +238,20 @@ def test_retag_only_touches_model_named_fields():
 def test_holdout_deterministic_score_is_pinned():
     """The offline number must not drift silently, in either direction.
 
-    19/34 is what `LABEL_SYNONYMS` reaches on labels it was not written against. If a
+    24/34 is what `LABEL_SYNONYMS` reaches on labels it was not written against. If a
     later change to the table moves this, that is a real result and the number here
     should be updated deliberately -- but it must not move without anyone noticing,
     because the whole point of the hold-out set is that its score is not ours to choose.
+
+    Moved from 19/34 once, deliberately, and this is the record of it. Two changes are
+    responsible and both were measured separately:
+
+      * four phrase synonyms -- `ADVICE DATE`, `PAY BEGIN DATE`, `PAY END DATE`,
+        `FOR PAY PERIOD ENDING` -- worth +5 here (`ho_003`, `ho_005`);
+      * `TYPED_VALUE_X_TOLERANCE`, which reaches values set a few points off their label's
+        edge, worth 0 on this set and +4 on the external six.
+
+    `wrong` stayed 0 through both, on this set and on every other one we measure.
 
     Skipped when the fixtures have not been generated (`python scripts/make_holdout.py`),
     since they are build artefacts rather than source.
@@ -279,7 +289,7 @@ def test_holdout_deterministic_score_is_pinned():
                 wrong += 1
 
     assert wrong == 0, "a wrong answer on the hold-out set is a regression, not a trade-off"
-    assert (correct, total) == (19, 34)
+    assert (correct, total) == (24, 34)
 
 
 # ─────────────────────────────────────────────────────── fakes

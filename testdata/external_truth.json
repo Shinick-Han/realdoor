@@ -1,120 +1,142 @@
 {
-  "generated_by": "hand transcription by a human reader working from rendered page images",
-  "purpose": "Ground truth for the REAL external PDFs in testdata/external_raw/. These files are the publishers' own bytes, downloaded unmodified. Nothing here was drawn by scripts/make_testdata.py, so the geometry is not ours.",
-  "ordering_discipline": "Every value below was read off a 140-dpi PNG render of the page (and, for four pages of ext_les/ext_utep that carry no field data, off the raw pdfplumber text layer) and written into this file BEFORE core.extract.extract_document was called even once in this session. The extractor's field output had not been observed at the time this file was saved. See the report for the audit trail.",
-  "field_semantics": {
-    "expected": "the value a careful human reads off the page for this field",
-    "expect_absent": "the page carries NO readable value for this field. The only acceptable outcomes are abstain or field-not-returned. Any concrete value here is a WRONG value -- a false positive -- and is counted as such.",
-    "note": "why this call was made, where it was not obvious"
+ "generated_by": "transcribed by an agent from 140-dpi page renders, before core.extract was run. Not independently checked by a person. An earlier version of this line claimed a human reader; that was false and is corrected here.",
+ "purpose": "Ground truth for the REAL external PDFs in testdata/external_raw/. These files are the publishers' own bytes, downloaded unmodified. Nothing here was drawn by scripts/make_testdata.py, so the geometry is not ours.",
+ "ordering_discipline": "Every value below was read off a 140-dpi PNG render of the page by an agent, not by a person (and, for four pages of ext_les/ext_utep that carry no field data, off the raw pdfplumber text layer) and written into this file BEFORE core.extract.extract_document was called even once in this session. The extractor's field output had not been observed at the time this file was saved. See the report for the audit trail.",
+ "field_semantics": {
+  "expected": "the value a careful human reads off the page for this field",
+  "expect_absent": "the page carries NO readable value for this field. The only acceptable outcomes are abstain or field-not-returned. Any concrete value here is a WRONG value -- a false positive -- and is counted as such.",
+  "note": "why this call was made, where it was not obvious"
+ },
+ "documents": [
+  {
+   "file_name": "ext_adp.pdf",
+   "document_type": "pay_stub",
+   "source_url": "https://courts.ca.gov/sites/default/files/courts/default/2024-10/lpa-adp-sample_pay_statement.pdf",
+   "what_it_is": "ADP 'Earnings Statement' sample check + stub, published by the California Courts. Filled with sample data.",
+   "text_layer": true,
+   "expected": {
+    "person_name": "AMIS SMITH",
+    "pay_date": "04/10/2015",
+    "pay_period_start": "03/30/2015",
+    "pay_period_end": "04/05/2015",
+    "regular_hours": 40.0,
+    "hourly_rate": 14.9,
+    "gross_pay": 707.75,
+    "net_pay": 532.76
+   },
+   "expect_absent": [
+    "pay_frequency"
+   ],
+   "note": "Rate/Hours are COLUMN HEADERS over a two-row earnings matrix (Regular 14.9000/40.00, Overtime 22.3500/5.00). The regular row is the nearest row below each header. Period Beginning/Ending/Pay Date each appear TWICE (statement header and check stub at the foot) with identical values, so a duplicate hit is harmless here."
   },
-  "documents": [
-    {
-      "file_name": "ext_adp.pdf",
-      "document_type": "pay_stub",
-      "source_url": "https://courts.ca.gov/sites/default/files/courts/default/2024-10/lpa-adp-sample_pay_statement.pdf",
-      "what_it_is": "ADP 'Earnings Statement' sample check + stub, published by the California Courts. Filled with sample data.",
-      "text_layer": true,
-      "expected": {
-        "person_name": "AMIS SMITH",
-        "pay_date": "04/10/2015",
-        "pay_period_start": "03/30/2015",
-        "pay_period_end": "04/05/2015",
-        "regular_hours": 40.00,
-        "hourly_rate": 14.9000,
-        "gross_pay": 707.75,
-        "net_pay": 532.76
-      },
-      "expect_absent": ["pay_frequency"],
-      "note": "Rate/Hours are COLUMN HEADERS over a two-row earnings matrix (Regular 14.9000/40.00, Overtime 22.3500/5.00). The regular row is the nearest row below each header. Period Beginning/Ending/Pay Date each appear TWICE (statement header and check stub at the foot) with identical values, so a duplicate hit is harmless here."
-    },
-    {
-      "file_name": "ext_unc.pdf",
-      "document_type": "pay_stub",
-      "source_url": "https://finance.unc.edu/wp-content/uploads/sites/298/2017/08/paystub-sample-2017.pdf",
-      "what_it_is": "PeopleSoft payroll advice, UNC Chapel Hill published sample. Dense 2-column ruled layout.",
-      "text_layer": true,
-      "expected": {
-        "pay_date": "08/04/2017",
-        "pay_period_start": "07/10/2017",
-        "pay_period_end": "07/23/2017",
-        "regular_hours": 74.50,
-        "hourly_rate": 20.346846,
-        "gross_pay": 1627.74,
-        "net_pay": 1040.23
-      },
-      "expect_absent": ["person_name", "pay_frequency"],
-      "note": "TRAP, flagged before running anything: the page carries a labelled field 'Pay Rate: $45,000.00 Annual'. 'PAY RATE' is in LABEL_MAP as hourly_rate, but the value is an ANNUAL SALARY. The true hourly rate (20.346846) is unlabelled, in the Rate column of the earnings matrix. Also: the 'Employee Name' box is redacted in this sample -- it holds an address (123 Franklin St / CHAPEL HILL, NC 27517), no name -- so person_name must abstain. TOTAL GROSS row has Current 1,627.74 and YTD 28,707.21 side by side."
-    },
-    {
-      "file_name": "ext_utep.pdf",
-      "document_type": "pay_stub",
-      "source_url": "https://www.utep.edu/student-affairs/financialaid/_files/docs/understanding-your-pay-stub.pdf",
-      "what_it_is": "Ascendium/UTEP 'Understanding Your Pay Stub' handout. Page 1 holds a sample stub; pages 2-3 are glossary prose.",
-      "text_layer": true,
-      "expected": {
-        "person_name": "Mary Doe",
-        "pay_date": "09-30-2014",
-        "regular_hours": 74.25,
-        "gross_pay": 1227.36,
-        "net_pay": 943.45
-      },
-      "expect_absent": ["pay_period_start", "pay_period_end", "pay_frequency", "hourly_rate"],
-      "note": "TRAP, flagged before running anything: the 'Pay Rate' COLUMN IS EMPTY on this sample -- every cell under it is blank. hourly_rate must abstain. The cells physically below the 'Pay Rate' header belong to the Description column's rows (Overtime/Regular/Vacation/Bonus) and the numbers nearby (0, 74.25, 5.50) live under 'Current Hours'. Page 2 is a glossary containing the strings 'Gross Earnings/Gross Wages' and 'Net Income/Net Pay' followed by PROSE definitions."
-    },
-    {
-      "file_name": "ext_les.pdf",
-      "document_type": "pay_stub",
-      "source_url": "https://www.usbr.gov/gp/employment/neo/tab6/ELS2012.pdf",
-      "what_it_is": "Federal Earnings & Leave Statement guide. Pages 1-2 are a GLOSSARY table (Data Element Name | Description); page 3 holds the actual filled LES; pages 4-5 are leave detail and prose.",
-      "text_layer": true,
-      "expected": {
-        "person_name": "STALLONE, SYLVESTER",
-        "pay_date": "08/14/2010",
-        "pay_period_start": "7/22/2010",
-        "pay_period_end": "08/04/2010",
-        "regular_hours": 80.00,
-        "hourly_rate": 21.38,
-        "gross_pay": 1813.00,
-        "net_pay": 960.50
-      },
-      "expect_absent": ["pay_frequency"],
-      "note": "TRAP, flagged before running anything: pages 1-2 are a glossary whose LEFT column is literally our label vocabulary -- 'Net Pay', 'Pay Date', 'Name', 'Hourly Rate', 'For Pay Period Ending', 'Pay Begin Date' -- and whose RIGHT column is an English sentence, not a value. extract_document merges pages with found.setdefault, so PAGE 1 WINS any field it can fill. The real values are on page 3. Whether this document reads correctly depends entirely on the type-parse guard rejecting prose. pay_period_start comes from 'Pay Begin Date 7/22/2010' in the Basic Information block (single-digit month as printed)."
-    },
-    {
-      "file_name": "ext_nydol.pdf",
-      "document_type": "benefit_letter",
-      "source_url": "https://forms.labor.ny.gov/UI/T402B.pdf",
-      "what_it_is": "NY DOL form T402B, Unemployment Insurance Monetary Benefit Determination. A BLANK unfilled form.",
-      "text_layer": true,
-      "expected": {},
-      "expect_absent": ["person_name", "document_date", "monthly_benefit", "benefit_frequency"],
-      "note": "Every value slot is empty. 'Date Mailed:' is followed by the fill-in rule ' / / '. 'Weekly Benefit Rate:' has an empty box, and is weekly rather than monthly in any case. The whole document is a false-positive test: there is no correct non-abstain answer to any field."
-    },
-    {
-      "file_name": "ext_va.pdf",
-      "document_type": "employment_letter",
-      "source_url": "https://www.vba.va.gov/pubs/forms/vba-26-8497-are.pdf",
-      "what_it_is": "VA Form 26-8497 / USDA 410-5, Request for Verification of Employment. A BLANK unfilled form.",
-      "text_layer": true,
-      "expected": {},
-      "expect_absent": ["person_name", "document_date", "weekly_hours", "hourly_rate"],
-      "note": "Blank form. Item 2 (name of applicant), item 5 (date), item 12 (current base pay) and item 15 (average hours worked each week) are all empty boxes. Bare '$' glyphs sit in many of the money boxes with no digits after them. Like the NY form, this is purely a false-positive test."
-    }
-  ],
-  "downloads": {
-    "fetched_on": "2026-07-19",
-    "note": "sha256 of the publishers' bytes exactly as received. The files were not re-rendered, re-typeset, re-keyed or edited in any way. Anyone re-downloading from the source_url above can confirm these hashes.",
-    "ext_adp.pdf": "c765098270e7532bf966bc628b66647007a0c7631cc42c027c4e0a6da2c891ca",
-    "ext_unc.pdf": "45c0394a8004fcc12769d062e83030bd5f36df37a3013944053924bd82968820",
-    "ext_utep.pdf": "8bda9ec2eb2fc4acf8206b5874bd2c0e85375d6379275a4bdd6fc9f3cd41baec",
-    "ext_les.pdf": "04253f0563950cea8ca885564e2214c0d71e4d8b71b11921846a22a63480602c",
-    "ext_nydol.pdf": "7a994cb8d828398ca166c60345524f9b7cec4ba00729ea5a011a12b4cbe561b0",
-    "ext_va.pdf": "f55ae09d8bd818d297369f27ff57f27889c7828614202270fe5005659b7caf55"
+  {
+   "file_name": "ext_unc.pdf",
+   "document_type": "pay_stub",
+   "source_url": "https://finance.unc.edu/wp-content/uploads/sites/298/2017/08/paystub-sample-2017.pdf",
+   "what_it_is": "PeopleSoft payroll advice, UNC Chapel Hill published sample. Dense 2-column ruled layout.",
+   "text_layer": true,
+   "expected": {
+    "pay_date": "08/04/2017",
+    "pay_period_start": "07/10/2017",
+    "pay_period_end": "07/23/2017",
+    "regular_hours": 74.5,
+    "hourly_rate": 20.346846,
+    "gross_pay": 1627.74,
+    "net_pay": 1040.23
+   },
+   "expect_absent": [
+    "person_name",
+    "pay_frequency"
+   ],
+   "note": "TRAP, flagged before running anything: the page carries a labelled field 'Pay Rate: $45,000.00 Annual'. 'PAY RATE' is in LABEL_MAP as hourly_rate, but the value is an ANNUAL SALARY. The true hourly rate (20.346846) is unlabelled, in the Rate column of the earnings matrix. Also: the 'Employee Name' box is redacted in this sample -- it holds an address (123 Franklin St / CHAPEL HILL, NC 27517), no name -- so person_name must abstain. TOTAL GROSS row has Current 1,627.74 and YTD 28,707.21 side by side."
   },
-  "not_obtained": [
-    {
-      "source_url": "https://files.consumerfinance.gov/f/documents/cfpb_building_block_activities_how-to-read-pay-stub_handout.pdf",
-      "reason": "HTTP 403 from the CDN on every attempt, including with browser User-Agent and a consumerfinance.gov Referer. Body is an Akamai 'Access Denied' page (reference #18.d93a6f3d.1784448933.2ba67f54), not a PDF. No substitute was invented for it."
-    }
-  ]
+  {
+   "file_name": "ext_utep.pdf",
+   "document_type": "pay_stub",
+   "source_url": "https://www.utep.edu/student-affairs/financialaid/_files/docs/understanding-your-pay-stub.pdf",
+   "what_it_is": "Ascendium/UTEP 'Understanding Your Pay Stub' handout. Page 1 holds a sample stub; pages 2-3 are glossary prose.",
+   "text_layer": true,
+   "expected": {
+    "person_name": "Mary Doe",
+    "pay_date": "09-30-2014",
+    "regular_hours": 74.25,
+    "gross_pay": 1227.36,
+    "net_pay": 943.45
+   },
+   "expect_absent": [
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "hourly_rate"
+   ],
+   "note": "TRAP, flagged before running anything: the 'Pay Rate' COLUMN IS EMPTY on this sample -- every cell under it is blank. hourly_rate must abstain. The cells physically below the 'Pay Rate' header belong to the Description column's rows (Overtime/Regular/Vacation/Bonus) and the numbers nearby (0, 74.25, 5.50) live under 'Current Hours'. Page 2 is a glossary containing the strings 'Gross Earnings/Gross Wages' and 'Net Income/Net Pay' followed by PROSE definitions."
+  },
+  {
+   "file_name": "ext_les.pdf",
+   "document_type": "pay_stub",
+   "source_url": "https://www.usbr.gov/gp/employment/neo/tab6/ELS2012.pdf",
+   "what_it_is": "Federal Earnings & Leave Statement guide. Pages 1-2 are a GLOSSARY table (Data Element Name | Description); page 3 holds the actual filled LES; pages 4-5 are leave detail and prose.",
+   "text_layer": true,
+   "expected": {
+    "person_name": "STALLONE, SYLVESTER",
+    "pay_date": "08/14/2010",
+    "pay_period_start": "7/22/2010",
+    "pay_period_end": "08/04/2010",
+    "regular_hours": 80.0,
+    "hourly_rate": 21.38,
+    "gross_pay": 1813.0,
+    "net_pay": 960.5
+   },
+   "expect_absent": [
+    "pay_frequency"
+   ],
+   "note": "TRAP, flagged before running anything: pages 1-2 are a glossary whose LEFT column is literally our label vocabulary -- 'Net Pay', 'Pay Date', 'Name', 'Hourly Rate', 'For Pay Period Ending', 'Pay Begin Date' -- and whose RIGHT column is an English sentence, not a value. extract_document merges pages with found.setdefault, so PAGE 1 WINS any field it can fill. The real values are on page 3. Whether this document reads correctly depends entirely on the type-parse guard rejecting prose. pay_period_start comes from 'Pay Begin Date 7/22/2010' in the Basic Information block (single-digit month as printed)."
+  },
+  {
+   "file_name": "ext_nydol.pdf",
+   "document_type": "benefit_letter",
+   "source_url": "https://forms.labor.ny.gov/UI/T402B.pdf",
+   "what_it_is": "NY DOL form T402B, Unemployment Insurance Monetary Benefit Determination. A BLANK unfilled form.",
+   "text_layer": true,
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "document_date",
+    "monthly_benefit",
+    "benefit_frequency"
+   ],
+   "note": "Every value slot is empty. 'Date Mailed:' is followed by the fill-in rule ' / / '. 'Weekly Benefit Rate:' has an empty box, and is weekly rather than monthly in any case. The whole document is a false-positive test: there is no correct non-abstain answer to any field."
+  },
+  {
+   "file_name": "ext_va.pdf",
+   "document_type": "employment_letter",
+   "source_url": "https://www.vba.va.gov/pubs/forms/vba-26-8497-are.pdf",
+   "what_it_is": "VA Form 26-8497 / USDA 410-5, Request for Verification of Employment. A BLANK unfilled form.",
+   "text_layer": true,
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "document_date",
+    "weekly_hours",
+    "hourly_rate"
+   ],
+   "note": "Blank form. Item 2 (name of applicant), item 5 (date), item 12 (current base pay) and item 15 (average hours worked each week) are all empty boxes. Bare '$' glyphs sit in many of the money boxes with no digits after them. Like the NY form, this is purely a false-positive test."
+  }
+ ],
+ "downloads": {
+  "fetched_on": "2026-07-19",
+  "note": "sha256 of the publishers' bytes exactly as received. The files were not re-rendered, re-typeset, re-keyed or edited in any way. Anyone re-downloading from the source_url above can confirm these hashes.",
+  "ext_adp.pdf": "c765098270e7532bf966bc628b66647007a0c7631cc42c027c4e0a6da2c891ca",
+  "ext_unc.pdf": "45c0394a8004fcc12769d062e83030bd5f36df37a3013944053924bd82968820",
+  "ext_utep.pdf": "8bda9ec2eb2fc4acf8206b5874bd2c0e85375d6379275a4bdd6fc9f3cd41baec",
+  "ext_les.pdf": "04253f0563950cea8ca885564e2214c0d71e4d8b71b11921846a22a63480602c",
+  "ext_nydol.pdf": "7a994cb8d828398ca166c60345524f9b7cec4ba00729ea5a011a12b4cbe561b0",
+  "ext_va.pdf": "f55ae09d8bd818d297369f27ff57f27889c7828614202270fe5005659b7caf55"
+ },
+ "not_obtained": [
+  {
+   "source_url": "https://files.consumerfinance.gov/f/documents/cfpb_building_block_activities_how-to-read-pay-stub_handout.pdf",
+   "reason": "HTTP 403 from the CDN on every attempt, including with browser User-Agent and a consumerfinance.gov Referer. Body is an Akamai 'Access Denied' page (reference #18.d93a6f3d.1784448933.2ba67f54), not a PDF. No substitute was invented for it."
+  }
+ ]
 }

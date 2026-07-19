@@ -50,23 +50,22 @@ upload is the front door, and the prepared files are a second offer on the same 
 3. Open **"How this works, and how we tested it"** in the header. The refusals, the
    prompt-injection probe, the output gate and session deletion all live there.
 
-All six households carry a bundled report, so the prepared-file select on step 1 renders any of them offline.
+All six households are available from the prepared-file select on step 1.
 
-**What the hosted build withholds, and why.** Steps 2 and 3 replay recorded pipeline
-output, and both recordings were made in an `HH-001` session. So on any other household
-the static build switches those controls off and says which household they belong to,
-rather than showing `HH-001`'s figures under another household's name — step 3 would
-otherwise answer "$72,000 for household size 1" two clicks before step 4 worked out
-$102,840.00 for the household actually on show. The rule questions that name no household
-(the eligibility refusal, the prompt-injection probe) are answered for every household,
-because those answers do not depend on whose session it was.
+### The link above is a running server, so the gate can be tested on it
 
-### The hosted build cannot demonstrate the output gate
+An earlier revision of this file described the public URL as a static build serving
+bundled fixtures, and said the output gate could not be demonstrated on it. That is no
+longer true and the paragraph is gone rather than quietly softened. The link runs the
+FastAPI process: uploads are read by the extractor, questions are routed live, and the
+output gate is in the request path. You can fire the gate at the hosted URL directly:
 
-The public URL runs on bundled fixtures — real pipeline output, no server, no network.
-The output gate lives inside the API process, so on the hosted build it reports
-**"Not run — there is no server to test"** rather than replaying a recording and calling
-it a live test. To see the gate actually withhold a response, run the server:
+```bash
+curl -i https://shinick-realdoor.hf.space/api/_gate_selftest
+# HTTP/1.1 500
+```
+
+To run the same thing locally instead:
 
 ```bash
 python -m uvicorn api.app:app --host 127.0.0.1 --port 8077
@@ -88,7 +87,7 @@ them are easy to miss and each was: without `python-multipart` FastAPI raises at
 time — the upload route takes form data — which aborts collection before a single test
 runs; the OCR fallback needs `rapidocr-onnxruntime`; and one readability measurement
 skips itself without `textstat`. In a clean 3.12 venv this exact line reproduces
-`880 passed`. Drop `textstat` and it is `879 passed, 1 skipped`, which is why it is
+`1158 passed`. Drop `textstat` and it is `1157 passed, 1 skipped`, which is why it is
 listed.)*
 
 ---
@@ -115,12 +114,12 @@ The API endpoints do map 1:1 to the brief's six steps; the screens do not.
 
 Stated first, because this is the point of the product.
 
-- **Upload works only with the server running.** Reading a PDF needs the extractor, which
-  is Python. On the hosted build the panel is on step 1, switched off rather than hidden,
-  saying what to run — a judge cannot bring their own PDF to the public URL. Start the
-  server and the same panel takes one synthetic document, held in that session's memory,
-  never written to disk and never joined to the household's file. The 24 pack documents
-  are pre-loaded either way.
+- **Upload takes one document at a time, and it is not persisted.** Reading a PDF needs
+  the extractor, which is Python, so upload works wherever the server runs — including the
+  public URL, where a judge can bring their own PDF. The document is held in that session's
+  memory, never written to disk and never joined to the household's file. (An earlier
+  revision of this line said upload was switched off on the public URL. That was true of a
+  static build we no longer serve.)
 - **One citation in seven could not be re-checked.** Of the 11 rules in the corpus, 7 cite
   an outside authority over https and 4 are the challenge pack's own frozen convention,
   whose source is a file in this repository — re-fetching those would be us reading back
@@ -148,10 +147,10 @@ Stated first, because this is the point of the product.
 Every number below is reproduced by the commands in *Reproducing the checks*.
 
 ```
-880 automated tests pass
+1158 automated tests pass
 
-Extraction        157/159 exact · 0 wrong · 2 abstained · 0 missed
-Bounding boxes    IoU > 0.5 on 157/157 · mean 0.9677  (anchored to the text baseline)
+Extraction        159/159 exact · 0 wrong · 0 abstained · 0 missed  (the organizer's pack)
+Bounding boxes    IoU > 0.5 on 159/159 · mean 0.9677  (anchored to the text baseline)
 Adversarial       24/24, 0 must_not violations
                   control set: 24/24 safe responses pass, 24/24 unsafe responses caught
 Rule questions    36/36 correct · 0 wrong · 0 abstained  (pack qa_gold)
@@ -230,7 +229,7 @@ Run from the repository root. None of these need a network connection or an API 
 # the full suite
 python -m pytest
 
-# 157/159 extraction, IoU mean 0.9677, adversarial 24/24, qa_gold 36/36
+# 159/159 extraction, IoU mean 0.9677, adversarial 24/24, qa_gold 36/36
 # (one command, roughly a minute — this is the one to run if you run only one)
 python scripts/verify.py
 
