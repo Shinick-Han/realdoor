@@ -57,8 +57,12 @@ PACK_SITUATIONS = [
      "eligibility_refused", ["READY_TO_REVIEW", "NEEDS_REVIEW", "housing professional"]),
     ("User asks which listed property has a unit available today.",
      "dataset_limitation_stated", ["cannot confirm", "HUD-DATA-001", "snapshot"]),
+    # "72,000" used to be asserted here, when the body recited all eight sizes. The body
+    # no longer does; the figures reach the renter through the citation card and the
+    # evidence line instead, and `test_frozen_corpus_figures_reach_the_renter` below
+    # asserts exactly that. The needle moved rather than being dropped.
     ("Prompt asks to use a remembered 2025 threshold.",
-     "frozen_corpus_enforced", ["2026", "HUD-MTSP-002", "72,000"]),
+     "frozen_corpus_enforced", ["2026", "HUD-MTSP-002"]),
     ("Model gives a value without source page or box.",
      "traceability_check_failed", ["traceability", "bounding box", "citation guard"]),
     ("Only employment letter is more than 60 days old.",
@@ -227,6 +231,22 @@ def test_bbox_route_admits_the_ingestion_gap(households):
     result = ask("Extraction returns a box outside the 612x792 page.", households)
     assert "not yet rejected at ingestion" in result["answer"]
     assert any(e["computed_live"] is False for e in result["evidence"])
+
+
+def test_frozen_corpus_figures_reach_the_renter(households):
+    """The body stopped reciting the table, so prove the numbers still arrive.
+
+    Shortening an answer is only safe if what was cut was redundant. It was: the size-1
+    60% figure is in HUD-MTSP-002's citation text and in the evidence line that reports
+    the table as read live during the request. If either of those stops carrying it, the
+    trim became a real loss and this fails.
+    """
+    result = ask("Prompt asks to use a remembered 2025 threshold.", households)
+    cited = " ".join(c["text"] for c in result["citations"])
+    assert "72,000" in cited, "the 60% table must still reach the renter as a citation"
+    evidence = " ".join(e["statement"] for e in result["evidence"])
+    assert "72000" in evidence.replace(",", ""), "the live-read table must still be shown"
+    assert any(e["computed_live"] for e in result["evidence"])
 
 
 def test_evidence_marks_live_computation_apart_from_citation(households):
@@ -429,3 +449,65 @@ def test_the_size_path_does_not_leak_decision_vocabulary(households):
         lowered = (out["answer"] or "").lower()
         for word in ("eligible", "ineligible", "qualif", "approved", "denied"):
             assert word not in lowered
+
+
+# =====================================================================================
+# routing — 어느 층이 잡았는가. 새 판단이 아니라 이미 참인 사실의 표시다.
+# =====================================================================================
+
+
+def test_routing_names_the_layer_that_caught_each_question(households):
+    """네 층이 각각 자기 이름으로 나온다. 답이 같아도 출처는 다르다."""
+    from api import route_llm
+
+    cases = [
+        ("what date did the current income limits take effect", "canonical",
+         "limits_effective_date"),
+        ("what is the income limit for this household", "alias", "frozen_threshold"),
+        ("Prompt asks to use a remembered 2025 threshold.", "situation",
+         "frozen_corpus_enforced"),
+        ("am i eligible", "guard", "eligibility_refused"),
+    ]
+    for question, path, intent in cases:
+        routing = ask(question, households)["routing"]
+        assert routing["path"] == path, question
+        assert routing["intent"] == intent, question
+        # gloss 는 지어내지 않고 GLOSSES 에서 읽는다.
+        assert routing["gloss"] == route_llm.GLOSSES.get(intent)
+
+
+def test_routing_admits_when_no_layer_caught_the_question(households):
+    routing = ask("what is the weather in boston", households)["routing"]
+    assert routing["path"] == "none"
+    assert routing["intent"] is None
+    assert routing["gloss"] is None
+
+
+def test_shape_gate_disclosure_appears_only_on_the_classifier_path(households):
+    """다른 층은 형태 게이트를 지나지 않는다. 지나지 않은 검사를 보고할 수는 없다."""
+    for question in ["what date did the current income limits take effect",
+                     "what is the income limit for this household",
+                     "am i eligible",
+                     "what is the weather in boston"]:
+        assert "shape_gate" not in ask(question, households)["routing"], question
+
+
+def test_routing_carries_no_key_the_output_gate_would_hold(households):
+    """`routing` 도 게이트를 지나간다. 필드 이름과 중첩 키 전부."""
+    for question, _kind, _needles in PACK_SITUATIONS:
+        result = ask(question, households)
+        assert gate.scan(result["routing"]) == []
+        assert gate.scan(result) == []
+
+
+def test_routing_intent_matches_the_answer_it_labels(households):
+    """표시가 답과 어긋나지 않는다 — 라우터 층은 지명한 의도로 답한다.
+
+    분류기 경로는 여기서 제외한다. 지명은 분류기가 하고 문구는 재확인이 고르므로 둘이
+    갈릴 수 있고, 그 갈림이야말로 `routing` 이 감추지 않고 싣는 사실이다.
+    """
+    for question, kind, _needles in PACK_SITUATIONS:
+        result = ask(question, households)
+        if result["routing"]["path"] == "classifier":
+            continue
+        assert result["routing"]["intent"] == result["kind"] == kind

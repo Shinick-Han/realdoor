@@ -1,6 +1,6 @@
 {
  "household_id": "HH-002",
- "generated_at": "2026-07-19T09:07:58Z",
+ "generated_at": "2026-07-19T09:51:15Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
@@ -674,8 +674,8 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:cda171ce0549",
- "session_id": "5db8219e226a",
+ "engine_version": "sha:6afbb478f6a8",
+ "session_id": "16b67361b849",
  "plain": {
   "messages": [
    {
@@ -753,7 +753,7 @@
  "activity_log": {
   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
   "ruleset_version": "pack-v1/2026-05-01",
-  "engine_version": "sha:cda171ce0549",
+  "engine_version": "sha:6afbb478f6a8",
   "counts": {
    "session_created": 1
   },

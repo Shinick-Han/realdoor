@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -401,3 +402,49 @@ def test_selftest_leaves_cache_rate_null_rather_than_guessing(monkeypatch):
     section = selftest_mod.intent_router_section()
     assert section["cache_hits"] is None
     assert section["cache_hit_rate"] is None
+
+
+# =====================================================================================
+# routing 필드 — 표시일 뿐이고, 표시하는 것은 전부 이미 참인 사실이다
+# =====================================================================================
+
+
+def test_profile_groups_are_derived_not_listed():
+    """그룹이 손 목록이 아니라는 증거: `PROFILES` 를 바꾸면 그룹이 따라 움직인다.
+
+    이 테스트가 이 파일에서 하는 일은 다른 테스트와 같다 — 정확도가 아니라 **구조**를
+    강제한다. 의도가 추가됐는데 누가 어딘가의 목록을 갱신하는 걸 잊어서 응답이 "이
+    지명은 유일하게 식별됐다"고 말하는 일이 생길 수 없다는 것.
+    """
+    from logic.answer_rules import AnswerProfile
+
+    before = route_llm.profile_peers("frozen_corpus_enforced")
+    assert "vacancy_claim" in before, "fixture assumption: 둘 다 (policy, False) 다"
+    assert "frozen_corpus_enforced" not in before, "자기 자신은 이웃이 아니다"
+
+    mine = route_llm.PROFILES["frozen_corpus_enforced"]
+    added = dict(route_llm.PROFILES)
+    added["a_newly_added_intent"] = AnswerProfile(mine.shape, mine.answers_self)
+    with mock.patch.dict(route_llm.PROFILES, added, clear=True):
+        after = route_llm.profile_peers("frozen_corpus_enforced")
+    assert "a_newly_added_intent" in after, "새 의도가 그룹에 저절로 들어와야 한다"
+    assert set(after) == set(before) | {"a_newly_added_intent"}
+
+    # 그리고 되돌아온다 — 그룹은 표가 아니라 계산이다.
+    assert route_llm.profile_peers("frozen_corpus_enforced") == before
+
+
+def test_profile_groups_partition_every_known_intent():
+    """모든 의도가 자기 그룹에 정확히 한 번 들어간다. 빠지거나 겹치는 의도가 없다."""
+    for intent in route_llm.known_intents():
+        peers = route_llm.profile_peers(intent)
+        assert intent not in peers
+        for peer in peers:
+            # 이웃 관계는 대칭이다. 한쪽만 구분 불가라고 말할 수는 없다.
+            assert intent in route_llm.profile_peers(peer)
+            assert route_llm.PROFILES[peer] == route_llm.PROFILES[intent]
+
+
+def test_unknown_intent_has_no_profile_peers():
+    assert route_llm.profile_peers("not_an_intent_at_all") == ()
+    assert route_llm.profile_peers("") == ()

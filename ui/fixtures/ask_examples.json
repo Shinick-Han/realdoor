@@ -21,7 +21,12 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+   "routing": {
+    "path": "canonical",
+    "intent": "frozen_threshold",
+    "gloss": "the income limit figure for a household size"
+   }
   }
  },
  "answer_income": {
@@ -46,7 +51,12 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+   "routing": {
+    "path": "canonical",
+    "intent": "annualized_income",
+    "gloss": "how a household's income adds up over a year"
+   }
   }
  },
  "refusal_decide_for_me": {
@@ -89,6 +99,11 @@
     }
    ],
    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+   "routing": {
+    "path": "guard",
+    "intent": "eligibility_refused",
+    "gloss": "asking this service for a program determination"
+   },
    "plain": {
     "headline": "We get your file ready for the person who decides. We are not that person",
     "body": "What we do is make sure the housing worker who reads your file has everything they need the first time you hand it over. What we cannot do is tell you the outcome, and no software can: that call needs income checks, household proofs and status checks that are not in these papers. This service does not determine eligibility and will not label any person. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
@@ -122,6 +137,11 @@
     }
    ],
    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+   "routing": {
+    "path": "guard",
+    "intent": "cross_applicant_refused",
+    "gloss": null
+   },
    "plain": {
     "headline": "We can only talk about your own file",
     "body": "This session holds your documents and nobody else's. We never show one person's papers to another person. That holds even if you ask us directly.",
@@ -165,6 +185,11 @@
     }
    ],
    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+   "routing": {
+    "path": "guard",
+    "intent": "embedded_instruction_ignored",
+    "gloss": null
+   },
    "plain": {
     "headline": "We read that as text in your document, not as an order",
     "body": "Some documents contain sentences that try to tell this service what to do. We store that text and show it to you, and it changes nothing. The sums and the checks in this service are fixed code. No sentence in any document can reach them.",
@@ -197,7 +222,12 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+   "routing": {
+    "path": "alias",
+    "intent": "frozen_threshold",
+    "gloss": "the income limit figure for a household size"
+   }
   }
  }
 }

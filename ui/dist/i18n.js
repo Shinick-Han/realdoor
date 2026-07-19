@@ -295,6 +295,38 @@
     "The threshold moves when household size changes because the frozen HUD table is indexed by household size (rule HUD-MTSP-002). The amount moves only when the recurring base changes.":
       "동결된 HUD 표가 세대원 수로 색인되어 있기 때문에(규칙 HUD-MTSP-002), 세대원 수가 바뀌면 기준액이 움직입니다. 금액은 정기 급여의 기준이 바뀔 때만 움직입니다.",
 
+    /* ── 랜딩 화면 제거에 따라 새로 생긴 문장들 ────────────────────────────────
+     *
+     * 기존 항목은 하나도 지우지 않았다. 랜딩 화면의 제목·첫 단락 키(위쪽)는 이제 화면에
+     * 나타나지 않지만 사전에 그대로 남겨 둔다 — 사전 키가 안 맞으면 저절로 영어로 남는
+     * 구조이므로 쓰이지 않는 키는 해를 끼치지 않고, 지우면 되돌리기가 어려워진다.
+     *
+     * "Before you start" 와 "What happens, in order" 의 한국어는 위에 이미 있고, 그 두
+     * 덩어리가 판정 화면(screen-how)으로 옮겨졌을 뿐이라 키가 그대로 맞는다. */
+
+    // 1단계 도입문. 헤더의 상시 고지가 이미 말하는 내용을 반복하지 않는다.
+    "RealDoor reads the documents for one household and shows you where on the page every value came from. On this step, each value is shown together with the box it was read from. Choose a field name to light up its box. Nothing here is inferred about the person.":
+      "RealDoor 는 한 세대의 서류를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여 줍니다. 이 단계에서는 각 값이 그것을 읽어낸 근거 위치와 함께 표시됩니다. 항목 이름을 고르면 그 위치가 켜집니다. 여기에서 사람에 대해 추측한 것은 하나도 없습니다.",
+
+    // 판정 화면으로 옮겨 간 목차에 붙는 안내문.
+    "The six steps of the walkthrough, in the order they are presented. The walkthrough starts on step 1, so this list is a description of it rather than a gate in front of it.":
+      "진행 과정 여섯 단계를, 제시되는 순서대로 적은 것입니다. 진행은 1단계에서 바로 시작하므로, 이 목록은 앞을 막는 관문이 아니라 설명입니다.",
+
+    // ── 모든 화면에 붙는 질문 상자 ─────────────────────────────────────────
+    "Ask about a housing rule": "주택 규칙에 대해 물어보기",
+    "You can ask from any step, in your own words. The answer opens below this box, with the rule id, the authority behind it and the date it took effect. Step 3 holds the recorded questions and explains what a citation carries.":
+      "어느 단계에서든 자기 말로 물어보실 수 있습니다. 답변은 이 상자 바로 아래에 열리며, 규칙 id, 그 근거가 되는 기관, 시행일이 함께 붙습니다. 기록된 질문과 인용이 무엇을 담는지에 대한 설명은 3단계에 있습니다.",
+    "No question has been asked yet. The answer to one appears here, in this same place on every screen, and the page moves you to it when it arrives.":
+      "아직 아무 질문도 하지 않으셨습니다. 질문에 대한 답변은 여기, 모든 화면에서 같은 자리에 나타나고, 답변이 오면 화면이 그리로 옮겨 드립니다.",
+    "You deleted this session, so there is nothing left to answer a question with. Starting again loads the household from the pack as a new session.":
+      "이 세션을 지우셨기 때문에, 질문에 답할 것이 남아 있지 않습니다. 다시 시작하면 세대 자료를 팩에서 새 세션으로 불러옵니다.",
+    "To ask in your own words, use the box at the foot of this page. It is on every screen, and its answers open in the same place these ones do.":
+      "자기 말로 물어보시려면 이 페이지 맨 아래의 입력 상자를 쓰세요. 그 상자는 모든 화면에 있고, 그 답변도 여기 답변과 같은 자리에 열립니다.",
+    "Then open http://127.0.0.1:8077 and ask from any screen.":
+      "그런 다음 http://127.0.0.1:8077 을 열면 어느 화면에서든 물어보실 수 있습니다.",
+    "Without a server, the questions this build did record can still be asked from step 3, and their answers open here.":
+      "서버가 없어도, 이 빌드가 기록해 둔 질문들은 3단계에서 그대로 물어볼 수 있고, 그 답변은 여기에 열립니다.",
+
     // ── app.js: 규칙 질문 화면 ─────────────────────────────────────────────
     "Ask about a rule": "규칙에 대해 물어보기",
     "Routed to deterministic rule handlers. No document text reaches the calculation.":

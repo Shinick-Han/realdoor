@@ -34,8 +34,8 @@ record("Households listed from the live API", households > 0, `${households} hou
  * controls a user has. Screens are no longer reachable by jumping to a tab. */
 const next = async () => { await page.locator("#step-next").click(); await page.waitForTimeout(120); };
 
-// 1. rendered page image with overlay boxes on top of it
-await page.locator("#start-demo").click();
+// 1. rendered page image with overlay boxes on top of it — step 1 is the screen the page
+// opens on, so no control has to be pressed to reach it
 await page.locator(".page-frame img").waitFor({ timeout: 15000 }).catch(() => {});
 const imageOk = await page.evaluate(() => {
   const img = document.querySelector(".page-frame img");
@@ -75,10 +75,12 @@ record("Step 2 — arbitrary correction accepted and threshold recomputed by the
   /\$111,120\.00/.test(diff),
   /\$111,120\.00/.test(diff) ? "household size 5 -> frozen threshold $111,120.00" : diff.slice(0, 90));
 
-// 3. free-text rule question
+// 3. free-text rule question. The box is at the foot of every screen now, not inside step 3,
+// so this could be asked from anywhere; it is asked from step 3 because that is where the
+// walk happens to be, and because the check downstream reads step 3's own answer area.
 await next();
 await page.fill("#ask-input", "What is the frozen 60% threshold for HH-001?");
-await page.locator("#ask-body button[type=submit]").click();
+await page.locator("#ask-box-body button[type=submit]").click();
 await page.waitForTimeout(600);
 const askBody = (await page.locator("#ask-answer").textContent()) || "";
 record("Step 3 — free-text question answered live with a citation",

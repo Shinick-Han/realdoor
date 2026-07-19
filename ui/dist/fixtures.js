@@ -24,7 +24,12 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+    "routing": {
+     "path": "canonical",
+     "intent": "frozen_threshold",
+     "gloss": "the income limit figure for a household size"
+    }
    }
   },
   "answer_income": {
@@ -49,7 +54,12 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+    "routing": {
+     "path": "canonical",
+     "intent": "annualized_income",
+     "gloss": "how a household's income adds up over a year"
+    }
    }
   },
   "refusal_decide_for_me": {
@@ -92,6 +102,11 @@ window.REALDOOR_FIXTURES = {
      }
     ],
     "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+    "routing": {
+     "path": "guard",
+     "intent": "eligibility_refused",
+     "gloss": "asking this service for a program determination"
+    },
     "plain": {
      "headline": "We get your file ready for the person who decides. We are not that person",
      "body": "What we do is make sure the housing worker who reads your file has everything they need the first time you hand it over. What we cannot do is tell you the outcome, and no software can: that call needs income checks, household proofs and status checks that are not in these papers. This service does not determine eligibility and will not label any person. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
@@ -125,6 +140,11 @@ window.REALDOOR_FIXTURES = {
      }
     ],
     "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+    "routing": {
+     "path": "guard",
+     "intent": "cross_applicant_refused",
+     "gloss": null
+    },
     "plain": {
      "headline": "We can only talk about your own file",
      "body": "This session holds your documents and nobody else's. We never show one person's papers to another person. That holds even if you ask us directly.",
@@ -168,6 +188,11 @@ window.REALDOOR_FIXTURES = {
      }
     ],
     "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+    "routing": {
+     "path": "guard",
+     "intent": "embedded_instruction_ignored",
+     "gloss": null
+    },
     "plain": {
      "headline": "We read that as text in your document, not as an order",
      "body": "Some documents contain sentences that try to tell this service what to do. We store that text and show it to you, and it changes nothing. The sums and the checks in this service are fixed code. No sentence in any document can reach them.",
@@ -200,7 +225,12 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
+    "routing": {
+     "path": "alias",
+     "intent": "frozen_threshold",
+     "gloss": "the income limit figure for a household size"
+    }
    }
   }
  },
@@ -566,7 +596,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -1202,8 +1232,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "5db8219e226a",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "16b67361b849",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -1259,7 +1289,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1
    },
@@ -1274,7 +1304,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001_after_rejected_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -1934,8 +1964,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "f13495ca650a",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "5c455febbc2f",
   "plain": {
    "messages": [
     {
@@ -2033,7 +2063,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1,
     "field_corrected": 1
@@ -2057,7 +2087,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001_after_size_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -2693,8 +2723,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "c30b6c684a41",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "a41158838cc0",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -2750,7 +2780,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1,
     "field_corrected": 1
@@ -2774,7 +2804,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-002": {
   "household_id": "HH-002",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -3448,8 +3478,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "5db8219e226a",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "16b67361b849",
   "plain": {
    "messages": [
     {
@@ -3527,7 +3557,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1
    },
@@ -3542,7 +3572,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-003": {
   "household_id": "HH-003",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -4210,8 +4240,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "5db8219e226a",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "16b67361b849",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -4275,7 +4305,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1
    },
@@ -4290,7 +4320,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-004": {
   "household_id": "HH-004",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -5027,8 +5057,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "5db8219e226a",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "16b67361b849",
   "plain": {
    "messages": [
     {
@@ -5157,7 +5187,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1
    },
@@ -5172,7 +5202,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-005": {
   "household_id": "HH-005",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -5821,8 +5851,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "5db8219e226a",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "16b67361b849",
   "plain": {
    "messages": [
     {
@@ -5900,7 +5930,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1
    },
@@ -5915,7 +5945,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-006": {
   "household_id": "HH-006",
-  "generated_at": "2026-07-19T09:07:58Z",
+  "generated_at": "2026-07-19T09:51:15Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -6608,8 +6638,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:cda171ce0549",
-  "session_id": "5db8219e226a",
+  "engine_version": "sha:6afbb478f6a8",
+  "session_id": "16b67361b849",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -6673,7 +6703,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:cda171ce0549",
+   "engine_version": "sha:6afbb478f6a8",
    "counts": {
     "session_created": 1
    },
@@ -6687,7 +6717,7 @@ window.REALDOOR_FIXTURES = {
   }
  },
  "selftest": {
-  "generated_at": "2026-07-19T09:08:00Z",
+  "generated_at": "2026-07-19T09:51:17Z",
   "sections": {
    "extraction": {
     "status": "measured",
@@ -6739,7 +6769,7 @@ window.REALDOOR_FIXTURES = {
     "could_not_re_fetch": 1,
     "newest_result_checked_at": "2026-07-19T08:08:34Z",
     "oldest_result_checked_at": "2026-07-19T08:08:05Z",
-    "oldest_result_age_days": 0.042,
+    "oldest_result_age_days": 0.072,
     "outcome_by_citation": "HUD-MTSP-001 matched · HUD-MTSP-002 matched · HUD-MTSP-003 matched · HUD-DATA-001 matched · HUD-GEO-001 matched · FED-LIHTC-001 could not be re-fetched · FED-MONITOR-001 matched · CH-INCOME-001 out of scope, our own rule · CH-READINESS-001 out of scope, our own rule · CH-SAFETY-001 out of scope, our own rule · CH-DECISION-001 out of scope, our own rule",
     "citations_not_confirmed": "FED-LIHTC-001: Nothing was compared, because the source did not answer within the 45 second limit. This is a citation we could not check, not a citation that failed.",
     "artefact": "eval/citation_recheck.json",
@@ -6750,7 +6780,7 @@ window.REALDOOR_FIXTURES = {
     "status": "measured",
     "tool": "axe-core",
     "standard": "WCAG 2.2 AA",
-    "scans": 32,
+    "scans": 28,
     "violations": 0,
     "incomplete": 12,
     "artefact": "ui/axe-report.json",

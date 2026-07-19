@@ -69,7 +69,7 @@ await page.waitForFunction(() => document.querySelectorAll("#documents-body tabl
 
 /* ── sequence 1: correct, undo, correct something else ────────────────────────── */
 await loadHousehold("HH-004");
-await page.locator("#start-demo").click();
+// The walkthrough opens on step 1; there is no landing screen in front of it to leave.
 await page.waitForTimeout(200);
 await next();   // step 2
 

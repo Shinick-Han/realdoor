@@ -314,20 +314,22 @@ def _vacancy(households: dict[str, Any]) -> Situation:
 
 
 def _wrong_year(households: dict[str, Any]) -> Situation:
-    table = "; ".join(f"size {size} ${amount:,}" for size, amount in sorted(LIMITS_60_PCT.items()))
     return Situation(
         kind="frozen_corpus_enforced",
+        # Four sentences, and none of them is the table. The table was here twice over:
+        # HUD-MTSP-002's citation text already reads out all eight sizes, and the evidence
+        # line below reports the same figures as read live during this request. A renter
+        # who asks which numbers are in use needs the answer to that, not the numbers
+        # recited a third time inside the paragraph, and not the reasoning that got us
+        # there -- where the frozen corpus comes from is a fact about how this service is
+        # built, and the citation card is where that already lives.
         text=(
-            "The only income limits this service uses are the frozen FY 2026 figures in the "
-            f"pack corpus, effective {LIMITS_EFFECTIVE_DATE} under HUD-MTSP-001. Read out of "
-            f"the frozen table during this request, the 60% figures for the Boston-Cambridge-"
-            f"Quincy, MA-NH HMFA are: {table} (HUD-MTSP-002). A number remembered from an "
-            "earlier year, or recalled from anywhere outside the frozen corpus, is not used "
-            "and cannot override a cited source — that substitution is the specific failure "
-            "FED-LIHTC-001 warns about, and it has already happened once in this project's "
-            "history, which is why the constants are pinned to pack files. If a different "
-            "figure genuinely applies, supply the document it comes from and it will be "
-            "cited or refused on its own terms."
+            "This service uses one set of income limits: the frozen FY 2026 figures in the "
+            f"pack corpus, effective {LIMITS_EFFECTIVE_DATE} (HUD-MTSP-001). The 60% limits "
+            "for the Boston-Cambridge-Quincy, MA-NH HMFA are the ones cited below "
+            "(HUD-MTSP-002). A figure remembered from an earlier year is not used here and "
+            "does not override a cited source. If a different figure applies to you, supply "
+            "the document it comes from and it will be cited or refused on its own terms."
         ),
         rule_ids=("HUD-MTSP-001", "HUD-MTSP-002", "FED-LIHTC-001"),
         resolve="supply the source document for any other figure so it can be cited or refused",

@@ -28,7 +28,6 @@ const page = await context.newPage();
 
 await page.goto(`${base}/?live`);
 await page.waitForFunction(() => document.querySelector("#upload-type") !== null, { timeout: 20000 });
-await page.locator("#start-demo").click();
 await page.waitForTimeout(200);
 
 // Documents chosen for screenshots: one per cohort, plus the empty-result case.
