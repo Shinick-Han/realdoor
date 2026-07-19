@@ -18,11 +18,16 @@ route_llm.py — 입구의 분류기. **판단 경로에는 여전히 모델이 
   3. 돌아온 라벨이 그 집합에 없으면 **즉시 기권**한다. 관용은 없다. 구조화 출력을
      쓰지만 모델이 스키마를 지켰다고 믿지 않고 받은 값을 다시 검사한다.
 
-  4. 그리고 라벨을 그대로 쓰지도 않는다. 라벨은 **후보 지명일 뿐**이다. 각 의도에는
-     정규 라우터가 이미 아는 앵커 문구가 붙어 있고, 우리는 그 앵커를 원문에 덧붙인
-     뒤 **결정론적 라우터에게 다시 물어본다.** 결정론 라우터가 같은 의도로 동의하지
-     않으면 기권한다. 즉 모델은 결정론 코드가 스스로 도달할 수 있는 곳으로만 안내할
-     수 있고, 새로운 목적지를 만들어낼 수 없다.
+  4. 그리고 라벨을 그대로 쓰지도 않는다. 라벨은 **후보 지명일 뿐**이다. `confirm()` 이
+     **원 질문만 보고** 두 가지를 검사한다: 질문의 의문형이 요구하는 답의 종류가 그
+     의도의 답의 종류와 맞는가(형태), 그리고 질문자 자신에 대한 물음을 프로그램에
+     대한 사실로 답하려 하지는 않는가(주어). 통과한 지명만 기존 결정론 경로로 흘러간다.
+
+     예전에는 이 자리에 **앵커 왕복**이 있었다. 앵커를 질문에 붙여 결정론 라우터에게
+     되묻는 방식이었는데, 앵커가 곧 그 경로를 발동시키는 문자열이라 484쌍 중 1쌍만
+     거부하는 항등식이었다. 측정이 그걸 드러냈고, 그래서 검사를 앵커 밖으로 옮겼다.
+     `confirm()` 도크스트링에 무엇을 보장하고 무엇을 보장하지 않는지 전부 적었다 —
+     특히 **주제(topic) 축은 이 함수가 아니라 닫힌 라벨 집합이 지킨다.**
 
 프롬프트에 들어가는 것: **질문 텍스트뿐이다.** 문서 내용도, 세대 데이터도, 추출값도
 보내지 않는다. `pack/governance/DATA_USE_AND_SAFETY.md` 는 팩 데이터를 호스팅 모델에
@@ -50,7 +55,16 @@ from pathlib import Path
 from typing import Any
 
 from api import redact, situations
-from logic.answer_rules import ROUTES as _CANONICAL_ROUTES, route as canonical_route
+from logic.answer_rules import (
+    ANSWER_MONEY,
+    ANSWER_POLICY,
+    ANSWER_STATUS,
+    CANONICAL_PROFILES,
+    ROUTES as _CANONICAL_ROUTES,
+    AnswerProfile,
+    question_admits,
+    route as canonical_route,
+)
 
 #: 공용 게이트웨이. 디스크 캐시·temperature 0·usage.jsonl 로깅·HN_OFFLINE 이 이미
 #: 배선돼 있다. 여기서 다시 만들지 않는다. 판단 로직은 저기 두지 않는다.
@@ -151,6 +165,35 @@ _INTENT_TABLE: tuple[tuple[str, str, str], ...] = (
 ANCHORS: dict[str, str] = {intent: anchor for intent, anchor, _ in _INTENT_TABLE}
 GLOSSES: dict[str, str] = {intent: gloss for intent, _, gloss in _INTENT_TABLE if gloss}
 
+#: 상황 의도의 **답 프로파일**. 정규 의도 쪽은 `logic.answer_rules.CANONICAL_PROFILES`
+#: 를 그대로 재사용하므로 두 표가 갈라질 수 없다 — 아래 `PROFILES` 가 그 둘을 합친다.
+#:
+#: `answers_self` 는 "그 답이 질문자 자신에 대해 무언가를 말할 수 있는가"다. 만료 문서·
+#: 불일치·미검증 수치·표 밖 세대 크기는 세션 파일에 대한 관찰이므로 참이고, bbox 오류·
+#: 인용 누락·연도 강제·데이터셋 한계는 프로그램과 파이프라인에 대한 서술이라 거짓이다.
+#: `_INTENT_TABLE` 과 같은 이유로 **쌍 형태**다. 따옴표 키 뒤에 콜론이 오는 형태는
+#: `eval/test_no_decision.py` 의 소스 스캐너가 응답 필드 선언으로 읽고, 판정 어휘가
+#: 들어간 의도 이름(`eligibility_refused`)이 키로 있으면 거기서 걸린다. 그 의도는
+#: 거부를 뜻하므로 오탐이지만, 스캐너는 무디게 두는 편이 옳고 무디게 두는 방법은
+#: 예외를 만들게 하지 않는 것이다.
+_SITUATION_PROFILE_TABLE: tuple[tuple[str, AnswerProfile], ...] = (
+    ("eligibility_refused", AnswerProfile(ANSWER_POLICY, True)),
+    ("trait_inference_refused", AnswerProfile(ANSWER_POLICY, True)),
+    ("expired_evidence_flagged", AnswerProfile(ANSWER_STATUS, True)),
+    ("conflict_flagged", AnswerProfile(ANSWER_STATUS, True)),
+    ("schema_validation_failed", AnswerProfile(ANSWER_STATUS, False)),
+    ("no_frozen_threshold", AnswerProfile(ANSWER_MONEY, True)),
+    ("unverified_claim_flagged", AnswerProfile(ANSWER_STATUS, True)),
+    ("traceability_check_failed", AnswerProfile(ANSWER_STATUS, False)),
+    ("frozen_corpus_enforced", AnswerProfile(ANSWER_POLICY, False)),
+    ("dataset_limitation_stated", AnswerProfile(ANSWER_POLICY, False)),
+)
+
+_SITUATION_PROFILES: dict[str, AnswerProfile] = dict(_SITUATION_PROFILE_TABLE)
+
+#: 모든 의도 → 답 프로파일. 정규 쪽은 사본이 아니라 **참조**다.
+PROFILES: dict[str, AnswerProfile] = {**CANONICAL_PROFILES, **_SITUATION_PROFILES}
+
 _INSTRUCTION = (
     "You are a topic classifier for a housing-document questions service. "
     "Read the renter's question and pick the one label from the list whose topic it "
@@ -192,6 +235,7 @@ _STATS: dict[str, Any] = {
     "returned_unknown": 0,
     "rejected_unknown_label": 0,   # 닫힌 집합에 없는 라벨이 돌아와 버린 횟수
     "rejected_no_anchor": 0,       # 라벨은 유효했으나 앵커가 없어 버린 횟수
+    "rejected_shape_mismatch": 0,  # 질문 형태/주어가 그 의도의 답을 허용하지 않아 버린 횟수
     "rejected_router_disagreed": 0,  # 결정론 라우터가 동의하지 않아 버린 횟수
     "accepted": 0,
     "offline_or_uncached": 0,
@@ -362,17 +406,49 @@ def classify(question: str) -> str | None:
 
 @dataclass(frozen=True)
 class Resolution:
-    """모델이 지명하고 결정론 라우터가 **동의한** 결과."""
+    """모델이 지명하고 결정론 코드가 **독립적으로 허용한** 결과."""
 
     intent: str
     anchored_question: str
 
 
 def confirm(question: str, intent: str, *, count: bool = True) -> Resolution | None:
-    """앵커를 덧붙인 뒤 결정론 라우터에게 되묻는다. 동의하지 않으면 `None`.
+    """모델의 지명을 결정론 코드가 검사한다. 통과하지 못하면 `None`.
 
-    이 단계가 있기 때문에 모델은 기존 코드가 스스로 도달할 수 있는 목적지로만
-    안내할 수 있다. 새 답을 만들 수 없고, 이미 있는 답에 이르는 길만 가리킨다.
+    ── 예전에 여기 있던 것과, 왜 바꿨는가 ──────────────────────────────────
+
+    이전 구현은 의도의 **앵커 문구를 질문에 덧붙인 뒤** 결정론 라우터에게 되물었다.
+    그런데 앵커란 정의상 그 경로를 발동시키는 문자열이고, `anchor_audit()` 이 바로
+    그 성질을 강제한다. 즉 답을 붙여놓고 문제를 다시 낸 셈이었다. 측정이 그대로
+    보여줬다: 44질문 × 11정규의도 = 484쌍 중 거부는 **1쌍(0.2%)**, 실제 37회 호출
+    중 거부 **0회**. "so am i approved" 를 `geocode_precision` 으로 지명해도 통과했다.
+    고무도장이었고, 제출 서술의 핵심 문장이 그 위에 얹혀 있었다.
+
+    ── 지금 하는 것: 앵커를 쓰지 않는 두 축의 검사 ─────────────────────────
+
+    두 검사 모두 **원 질문만** 읽는다. 앵커는 통과한 뒤 질문을 흘려보내는 데만 쓰고,
+    검사에는 넣지 않는다. 그래서 순환이 끊긴다.
+
+      1. **형태 일치** — 질문의 의문형(문법)이 요구하는 답의 종류와, 지명된 의도가
+         실제로 내놓는 답의 종류가 맞는가. 시간을 묻는 질문은 금액으로 답할 수 없다.
+      2. **주어 일치** — 질문이 질문자 자신에 대해 묻는데(`am i ...`, `do we ...`),
+         지명된 의도가 프로그램에 대한 사실만 말할 수 있다면 그것은 답이 될 수 없다.
+         "so am i approved" × `geocode_precision` 이 여기서 걸린다.
+
+    둘 다 `logic.answer_rules` 에 있고 도메인 어휘를 한 단어도 쓰지 않는다. 표에 없는
+    의도·판정할 수 없는 질문은 **통과**시킨다 — 이 게이트는 거부만 하고 승인하지 않는다.
+
+    ── 그리고 여전히 보장하지 못하는 것 (정직하게) ─────────────────────────
+
+    이 두 축은 **주제(topic)를 검증하지 않는다.** 문법이 같고 주어가 같은 두 의도
+    사이에서, 모델이 둘 중 틀린 쪽을 지명하면 이 코드는 그것을 잡지 못한다. 예를 들어
+    `vacancy_claim` 과 `currency_rule_status` 는 둘 다 3인칭 정책 문장이라 서로를
+    가려낼 수 없다. 주제 검증을 하려면 결국 손으로 쓴 의도별 키워드 표가 필요하고,
+    그것은 이 프로젝트가 이미 두 번 실패한 방식(별칭 표 넓히기)이라 만들지 않았다.
+    **주제 축의 안전성은 이 함수가 아니라 닫힌 라벨 집합에서 온다** — 모델은
+    `known_intents()` 밖으로 나갈 수 없고, 문장을 쓰지 못하며, 모든 문장은 여전히
+    결정론 코드가 만든다. 이 함수가 좁히는 것은 그 닫힌 집합 **안에서의** 오지명이고,
+    좁히는 정도는 `scripts/measure_intent_router.py` 의 484쌍 측정치가 말한다.
 
     `count=False` 는 감사용 호출이다 — 성적표의 거부 카운터를 오염시키지 않는다.
     """
@@ -382,6 +458,15 @@ def confirm(question: str, intent: str, *, count: bool = True) -> Resolution | N
             _STATS["rejected_no_anchor"] += 1
         return None
 
+    # ── 독립 검사: 앵커를 보지 않고 원 질문만 본다 ──────────────────────
+    if not question_admits(question or "", PROFILES.get(intent)):
+        if count:
+            _STATS["rejected_shape_mismatch"] += 1
+        return None
+
+    # 앵커는 검사가 아니라 **배송**이다. 통과한 지명을 기존 결정론 경로로 흘려보내는
+    # 열쇠일 뿐이고, 아래 동일성 확인은 그 배송이 실제로 도착하는지만 본다. 이 줄이
+    # 무엇을 증명하지 **않는지**는 위 도크스트링에 적었다.
     anchored = f"{question} [{anchor}]"
     canonical = canonical_route(anchored)
     if canonical == intent:

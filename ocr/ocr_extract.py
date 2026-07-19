@@ -144,6 +144,40 @@ _DROPPED_SPACE = re.compile(r",\S")
 #: word, so it is evidence of a lost boundary.
 _CASE_BOUNDARY = re.compile(r"(?<=[a-z])(?=[A-Z])")
 
+#: WORD-SPACE RECOVERY BY RE-READING THE LINE
+#: ------------------------------------------
+#: Why the page-level read loses spaces at all: the detector/recogniser pipeline resizes the
+#: page down to `Det.max_side_len` (2000px) before it runs. Our page render at RENDER_SCALE
+#: 3.0 is ~2550x3300, so it is DOWNSAMPLED, and a 10pt space is the first thing to go.
+#: Measured: raising RENDER_SCALE to 4/5/6/8 changes the read not at all, because the engine
+#: re-imposes the same 2000px cap -- so a global scale increase cannot fix this, and would
+#: cost runtime on all 24 documents for nothing.
+#:
+#: What DOES fix it: crop the one line we care about and hand that crop to the recogniser by
+#: itself. A single line is far below the cap, so it is fed at full resolution -- roughly 4x
+#: the pixels per glyph -- and the spaces survive.
+#:
+#: We run RECOGNITION ONLY (`use_det=False`) on the crop. Measured: letting the detector run
+#: again on the crop sometimes splits one line into two overlapping regions and DUPLICATES a
+#: character across the seam ("77MeadowSignalAve..." came back as "77MeadowS" + "Signal
+#: Ave..."). We already know where the line is -- re-detecting only adds a failure mode.
+#:
+#: This is a RETRY PATH, reached only by a value we would otherwise abstain on. It cannot
+#: move a field that already reads cleanly.
+SPACE_RETRY_PADS = (0.5, 1.0, 2.0)
+
+#: How many rungs of the ladder must agree character-for-character on the same spacing.
+#: Each rung crops a slightly different window, so agreement across them is what separates a
+#: stable reading from one lucky sample. With three rungs, 2 is already a strict majority.
+#: Measured on the pack's four de-spaced addresses: all three rungs agreed every time.
+SPACE_RETRY_AGREEMENT = 2
+
+
+def strip_spaces(text: str) -> str:
+    """All whitespace removed. This is the identity a space repair may not change."""
+    return "".join(text.split())
+
+
 #: Where a de-spaced value has EXACTLY ONE such boundary, the repair is forced -- there is
 #: only one place the space can go, so we restore it. This is the opposite of the address
 #: case, which needs several splits and has genuinely ambiguous ones ("MA02145"), which is
@@ -208,6 +242,21 @@ class Detection:
         return "abstain"
 
 
+@dataclass(frozen=True)
+class PageImage:
+    """The rasterised page, kept around so a single line can be re-read from it.
+
+    Holds the *authoritative* scale and page height reported by `core.render`, so the
+    point->pixel conversion used by the retry path is the exact inverse of the one
+    `read_detections` used on the way out.
+    """
+
+    image: Any  # PIL.Image.Image
+    scale: float
+    height_points: float
+    width_points: float = 0.0
+
+
 _ENGINE = None
 
 
@@ -221,20 +270,39 @@ def _engine():
     return _ENGINE
 
 
-def read_detections(
+def load_page_image(
     pdf_path: str | Path | bytes, page_number: int = 1, scale: float = RENDER_SCALE
+) -> PageImage:
+    """Rasterise one page once, so detection and any line re-read share the same pixels."""
+    rendered = render_page_png(pdf_path, page_number, scale)
+    return PageImage(
+        image=Image.open(io.BytesIO(rendered.png_bytes)).convert("RGB"),
+        scale=rendered.scale,  # authoritative, per core.render's contract
+        height_points=rendered.page_height_points,
+        width_points=rendered.page_width_points,
+    )
+
+
+def read_detections(
+    pdf_path: str | Path | bytes,
+    page_number: int = 1,
+    scale: float = RENDER_SCALE,
+    page: PageImage | None = None,
 ) -> list[Detection]:
     """OCR one page and return detections in PDF points, bottom-left origin.
 
     The y-flip is the conversion that silently ruins overlays if you get it wrong, so it is
     done here once, against the page height that `core.render` reports, and nowhere else.
-    """
-    rendered = render_page_png(pdf_path, page_number, scale)
-    image = np.array(Image.open(io.BytesIO(rendered.png_bytes)).convert("RGB"))
-    result, _ = _engine()(image)
 
-    height_points = rendered.page_height_points
-    used_scale = rendered.scale  # authoritative, per core.render's contract
+    A caller that already rasterised the page passes it in as `page` rather than paying for
+    a second render.
+    """
+    if page is None:
+        page = load_page_image(pdf_path, page_number, scale)
+    result, _ = _engine()(np.array(page.image))
+
+    height_points = page.height_points
+    used_scale = page.scale
     detections: list[Detection] = []
     for quad, text, confidence in result or []:
         xs = [float(p[0]) for p in quad]
@@ -251,6 +319,76 @@ def read_detections(
             )
         )
     return detections
+
+
+def _recognize_line(page: PageImage, det: Detection, pad_points: float) -> str | None:
+    """Re-read ONE detection's own line straight from the page bitmap, at full resolution.
+
+    Recognition only: the crop IS the line, so there is nothing left to detect (see
+    SPACE_RETRY_PADS for what re-detection was measured to do here).
+    """
+    scale = page.scale
+    left = int((det.x0 - pad_points) * scale)
+    right = int((det.x1 + pad_points) * scale)
+    # y flips: the detection's y1 (top, in points from the bottom) is the SMALL pixel row.
+    top = int((page.height_points - det.y1 - pad_points) * scale)
+    bottom = int((page.height_points - det.y0 + pad_points) * scale)
+
+    left, top = max(0, left), max(0, top)
+    right = min(page.image.width, right)
+    bottom = min(page.image.height, bottom)
+    if right - left < 4 or bottom - top < 4:
+        return None
+
+    result, _ = _engine()(
+        np.array(page.image.crop((left, top, right, bottom))),
+        use_det=False,
+        use_cls=False,
+        use_rec=True,
+    )
+    if not result:
+        return None
+    return str(result[0][0]).strip()
+
+
+def recover_word_spaces(page: PageImage, det: Detection) -> str | None:
+    """Recover the word spaces the page-level read dropped, or None if we cannot.
+
+    THE INVARIANT
+    -------------
+    A recovered reading is accepted only if removing all whitespace from it reproduces the
+    original reading exactly::
+
+        strip_spaces(recovered) == strip_spaces(det.text)
+
+    So this function can only ever move spaces around. It cannot change, add, or drop a
+    single character -- a wrong ADDRESS is therefore not a failure mode this path can
+    produce, only a wrongly-spaced one, and even that has to survive the agreement check
+    below. This matters because the second read is a genuinely independent look at the
+    pixels: measured on the pack it sometimes returns "0r account" for "or account" or
+    "Paper Mil Road" for "Paper Mill Road", and the invariant throws exactly those away.
+
+    AGREEMENT
+    ---------
+    Each rung of the ladder crops a slightly different window around the same line. We take
+    the reading that at least SPACE_RETRY_AGREEMENT rungs produce character-for-character.
+    If the crops disagree about where the spaces go, we do not know where the spaces go, and
+    we say so by returning None.
+    """
+    target = strip_spaces(det.text)
+    votes: dict[str, int] = {}
+    for pad in SPACE_RETRY_PADS:
+        candidate = _recognize_line(page, det, pad)
+        if candidate is None or strip_spaces(candidate) != target:
+            continue  # INVARIANT: character drift, discard this rung entirely
+        votes[candidate] = votes.get(candidate, 0) + 1
+
+    if not votes:
+        return None
+    best, count = max(votes.items(), key=lambda kv: kv[1])
+    if count < SPACE_RETRY_AGREEMENT:
+        return None
+    return best if best != det.text else None
 
 
 def _extracted_field(
@@ -276,8 +414,15 @@ def _extracted_field(
     }
 
 
-def _abstain(name: str, reason: str) -> dict[str, Any]:
-    return _extracted_field(name, None, None, None, "abstain", None, reason)
+def _abstain(name: str, reason: str, source_text: str | None = None) -> dict[str, Any]:
+    """Abstain. `value` stays null -- CONTRACTS section 2 requires that of an abstention.
+
+    `source_text` is still carried when we HAVE read the characters and only failed to place
+    the spaces. Withholding it would be throwing away information we actually hold: the
+    reviewer can read the characters off the page anyway, and showing them what the engine
+    saw is what lets them confirm or retype it in one step instead of hunting for the line.
+    """
+    return _extracted_field(name, None, None, None, "abstain", source_text, reason)
 
 
 def _clean_value_text(field_name: str, text: str) -> str:
@@ -301,13 +446,20 @@ def _clean_value_text(field_name: str, text: str) -> str:
 
 
 def extract_fields_from_detections(
-    detections: Sequence[Detection], document_type: str
+    detections: Sequence[Detection],
+    document_type: str,
+    page: PageImage | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Label-anchored extraction over OCR detections.
 
     Identical grammar to `core.extract`: find a known label, then read the detection
     directly beneath it and left-aligned with it. We never read a value we did not find a
     label for, which is what keeps embedded instruction text inert.
+
+    `page` is optional. With it, a value whose word spaces were dropped gets one re-read of
+    its own line (see `recover_word_spaces`); without it that value abstains as before. The
+    re-read is reachable ONLY from that failure, so passing a page cannot change any field
+    that already read cleanly.
     """
     lookup = LABEL_LOOKUP.get(document_type, {})
     found: dict[str, dict[str, Any]] = {}
@@ -360,25 +512,44 @@ def extract_fields_from_detections(
         # flagged); anything ambiguous abstains rather than emitting a wrong string.
         value_text = chosen.text
         repaired = False
+        reread = False
         if field_name in {"person_name", "address"}:
-            if _DROPPED_SPACE.search(value_text):
-                found[field_name] = _abstain(
-                    field_name,
-                    "OCR dropped at least one word space (a comma is followed by a "
-                    "non-space) and the split points are ambiguous, so the exact string "
-                    f"cannot be reconstructed; read as {chosen.text!r}",
-                )
-                continue
-            fixed = repair_single_space(value_text)
-            if fixed is not None:
-                value_text, repaired = fixed, True
-            elif " " not in value_text and _CASE_BOUNDARY.search(value_text):
-                found[field_name] = _abstain(
-                    field_name,
-                    "OCR dropped more than one word space and no single split is forced; "
-                    f"read as {chosen.text!r}",
-                )
-                continue
+            despaced = bool(_DROPPED_SPACE.search(value_text)) or (
+                " " not in value_text and bool(_CASE_BOUNDARY.search(value_text))
+            )
+            if despaced:
+                # Look again at the pixels before giving up on this value. This is the only
+                # thing here that adds INFORMATION -- everything below only reasons about
+                # the string we already have.
+                recovered = recover_word_spaces(page, chosen) if page is not None else None
+                if recovered is not None:
+                    value_text, reread = recovered, True
+
+            if not reread:
+                if _DROPPED_SPACE.search(value_text):
+                    found[field_name] = _abstain(
+                        field_name,
+                        "OCR read every character of this value confidently but ran the "
+                        "words together (a comma is followed by a non-space), and re-reading "
+                        "the line on its own did not settle where the spaces belong. The "
+                        "characters are shown as read; a reviewer only needs to fix the "
+                        f"spacing. Read as {chosen.text!r}",
+                        source_text=chosen.text,
+                    )
+                    continue
+                fixed = repair_single_space(value_text)
+                if fixed is not None:
+                    value_text, repaired = fixed, True
+                elif " " not in value_text and _CASE_BOUNDARY.search(value_text):
+                    found[field_name] = _abstain(
+                        field_name,
+                        "OCR read every character of this value confidently but ran the "
+                        "words together, and neither re-reading the line nor a forced split "
+                        "settled where the spaces belong. The characters are shown as read; "
+                        f"a reviewer only needs to fix the spacing. Read as {chosen.text!r}",
+                        source_text=chosen.text,
+                    )
+                    continue
 
         try:
             value, unambiguous = parse_value(field_name, _clean_value_text(field_name, value_text))
@@ -389,6 +560,14 @@ def extract_fields_from_detections(
             continue
 
         notes = "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+        if reread:
+            certainty = "low"
+            notes += (
+                f" | the page-level read ran the words together ({chosen.text!r}); re-reading "
+                "this line on its own at full resolution restored the word spaces. Every "
+                "character is identical between the two reads -- only the spacing differs -- "
+                "so the wording is certain and only the spacing was inferred. Confirm it"
+            )
         if repaired:
             certainty = "low"
             notes += (
@@ -443,9 +622,10 @@ def extract_document_ocr(
         inferred_id, household_id = infer_ids(path)
         resolved_id = document_id or inferred_id
 
-    rendered = render_page_png(source, 1, scale)
-    detections = read_detections(source, 1, scale)
-    found = extract_fields_from_detections(detections, doc_type)
+    # One rasterisation, reused for detection and for any single-line re-read.
+    page = load_page_image(source, 1, scale)
+    detections = read_detections(source, 1, scale, page=page)
+    found = extract_fields_from_detections(detections, doc_type, page=page)
 
     fields: list[dict[str, Any]] = []
     for name in EXPECTED_FIELDS.get(doc_type, ()):
@@ -476,8 +656,8 @@ def extract_document_ocr(
         "file_name": display_name,
         "page_count": 1,
         "page_size_points": [
-            round(rendered.page_width_points, 2),
-            round(rendered.page_height_points, 2),
+            round(page.width_points, 2),
+            round(page.height_points, 2),
         ],
         "fields": fields,
         "document_date": staleness.document_date,

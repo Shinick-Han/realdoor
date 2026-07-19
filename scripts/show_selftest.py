@@ -21,5 +21,12 @@ for name, s in d["sections"].items():
     elif name == "rule_questions":
         detail = f"  정답 {s.get('correct')} · 오답 {s.get('wrong')} / {s.get('total')}"
     elif name == "citations":
-        detail = f"  {s.get('verified_against_live_source')}/{s.get('rules_in_corpus')} 원문 확인"
+        # 분모는 바깥 기관 출처를 가진 인용만. 팩 자신의 규약은 재확인 대상이 아니다.
+        detail = (f"  외부 {s.get('re_fetched_and_matched')}/"
+                  f"{s.get('external_citations_in_scope')} 원문 재확인 · "
+                  f"불일치 {s.get('re_fetched_and_did_not_match')} · "
+                  f"확인 못 함 {s.get('could_not_re_fetch')} · "
+                  f"팩 자체 규약 {s.get('self_issued_citations_out_of_scope')}건 대상 외"
+                  if s.get("status") == "measured" else
+                  f"  대조한 인용 없음 (전체 {s.get('rules_in_corpus')}건)")
     print(f"  {name:<16}{s['status']:<10}{detail}")

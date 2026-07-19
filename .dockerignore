@@ -1,0 +1,26 @@
+# 여기서 **빼지 않는** 것 두 가지를 먼저 적는다. 실수로 추가되기 쉬운 것들이다.
+#
+#   .git       — `engine_version()` 이 커밋 sha 를 여기서 읽는다. 빼면 헬스체크와
+#                리포트의 engine_version 이 "sha:unversioned" 가 된다. 치명적이지는
+#                않지만, 심사위원에게 보이는 모든 숫자가 어느 코드에서 나왔는지
+#                말하지 못하게 된다. 15MB 낼 값어치가 있다.
+#   .cache/    — `.cache/extractions` 가 있으면 첫 부팅이 수 초로 끝난다(Dockerfile 참조).
+#                여기에 적으면 그 이득이 사라진다.
+
+ui/tools/node_modules/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# 비밀값이 이미지 레이어에 굳지 않게. 워킹트리에 .env 는 없지만(`.gitignore:6-7`),
+# 없다는 사실에 기대는 것과 명시적으로 막는 것은 다르다.
+.env
+.env.*
+*.key
+
+# 산출물·측정 부산물. 런타임이 읽지 않는다.
+ui/shots/
+build/
+*.zip

@@ -508,6 +508,63 @@ def synonym_mapper(document_type: str, label: str) -> str | None:
 
 
 # --------------------------------------------------------------------------------------
+# What is even worth asking a mapper about
+# --------------------------------------------------------------------------------------
+# Every run of words on the page used to be offered to the mapper. On the pack that was
+# free, because `is_label()` had already cut the page down to a handful of bold ALL-CAPS
+# runs. On real documents it is not free: a five-page federal guide offers ~1,745 distinct
+# strings, and with the model leg attached that is ~1,745 network calls and 25 minutes for
+# six documents. Almost all of them are prose.
+#
+# So there is a deterministic gate in front of every mapper: a run has to be *shaped* like
+# a label before anything is asked about it. The three tests below are properties of the
+# label vocabulary itself, not of any particular document:
+#
+#   * it contains a letter                -- "1,627.74" and "07/23/2017" name nothing
+#   * it is short                          -- the longest string in either frozen table is
+#                                             four words; a sentence is not a label
+#   * it is mostly letters                 -- "$45,000.00 Annual" is a value, not a label
+#
+# The gate can only ever *reduce* what is asked, so it cannot admit a string that the old
+# code would have rejected. `core/test_extract_reading.py` asserts the converse -- that
+# every key in both frozen tables passes it -- which is what stops it silently narrowing
+# the vocabulary we already ship.
+
+#: Longest label in the frozen tables, plus one word of headroom for a mapper that knows a
+#: phrasing we do not. Derived, not guessed, so it tracks the tables if they grow.
+MAX_LABEL_WORDS = max(
+    len(normalize_label(key).split())
+    for table in (LABEL_MAP, LABEL_SYNONYMS)
+    for mapping in table.values()
+    for key in mapping
+) + 1
+
+#: A label is mostly letters and spaces. Measured against the frozen tables, the lowest
+#: ratio is "NO. IN HOUSEHOLD" / "HOURS/WEEK", which sit well above this floor.
+MIN_LABEL_LETTER_RATIO = 0.6
+
+
+def looks_like_a_label(text: str) -> bool:
+    """Could this run of words be a field label at all? Deterministic, offline, cheap.
+
+    A pre-filter, not a decision. Answering True means "worth asking a mapper about";
+    the mapper still has to recognise the string exactly, so this never admits anything.
+    Answering False skips the mapper entirely, which is what keeps the model leg from
+    being handed a page of prose one sentence at a time.
+    """
+    normalized = normalize_label(text)
+    if not normalized:
+        return False
+    words = normalized.split()
+    if len(words) > MAX_LABEL_WORDS:
+        return False
+    letters = sum(character.isalpha() for character in normalized)
+    if not letters:
+        return False
+    return letters / len(normalized.replace(" ", "") or " ") >= MIN_LABEL_LETTER_RATIO
+
+
+# --------------------------------------------------------------------------------------
 # Provenance notes -- how a reader tells the three paths apart
 # --------------------------------------------------------------------------------------
 # Three things can name a field, and they do not deserve equal trust, so a reader must be
@@ -564,11 +621,20 @@ class _TrackingMapper:
     def __init__(self, document_type: str) -> None:
         self.document_type = document_type
         self.from_model: set[str] = set()
+        # Bound once and stored, so `stage is tracker.model_leg` in
+        # `extract_fields_from_page` compares one stable object. Reading `self._model_leg`
+        # afresh would build a new bound method every time and the identity test -- which
+        # decides which fields get credited to the model -- would silently never fire.
+        self.model_leg: FieldMapper = self._model_leg
 
     def __call__(self, document_type: str, label: str) -> str | None:
         found = synonym_mapper(document_type, label)
         if found is not None:
             return found
+        return self.model_leg(document_type, label)
+
+    def _model_leg(self, document_type: str, label: str) -> str | None:
+        """The model on its own, with no table in front of it. See `_mapper_stages`."""
         found = model_mapper(document_type, label)
         if found is not None:
             self.from_model.add(found)
@@ -635,6 +701,97 @@ class ParseError(ValueError):
     """The text under a label did not parse as the type that field requires."""
 
 
+# --------------------------------------------------------------------------------------
+# Free-text fields still have a type
+# --------------------------------------------------------------------------------------
+# `person_name`, `address` and the two frequency fields accept a string, and for a long
+# time that meant they accepted *any* string. Every other field is protected by its parser:
+# point `gross_pay` at a sentence and `_MONEY_RE` rejects it, point `pay_date` at a
+# paragraph and `strptime` rejects it. The free-text fields had no such floor, so they were
+# the only place where a mis-located run could become a confident answer instead of an
+# abstention -- and on real documents that is exactly what happened twice:
+#
+#   * UNC advice: the `Employee Name` box is redacted and holds an address. The run under
+#     the label is "123 Franklin St", which is a perfectly good string and a very bad name.
+#   * Federal LES / UTEP: pages of glossary whose left column is our label vocabulary and
+#     whose right column is an English sentence. "A total of all earnings (current pay
+#     period and any adjustments)" is a perfectly good string and a very bad pay frequency.
+#
+# Both are the same bug -- a field whose type was never stated -- and both are fixed by
+# stating it. These are properties of the values themselves, not of those documents: a
+# person's name does not contain digits, and a pay frequency is a word rather than a
+# paragraph. Nothing here is a match against a document we have seen; a document that puts
+# a real name under a name label still reads exactly as before.
+
+#: Free-text fields, and the widest shape the value can honestly take. The word counts sit
+#: comfortably above the widest value in the pack gold (name 2, address 7, frequency 1), so
+#: they reject prose without narrowing anything we already read.
+TEXT_FIELD_MAX_WORDS: dict[str, int] = {
+    "person_name": 5,
+    "address": 12,
+    "pay_frequency": 2,
+    "benefit_frequency": 2,
+}
+
+#: Fields whose value cannot contain a digit. A person is not a street number, an employee
+#: id or a dollar amount, and every wrong reading of this field we have measured was one of
+#: those three.
+DIGITLESS_FIELDS = frozenset({"person_name", "pay_frequency", "benefit_frequency"})
+
+
+def _check_text_shape(field_name: str, raw: str) -> None:
+    """Raise `ParseError` when a string cannot be this field's value. Type check, no more."""
+    limit = TEXT_FIELD_MAX_WORDS.get(field_name)
+    if limit is not None and len(raw.split()) > limit:
+        raise ParseError(
+            f"{len(raw.split())} words is prose, not a {field_name} (limit {limit}): {raw!r}"
+        )
+    if field_name in DIGITLESS_FIELDS and any(character.isdigit() for character in raw):
+        raise ParseError(f"a {field_name} does not contain digits: {raw!r}")
+    # Only asked of fields we have actually typed above; an unrecognised field name keeps
+    # the old "any string will do" behaviour rather than acquiring a rule by accident.
+    known_text_field = field_name in TEXT_FIELD_MAX_WORDS or field_name in DIGITLESS_FIELDS
+    if known_text_field and not any(character.isalpha() for character in raw):
+        raise ParseError(f"no letters in a {field_name}: {raw!r}")
+
+
+# --------------------------------------------------------------------------------------
+# Dates as they are actually printed
+# --------------------------------------------------------------------------------------
+# The pack writes every date ISO, so this parser accepted ISO and nothing else. No document
+# outside the pack does that: the six published PDFs print 04/10/2015, 09-30-2014,
+# 7/22/2010. Every one of them raised `ParseError` and abstained, which is why not a single
+# date was read on any real document.
+#
+# The formats below are exactly the ones `eval/score_extraction.py` already documents as the
+# repository's reading convention, including its stated caveat -- a slash date is read
+# US-style, month first. That caveat is a *convention*, not a fact about the page, and
+# 07/03 is a real date either way round, so this is the one place where widening the parser
+# could produce a wrong value rather than an abstention. It is therefore marked: only ISO
+# comes back `clean=True`. Everything else resolves to `certainty="low"` carrying the note
+# below, so a reader can see which dates rest on a convention and which do not.
+_ISO_DATE_FORMAT = "%Y-%m-%d"
+_DATE_FORMATS = (
+    _ISO_DATE_FORMAT,
+    "%Y/%m/%d",
+    "%m/%d/%Y",
+    "%m-%d-%Y",
+    "%B %d, %Y",
+    "%b %d, %Y",
+)
+
+
+def _parse_date(raw: str) -> tuple[str, bool]:
+    """ISO date string plus a flag saying whether the input was already unambiguous."""
+    for fmt in _DATE_FORMATS:
+        try:
+            parsed = datetime.strptime(raw, fmt).date()
+        except ValueError:
+            continue
+        return parsed.isoformat(), fmt == _ISO_DATE_FORMAT
+    raise ParseError(f"not a date in any format we read: {raw!r}")
+
+
 def parse_value(field_name: str, text: str) -> tuple[Any, bool]:
     """Normalize raw page text into a typed value.
 
@@ -647,10 +804,7 @@ def parse_value(field_name: str, text: str) -> tuple[Any, bool]:
         raise ParseError("empty")
 
     if field_name in DATE_FIELDS:
-        try:
-            return datetime.strptime(raw, "%Y-%m-%d").date().isoformat(), True
-        except ValueError as exc:
-            raise ParseError(f"not an ISO date: {raw!r}") from exc
+        return _parse_date(raw)
 
     if field_name in MONTH_FIELDS:
         try:
@@ -676,9 +830,11 @@ def parse_value(field_name: str, text: str) -> tuple[Any, bool]:
         return int(number), True
 
     if field_name in FREQUENCY_FIELDS:
+        _check_text_shape(field_name, raw)
         token = raw.lower()
         return token, token in KNOWN_FREQUENCIES
 
+    _check_text_shape(field_name, raw)
     return raw, True
 
 
@@ -806,13 +962,39 @@ def _label_runs(
 
     Note `text.upper() == text` is true of every date and every amount, since digits have
     no case. The vocabulary test is what keeps those out: "2026-07-03" matches no label.
+
+    **Why the ALL-CAPS test is gone from path 2.** It used to read
+    `w.text.upper() == w.text`, and it did no work that the vocabulary test was not already
+    doing better. What it *did* do was throw away every Title Case label -- `Net Pay`,
+    `Employee Name`, `Pay Begin Date` -- which is how real documents are typeset. Measured
+    across six published PDFs, label detection fired twice in total. Comparison is now
+    case-normalised (`normalize_label` upper-cases), so `Net Pay` is tested against the
+    tables as `NET PAY`.
+
+    This admits **no new strings**. The set of runs offered to the mapper grew, but the set
+    the mapper *accepts* is the same closed table it always was, compared case-insensitively.
+    A run still has to match a known label exactly, still has to have a value in its column,
+    and that value still has to parse as the field's type -- so the original argument holds
+    unchanged: this can turn an abstention into a right answer or into another abstention,
+    never into a wrong one. What it *can* do is let a known label sit next to a value we
+    would not previously have looked at, and that is the risk the type guards in
+    `parse_value` and the alignment measurement in `_resolve_value` exist to carry.
+
+    Path 1 (typography) is deliberately left exactly as it was. Relaxing its size/weight
+    window would admit new *strings* as labels -- runs nothing in the vocabulary recognises,
+    which still act as column boundaries and as ownership anchors for `_caption_value`, and
+    so can move values that resolve correctly today. Path 2 already recovers every label we
+    actually know at any size and any weight, so relaxing path 1 buys nothing we do not
+    already have and costs the one guarantee worth keeping.
     """
     typographic = _split_runs([w for w in line if w.is_label()])
 
-    rest = [w for w in line if not w.is_label() and w.text.upper() == w.text]
+    rest = [w for w in line if not w.is_label()]
     recovered = [
-        run for run in _split_runs(rest)
-        if field_mapper(document_type, _join_run(run)) is not None
+        run
+        for run in _split_runs(rest)
+        if looks_like_a_label(_join_run(run))
+        and field_mapper(document_type, _join_run(run)) is not None
     ]
 
     runs = typographic + recovered
@@ -830,7 +1012,7 @@ def _scan_page(
 ) -> list[str]:
     """One pass of label-anchored extraction. Fills `found` in place, returns unmapped."""
     unmapped: list[str] = []
-    anchors = _label_anchors(lines, document_type, field_mapper)
+    anchors, label_words = _label_anchors(lines, document_type, field_mapper)
     for line in lines:
         label_runs = _label_runs(line, document_type, field_mapper)
         if not label_runs:
@@ -847,7 +1029,7 @@ def _scan_page(
                 continue  # first occurrence wins; forms do not repeat labels
             column_right = starts[index + 1] if index + 1 < len(starts) else float("inf")
             resolved = _resolve_value(
-                lines, run, column_right, field_name, convention, is_exact=is_exact
+                lines, run, column_right, field_name, convention, is_exact, label_words
             )
             # The column beneath the label is the pack's own layout and stays first. Only
             # when it yields *nothing at all* do the two other placements get a turn, and
@@ -861,7 +1043,8 @@ def _scan_page(
                 )
             if resolved is None:
                 resolved = _caption_value(
-                    lines, anchors, run, column_right, field_name, convention, is_exact
+                    lines, anchors, run, column_right, field_name, convention, is_exact,
+                    label_words,
                 )
             if resolved is not None:
                 found[field_name] = resolved
@@ -872,19 +1055,24 @@ def _label_anchors(
     lines: Sequence[Sequence[Word]],
     document_type: str,
     field_mapper: FieldMapper,
-) -> list[tuple[float, float]]:
-    """(baseline, x0) of every label run on the page, mapped or not.
+) -> tuple[list[tuple[float, float]], frozenset[int]]:
+    """(baseline, x0) of every label run on the page, plus the id of every label word.
 
-    Used only to answer one question -- "is this run of words already spoken for by a label
-    sitting above it?" -- so it deliberately includes labels we cannot map. An unmappable
+    The anchors answer one question -- "is this run of words already spoken for by a label
+    sitting above it?" -- so they deliberately include labels we cannot map. An unmappable
     label still owns the value underneath it, and that ownership is what blocks the caption
     rule from stealing it.
+
+    The word ids answer the mirror question -- "is this run of words itself a label?" -- for
+    `_runs_in_window`, and include unmappable labels for the same reason.
     """
-    return [
-        (run[0].baseline, run[0].x0)
-        for line in lines
-        for run in _label_runs(line, document_type, field_mapper)
-    ]
+    anchors: list[tuple[float, float]] = []
+    words: set[int] = set()
+    for line in lines:
+        for run in _label_runs(line, document_type, field_mapper):
+            anchors.append((run[0].baseline, run[0].x0))
+            words.update(id(w) for w in run)
+    return anchors, frozenset(words)
 
 
 def extract_fields_from_page(
@@ -924,13 +1112,47 @@ def extract_fields_from_page(
     )
     if fallback_mapper is not None:
         tracker = fallback_mapper if isinstance(fallback_mapper, _TrackingMapper) else None
-        before = set(found)
-        unmapped = _scan_page(
-            lines, document_type, convention, fallback_mapper, found, is_exact=False
-        )
+        # Provenance is credited per stage, not at the end. `tracker.from_model` records
+        # every field the model *named*, and once the model runs as its own pass over the
+        # whole page that includes fields the synonym pass had already filled -- crediting
+        # those to the model would overstate what it did, which is the one thing this
+        # bookkeeping exists to prevent.
+        model_named: set[str] = set()
+        for stage in _mapper_stages(fallback_mapper):
+            before_stage = set(found)
+            unmapped = _scan_page(
+                lines, document_type, convention, stage, found, is_exact=False
+            )
+            if tracker is not None and stage is tracker.model_leg:
+                model_named |= set(found) - before_stage
         if tracker is not None:
-            _retag_model_provenance(found, set(found) - before, tracker.from_model)
+            _retag_model_provenance(found, model_named, tracker.from_model)
     return found, unmapped
+
+
+def _mapper_stages(fallback_mapper: FieldMapper) -> list[FieldMapper]:
+    """Split a layered mapper into separate passes: frozen tables first, model last.
+
+    `layered_mapper` consults the tables before the model *for one label*, which is a cost
+    argument. It is not a precedence argument, and the difference showed up as soon as label
+    detection stopped requiring ALL-CAPS. Inside a single pass, `found` fills in page order
+    and first occurrence wins, so a label the model named near the top of the page took a
+    field that a *synonym* would have named correctly further down. Measured: the model
+    column of `scripts/measure_label_mapping.py` fell from 134 to 131 on the 26 existing
+    documents and from 26 to 24 on the wording hold-out, while the deterministic column --
+    which has no model in it -- did not move at all.
+
+    Running them as two passes over the same page makes the precedence explicit and matches
+    the ordering the rest of this module already promises: **everything the frozen tables can
+    name is named by them, on every machine, before the model is allowed to name anything.**
+    A field the tables can fill is therefore never displaced by one the model guessed, and
+    turning the model off can only ever remove fields, never change them.
+    """
+    if isinstance(fallback_mapper, _TrackingMapper):
+        return [synonym_mapper, fallback_mapper.model_leg]
+    if fallback_mapper is layered_mapper:
+        return [synonym_mapper, model_mapper]
+    return [fallback_mapper]
 
 
 def _retag_model_provenance(
@@ -956,22 +1178,99 @@ def _retag_model_provenance(
         )
 
 
-def _resolve_value(
-    lines: Sequence[Sequence[Word]],
-    label_run: Sequence[Word],
-    column_right: float,
-    field_name: str,
-    convention: LineBoxConvention,
-    is_exact: bool,
-) -> dict[str, Any] | None:
-    """Find the value belonging to one label, or return None so the caller abstains."""
-    label_x0 = label_run[0].x0
-    label_baseline = label_run[0].baseline
-    near, far = VALUE_Y_WINDOW
+# --------------------------------------------------------------------------------------
+# Which edge of a column is the column (rule: measure it, do not assume it)
+# --------------------------------------------------------------------------------------
+# The alignment test used to read one number: `abs(run.x0 - label.x0) <= 3`. That is the
+# right test for a left-aligned text column and the wrong test for a right-aligned number
+# column, where **x0 is a function of how many digits the number has**. Measured on the UNC
+# advice, under the `NET PAY` label at x0=571.6:
+#
+#     1,040.23    x0=577.7  ->  |6.1| > 3  rejected   <- the current-period net pay, correct
+#     18,396.25   x0=574.2  ->  |2.6| <= 3 accepted   <- the year-to-date figure, wrong
+#
+# The longer number won because it was longer. Both runs end at x1=602.2: the column is
+# right-aligned, and its right edge is the only edge that means anything.
+#
+# So the edge is measured rather than assumed, per column, from the runs themselves: if the
+# runs stacked in a column agree with each other on x1 more than they agree on x0, and the
+# label agrees with them on x1 too, the column is right-aligned. Failing a clear reading we
+# say so ("unknown") and accept either edge, which is what the pack's own single-value
+# columns do -- so the pack's behaviour is bit-for-bit what it was.
 
-    candidates: list[list[Word]] = []
+
+def _cluster_size(values: Sequence[float], tolerance: float) -> int:
+    """Size of the largest group of values that agree to within `tolerance`."""
+    return max(
+        (sum(abs(other - anchor) <= tolerance for other in values) for anchor in values),
+        default=0,
+    )
+
+
+def _column_alignment(
+    runs: Sequence[Sequence[Word]], label_x0: float, label_x1: float
+) -> str:
+    """"left", "right" or "unknown", read off the runs stacked in one column.
+
+    Deliberately conservative in both directions. A verdict of "right" requires two things
+    to agree -- the runs share x1 more than they share x0, *and* the label's own right edge
+    sits on that shared edge. One of them alone is a coincidence; a column whose values line
+    up on the right but nowhere near the label is not this label's column. Anything less
+    than a clear reading is "unknown", which accepts either edge and therefore cannot reject
+    a value the old code would have found.
+    """
+    if len(runs) < 2:
+        return "unknown"
+    left = _cluster_size([run[0].x0 for run in runs], VALUE_X_TOLERANCE)
+    right = _cluster_size([max(w.x1 for w in run) for run in runs], VALUE_X_TOLERANCE)
+    if right > left and any(
+        abs(max(w.x1 for w in run) - label_x1) <= VALUE_X_TOLERANCE for run in runs
+    ):
+        return "right"
+    if left > right and any(abs(run[0].x0 - label_x0) <= VALUE_X_TOLERANCE for run in runs):
+        return "left"
+    return "unknown"
+
+
+def _aligned_with_label(
+    run: Sequence[Word], label_x0: float, label_x1: float, alignment: str
+) -> bool:
+    """Does this run sit in the label's column, under the measured alignment?"""
+    if alignment != "right" and abs(run[0].x0 - label_x0) <= VALUE_X_TOLERANCE:
+        return True
+    if alignment != "left" and abs(max(w.x1 for w in run) - label_x1) <= VALUE_X_TOLERANCE:
+        return True
+    return False
+
+
+def _runs_in_window(
+    lines: Sequence[Sequence[Word]],
+    label_x0: float,
+    label_baseline: float,
+    column_right: float,
+    above: bool = False,
+    label_words: frozenset[int] = frozenset(),
+) -> list[list[Word]]:
+    """Every run inside the label's column and vertical window, with no alignment test.
+
+    This is the honest denominator for `certainty`. The old code counted candidates only
+    *after* the alignment filter had already thrown some away, so a label with two numbers
+    under it could report `high` on the strength of having exactly one survivor -- the
+    competition had been deleted before it was counted. See `_resolve_value`.
+
+    `label_words` carries every word on the page that belongs to some label run, and a run
+    made entirely of those is skipped. **A label is never a value.** On a stacked form the
+    line below `Period Beginning` is `Period Ending`, and reading it as the value produced a
+    located-but-unparseable result, which under the rule in `_scan_page` is an abstention
+    that stands -- so the real value, sitting to the right on the label's own line, was never
+    looked for. Skipping label runs here does not admit them anywhere else: they remain
+    labels, they still bound columns, and they still shield their own values from
+    `_caption_value`.
+    """
+    near, far = VALUE_Y_WINDOW
+    out: list[list[Word]] = []
     for line in lines:
-        delta = label_baseline - line[0].baseline
+        delta = (line[0].baseline - label_baseline) if above else (label_baseline - line[0].baseline)
         if not (near <= delta <= far):
             continue
         in_column = [
@@ -979,11 +1278,36 @@ def _resolve_value(
             for w in line
             if w.x0 >= label_x0 - VALUE_X_TOLERANCE and w.x0 < column_right - VALUE_X_TOLERANCE
         ]
-        if not in_column:
-            continue
-        for run in _split_runs(in_column):
-            if abs(run[0].x0 - label_x0) <= VALUE_X_TOLERANCE:
-                candidates.append(run)
+        if in_column:
+            out.extend(
+                run
+                for run in _split_runs(in_column)
+                if not all(id(w) in label_words for w in run)
+            )
+    return out
+
+
+def _resolve_value(
+    lines: Sequence[Sequence[Word]],
+    label_run: Sequence[Word],
+    column_right: float,
+    field_name: str,
+    convention: LineBoxConvention,
+    is_exact: bool,
+    label_words: frozenset[int] = frozenset(),
+) -> dict[str, Any] | None:
+    """Find the value belonging to one label, or return None so the caller abstains."""
+    label_x0 = label_run[0].x0
+    label_x1 = max(w.x1 for w in label_run)
+    label_baseline = label_run[0].baseline
+
+    in_window = _runs_in_window(
+        lines, label_x0, label_baseline, column_right, label_words=label_words
+    )
+    alignment = _column_alignment(in_window, label_x0, label_x1)
+    candidates = [
+        run for run in in_window if _aligned_with_label(run, label_x0, label_x1, alignment)
+    ]
 
     if not candidates:
         return None
@@ -999,15 +1323,24 @@ def _resolve_value(
     except ParseError as exc:
         return _abstain(field_name, f"value under label did not parse: {exc}")
 
-    unambiguous = clean and is_exact and len(candidates) == 1
+    # `len(in_window)`, not `len(candidates)`: a value that only won because the alignment
+    # test removed its rivals was never unambiguous, and saying "high" about it is the one
+    # failure mode that is worse than being wrong -- being wrong *and* confident.
+    contested = len(in_window) > 1
+    unambiguous = clean and is_exact and len(candidates) == 1 and not contested
     notes = None
     if not unambiguous:
+        parts = []
         if not is_exact:
-            notes = "label resolved by a non-exact mapper"
-        elif len(candidates) > 1:
-            notes = f"{len(candidates)} candidate value runs under this label"
-        else:
-            notes = "value did not match the expected format for this field"
+            parts.append("label resolved by a non-exact mapper")
+        if contested:
+            parts.append(
+                f"{len(in_window)} candidate value runs sat in this label's column "
+                f"({len(candidates)} aligned with it; column read as {alignment}-aligned)"
+            )
+        if not clean:
+            parts.append("value did not match the expected format for this field")
+        notes = " | ".join(parts) or "value did not match the expected format for this field"
 
     return _extracted_field(
         field_name,
@@ -1140,6 +1473,7 @@ def _caption_value(
     field_name: str,
     convention: LineBoxConvention,
     is_exact: bool,
+    label_words: frozenset[int] = frozenset(),
 ) -> dict[str, Any] | None:
     """Value *above* its label, with the label used as a caption underneath it.
 
@@ -1160,26 +1494,21 @@ def _caption_value(
     inside the label's column, and it must be the only candidate.
     """
     label_x0 = label_run[0].x0
+    label_x1 = max(w.x1 for w in label_run)
     label_baseline = label_run[0].baseline
-    near, far = VALUE_Y_WINDOW
 
-    candidates: list[list[Word]] = []
-    for line in lines:
-        delta = line[0].baseline - label_baseline  # positive == above the label
-        if not (near <= delta <= far):
-            continue
-        in_column = [
-            w
-            for w in line
-            if w.x0 >= label_x0 - VALUE_X_TOLERANCE and w.x0 < column_right - VALUE_X_TOLERANCE
-        ]
-        if not in_column:
-            continue
-        for run in _split_runs(in_column):
-            if abs(run[0].x0 - label_x0) <= VALUE_X_TOLERANCE:
-                candidates.append(run)
+    in_window = _runs_in_window(
+        lines, label_x0, label_baseline, column_right, above=True, label_words=label_words
+    )
+    alignment = _column_alignment(in_window, label_x0, label_x1)
+    candidates = [
+        run for run in in_window if _aligned_with_label(run, label_x0, label_x1, alignment)
+    ]
 
-    if len(candidates) != 1:
+    # Unchanged, and stricter than `_resolve_value` on purpose: looking upward is only ever
+    # allowed when the layout leaves exactly one reading. Counting `in_window` here as well
+    # means a caption rule that had rivals removed by the alignment test does not fire at all.
+    if len(candidates) != 1 or len(in_window) != 1:
         return None
 
     run = candidates[0]

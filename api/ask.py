@@ -42,7 +42,11 @@ import re
 from typing import Any
 
 from api import plain, route_llm, situations
-from logic.answer_rules import answer as answer_rule, route as canonical_route
+from logic.answer_rules import (
+    answer as answer_rule,
+    canonical_admits,
+    route as canonical_route,
+)
 from logic.household import load_pack_checklists, load_rule_corpus
 
 # 1) 자격 판정을 요구하는 질문
@@ -138,14 +142,30 @@ def _with_aliases(question: str, canonical_kind: str | None) -> str:
 
     이 가드가 요구사항의 핵심이다. 별칭은 오직 지금 침묵하는(라우팅 실패하는) 질문만
     건드릴 수 있으므로, 이미 답이 나가는 질문의 답을 바꾸는 것은 구조적으로 불가능하다.
+
+    두 번째 가드: **문항 형태와 답의 종류가 어긋나면 그 별칭은 쓰지 않는다.**
+    별칭은 부분문자열 매칭이라 질문이 무엇을 묻는지 보지 않는다. "when does the new
+    2026 income limit start counting" 는 "income limit" 때문에 `frozen_threshold` 로
+    끌려갔고, 시간을 묻는 질문에 금액이 인용까지 붙어 나갔다. 그 별칭에 문구를 하나 더
+    끼워 넣는 것은 같은 결함을 다음 문구까지 미루는 일이라, 대신
+    `logic.answer_rules.canonical_admits()` 로 **문법 대 답의 종류**를 본다.
+
+    맞지 않으면 `return` 이 아니라 `continue` 다. 이 별칭은 못 쓰지만 다른 별칭이 맞을
+    수 있고, 전부 걸러지면 질문은 손대지 않은 채로 돌아간다 — 그러면 아래에서 의도
+    분류기가 호출될 자격을 얻는다(`routed == q`). 잘못된 낚아챔이 분류기를 선점하던
+    경로가 그렇게 닫힌다.
     """
     if canonical_kind is not None:
         return question
     for pattern, canonical_phrase in _ALIASES:
         if pattern.search(question or ""):
             rewritten = f"{question} [{canonical_phrase}]"
-            if canonical_route(rewritten) is not None:
-                return rewritten
+            landing = canonical_route(rewritten)
+            if landing is None:
+                continue
+            if not canonical_admits(question, landing):
+                continue
+            return rewritten
     return question
 
 

@@ -105,6 +105,223 @@ DERIVED_KINDS = frozenset(
 )
 
 
+# =====================================================================================
+# question form vs. answer kind -- the agreement gate
+# =====================================================================================
+#
+# WHY THIS EXISTS
+# ---------------
+# "when does the new 2026 income limit start counting" was answered with "$92,580 for
+# household size 3." A question about a DATE was handed a MONEY figure, with a citation
+# attached, sounding exactly as confident as a right answer. The alias table had matched
+# the substring "income limit" and dragged the question to `frozen_threshold` before the
+# intent classifier -- which gets this question right -- was ever consulted.
+#
+# The tempting repair is to add "when ... income limit" to the effective-date alias. That
+# repair is why the defect existed in the first place: the alias table is a list of
+# phrasings, and a list of phrasings is always one phrasing short. The next renter writes
+# "as of what day is the new income cap", and it breaks again in exactly the same way.
+#
+# So the gate below is not about phrasings at all. It is about GRAMMAR on one side and
+# ANSWER TYPE on the other:
+#
+#   * every intent declares what KIND OF THING its answer is -- a date, a dollar figure,
+#     a comparison, a status, a policy sentence, a code, a citation;
+#   * the question's own interrogative form says what kind of thing it is ASKING for;
+#   * when those two are determinate and they contradict, the route is refused.
+#
+# The question-side patterns contain NO domain vocabulary. Not "income", not "limit", not
+# "household", not "document" -- only interrogatives and auxiliary verbs. That is the
+# testable difference between this and a wider alias table, and `test_answer_rules.py`
+# asserts it directly rather than asking the reader to take it on faith. A gate written in
+# grammar generalises to phrasings nobody has written yet; a gate written in vocabulary
+# only ever covers the phrasings someone already thought of.
+#
+# The gate is a VETO and only ever a veto. It can turn a wrong answer into an abstention.
+# It can never turn an abstention into an answer, and it can never change what an answer
+# says. It is also consulted only on the non-canonical paths -- the tenant-vocabulary
+# aliases and the intent classifier. A question `route()` matches on its own is never
+# shown to this code, which is why the 36 pack questions cannot move.
+
+ANSWER_DATE = "date"
+ANSWER_MONEY = "money"
+ANSWER_RELATION = "relation"
+ANSWER_STATUS = "status"
+ANSWER_POLICY = "policy"
+ANSWER_CODE = "code"
+ANSWER_CITATION = "citation"
+
+ANSWER_SHAPES = frozenset({
+    ANSWER_DATE, ANSWER_MONEY, ANSWER_RELATION, ANSWER_STATUS,
+    ANSWER_POLICY, ANSWER_CODE, ANSWER_CITATION,
+})
+
+SCOPE_SELF = "self"
+SCOPE_GENERAL = "general"
+
+#: A temporal interrogative, in four grammatical forms:
+#:   * subject-auxiliary inversion after "when"  -- "when does the limit start"
+#:   * a bare leading "when"                     -- "when do they change"
+#:   * "when" as the object of a temporal preposition -- "since when", "as of when"
+#:   * a wh-phrase whose head noun is a calendar unit -- "what date", "which year"
+#:   * a degree question over recency            -- "how recent", "how old"
+#: No domain word appears here, and none is needed: the form is what carries the meaning.
+_TEMPORAL_QUESTION = re.compile(
+    r"\bwhen\s+(?:do|does|did|will|is|are|was|were|can|could|should|would"
+    r"|has|have|had|may|might|must)\b"
+    r"|^\W*(?:(?:so|ok|okay|um|uh|and|but|sorry|hey|well)[,\s]+)*when\b"
+    r"|\b(?:since|as\s+of|from|until|till|up\s+to|by)\s+when\b"
+    r"|\b(?:what|which)\s+(?:date|day|year|month)\b"
+    r"|\bhow\s+(?:recent|current|old)\b",
+    re.IGNORECASE,
+)
+
+#: A quantity interrogative. "how much", or a wh-phrase whose head noun is a bare
+#: quantity word. Adjacency is required, so "what part of that number" -- which asks
+#: which portion of a code to use -- does not read as a request for an amount.
+_AMOUNT_QUESTION = re.compile(
+    r"\bhow\s+much\b"
+    r"|\bhow\s+many\s+dollars\b"
+    r"|\b(?:what|which)\s+(?:amount|number|figure|total)\b"
+    r"|\bwhat'?s\s+the\s+(?:amount|number|figure|total)\b",
+    re.IGNORECASE,
+)
+
+#: Any wh-word. Its ABSENCE is what makes a leading auxiliary a yes/no question rather
+#: than a wh-question that happens to start with one.
+_WH_WORD = re.compile(r"\b(?:what|when|where|which|who|whom|whose|why|how)\b", re.IGNORECASE)
+
+#: A polar (yes/no) question: subject-auxiliary inversion at the head of the sentence,
+#: optionally behind a discourse filler.
+_YES_NO_QUESTION = re.compile(
+    r"^\W*(?:(?:so|ok|okay|um|uh|and|but|sorry|hey|well|please)[,\s]+)*"
+    r"(?:is|are|am|was|were|do|does|did|can|could|will|would|should|shall"
+    r"|has|have|had|may|might|must)\b",
+    re.IGNORECASE,
+)
+
+#: The asker as grammatical subject of a stative or do-supported predicate: "am i ...",
+#: "are we ...", "do i ...". Deliberately NOT triggered by a bare "my" or "me" -- "which
+#: of these codes is ok to show on my address" is a question about the codes, not about
+#: the asker -- and not by "can i", which introduces questions about what is possible
+#: ("can i trust that listing") far more often than questions about the asker's standing.
+_SELF_SUBJECT = re.compile(r"\b(?:am|are)\s+(?:i|we)\b|\bdo\s+(?:i|we)\b", re.IGNORECASE)
+
+
+def _first_at(pattern: re.Pattern[str], text: str) -> int | None:
+    match = pattern.search(text)
+    return match.start() if match else None
+
+
+def asked_shapes(question: str) -> frozenset[str] | None:
+    """The answer types this question's grammar admits, or ``None`` if it does not say.
+
+    ``None`` is the common case and it means "no opinion" -- the gate stays out of the
+    way unless the question's form is genuinely determinate. Returning a set rather than
+    a single shape keeps the honest ambiguity: "how much over am i" is asking for either
+    a figure or a comparison, and the gate should not have to pick.
+
+    Only the MATRIX interrogative counts -- the one the sentence is actually built on --
+    and that is why position is compared rather than just presence. "who made up the rule
+    about how recent my papers have to be" contains a temporal phrase, but it is buried in
+    a relative clause describing the rule; the question being asked is "who". Reading the
+    embedded clause as the question turns a request for an authority into a request for a
+    date, and vetoes a route that was right. The earliest interrogative wins, with ties
+    going to the more specific reading (the generic wh-word also matches at the head of
+    "how recent" and "what day").
+    """
+    text = question or ""
+    wh = _first_at(_WH_WORD, text)
+    temporal = _first_at(_TEMPORAL_QUESTION, text)
+    amount = _first_at(_AMOUNT_QUESTION, text)
+
+    if temporal is not None and (wh is None or temporal <= wh):
+        return frozenset({ANSWER_DATE})
+    if amount is not None and (wh is None or amount <= wh):
+        return frozenset({ANSWER_MONEY, ANSWER_RELATION})
+    if wh is None and _YES_NO_QUESTION.search(text):
+        # A polar question wants a sentence that can carry a yes or a no. A bare dollar
+        # figure and a bare calendar date are the two answer types that cannot: handing
+        # "$92,580" to someone who asked "are they using the new numbers" answers
+        # nothing, however true the figure is.
+        return ANSWER_SHAPES - {ANSWER_MONEY, ANSWER_DATE}
+    return None
+
+
+def question_scope(question: str) -> str:
+    """Is this question predicated on the asker, or on the program?
+
+    A second, orthogonal axis. "so am i approved" is about the asker's own standing;
+    "which location codes are ok to display" is about the corpus, even though it ends
+    with "my address". Intents that state a fact about the program can never be the
+    answer to the first kind of question, and that is true regardless of vocabulary.
+    """
+    return SCOPE_SELF if _SELF_SUBJECT.search(question or "") else SCOPE_GENERAL
+
+
+@dataclass(frozen=True)
+class AnswerProfile:
+    """What an intent's answer IS -- independent of any phrasing that reaches it.
+
+    ``shape``        the type of thing the answer is.
+    ``answers_self`` whether this intent can answer a question predicated on the asker.
+                     A threshold, an income, a comparison and a readiness status are all
+                     computed from the asker's own file, so they can. An effective date,
+                     a statute and a geocoding convention are facts about the program;
+                     they are true whoever asks, and they answer nothing about anyone.
+    """
+
+    shape: str
+    answers_self: bool
+
+    def __post_init__(self) -> None:
+        if self.shape not in ANSWER_SHAPES:
+            raise ValueError(f"{self.shape!r} is not a declared answer shape")
+
+
+#: Profiles for the intents this module routes. `api/route_llm.py` declares the same for
+#: the situation intents and reuses this table verbatim for these, so the two cannot drift.
+CANONICAL_PROFILES: dict[str, AnswerProfile] = {
+    "frozen_threshold": AnswerProfile(ANSWER_MONEY, True),
+    "annualized_income": AnswerProfile(ANSWER_MONEY, True),
+    "threshold_comparison": AnswerProfile(ANSWER_RELATION, True),
+    "readiness_status": AnswerProfile(ANSWER_STATUS, True),
+    # The answer to "may this service decide about me" is a policy sentence, and it is
+    # squarely about the asker -- refusing to decide is the answer to a question about
+    # the asker's standing, so this one is `answers_self`.
+    "decision_boundary": AnswerProfile(ANSWER_POLICY, True),
+    "limits_effective_date": AnswerProfile(ANSWER_DATE, False),
+    "vacancy_claim": AnswerProfile(ANSWER_POLICY, False),
+    "geocode_precision": AnswerProfile(ANSWER_CODE, False),
+    "embedded_instructions": AnswerProfile(ANSWER_POLICY, False),
+    "currency_rule_status": AnswerProfile(ANSWER_POLICY, False),
+    "statutory_anchor": AnswerProfile(ANSWER_CITATION, False),
+}
+
+
+def question_admits(question: str, profile: AnswerProfile | None) -> bool:
+    """Could an answer with this profile be an answer to this question?
+
+    ``False`` only when the question's grammar rules it out. An unknown profile and an
+    indeterminate question both return ``True``: this gate refuses, it never approves.
+    """
+    if profile is None:
+        return True
+    shapes = asked_shapes(question)
+    if shapes is not None and profile.shape not in shapes:
+        return False
+    if question_scope(question) == SCOPE_SELF and not profile.answers_self:
+        return False
+    return True
+
+
+def canonical_admits(question: str, kind: str | None) -> bool:
+    """``question_admits`` for a kind routed by this module."""
+    if kind is None:
+        return True
+    return question_admits(question, CANONICAL_PROFILES.get(kind))
+
+
 @dataclass(frozen=True)
 class Answer:
     """One answered (or explicitly unanswered) question."""
@@ -545,11 +762,20 @@ def summary_line(result: dict[str, Any]) -> str:
 
 
 __all__ = [
+    "ANSWER_SHAPES",
     "Answer",
+    "AnswerProfile",
+    "CANONICAL_PROFILES",
     "GradedAnswer",
     "QUESTION_SIZE_PATTERN",
+    "SCOPE_GENERAL",
+    "SCOPE_SELF",
     "answer",
+    "asked_shapes",
+    "canonical_admits",
     "equivalent",
+    "question_admits",
+    "question_scope",
     "load_qa_gold",
     "question_household_size",
     "route",

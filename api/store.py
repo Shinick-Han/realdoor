@@ -26,7 +26,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from api import plain
-from core.extract import extract_document
+from core.extract import extract_document, tracking_layered_mapper
 from logic.household import (households_from_views, load_pack_checklists,
                              required_document_types)
 from logic.readiness import build_report
@@ -52,10 +52,15 @@ def engine_version() -> str:
 
 
 #: 추출 결과를 만들어 내는 코드 파일들. 이 파일들이 바뀌면 캐시된 추출은 **낡은 코드의 산물**이다.
+#:
+#: `core/label_llm.py` 가 여기 있는 이유: 팩 추출도 이제 3단 매퍼를 쓰고, 모델이 무엇을
+#: 이름 댈 수 있는지는 그 파일의 프롬프트·글로스·닫힌 집합이 정한다. 그 파일이 바뀌면
+#: 캐시된 추출은 다른 어휘가 만든 산물이다.
 ENGINE_SOURCES = (
     ROOT / "core/extract.py",
     ROOT / "core/render.py",
     ROOT / "ocr/ocr_extract.py",
+    ROOT / "core/label_llm.py",
 )
 
 _ENGINE_SHA: str | None = None
@@ -86,19 +91,47 @@ def engine_sha() -> str:
     return _ENGINE_SHA
 
 
+def _label_model_key() -> str:
+    """라벨 모델의 **켜짐 상태**를 캐시 키에 넣기 위한 조각.
+
+    이게 없으면 캐시가 조용히 거짓말을 한다. 키가 있는 기계에서 한 번 돌리면 모델이
+    참여한 추출이 `.cache/extractions` 에 눌러앉고, 나중에 키 없이 돌린 사람은 자기가
+    표만으로 얻은 결과라고 믿으면서 **모델이 만든 캐시**를 읽는다. 두 상태가 같은 키를
+    쓰는 한 "표만 썼을 때의 성능"이라는 문장은 검증할 수 없는 문장이 된다.
+
+    모델 이름까지 넣는 이유는 같다 -- 다른 모델은 다른 어휘고, 다른 산물이다.
+    """
+    from core import label_llm
+
+    return f"{int(label_llm.is_enabled())}:{label_llm.MODEL}"
+
+
 def _cache_key(pdf: Path) -> str:
     st = pdf.stat()
-    raw = f"{pdf.name}|{st.st_size}|{int(st.st_mtime)}|{engine_sha()}|v2"
+    raw = f"{pdf.name}|{st.st_size}|{int(st.st_mtime)}|{engine_sha()}|{_label_model_key()}|v3"
     return hashlib.sha256(raw.encode()).hexdigest()[:20]
 
 
 def extract_one(pdf: Path, rasterized: bool) -> dict[str, Any]:
-    """캐시를 거친 단일 문서 추출. 텍스트 레이어가 있으면 core, 없으면 ocr."""
+    """캐시를 거친 단일 문서 추출. 텍스트 레이어가 있으면 core, 없으면 ocr.
+
+    팩 문서도 업로드와 같은 3단 매퍼(정본 표 → 유의어 표 → 모델)를 쓴다. 팩 루브릭이
+    "Hidden tests may perturb names and values while retaining the schemas" 라고 예고한
+    이상, 채점되는 문서가 팩의 어휘를 쓴다는 보장이 없기 때문이다. 표가 못 읽는 라벨에서만
+    모델이 발동하므로, 어휘가 그대로인 문서에서는 1패스가 전부 잡고 모델은 호출조차
+    되지 않는다 -- 그래서 이 변경은 팩 숫자를 움직이지 않으면서 낯선 어휘에서만 일한다.
+
+    모델이 이름 댄 필드는 `MODEL_MAPPER_NOTE` 로 태깅되고 certainty="low" 로 남는다.
+    """
     CACHE.mkdir(parents=True, exist_ok=True)
     cached = CACHE / f"{_cache_key(pdf)}.json"
     if cached.exists():
         return json.loads(cached.read_text(encoding="utf-8"))
-    view = extract_document_ocr(str(pdf)) if rasterized else extract_document(str(pdf))
+    view = (
+        extract_document_ocr(str(pdf))
+        if rasterized
+        else extract_document(str(pdf), fallback_mapper=tracking_layered_mapper())
+    )
     cached.write_text(json.dumps(view, ensure_ascii=False, default=str), encoding="utf-8")
     return view
 

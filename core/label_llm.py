@@ -180,10 +180,19 @@ def _schema(document_type: str) -> dict[str, Any]:
 #: heading; "PERIOD 2" happens) so digits alone are not disqualifying -- but a run that
 #: parses as money, a date, or a bare decimal is a value that has been mistaken for a
 #: label, and it does not leave.
+#:
+#: The `YYYY-M(M)` shape was added after it was caught leaving. Running the pack through the
+#: layered mapper, `2026-06` -- the statement month printed on `hh-004_d04_gig_statement` --
+#: was classified as a label run and sent to the model, which duly named it
+#: `statement_month`. The full-date pattern above did not match it because it has no day.
+#: No figure moved (the tables had already named that field) but a value had left the
+#: process, which is the one thing this module promises does not happen. A gate is only
+#: worth what its narrowest hole allows through.
 _VALUE_SHAPES = (
     re.compile(r"\$\s*\d"),                       # $1,440.00
     re.compile(r"^\s*-?[\d,]+\.\d+\s*$"),         # 1440.00
     re.compile(r"\d{4}-\d{2}-\d{2}"),             # 2026-07-03
+    re.compile(r"^\s*\d{4}-\d{1,2}\s*$"),         # 2026-06 -- a month value, not a caption
     re.compile(r"\d{1,2}/\d{1,2}/\d{2,4}"),       # 07/03/2026
     re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),         # SSN shape
     re.compile(r"[\w.+-]+@[\w-]+\.\w+"),          # email

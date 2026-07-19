@@ -51,58 +51,106 @@ def extraction_section(views: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def adversarial_section(respond) -> dict[str, Any]:
-    from run_adversarial import run_suite  # eval/
+    from run_adversarial import load_tests, run_suite  # eval/
 
     result = run_suite(respond)
     total = result.get("total", 0)
     passed = result.get("passed", 0)
+    # 12 는 오랫동안 손으로 적힌 숫자였다. 이 절의 요지가 "24 는 24개의 독립 시행이
+    # 아니다"인데 그 24 만 세고 12 는 세지 않는 것은, 우리가 스스로 붙인 단서를
+    # 측정하지 않고 주장만 한 것이다. 팩에서 직접 센다.
+    distinct = len({test.get("input") for test in load_tests()})
     return {
         "status": "measured",
         "total_tests": total,
         "passed": passed,
         "failed_test_ids": result.get("failed", []),
-        "distinct_inputs": 12,
+        "distinct_inputs": distinct,
         "note": ("The pack's 24 tests are 12 distinct hostile inputs, each present twice. "
                  "We report 24 runs but only 12 independent probes. Detectors are "
                  "keyword and canary based: a pass is evidence, not proof."),
     }
 
 
+def _both_ways(theirs, ours) -> bool:
+    """양쪽을 **다 불러** 같은 결과인지 본다. 한쪽만 죽으면 그것도 불일치다.
+
+    두 함수를 각각 호출해 (값, 예외종류) 로 만든 뒤 비교한다. 셋 다 다른 사건이다:
+      * 둘 다 값을 냈고 값이 같다        -> 일치
+      * 둘 다 같은 종류로 거부했다        -> 일치 (같은 입력을 같은 이유로 막는 것도 합의다)
+      * 한쪽만 죽었거나 값이 다르다       -> 불일치
+
+    예전 코드는 예외가 나면 `continue` 로 넘어갔다. 비대칭 실패는 **가장 중요한**
+    불일치인데 그게 카운트에서 조용히 사라졌다.
+    """
+    def call(fn):
+        try:
+            return ("value", fn())
+        except Exception as exc:
+            return ("raised", type(exc).__name__)
+
+    return call(theirs) == call(ours)
+
+
 def calculation_section() -> dict[str, Any]:
-    """주최자 참조구현과의 대조. 우리 계산이 아니라 **그들의 계산**과 맞는지."""
-    from pack.starter.src.calculate import annualize, compare_to_threshold
+    """주최자 참조구현과의 대조. 우리 계산이 아니라 **그들의 계산**과 맞는지.
+
+    ⚠️ 이 절은 한동안 거짓말을 하고 있었다. threshold 10쌍 루프가 주최자 함수만 부르고
+    예외가 안 나면 일치로 셌다 — 우리 구현은 import 되지도 않았으니, 재던 것은 "일치"가
+    아니라 "그들 함수가 안 죽었다" 였다. 화면에 뜬 90 중 10 은 아무것도 비교하지 않은
+    숫자였다. 측정한 대로만 말하겠다는 제품에서 이건 제일 하면 안 되는 종류의 오류라,
+    이제 양쪽을 다 불러 비교하고 비대칭 실패는 불일치로 센다.
+    """
+    from pack.starter.src.calculate import (
+        annualize as their_annualize,
+        compare_to_threshold as their_compare,
+    )
     from logic.income import annualize as our_annualize  # type: ignore[attr-defined]
+    from logic.threshold import compare_to_threshold as our_compare
 
     amounts = [0.0, 1.0, 12.5, 100.0, 250.75, 500.0, 960.0, 1083.0, 1200.0,
                1395.0, 1500.0, 2166.0, 2500.0, 3000.0, 4166.67, 10000.0]
     freqs = ["weekly", "biweekly", "semimonthly", "monthly", "annual"]
-    agree = disagree = 0
-    for a in amounts:
-        for f in freqs:
-            try:
-                theirs = annualize(a, f)
-                ours = our_annualize(a, f)
-            except Exception:
-                continue
-            agree, disagree = (agree + 1, disagree) if theirs == ours else (agree, disagree + 1)
-
     pairs = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (72000.0, 72000.0), (72000.01, 72000.0),
              (71999.99, 72000.0), (56316.0, 72000.0), (105000.0, 119340.0),
              (49920.0, 82320.0), (51008.0, 102840.0)]
-    for inc, thr in pairs:
-        try:
-            compare_to_threshold(inc, thr)
+
+    agree = disagree = 0
+    disagreements: list[str] = []
+
+    def record(label: str, theirs, ours) -> None:
+        nonlocal agree, disagree
+        if _both_ways(theirs, ours):
             agree += 1
-        except Exception:
+        else:
             disagree += 1
+            disagreements.append(label)
+
+    for amount in amounts:
+        for freq in freqs:
+            record(f"annualize({amount}, {freq})",
+                   lambda a=amount, f=freq: their_annualize(a, f),
+                   lambda a=amount, f=freq: our_annualize(a, f))
+
+    for income, limit in pairs:
+        record(f"compare_to_threshold({income}, {limit})",
+               lambda i=income, t=limit: their_compare(i, t),
+               lambda i=income, t=limit: our_compare(i, t))
 
     return {
         "status": "measured",
         "checks": agree + disagree,
         "agree_with_organizer_reference": agree,
         "disagree": disagree,
+        "disagreeing_inputs": disagreements,
         "note": ("Compared against pack/starter/src/calculate.py, the organizer's own "
-                 "reference implementation, imported directly rather than copied."),
+                 "reference implementation, imported directly rather than copied. Both "
+                 "sides are called on every input and the two results are compared: same "
+                 "value is agreement, and so is both sides refusing the same input the "
+                 "same way, while one side raising and the other returning is counted as "
+                 "a disagreement rather than skipped. The swept grid here is all-valid "
+                 "input; agreement on the inputs both sides must reject is swept "
+                 "separately in logic/test_pack_agreement.py."),
     }
 
 
@@ -120,16 +168,128 @@ def qa_section() -> dict[str, Any]:
     }
 
 
-def citations_section() -> dict[str, Any]:
+def _citation_word(outcome: str | None) -> str:
+    """기계 낱말을 사람이 읽는 낱말로. `not_run` 은 실패가 아니라 미실행이고,
+    `not_applicable` 은 통과가 아니라 대상 아님이다 — 둘 다 그렇게 읽혀야 한다."""
+    return {
+        "matched": "matched",
+        "did_not_match": "no longer matches",
+        "not_run": "could not be re-fetched",
+        "not_applicable": "out of scope, our own rule",
+    }.get(outcome or "", "unknown")
+
+
+def citations_section(artefact_path: Path | None = None) -> dict[str, Any]:
+    """인용한 규칙 원문이 지금도 그 출처의 그 자리에 있는지.
+
+    **여기서 네트워크를 쓰지 않는다.** 심사위원이 이 화면을 열 때마다 HUD 서버로 요청이
+    나가서도, 시연이 네트워크 상태에 매달려서도 안 되기 때문이다. 재확인은
+    `eval/citation_recheck.py` 가 따로 돌면서 `eval/citation_recheck.json` 에 결과를
+    남기고, 이 절은 그 파일을 **읽기만** 한다. 대신 언제 확인한 것인지를 항상 같이 싣는다 —
+    발효일을 화면에 찍는 제품이 자기 확인 시각을 감출 수는 없다.
+
+    분모가 무엇인지 화면에서 읽혀야 한다. 인용 11건 중 4건은 챌린지 팩 **자신의** 규약이고
+    출처가 이 저장소 안의 파일이라, 바깥 출처와 대조한다는 말 자체가 성립하지 않는다.
+    그 4건은 대상 아님으로 표시하고 분모에서 뺀다. 재확인 대상은 바깥 기관이 낸 7건이다.
+
+    산출물이 없거나, 있어도 이번에 한 건도 대조하지 못했으면 `not_run`. 재지 못한 것을
+    0 으로 적는 것은 성공으로 위장한 미측정이다.
+    """
     from logic.household import load_rule_corpus
+    import citation_recheck  # eval/
 
     rules = load_rule_corpus()
+    artefact = citation_recheck.load_artefact(artefact_path or citation_recheck.ARTEFACT)
+
+    if artefact is None:
+        return {
+            "status": "not_run",
+            "rules_in_corpus": len(rules),
+            "note": ("No re-check artefact was found, so no citation has been compared "
+                     "against its source. Run `python eval/citation_recheck.py`. Reported "
+                     "as not run rather than as zero."),
+        }
+
+    rows = artefact.get("citations", [])
+    external = [r for r in rows if r.get("classification") == "external_authority"]
+    matched = [r for r in external if r.get("outcome") == "matched"]
+    mismatched = [r for r in external if r.get("outcome") == "did_not_match"]
+    unreachable = [r for r in external if r.get("outcome") == "not_run"]
+
+    stamps = sorted(r.get("checked_at") for r in rows if r.get("checked_at"))
+    oldest = stamps[0] if stamps else None
+    newest = stamps[-1] if stamps else None
+
+    def age_days(stamp: str | None) -> float | None:
+        if not stamp:
+            return None
+        try:
+            then = datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+        return round((datetime.now(timezone.utc) - then).total_seconds() / 86400.0, 3)
+
+    # 한 건도 대조하지 못했으면 이 절은 측정된 것이 아니다.
+    if not matched and not mismatched:
+        return {
+            "status": "not_run",
+            "rules_in_corpus": len(rules),
+            "external_citations_in_scope": len(external),
+            "self_issued_citations_out_of_scope": len(rows) - len(external),
+            "could_not_re_fetch": len(unreachable),
+            "last_attempt_at": artefact.get("checked_at"),
+            "artefact": "eval/citation_recheck.json",
+            "note": ("Every external source was unreachable on the run that produced this "
+                     "artefact, so nothing was compared. Not run is the honest reading: an "
+                     "unreachable source is a citation we could not check, not a citation "
+                     "that failed."),
+        }
+
+    headline = (f"{len(matched)} of {len(external)} external citations re-fetched and "
+                f"matched their quoted text")
+    if mismatched:
+        headline += f"; {len(mismatched)} no longer match"
+    if unreachable:
+        headline += f"; {len(unreachable)} could not be reached"
+
     return {
-        "status": "not_run",
+        "status": "measured",
+        "headline": headline,
         "rules_in_corpus": len(rules),
-        "verified_against_live_source": 0,
-        "note": ("Re-verifying each cited rule against its live source URL is not wired "
-                 "yet. Reported as zero rather than assumed."),
+        "external_citations_in_scope": len(external),
+        "self_issued_citations_out_of_scope": len(rows) - len(external),
+        "re_fetched_and_matched": len(matched),
+        "re_fetched_and_did_not_match": len(mismatched),
+        "could_not_re_fetch": len(unreachable),
+        "newest_result_checked_at": newest,
+        "oldest_result_checked_at": oldest,
+        "oldest_result_age_days": age_days(oldest),
+        # 측정 패널은 한 줄에 값 하나를 그린다. 이걸 객체 목록으로 실었더니 중첩 표가
+        # 만들어졌고, 그 표가 가로로 넘치면서 **키보드로 닿을 수 없는 스크롤 영역**이
+        # 생겼다(axe: scrollable-region-focusable, serious). 접근성 위반을 만들어 가며
+        # 표를 고집할 이유가 없어 문자열로 편다 — 항목별 원문·증거는 전부 산출물에 있다.
+        "outcome_by_citation": " · ".join(
+            f"{r.get('rule_id')} {_citation_word(r.get('outcome'))}" for r in rows),
+        # 확인된 것보다 **확인되지 않은 것**이 읽을 거리다. 이유까지 한 줄에 싣는다.
+        "citations_not_confirmed": " ".join(
+            f"{r.get('rule_id')}: {r.get('detail')}"
+            for r in external if r.get("outcome") != "matched"
+        ) or "none — every external citation was re-fetched and matched",
+        "artefact": "eval/citation_recheck.json",
+        "refresh_with": "python eval/citation_recheck.py --refresh",
+        "note": (
+            "The denominator is the seven citations whose source is an outside authority — "
+            "HUD or the federal regulations — reachable over https. The other four are the "
+            "challenge pack's own frozen convention, whose source is a file inside this "
+            "repository; re-fetching those would be us reading back what we wrote, so they "
+            "are marked out of scope rather than counted as passes. A match means the "
+            "specific figures and sentences our rule quotes were found again at the source "
+            "and at the locator we cite, not merely that the link answered. An unreachable "
+            "source is reported as not checked, never as checked and fine. This screen "
+            "makes no network request: it reads the artefact left by "
+            "eval/citation_recheck.py, which is why every row carries the time it was "
+            "checked."
+        ),
     }
 
 

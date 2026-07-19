@@ -105,9 +105,16 @@ Stated first, because this is the point of the product.
   server and the same panel takes one synthetic document, held in that session's memory,
   never written to disk and never joined to the household's file. The 24 pack documents
   are pre-loaded either way.
-- **Citations are not re-verified against their live sources.** 11 rules in the corpus,
-  0 checked against a live URL. The scorecard reports this as `not_run` and prints zero
-  rather than assuming success.
+- **One citation in seven could not be re-checked.** Of the 11 rules in the corpus, 7 cite
+  an outside authority over https and 4 are the challenge pack's own frozen convention,
+  whose source is a file in this repository — re-fetching those would be us reading back
+  what we wrote, so they are marked out of scope rather than counted as passes. Of the 7,
+  six were re-fetched and the specific figures and sentences we quote were found again at
+  the locator we cite; `uscode.house.gov` did not answer and is reported as not checked,
+  never as checked and fine. The scorecard prints the time of each check, and the screen
+  makes no network request of its own — it reads the artefact left by
+  `python eval/citation_recheck.py`, so the demo does not depend on the network and judges
+  do not fan requests out to HUD.
 - **The stretch goal ("Discover") is not implemented.** No part of it shipped.
 - **axe-core ran at one viewport width only** (1280×900). Reflow is checked separately
   at five narrow widths. See the honesty note under Measurements.
@@ -139,7 +146,8 @@ axe-core          0 violations across 4 origins x 8 screens — at 1280px only
 Keyboard journey  28/28
 Reflow            40/40 at 320 / 360 / 390 / 412 / 768 px
 Live API check    11/11
-Citations         re-verification against live sources: NOT RUN (reported as not_run)
+Citations         6/7 outside-authority citations re-fetched and matched; 1 unreachable
+                  (4 of the 11 rules are the pack's own convention — out of scope)
 ```
 
 The test count grows as tests are added; `python -m pytest` is the authority, not this

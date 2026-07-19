@@ -14,6 +14,7 @@
 import { chromium } from "playwright";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pageUrl = pathToFileURL(resolve(here, "..", "dist", "index.html")).href;
@@ -340,14 +341,36 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
     /cleared/i.test(sessionBody), sessionBody.slice(0, 60).trim());
 
   // The measurements are read from ui/fixtures/selftest.json as exported. Assert on the
-  // shape of the honesty rather than on numbers that legitimately move between exports:
-  // a not_run section must be labelled Not run, and abstentions must be reported.
+  // shape of the honesty rather than on numbers that legitimately move between exports.
+  //
+  // This check used to require that at least one section be labelled Not run, because the
+  // citations section had been not_run since it was written. That made a shortfall into a
+  // fixture of the test, and once the citation re-check was wired the suite failed for the
+  // one reason it must never fail: a number got better. Requiring a permanent red chip
+  // would also have been an invitation to keep one, which is the opposite of the point.
+  //
+  // The invariant is the correspondence, in both directions: every section the export marks
+  // not_run is chipped Not run, every section it marks measured is not, and the summary
+  // names them. Zero not-run sections is then an allowed and reportable state, not a pass
+  // and not a failure.
   const measure = (await page.locator("#measure-body").textContent()) || "";
-  const notRunSections = await page.locator("#measure-body .chip--missing").count();
-  record("Measurements — shown as exported, including sections that were not run",
-    /Not run/.test(measure) && notRunSections > 0 && /abstained/.test(measure) &&
-    /Citations re-checked against their live source/.test(measure),
-    `${notRunSections} section(s) labelled Not run`);
+  const exported = JSON.parse(
+    await readFile(resolve(here, "..", "fixtures", "selftest.json"), "utf8"));
+  const expectedNotRun = Object.entries(exported.sections)
+    .filter(([, section]) => section.status !== "measured").map(([name]) => name);
+  const notRunChips = await page.locator("#measure-body .chip--missing").count();
+  const measuredChips = await page.locator("#measure-body .chip--present").count();
+  const totalSections = Object.keys(exported.sections).length;
+  record("Measurements — every section is chipped with the status the export actually carries",
+    notRunChips === expectedNotRun.length &&
+    measuredChips === totalSections - expectedNotRun.length &&
+    /abstained/.test(measure) &&
+    /Citations re-checked against their live source/.test(measure) &&
+    // 못 잰 절이 하나도 없을 때도 그 사실이 문장으로 나와야 한다 — 빈칸은 주장이 아니다.
+    (expectedNotRun.length ? /Not run at all:/.test(measure)
+                           : /No measured section fell short in this run|Not run at all:/.test(measure)),
+    `${notRunChips} not run, ${measuredChips} measured, of ${totalSections} sections` +
+    (expectedNotRun.length ? ` (not run: ${expectedNotRun.join(", ")})` : ""));
 }
 
 // ── constraint checks that must hold on every screen ────────────────────────────

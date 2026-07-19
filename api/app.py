@@ -21,7 +21,7 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, Response, Upload
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from api import gate
+from api import gate, limits
 from api.store import STORE, DOCS, engine_version
 
 app = FastAPI(
@@ -71,6 +71,12 @@ class DecisionGate(BaseHTTPMiddleware):
 
 app.add_middleware(DecisionGate)
 
+# 레이트리밋은 **게이트 다음에** 등록한다. Starlette 은 나중에 add 한 것이 바깥이므로
+# 이 순서라야 차단된 요청이 앱에 아예 닿지 않는다. 반대로 두면 429 응답까지 게이트가
+# 훑는다 — 무해하지만 낭비고, 무엇보다 막으려던 일이 이미 벌어진 뒤가 된다.
+# 상한값과 그 근거는 `api/limits.py` 에 있다. 테스트 중에는 기본 OFF.
+app.add_middleware(limits.RateLimit)
+
 
 @app.on_event("startup")
 def _startup() -> None:
@@ -105,7 +111,25 @@ def health() -> dict:
 # ── 세션 (데모 6단계: 세션 삭제) ────────────────────────────────────────
 @app.post("/api/session")
 def create_session() -> dict:
+    """세션 하나 = 팩 24문서의 **사본** 하나다 (`api/store.py:298-305`).
+
+    인증이 없으므로 이 라우트는 누구나 무한히 부를 수 있고, 부를 때마다 프로세스
+    메모리가 그만큼 늘어난다. 그래서 여기에만 총량 상한이 있다. 상한에 닿으면 먼저
+    나이 지난 세션을 청소하고, 그래도 자리가 없으면 가장 오래된 것을 축출한다
+    (근거는 `api/limits.py`). 거절은 마지막 수단이다.
+    """
+    try:
+        limits.admit_session(STORE)
+    except limits.SessionCapacity:
+        raise HTTPException(
+            503,
+            "This copy is not opening new sessions right now. It is a free public demo "
+            "holding every session in one process's memory, so there is a ceiling on how "
+            "many can be open at once, and it has been reached. Nothing is wrong with "
+            "your browser. Wait about a minute and load the page again.",
+        ) from None
     s = STORE.new_session()
+    limits.note_session(s.session_id)
     return {"session_id": s.session_id, "documents": len(s.views)}
 
 
@@ -113,6 +137,7 @@ def create_session() -> dict:
 def delete_session(session_id: str) -> dict:
     """폐기 후에는 프로세스 어디에도 남지 않는다. 이어지는 GET은 404가 된다."""
     existed = STORE.delete(session_id)
+    limits.forget_session(session_id)
     return {"deleted": existed, "session_id": session_id,
             "remaining_sessions": STORE.session_count}
 
@@ -216,6 +241,7 @@ def upload_types() -> dict:
 @app.post("/api/upload")
 async def upload(file: UploadFile = File(...),
                  document_type: str = Form(...),
+                 content_length: int | None = Header(default=None),
                  x_session_id: str | None = Header(default=None)) -> dict:
     """올린 PDF 한 장을 읽고 **근거와 함께** 돌려준다.
 
@@ -230,7 +256,50 @@ async def upload(file: UploadFile = File(...),
     from api import upload as upload_mod
 
     s = _session(x_session_id)
-    data = await file.read()
+    # `upload_mod.validate` 의 10MB 검사는 **바이트가 이미 전부 메모리에 올라온 뒤**에
+    # 돈다. 그러면 500MB POST 도 일단 다 버퍼된 다음에야 거절당한다 — 공개 URL 에서는
+    # 그 자체가 공격이다. 그래서 여기서 두 번 막는다.
+    #
+    # (1) Content-Length 를 먼저 본다. 싸고, 정상 클라이언트는 항상 보낸다.
+    #     헤더는 위조할 수 있으므로 이것만으로는 부족하다.
+    # (2) 그래서 읽기도 청크 루프로 바꾼다. 누적이 한도를 넘는 순간 읽기를 멈춘다.
+    #     멀티파트 경계 때문에 본문은 파일보다 조금 크므로 여유를 조금 둔다.
+    #
+    # 응답의 모양과 상태 코드는 `upload_mod.validate` 가 내던 것과 **똑같이** 맞춘다
+    # (400 + `{"code": "file_too_large", ...}`). 413 이 HTTP 로는 더 정확하지만, 그
+    # 정확함을 얻자고 화면과 테스트가 알고 있는 계약을 바꾸는 것은 남는 장사가 아니다.
+    # 여기서 달라지는 것은 **언제 거절하느냐** 하나여야 한다.
+    ceiling = upload_mod.MAX_UPLOAD_BYTES
+
+    def _too_big(size: int | None) -> HTTPException:
+        how_big = f"That upload is {size / 1048576:.1f} MB. " if size else "That upload is too large. "
+        return HTTPException(400, {
+            "code": "file_too_large",
+            "detail": (
+                f"{how_big}The limit is {ceiling // 1048576} MB, because an uploaded "
+                f"document is held in memory for this session only and never written to "
+                f"disk. We stopped reading it rather than taking it in first and refusing "
+                f"afterwards."
+            ),
+        })
+
+    if content_length is not None and content_length > ceiling + 65536:
+        raise _too_big(content_length)
+
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await file.read(262144)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > ceiling:
+            # 남은 본문을 읽지 않고 여기서 끊는다. 읽어 버리면 막은 의미가 없다.
+            chunks.clear()
+            raise _too_big(total)
+        chunks.append(chunk)
+    data = b"".join(chunks)
+    chunks.clear()
     try:
         doc_type = upload_mod.validate(data, file.filename or "upload.pdf",
                                        file.content_type, document_type)
@@ -282,7 +351,10 @@ def ask(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
     판단 경로에 LLM이 없으므로, 문서나 질문에 삽입된 지시는 원리적으로
     계산을 바꿀 수 없다. 여기서는 그 위에 명시적 거부 세 가지를 얹는다.
     """
+    import os
+
     from api import ask as ask_mod
+    from api import route_llm
     from logic.household import households_from_views
 
     s = _session(x_session_id)
@@ -290,7 +362,35 @@ def ask(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
     hid = payload.get("household_id")
     houses = households_from_views(list(s.views.values()))
     s.log("question_asked", household_id=hid)   # 질문 원문은 남기지 않는다
-    return ask_mod.handle(question, hid, houses)
+
+    # ── 모델 호출 예산 ──────────────────────────────────────────────────
+    # 이 라우트가 이 앱에서 모델 호출로 이어지는 유일한 경로다. 캐시를 비껴가는 무작위
+    # 문장을 반복하면 분류기가 계속 불린다 — 공개 URL 에서 돈이 새는 유일한 구멍이다.
+    #
+    # 예산을 다 쓰면 분류기만 건너뛴다. 답은 여전히 결정론 경로로 나가고, 결정론 층이
+    # 침묵하면 화면은 원래 하던 대로 기권한다. **사용자에게는 아무 것도 깨지지 않으므로**
+    # 상한을 낮게 걸어도 안전하다. 이게 판단 경로에 LLM 을 두지 않은 설계의 이점이다.
+    before = route_llm.stats().get("calls", 0)
+    if limits.enforce_llm_budget(s.session_id):
+        answer = ask_mod.handle(question, hid, houses)
+    else:
+        saved = os.environ.get("REALDOOR_LLM_ROUTER")
+        os.environ["REALDOOR_LLM_ROUTER"] = "0"
+        try:
+            answer = ask_mod.handle(question, hid, houses)
+        finally:
+            # 이 요청이 도는 사이에 **전체** 예산이 소진됐다면 그쪽 결정이 이긴다.
+            # 그때는 되돌리지 않는다 — 되돌리면 방금 닫은 문을 다시 여는 셈이다.
+            if not limits.llm_budget_left(None):
+                pass
+            elif saved is None:
+                os.environ.pop("REALDOOR_LLM_ROUTER", None)
+            else:
+                os.environ["REALDOOR_LLM_ROUTER"] = saved
+    # 시도가 아니라 **분류기가 실제로 게이트웨이를 부른 횟수**를 센다
+    # (`route_llm._STATS["calls"]`). 결정론 층이 잡아낸 질문은 예산을 쓰지 않는다.
+    limits.note_llm_attempt(s.session_id, route_llm.stats().get("calls", 0) - before)
+    return answer
 
 
 # ── 패킷 내보내기 (데모 5단계) ─────────────────────────────────────────

@@ -10,7 +10,7 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-19T07:51:57.487Z",
+ "generated_at": "2026-07-19T09:09:32.757Z",
  "screens_per_origin": 8,
  "total_violations": 0,
  "violations_by_impact": {},
@@ -75,7 +75,7 @@
        "nodes": [
         {
          "target": [
-          "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
@@ -190,7 +190,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 30
+     "rules_passed": 31
     },
     {
      "screen": "step4-calculation",
@@ -209,19 +209,19 @@
        "nodes": [
         {
          "target": [
-          ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -247,49 +247,55 @@
        "nodes": [
         {
          "target": [
-          "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-extraction > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-adversarial > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-calculation > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rule_questions > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-citations > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-accessibility > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-plain_language > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rendered_screens > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -323,7 +329,7 @@
        "nodes": [
         {
          "target": [
-          "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
@@ -438,7 +444,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 30
+     "rules_passed": 31
     },
     {
      "screen": "step4-calculation",
@@ -457,19 +463,19 @@
        "nodes": [
         {
          "target": [
-          ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -495,49 +501,55 @@
        "nodes": [
         {
          "target": [
-          "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-extraction > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-adversarial > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-calculation > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rule_questions > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-citations > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-accessibility > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-plain_language > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rendered_screens > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -571,7 +583,7 @@
        "nodes": [
         {
          "target": [
-          "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
@@ -668,7 +680,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 30
+     "rules_passed": 31
     },
     {
      "screen": "step4-calculation",
@@ -687,19 +699,19 @@
        "nodes": [
         {
          "target": [
-          ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -725,49 +737,55 @@
        "nodes": [
         {
          "target": [
-          "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-extraction > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-adversarial > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-calculation > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rule_questions > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-citations > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-accessibility > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-plain_language > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rendered_screens > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -801,7 +819,7 @@
        "nodes": [
         {
          "target": [
-          "dd:nth-child(6) > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
@@ -898,7 +916,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 30
+     "rules_passed": 31
     },
     {
      "screen": "step4-calculation",
@@ -917,19 +935,19 @@
        "nodes": [
         {
          "target": [
-          ".card:nth-child(3) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(4) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          ".card:nth-child(5) > h4 > .chip--present.chip > span[aria-hidden=\"true\"]"
+          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }
@@ -955,49 +973,55 @@
        "nodes": [
         {
          "target": [
-          "#measure-extraction > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-extraction > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-adversarial > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-adversarial > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-calculation > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-calculation > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rule_questions > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rule_questions > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-accessibility > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-citations > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-plain_language > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-accessibility > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-rendered_screens > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-plain_language > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         },
         {
          "target": [
-          "#measure-intent_router > .chip--present.chip > span[aria-hidden=\"true\"]"
+          "#measure-rendered_screens > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "#measure-intent_router > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
         }

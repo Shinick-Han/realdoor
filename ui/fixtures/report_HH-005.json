@@ -1,6 +1,6 @@
 {
  "household_id": "HH-005",
- "generated_at": "2026-07-19T06:40:58Z",
+ "generated_at": "2026-07-19T09:07:58Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
@@ -37,7 +37,7 @@
      "certainty": "low",
      "evidence_kind": "extracted",
      "source_text": "TessAlder",
-     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'TessAlder' with the word space dropped; restored the one forced split point -- confirm with a human"
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('TessAlder'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
     },
     {
      "field": "household_size",
@@ -57,14 +57,19 @@
     },
     {
      "field": "address",
-     "value": null,
-     "page": null,
-     "bbox": null,
+     "value": "77 Meadow Signal Ave, Quincy, MA 02169",
+     "page": 1,
+     "bbox": [
+      40.36,
+      587.62,
+      233.69,
+      601.62
+     ],
      "bbox_units": "pdf_points_bottom_left_origin",
-     "certainty": "abstain",
+     "certainty": "low",
      "evidence_kind": "extracted",
-     "source_text": null,
-     "notes": "OCR dropped at least one word space (a comma is followed by a non-space) and the split points are ambiguous, so the exact string cannot be reconstructed; read as '77MeadowSignalAve,Quincy,MA02169'"
+     "source_text": "77MeadowSignalAve,Quincy,MA02169",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('77MeadowSignalAve,Quincy,MA02169'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
     },
     {
      "field": "application_date",
@@ -435,7 +440,7 @@
      "certainty": "low",
      "evidence_kind": "extracted",
      "source_text": "TessAlder",
-     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'TessAlder' with the word space dropped; restored the one forced split point -- confirm with a human"
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('TessAlder'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
     },
     {
      "field": "document_date",
@@ -644,8 +649,8 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:a023f37c6936",
- "session_id": "7f7ec51218e1",
+ "engine_version": "sha:cda171ce0549",
+ "session_id": "5db8219e226a",
  "plain": {
   "messages": [
    {
@@ -715,15 +720,15 @@
  "confirmation": {
   "confirmed": 0,
   "corrected": 0,
-  "not_confirmed": 25,
-  "not_read": 1,
+  "not_confirmed": 26,
+  "not_read": 0,
   "fields": 26,
   "seen_by_a_person": 0
  },
  "activity_log": {
   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
   "ruleset_version": "pack-v1/2026-05-01",
-  "engine_version": "sha:a023f37c6936",
+  "engine_version": "sha:cda171ce0549",
   "counts": {
    "session_created": 1
   },

@@ -161,16 +161,28 @@ def test_same_value_absorbs_notation_and_nothing_else(submitted, extracted, expe
 def test_a_value_that_was_not_read_cannot_be_confirmed(client, session):
     """기권한 필드에 "사람이 확인했다"는 표시가 붙으면, 하필 사람 손이 가장 필요한
     자리에서 그 표시가 거짓이 된다. 값을 채워 넣으라고 거절한다."""
-    # HH-002-D01 의 address 는 팩에서 실제로 기권이 나는 자리다. 그 자리를 이름으로 짚어
-    # 두면, 언젠가 추출이 좋아져 기권이 사라졌을 때 이 테스트가 조용히 통과하는 대신
-    # 없어진 전제를 알려준다.
-    blank = ("HH-002-D01", "address")
-    other = client.get("/api/report/HH-002", headers=_h(session)).json()
-    assert _field(other, *blank)["value"] is None, "전제가 사라졌다: 이 필드는 이제 읽힌다"
+    # 이 테스트는 원래 HH-002-D01 의 address 를 짚었다 — 팩에서 실제로 기권이 나던 자리다.
+    # 그리고 예고한 대로 동작했다: OCR 이 떨어뜨린 단어 공백을 복원하게 되면서 그 자리가
+    # 읽히기 시작했고, 테스트는 조용히 통과하는 대신 없어진 전제를 알려주며 실패했다.
+    # 지금 팩에는 기권이 한 건도 없다(159/159).
+    #
+    # 그래서 기권을 여기서 만든다. 재는 대상은 추출 성적이 아니라 `/api/confirm` 의 계약이고,
+    # 계약을 재는 데 그날그날의 추출 성적이 끼어들 이유가 없다. 팩에 다시 기권이 생기든
+    # 안 생기든 이 검사는 같은 것을 잰다.
+    blank = (DOC_APP, "address")
+    for field in STORE.get(session).views[blank[0]]["fields"]:
+        if field["field"] == blank[1]:
+            field["value"] = None
+            field["certainty"] = "abstain"
+            field["source_text"] = None
+            break
+    else:
+        raise AssertionError(f"{blank[0]}.{blank[1]} 가 뷰에 없다")
+
+    assert _field(_report(client, session), *blank)["value"] is None
 
     assert _send(client, session, blank[0], blank[1], None).status_code == 400
-    assert _field(client.get("/api/report/HH-002", headers=_h(session)).json(),
-                  *blank)["evidence_kind"] == "extracted"
+    assert _field(_report(client, session), *blank)["evidence_kind"] == "extracted"
 
     # 대신 값을 채워 넣는 것은 언제나 가능하다 — 그것은 정정이다.
     filled = _send(client, session, blank[0], blank[1], "12 Elm St").json()

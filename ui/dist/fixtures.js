@@ -566,7 +566,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -1202,8 +1202,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "7f7ec51218e1",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "5db8219e226a",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -1259,7 +1259,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1
    },
@@ -1274,7 +1274,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001_after_rejected_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -1934,8 +1934,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "9319ab6a06cb",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "f13495ca650a",
   "plain": {
    "messages": [
     {
@@ -2033,7 +2033,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1,
     "field_corrected": 1
@@ -2057,7 +2057,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001_after_size_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -2693,8 +2693,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "9a45d04b5350",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "c30b6c684a41",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -2750,7 +2750,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1,
     "field_corrected": 1
@@ -2774,7 +2774,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-002": {
   "household_id": "HH-002",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -2811,7 +2811,7 @@ window.REALDOOR_FIXTURES = {
       "certainty": "low",
       "evidence_kind": "extracted",
       "source_text": "JonasVale",
-      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'JonasVale' with the word space dropped; restored the one forced split point -- confirm with a human"
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('JonasVale'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "household_size",
@@ -2831,14 +2831,19 @@ window.REALDOOR_FIXTURES = {
      },
      {
       "field": "address",
-      "value": null,
-      "page": null,
-      "bbox": null,
+      "value": "81 Paper Mill Road, Cambridge, MA 02139",
+      "page": 1,
+      "bbox": [
+       39.96,
+       588.02,
+       233.69,
+       602.02
+      ],
       "bbox_units": "pdf_points_bottom_left_origin",
-      "certainty": "abstain",
+      "certainty": "low",
       "evidence_kind": "extracted",
-      "source_text": null,
-      "notes": "OCR dropped at least one word space (a comma is followed by a non-space) and the split points are ambiguous, so the exact string cannot be reconstructed; read as '81PaperMillRoad,Cambridge,MA02139'"
+      "source_text": "81PaperMillRoad,Cambridge,MA02139",
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('81PaperMillRoad,Cambridge,MA02139'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "application_date",
@@ -3225,7 +3230,7 @@ window.REALDOOR_FIXTURES = {
       "certainty": "low",
       "evidence_kind": "extracted",
       "source_text": "JonasVale",
-      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'JonasVale' with the word space dropped; restored the one forced split point -- confirm with a human"
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('JonasVale'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "document_date",
@@ -3443,8 +3448,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "7f7ec51218e1",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "5db8219e226a",
   "plain": {
    "messages": [
     {
@@ -3514,15 +3519,15 @@ window.REALDOOR_FIXTURES = {
   "confirmation": {
    "confirmed": 0,
    "corrected": 0,
-   "not_confirmed": 26,
-   "not_read": 1,
+   "not_confirmed": 27,
+   "not_read": 0,
    "fields": 27,
    "seen_by_a_person": 0
   },
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1
    },
@@ -3537,7 +3542,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-003": {
   "household_id": "HH-003",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -3809,7 +3814,7 @@ window.REALDOOR_FIXTURES = {
       "certainty": "low",
       "evidence_kind": "extracted",
       "source_text": "AveryMoss",
-      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'AveryMoss' with the word space dropped; restored the one forced split point -- confirm with a human"
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('AveryMoss'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "pay_date",
@@ -4205,8 +4210,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "7f7ec51218e1",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "5db8219e226a",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -4270,7 +4275,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1
    },
@@ -4285,7 +4290,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-004": {
   "household_id": "HH-004",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -4415,7 +4420,7 @@ window.REALDOOR_FIXTURES = {
       "certainty": "low",
       "evidence_kind": "extracted",
       "source_text": "RinCalder",
-      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'RinCalder' with the word space dropped; restored the one forced split point -- confirm with a human"
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('RinCalder'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "pay_date",
@@ -5022,8 +5027,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "7f7ec51218e1",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "5db8219e226a",
   "plain": {
    "messages": [
     {
@@ -5152,7 +5157,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1
    },
@@ -5167,7 +5172,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-005": {
   "household_id": "HH-005",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -5204,7 +5209,7 @@ window.REALDOOR_FIXTURES = {
       "certainty": "low",
       "evidence_kind": "extracted",
       "source_text": "TessAlder",
-      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'TessAlder' with the word space dropped; restored the one forced split point -- confirm with a human"
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('TessAlder'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "household_size",
@@ -5224,14 +5229,19 @@ window.REALDOOR_FIXTURES = {
      },
      {
       "field": "address",
-      "value": null,
-      "page": null,
-      "bbox": null,
+      "value": "77 Meadow Signal Ave, Quincy, MA 02169",
+      "page": 1,
+      "bbox": [
+       40.36,
+       587.62,
+       233.69,
+       601.62
+      ],
       "bbox_units": "pdf_points_bottom_left_origin",
-      "certainty": "abstain",
+      "certainty": "low",
       "evidence_kind": "extracted",
-      "source_text": null,
-      "notes": "OCR dropped at least one word space (a comma is followed by a non-space) and the split points are ambiguous, so the exact string cannot be reconstructed; read as '77MeadowSignalAve,Quincy,MA02169'"
+      "source_text": "77MeadowSignalAve,Quincy,MA02169",
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('77MeadowSignalAve,Quincy,MA02169'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "application_date",
@@ -5602,7 +5612,7 @@ window.REALDOOR_FIXTURES = {
       "certainty": "low",
       "evidence_kind": "extracted",
       "source_text": "TessAlder",
-      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | OCR read 'TessAlder' with the word space dropped; restored the one forced split point -- confirm with a human"
+      "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('TessAlder'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
      },
      {
       "field": "document_date",
@@ -5811,8 +5821,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "7f7ec51218e1",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "5db8219e226a",
   "plain": {
    "messages": [
     {
@@ -5882,15 +5892,15 @@ window.REALDOOR_FIXTURES = {
   "confirmation": {
    "confirmed": 0,
    "corrected": 0,
-   "not_confirmed": 25,
-   "not_read": 1,
+   "not_confirmed": 26,
+   "not_read": 0,
    "fields": 26,
    "seen_by_a_person": 0
   },
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1
    },
@@ -5905,7 +5915,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-006": {
   "household_id": "HH-006",
-  "generated_at": "2026-07-19T06:40:58Z",
+  "generated_at": "2026-07-19T09:07:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -6598,8 +6608,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:a023f37c6936",
-  "session_id": "7f7ec51218e1",
+  "engine_version": "sha:cda171ce0549",
+  "session_id": "5db8219e226a",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -6663,7 +6673,7 @@ window.REALDOOR_FIXTURES = {
   "activity_log": {
    "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
    "ruleset_version": "pack-v1/2026-05-01",
-   "engine_version": "sha:a023f37c6936",
+   "engine_version": "sha:cda171ce0549",
    "counts": {
     "session_created": 1
    },
@@ -6677,20 +6687,20 @@ window.REALDOOR_FIXTURES = {
   }
  },
  "selftest": {
-  "generated_at": "2026-07-19T06:41:01Z",
+  "generated_at": "2026-07-19T09:08:00Z",
   "sections": {
    "extraction": {
     "status": "measured",
     "gold_sha256": "13cc5f24fcf6cebd527d22b6dd63945acbaf8c97d053750afbeb1e7147ee7e9b",
     "fields_total": 159,
-    "exact_match": 157,
+    "exact_match": 159,
     "wrong": 0,
-    "abstained": 2,
+    "abstained": 0,
     "missed": 0,
-    "coverage": 0.9874,
+    "coverage": 1.0,
     "selective_accuracy": 1.0,
-    "bbox_iou_gt_0_5": 157,
-    "bbox_evaluated": 157,
+    "bbox_iou_gt_0_5": 159,
+    "bbox_evaluated": 159,
     "bbox_iou_mean": 0.9677,
     "note": "Abstentions are counted separately and are never scored as wrong answers."
    },
@@ -6707,7 +6717,8 @@ window.REALDOOR_FIXTURES = {
     "checks": 90,
     "agree_with_organizer_reference": 90,
     "disagree": 0,
-    "note": "Compared against pack/starter/src/calculate.py, the organizer's own reference implementation, imported directly rather than copied."
+    "disagreeing_inputs": [],
+    "note": "Compared against pack/starter/src/calculate.py, the organizer's own reference implementation, imported directly rather than copied. Both sides are called on every input and the two results are compared: same value is agreement, and so is both sides refusing the same input the same way, while one side raising and the other returning is counted as a disagreement rather than skipped. The swept grid here is all-valid input; agreement on the inputs both sides must reject is swept separately in logic/test_pack_agreement.py."
    },
    "rule_questions": {
     "status": "measured",
@@ -6718,10 +6729,22 @@ window.REALDOOR_FIXTURES = {
     "note": ""
    },
    "citations": {
-    "status": "not_run",
+    "status": "measured",
+    "headline": "6 of 7 external citations re-fetched and matched their quoted text; 1 could not be reached",
     "rules_in_corpus": 11,
-    "verified_against_live_source": 0,
-    "note": "Re-verifying each cited rule against its live source URL is not wired yet. Reported as zero rather than assumed."
+    "external_citations_in_scope": 7,
+    "self_issued_citations_out_of_scope": 4,
+    "re_fetched_and_matched": 6,
+    "re_fetched_and_did_not_match": 0,
+    "could_not_re_fetch": 1,
+    "newest_result_checked_at": "2026-07-19T08:08:34Z",
+    "oldest_result_checked_at": "2026-07-19T08:08:05Z",
+    "oldest_result_age_days": 0.042,
+    "outcome_by_citation": "HUD-MTSP-001 matched · HUD-MTSP-002 matched · HUD-MTSP-003 matched · HUD-DATA-001 matched · HUD-GEO-001 matched · FED-LIHTC-001 could not be re-fetched · FED-MONITOR-001 matched · CH-INCOME-001 out of scope, our own rule · CH-READINESS-001 out of scope, our own rule · CH-SAFETY-001 out of scope, our own rule · CH-DECISION-001 out of scope, our own rule",
+    "citations_not_confirmed": "FED-LIHTC-001: Nothing was compared, because the source did not answer within the 45 second limit. This is a citation we could not check, not a citation that failed.",
+    "artefact": "eval/citation_recheck.json",
+    "refresh_with": "python eval/citation_recheck.py --refresh",
+    "note": "The denominator is the seven citations whose source is an outside authority — HUD or the federal regulations — reachable over https. The other four are the challenge pack's own frozen convention, whose source is a file inside this repository; re-fetching those would be us reading back what we wrote, so they are marked out of scope rather than counted as passes. A match means the specific figures and sentences our rule quotes were found again at the source and at the locator we cite, not merely that the link answered. An unreachable source is reported as not checked, never as checked and fine. This screen makes no network request: it reads the artefact left by eval/citation_recheck.py, which is why every row carries the time it was checked."
    },
    "accessibility": {
     "status": "measured",

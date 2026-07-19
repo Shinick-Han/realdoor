@@ -390,3 +390,150 @@ def test_the_qa_gold_threshold_records_are_untouched_by_the_size_path(gold_house
         result = answer(f"What is the frozen 60% threshold for {hid}?", hid,
                         households=gold_households)
         assert result.text == gold
+
+
+# =====================================================================================
+# the question-form / answer-kind agreement gate
+# =====================================================================================
+#
+# The defect these tests pin down: "when does the new 2026 income limit start counting"
+# was answered "$92,580 for household size 3." -- a time question answered with a money
+# figure, cited, and indistinguishable in tone from a right answer. The repair had to be
+# structural, because the obvious repair (teach the effective-date alias one more phrasing)
+# is what produced the defect in the first place.
+
+
+def test_the_gate_uses_no_domain_vocabulary():
+    """The claim that separates this from a wider alias table, asserted rather than argued.
+
+    An alias table is a list of TOPIC words: "income", "limit", "paperwork". This gate is
+    written in GRAMMAR -- interrogatives and auxiliaries -- so it generalises to phrasings
+    nobody has authored. If a housing word ever appears in a question-side pattern, the
+    gate has quietly become a second alias table and this test is the alarm.
+    """
+    import re as _re
+
+    from logic import answer_rules as ar
+
+    # Compare whole tokens, not substrings: "current" is a recency word and legitimately
+    # contains "rent", and a substring test would call that a housing term.
+    tokens = set()
+    for pattern in (ar._TEMPORAL_QUESTION, ar._AMOUNT_QUESTION,
+                    ar._YES_NO_QUESTION, ar._WH_WORD, ar._SELF_SUBJECT):
+        tokens |= set(_re.findall(r"[a-z]+", pattern.pattern.lower()))
+
+    domain_words = {
+        "income", "incomes", "limit", "limits", "cap", "caps", "ceiling", "threshold",
+        "household", "households", "family", "document", "documents", "paper", "papers",
+        "paperwork", "form", "forms", "rent", "housing", "tenant", "renter", "eligible",
+        "eligibility", "qualify", "approved", "denied", "vacancy", "vacant", "geocode",
+        "statute", "statutory", "readiness", "ami", "hud", "salary", "wage", "wages",
+        "earn", "pay", "size", "money", "dollar", "file", "application",
+    }
+    leaked = tokens & domain_words
+    assert not leaked, f"domain vocabulary leaked into the gate: {sorted(leaked)}"
+
+    # And the converse, so the test cannot pass by the patterns being empty: the gate is
+    # in fact built out of interrogatives and auxiliaries.
+    assert {"when", "what", "which", "how", "much", "is", "are", "am", "do"} <= tokens
+
+
+@pytest.mark.parametrize("question", [
+    "when does the new 2026 income limit start counting",
+    "as of what day is the new income cap",
+    "since when has the income ceiling been in force",
+    "when will the numbers be updated",
+    "what year do these figures come from",
+    "how recent do the limits have to be",
+])
+def test_a_time_question_is_never_answered_with_a_money_figure(question):
+    """The whole point, stated once. None of these six phrasings is in any alias table,
+    and the gate has never been shown any of them."""
+    from logic.answer_rules import canonical_admits
+
+    assert canonical_admits(question, "frozen_threshold") is False
+    assert canonical_admits(question, "annualized_income") is False
+    assert canonical_admits(question, "limits_effective_date") is True
+
+
+@pytest.mark.parametrize("question", [
+    "how much can i earn and still get in",
+    "what amount do i have to stay under",
+])
+def test_an_amount_question_is_never_answered_with_a_date(question):
+    from logic.answer_rules import canonical_admits
+
+    assert canonical_admits(question, "limits_effective_date") is False
+    assert canonical_admits(question, "frozen_threshold") is True
+
+
+def test_a_question_about_the_asker_is_not_answered_with_a_program_fact():
+    """The second axis. "so am i approved" is about the asker's standing; the geocoding
+    convention is true whoever asks and answers nothing about anyone."""
+    from logic.answer_rules import canonical_admits, question_scope, SCOPE_SELF
+
+    assert question_scope("so am i approved") == SCOPE_SELF
+    assert canonical_admits("so am i approved", "geocode_precision") is False
+    assert canonical_admits("so am i approved", "statutory_anchor") is False
+    # ...but the intents that CAN speak to the asker's own file stay reachable.
+    assert canonical_admits("so am i approved", "decision_boundary") is True
+    assert canonical_admits("am i under or over", "threshold_comparison") is True
+
+
+def test_a_possessive_is_not_a_self_subject():
+    """"which of these codes is ok to show on my address" is a question about the codes.
+    Treating any first-person token as a self-question would veto correct routes."""
+    from logic.answer_rules import canonical_admits, question_scope, SCOPE_GENERAL
+
+    q = "which of these location codes is ok to actually show on my address"
+    assert question_scope(q) == SCOPE_GENERAL
+    assert canonical_admits(q, "geocode_precision") is True
+
+
+def test_the_gate_only_ever_vetoes():
+    """It can turn a wrong answer into an abstention. It can never invent a route.
+
+    An unknown intent and an indeterminate question both pass, so no phrasing can be
+    ADMITTED by this code that was not already reachable without it.
+    """
+    from logic.answer_rules import canonical_admits, question_admits
+
+    assert canonical_admits("my income went up last month", "frozen_threshold") is True
+    assert canonical_admits("anything at all", None) is True
+    assert question_admits("so am i approved", None) is True
+
+
+def test_every_canonical_route_declares_a_profile():
+    """A route without a profile is a silent hole in the gate -- it would pass everything.
+    New routes have to declare what kind of thing they answer."""
+    from logic.answer_rules import ROUTES, CANONICAL_PROFILES
+
+    for item in ROUTES:
+        assert item.kind in CANONICAL_PROFILES, f"{item.kind} declares no answer profile"
+
+
+def test_the_pack_questions_are_never_shown_the_gate(gold_households):
+    """The structural reason the 36 cannot move: `route()` catches every pack question, and
+    a question `route()` catches never reaches the alias path or the classifier."""
+    from logic.answer_rules import route
+
+    for record in load_qa_gold():
+        assert route(record["question"]) is not None, record["qa_id"]
+
+
+def test_only_the_matrix_interrogative_decides_the_asked_shape():
+    """An embedded temporal clause must not hijack the question it is embedded in.
+
+    "who made up the rule about how recent my papers have to be" asks for an authority.
+    The recency phrase describes the rule, not the request. Reading it as a date question
+    vetoes the correct route -- this is a real regression that a measurement caught, and
+    the fix was to compare interrogative POSITION rather than mere presence.
+    """
+    from logic.answer_rules import asked_shapes, canonical_admits, ANSWER_DATE
+
+    embedded = "who made up the rule about how recent my papers have to be"
+    assert asked_shapes(embedded) is None
+    assert canonical_admits(embedded, "currency_rule_status") is True
+
+    # The same phrase in matrix position still governs.
+    assert asked_shapes("how recent do my papers have to be") == frozenset({ANSWER_DATE})
