@@ -514,6 +514,27 @@
       });
     }
 
+    /* Every recorded answer in ask_examples.json came out of one pipeline run, and that run
+     * was a session for this household. Offline there is no rule handler to re-ask, so an
+     * answer that depends on whose session it was can only be shown to that household. */
+    var RECORDED_ASK_HOUSEHOLD = "HH-001";
+
+    /* Does this recorded answer depend on which household was asking?
+     *
+     * Read off the text rather than kept as a list of keys, so a re-exported fixture cannot
+     * quietly gain a household-specific answer that this check does not know about. A
+     * question or answer that names a household ("...for HH-001", "What is HH-004's
+     * income?") or says "this household" was answered inside one session and means something
+     * different inside another. The refusals that name nobody — "Am I eligible for this
+     * apartment?", the embedded-instruction probe — are true in any session, so they stay
+     * available for every household. Withholding those would cost the screen its strongest
+     * content and buy no honesty.
+     */
+    function askExampleIsSessionBound(example) {
+      var text = String(example.question || "") + " " + String((example.response || {}).answer || "");
+      return /\bHH-\d{3}\b/.test(text) || /\bthis household\b/i.test(text);
+    }
+
     // fixtures-mode corrections: only the two the pipeline actually produced exist offline.
     var OFFLINE_CORRECTIONS = [
       {
@@ -667,20 +688,40 @@
         }).then(function (report) { return { report: report, server: true }; });
       },
 
+      recordedAskHousehold: RECORDED_ASK_HOUSEHOLD,
       askExamples: function () {
         var examples = fixtures.ask_examples || {};
         return Object.keys(examples).map(function (key) {
-          return { key: key, question: examples[key].question, response: examples[key].response };
+          var example = { key: key, question: examples[key].question, response: examples[key].response };
+          // Live, the handler answers for whichever household is selected and nothing is
+          // session-bound. Offline, this flag is what lets the screen switch a recorded
+          // answer off instead of showing another household's numbers.
+          example.sessionBound = live ? false : askExampleIsSessionBound(example);
+          return example;
         });
       },
+      /* Offline this used to take `householdId` and drop it, so every recorded answer was
+       * served whatever household was on show: step 3 said "$72,000 for household size 1"
+       * while step 4 of the same walkthrough said the threshold was $102,840.00. The
+       * recording is real pipeline output, but it is HH-001's, and a number is only true
+       * next to the household it was computed for.
+       *
+       * So the household is now read. A session-bound answer asked for by another household
+       * comes back `withheld` rather than answered — the same move the upload panel and the
+       * output gate already make, which is to say what this copy cannot do instead of
+       * replaying a recording and letting it read as this household's answer. */
       ask: function (question, householdId) {
         if (!live) {
           var examples = fixtures.ask_examples || {};
           var hit = Object.keys(examples).filter(function (key) {
             return examples[key].question.toLowerCase() === String(question).toLowerCase();
           })[0];
-          if (hit) return Promise.resolve(examples[hit].response);
-          return Promise.resolve(null); // offline: only the recorded questions exist
+          if (!hit) return Promise.resolve(null); // offline: only the recorded questions exist
+          var example = { key: hit, question: examples[hit].question, response: examples[hit].response };
+          if (askExampleIsSessionBound(example) && householdId !== RECORDED_ASK_HOUSEHOLD) {
+            return Promise.resolve({ withheld: "other_household", askedFor: householdId });
+          }
+          return Promise.resolve(example.response);
         }
         return json("/api/ask", {
           method: "POST",
@@ -1069,6 +1110,46 @@
         h("p", { class: "process-item__blurb", text: step.blurb })
       ]));
     });
+  }
+
+  /* A pointer to the household that actually shows the work.
+   *
+   * The default household's file is complete, so a judge who walks straight through meets
+   * six screens of "everything is present" and never sees the checklist catch anything —
+   * the one thing this product is for. This says so on the landing screen, and says it only
+   * while the household on show has nothing open, so it disappears the moment it would stop
+   * being true. It names what the other household is missing rather than promising a
+   * better demo. */
+  function renderLandingHint() {
+    var list = byId("process-list");
+    if (!list || !list.parentNode) return;
+    var host = byId("landing-hint");
+    if (!host) {
+      host = h("div", { id: "landing-hint" });
+      list.parentNode.insertBefore(host, list.nextSibling);
+    }
+    clear(host);
+    if (!state.report || state.sessionDeleted) return;
+    var open = (state.report.checklist || []).filter(function (i) { return i.state !== "present"; });
+    if (open.length) return;   // this household already shows the interesting case
+
+    // Only offered if that household is actually loadable here; a pointer to a household
+    // this build cannot open would be worse than no pointer.
+    var hasFour = (state.households || []).some(function (row) {
+      return row.household_id === "HH-004" && row.has_report;
+    });
+    if (!hasFour || state.householdId === "HH-004") return;
+
+    host.appendChild(h("div", { class: "callout" }, [
+      h("h3", { text: "This household has nothing missing, which is the quiet case" }),
+      h("p", {
+        text: state.householdId + " has every required document, present and current, so the " +
+              "checklist on step 5 has nothing to report. To see it find something, change the " +
+              "Household above to HH-004: an employment verification letter is not in the file, " +
+              "and a gig statement is dated to the month with no day, which the system says it " +
+              "cannot apply the 60-day convention to rather than inventing a date."
+      })
+    ]));
   }
 
   // ── panel 1a: upload a document of your own ─────────────────────────────────────
@@ -1974,6 +2055,18 @@
             }
           }, [c.label]);
         })));
+      } else {
+        /* Without this the step was a silent dead end: no buttons, a form that accepts any
+         * value, and the "not available" message only after the renter had typed one. Said
+         * before the form instead, with the household that does work named. */
+        root.appendChild(h("h3", { text: "No recorded correction for " + state.householdId }));
+        root.appendChild(h("p", {
+          class: "hint",
+          text: "Without a server the app can only replay corrections the pipeline actually ran, and " +
+                "it ran them on " + correctionHouseholds() + ". Change the household to " +
+                correctionHouseholds() + " to watch a correction move the numbers underneath it. " +
+                "Point the app at the API to edit any field on any household."
+        }));
       }
     }
 
@@ -2030,6 +2123,19 @@
     }
   }
 
+  /* Which households the offline bundle can actually replay a correction for, read off the
+   * recorded list rather than written into a sentence, so the wording cannot outlive the
+   * fixtures it describes. */
+  function correctionHouseholds() {
+    var ids = [];
+    Source.offlineCorrections.forEach(function (c) {
+      if (ids.indexOf(c.household_id) === -1) ids.push(c.household_id);
+    });
+    if (!ids.length) return "no household in this bundle";
+    if (ids.length === 1) return ids[0];
+    return ids.slice(0, -1).join(", ") + " or " + ids[ids.length - 1];
+  }
+
   function applyCorrection() {
     var documentId = byId("correct-doc").value;
     var field = byId("correct-field").value;
@@ -2047,7 +2153,17 @@
           h("p", {
             text: "This build is running on bundled fixtures, which contain only the two corrections " +
                   "the pipeline actually ran. Rather than invent a result for " + field + " = " + raw +
-                  ", the app declines to show one. Start the API and set window.REALDOOR_API to correct any field."
+                  ", the app declines to show one."
+          }),
+          /* Saying only "not available" left the renter with nowhere to go, on the one step
+           * whose whole point is watching a correction move the numbers underneath it. Both
+           * recorded corrections are HH-001's, so the way through is a household away and
+           * this now says so. */
+          h("p", {
+            text: "The recorded corrections belong to " + correctionHouseholds() +
+                  ". Change the household to " + correctionHouseholds() + " and this step " +
+                  "offers them as one-press buttons, with the before-and-after figures. To correct " +
+                  "any field on any household, start the API and set window.REALDOOR_API."
           })
         ]));
         announce("That correction is not available offline.");
@@ -2248,7 +2364,51 @@
 
   function renderAskResponse(host, question, response, options) {
     clear(host);
-    if (!(options && options.silent)) state.lastQuestion = question;
+    if (!(options && options.silent)) {
+      state.lastQuestion = question;
+      /* Step 6 promises the renter they can check everything in one place, and it reads
+       * `state.lastQuestion` off the same state this line just set. Setting it without
+       * redrawing left step 6 saying "You have not asked about a rule." to someone who had
+       * just asked one, which is the one thing that screen must not do. The step 3 panel is
+       * not inside renderAll, so the redraw has to be asked for here. */
+      if (byId("summary-body")) renderSummary();
+    }
+
+    /* A recorded answer belonging to another household is not shown at all.
+     *
+     * The alternative was to show it under a banner naming HH-001. That still leaves
+     * HH-001's threshold painted on a screen the renter opened for their own household,
+     * one step away from step 4 printing a different threshold for the same person — and
+     * a caption does not stop a number being read. This build's existing habit is to
+     * withhold and say why (the upload panel, and the output gate reporting "Not run —
+     * there is no server to test" rather than replaying a recording), so this does that. */
+    if (response && response.withheld) {
+      host.appendChild(h("div", { class: "callout callout--warn" }, [
+        h("h3", { id: "ask-answer-heading", tabindex: "-1",
+                  text: "This answer was recorded for " + Source.recordedAskHousehold +
+                        ", so this copy will not give it for " + state.householdId }),
+        h("p", {
+          text: "Rule answers come from a handler that runs on a server. This page is the static " +
+                "build and carries only the answers the pipeline recorded, and it recorded them in " +
+                "a session for " + Source.recordedAskHousehold + ". The figures in that answer are " +
+                Source.recordedAskHousehold + "'s, not " + state.householdId + "'s, and step 4 works " +
+                "out a different figure for " + state.householdId + " from that household's own " +
+                "documents. Showing the recording here would put one household's number under " +
+                "another household's name, so it is withheld."
+        }),
+        h("p", {
+          text: "Switch the household back to " + Source.recordedAskHousehold + " to read the " +
+                "recorded answers, or start the server to ask about " + state.householdId + ":"
+        }),
+        h("p", { class: "mono", text: "python -m uvicorn api.app:app --port 8077" }),
+        h("p", { class: "hint", text: "Then open http://127.0.0.1:8077 and return to step 3." })
+      ]));
+      byId("ask-answer-heading").focus();
+      announce("That answer was recorded for " + Source.recordedAskHousehold +
+               " and is not shown for " + state.householdId + ".");
+      return;
+    }
+
     if (!response) {
       host.appendChild(h("div", { class: "callout callout--warn" }, [
         h("h3", { text: "No recorded answer for that wording", tabindex: "-1", id: "ask-answer-heading" }),
@@ -2427,16 +2587,60 @@
     }
 
     root.appendChild(h("h3", { text: "Recorded questions", style: { marginTop: "0" } }));
+
+    /* Said before the buttons, not after a renter presses one.
+     *
+     * Some of these were recorded inside a session for one household, and this copy has no
+     * handler to re-ask them for another. The panel keeps them on screen and switched off
+     * rather than hidden — the same arrangement as the upload controls on step 1, where the
+     * feature exists and this copy has nothing to run it with. */
+    var outOfSession = examples.filter(function (e) { return e.sessionBound; });
+    if (outOfSession.length && state.householdId && state.householdId !== Source.recordedAskHousehold) {
+      root.appendChild(h("div", { class: "callout" }, [
+        h("h3", { text: "This copy has no server, so it can only replay answers recorded for " +
+                        Source.recordedAskHousehold }),
+        h("p", {
+          text: outOfSession.length + " of these questions were answered inside a session for " +
+                Source.recordedAskHousehold + ", and their figures are that household's. " +
+                state.householdId + " has its own documents and its own numbers, so those " +
+                "buttons are switched off here rather than answering with the wrong " +
+                "household's figures. The questions that name no household still work."
+        }),
+        h("p", {
+          class: "hint",
+          text: "Switch the household back to " + Source.recordedAskHousehold + ", or start the " +
+                "server to ask about " + state.householdId + "."
+        })
+      ]));
+    }
+
     root.appendChild(h("div", { class: "button-row" }, examples.map(function (example) {
+      var withheld = example.sessionBound && state.householdId !== Source.recordedAskHousehold;
       return h("button", {
         type: "button", class: "action secondary",
-        onclick: function () { renderAskResponse(byId("ask-answer"), example.question, example.response); }
+        disabled: withheld ? true : null,
+        title: withheld
+          ? "Recorded for " + Source.recordedAskHousehold + ", so it is not answered for " +
+            state.householdId
+          : null,
+        onclick: function () {
+          // Routed through Source.ask rather than handed the fixture directly, so the button
+          // and a typed question meet the same household check and cannot disagree.
+          Source.ask(example.question, state.householdId).then(function (response) {
+            renderAskResponse(byId("ask-answer"), example.question, response);
+          });
+        }
       }, [example.question]);
     })));
     root.appendChild(h("div", { id: "ask-answer" }));
 
+    /* The answer painted before anyone presses anything. It has to obey the same rule: on
+     * HH-001 it is the recorded threshold answer, and on any other household there is no
+     * recorded answer to open with, so the panel opens with none. */
     var first = examples.filter(function (e) { return e.key === "answer_threshold"; })[0] || examples[0];
-    if (first) {
+    var firstIsWithheld = first && first.sessionBound &&
+                          state.householdId !== Source.recordedAskHousehold;
+    if (first && !firstIsWithheld) {
       var host = byId("ask-answer");
       renderAskResponse(host, first.question, first.response, { silent: true });
       byId("live-status").textContent = "";   // do not announce on first paint
@@ -2744,9 +2948,15 @@
         calc ? money(calc.result) + " — " + (COMPARISON[calc.comparison] || String(calc.comparison))
              : "No income calculation is present in this report.", 4,
         "how the yearly income figure was worked out"),
+      /* Step 5 tells the renter what to do about each open item and this row used to answer
+       * the same question with the checklist's internal labels — "Independent corroboration
+       * of gig income" — so the last screen spoke a different language from the one before
+       * it. It now carries `action_for_renter`, which is the sentence step 5 already shows,
+       * and falls back to the label only where the pipeline supplied no action. */
       answerRow("Still missing or out of date",
         open.length
-          ? open.length + " item(s): " + open.map(function (i) { return i.label; }).join(", ")
+          ? open.length + " thing(s) to do: " +
+            open.map(function (i) { return i.action_for_renter || i.label; }).join("; ")
           : "Nothing. Every required item is present and current.", 5,
         "what is missing or out of date"),
       answerRow("Questions the system will not answer on its own",
@@ -2823,10 +3033,19 @@
   function deletedNotice(heading) {
     return h("div", { class: "callout callout--warn" }, [
       h("h3", { style: { marginTop: "0" }, text: heading || "You deleted this session" }),
+      /* Where the data went depends on where it was, and this notice used to name "the
+       * server process" on a build that has no server. The page's own standard is the
+       * output gate two screens away, which reports "Not run — there is no server to test"
+       * rather than claiming a server did something; this says the same thing about itself. */
       h("p", {
-        text: "The documents, the values read from them, and every correction were removed from the " +
-              "server process, and this page is holding nothing. There is no packet to download and " +
-              "nothing here to show, because there is nothing left to answer with."
+        text: Source.live
+          ? "The documents, the values read from them, and every correction were removed from the " +
+            "server process, and this page is holding nothing. There is no packet to download and " +
+            "nothing here to show, because there is nothing left to answer with."
+          : "There is no server on this build, so there was no server session to destroy. What was " +
+            "cleared is everything this page was holding: the documents, the values read from them, " +
+            "and every correction. There is no packet to download and nothing here to show, because " +
+            "there is nothing left to answer with."
       }),
       h("p", {
         text: "Starting again does not bring any of it back. It loads the household from the pack " +
@@ -3473,9 +3692,9 @@
       h("h3", { style: { marginTop: "0" }, text: "No report is loaded for this household" }),
       h("p", {
         style: { marginBottom: "0" },
-        text: "The offline bundle carries the pipeline's real output for HH-001, HH-004 and HH-005 only. " +
-              "The other households exist in the file list but no report was exported for them, and the app " +
-              "will not fabricate one. Start the API and set window.REALDOOR_API to load any household."
+        text: "This household appears in the file list, but no report was exported for it into the " +
+              "offline bundle, and the app will not fabricate one. Start the API and set " +
+              "window.REALDOOR_API to load any household."
       })
     ]);
   }
@@ -3502,6 +3721,7 @@
   }
 
   function renderAll() {
+    renderLandingHint();
     renderOpenQuestions();
     renderDocuments();
     renderCorrect();
@@ -3533,8 +3753,16 @@
     state.correction = null;
     state.documentId = null;
     state.activeField = null;
+    /* A rule question was asked by, and answered for, the household that was selected at the
+     * time. Carrying it across a household change would leave step 6 attributing one
+     * household's question to another, so it goes with the rest of the per-household state. */
+    state.lastQuestion = null;
     return Source.report(householdId).then(function (report) {
       state.report = report;
+      /* Step 3 is drawn outside renderAll because it holds what the renter typed. It does
+       * depend on the household, though — which recorded answers can honestly be shown is a
+       * function of who is selected — so a household change has to redraw it. */
+      renderAsk();
       renderAll();
     });
   }

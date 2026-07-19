@@ -10,7 +10,7 @@
  },
  "page": "ui/dist/index.html",
  "origin": "file:// (offline, bundled fixtures — the state the submitted build opens in)",
- "generated_at": "2026-07-19T06:39:22.772Z",
+ "generated_at": "2026-07-19T07:01:04.988Z",
  "households_walked": [
   "HH-001",
   "HH-004",
@@ -244,7 +244,7 @@
     {
      "step": "step2-correct",
      "visible_identifiers": 4,
-     "household_ids_named": 6,
+     "household_ids_named": 9,
      "offenders": [
       {
        "pattern": "document_id",
@@ -271,7 +271,7 @@
     {
      "step": "step3-ask",
      "visible_identifiers": 0,
-     "household_ids_named": 10,
+     "household_ids_named": 14,
      "offenders": []
     },
     {
@@ -420,7 +420,7 @@
     {
      "step": "step2-correct",
      "visible_identifiers": 4,
-     "household_ids_named": 6,
+     "household_ids_named": 9,
      "offenders": [
       {
        "pattern": "document_id",
@@ -447,7 +447,7 @@
     {
      "step": "step3-ask",
      "visible_identifiers": 0,
-     "household_ids_named": 10,
+     "household_ids_named": 14,
      "offenders": []
     },
     {

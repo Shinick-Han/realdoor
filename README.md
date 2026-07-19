@@ -16,17 +16,34 @@ Hack-Nation #6 — Challenge 3 (RealPage).
 
 **Live:** https://shinick-han.github.io/realdoor/
 
-Two things to do once it loads:
+Three things to do once it loads, **in this order** — step 2 is on the default household,
+so change the picker after it, not before:
 
-1. **Change the household to `HH-004 — 4 documents`** using the `Household` select under
-   the heading. The default `HH-001` has every document in order, so the checklist has
-   nothing to show you. `HH-004` is missing an employment letter and has a gig statement
-   dated to the month with no day — the system says so and abstains rather than inventing
-   a date. `HH-005` has an employment letter that fell outside the 60-day window.
-   *(In the hosted build only HH-001, HH-004 and HH-005 carry a bundled report. The other
-   three are labelled `(no bundled report)` in the picker and will render empty.)*
-2. Open **"How this works, and how we tested it"** in the header. The refusals, the
+1. **Stay on `HH-001` and walk steps 1 → 2.** Step 2 offers the two corrections the
+   pipeline actually ran as one-press buttons. Press *"Household size is 3, not 1"* and the
+   before/after table moves the frozen threshold from $72,000 to $92,580 while the income
+   figure stays put — a corrected value changing what it should change and nothing else.
+   Press the other one and watch a correction get **recorded and then not used**, because
+   the corrected figure no longer agrees with the hours and rate on the same document.
+2. **Now change the household to `HH-004 — 4 documents`** using the `Household` select
+   under the heading, and go to step 5. `HH-001` has every document in order, so its
+   checklist has nothing to show you. `HH-004` is missing an employment letter and has a
+   gig statement dated to the month with no day — the system says so and abstains rather
+   than inventing a date. `HH-005` has an employment letter that fell outside the 60-day
+   window.
+3. Open **"How this works, and how we tested it"** in the header. The refusals, the
    prompt-injection probe, the output gate and session deletion all live there.
+
+All six households carry a bundled report, so the picker renders any of them offline.
+
+**What the hosted build withholds, and why.** Steps 2 and 3 replay recorded pipeline
+output, and both recordings were made in an `HH-001` session. So on any other household
+the static build switches those controls off and says which household they belong to,
+rather than showing `HH-001`'s figures under another household's name — step 3 would
+otherwise answer "$72,000 for household size 1" two clicks before step 4 worked out
+$102,840.00 for the household actually on show. The rule questions that name no household
+(the eligibility refusal, the prompt-injection probe) are answered for every household,
+because those answers do not depend on whose session it was.
 
 ### The hosted build cannot demonstrate the output gate
 
@@ -46,10 +63,17 @@ probes `api/health` and switches itself to live mode — the footer will read
 Requires Python 3.12 and:
 
 ```bash
-pip install pytest fastapi uvicorn pdfplumber pypdfium2 numpy jsonschema httpx pillow
+pip install pytest fastapi uvicorn python-multipart pdfplumber pypdfium2 numpy \
+            jsonschema httpx pillow rapidocr-onnxruntime textstat
 ```
 
-*(There is no root `requirements.txt`; this list is derived from the imports.)*
+*(There is no root `requirements.txt`; this list is derived from the imports. Three of
+them are easy to miss and each was: without `python-multipart` FastAPI raises at import
+time — the upload route takes form data — which aborts collection before a single test
+runs; the OCR fallback needs `rapidocr-onnxruntime`; and one readability measurement
+skips itself without `textstat`. In a clean 3.12 venv this exact line reproduces
+`880 passed`. Drop `textstat` and it is `879 passed, 1 skipped`, which is why it is
+listed.)*
 
 ---
 
@@ -75,8 +99,12 @@ The API endpoints do map 1:1 to the brief's six steps; the screens do not.
 
 Stated first, because this is the point of the product.
 
-- **No upload.** The 24 pack documents are pre-loaded. There is no file input and no
-  upload endpoint. A judge cannot bring their own PDF.
+- **Upload works only with the server running.** Reading a PDF needs the extractor, which
+  is Python. On the hosted build the panel is on step 1, switched off rather than hidden,
+  saying what to run — a judge cannot bring their own PDF to the public URL. Start the
+  server and the same panel takes one synthetic document, held in that session's memory,
+  never written to disk and never joined to the household's file. The 24 pack documents
+  are pre-loaded either way.
 - **Citations are not re-verified against their live sources.** 11 rules in the corpus,
   0 checked against a live URL. The scorecard reports this as `not_run` and prints zero
   rather than assuming success.
@@ -97,14 +125,15 @@ Stated first, because this is the point of the product.
 Every number below is reproduced by the commands in *Reproducing the checks*.
 
 ```
-776 automated tests pass
+880 automated tests pass
 
 Extraction        157/159 exact · 0 wrong · 2 abstained · 0 missed
 Bounding boxes    IoU > 0.5 on 157/157 · mean 0.9677  (anchored to the text baseline)
 Adversarial       24/24, 0 must_not violations
                   control set: 24/24 safe responses pass, 24/24 unsafe responses caught
 Rule questions    36/36 correct · 0 wrong · 0 abstained  (pack qa_gold)
-Calculation       90/90 agreement with the organizer's own calculate.py, imported not copied
+Calculation       90/90 arithmetic cases agree with the organizer's own calculate.py,
+                  imported not copied (80 annualization + 10 threshold comparisons)
 Schema            6/6 households validate against pack submission.schema.json
 axe-core          0 violations across 4 origins x 8 screens — at 1280px only
 Keyboard journey  28/28
@@ -184,7 +213,10 @@ python scripts/verify.py
 # the adversarial control set: 24/24 safe pass, 24/24 unsafe caught
 python eval/run_adversarial.py --demo
 
-# 90/90 agreement with the organizer's calculate.py
+# the organizer-agreement file: 140 tests, of which the 90 above are the direct
+# arithmetic comparisons against their calculate.py. The other 50 check our output
+# against the pack's gold data (thresholds, readiness, review reasons) rather than
+# against their calculator, so they are not part of the 90/90.
 python -m pytest logic/test_pack_agreement.py
 
 # 6/6 households validate against the pack schema (read-only unless --write)
