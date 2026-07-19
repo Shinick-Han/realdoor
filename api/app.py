@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from fastapi import FastAPI, Header, HTTPException, Response
+from fastapi import FastAPI, File, Form, Header, HTTPException, Response, UploadFile
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -169,6 +169,66 @@ def undo(payload: dict, x_session_id: str | None = Header(default=None)) -> dict
     if rep is None:
         raise HTTPException(404, f"unknown household {hid}")
     return rep
+
+
+# ── 업로드 (인수 데모 1단계) ────────────────────────────────────────────
+@app.get("/api/upload/types")
+def upload_types() -> dict:
+    """읽을 줄 아는 문서 종류. 화면의 선택지는 여기서 온다 — 하드코딩 사본은 없다."""
+    from api import upload as upload_mod
+
+    return {
+        "document_types": upload_mod.supported_document_types(),
+        "max_bytes": upload_mod.MAX_UPLOAD_BYTES,
+        "accepted": "application/pdf",
+        "notice": ("Upload synthetic documents only. Everything you upload stays in this "
+                   "session's memory, is never written to disk, and is never used to train "
+                   "anything."),
+    }
+
+
+@app.post("/api/upload")
+async def upload(file: UploadFile = File(...),
+                 document_type: str = Form(...),
+                 x_session_id: str | None = Header(default=None)) -> dict:
+    """올린 PDF 한 장을 읽고 **근거와 함께** 돌려준다.
+
+    `document_type` 은 선택이 아니라 필수다. 파일 이름으로는 종류를 알 수 없고
+    (`core.extract.infer_document_type` 은 팩 명명 규칙 밖에서 항상 `unknown` 을 낸다),
+    `unknown` 은 오류가 아니라 **빈 필드 목록**을 내므로 조용히 실패한다. 그 실패를
+    사용자에게 떠넘기지 않으려면 여기서 막아야 한다.
+
+    결과는 세션 메모리에만 담긴다. 세대 계산에는 합류시키지 않는다 — 그 이유는
+    `api/upload.py` 모듈 문서에 적혀 있다.
+    """
+    from api import upload as upload_mod
+
+    s = _session(x_session_id)
+    data = await file.read()
+    try:
+        doc_type = upload_mod.validate(data, file.filename or "upload.pdf",
+                                       file.content_type, document_type)
+        view = STORE.add_upload(s, data, file.filename or "upload.pdf", doc_type)
+    except upload_mod.UploadRejected as exc:
+        raise HTTPException(400, {"code": exc.code, "detail": exc.message}) from exc
+    return view
+
+
+@app.get("/api/upload/{upload_id}/page/{page}.png")
+def upload_page_png(upload_id: str, page: int,
+                    x_session_id: str | None = Header(default=None)) -> Response:
+    """올린 문서의 페이지 이미지. 원본 바이트는 세션 메모리에서만 나온다."""
+    from core.render import render_page_png
+
+    s = _session(x_session_id)
+    data = s.upload_bytes.get(upload_id)
+    if data is None:
+        raise HTTPException(404, f"unknown upload {upload_id}")
+    img = render_page_png(data, page_number=page)
+    return Response(content=img.png_bytes, media_type="image/png",
+                    headers={"X-Image-Scale": str(img.scale),
+                             "X-Image-Width": str(img.width_px),
+                             "X-Image-Height": str(img.height_px)})
 
 
 # ── 페이지 이미지 (UI가 근거 상자를 그리는 바탕) ────────────────────────

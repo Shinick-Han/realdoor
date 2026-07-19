@@ -72,8 +72,10 @@
       <div class="summary-box" role="region" aria-labelledby="trust-heading">
         <h2 id="trust-heading">Before you start</h2>
         <p id="trust-line">This walkthrough takes about ten minutes. The documents for the household
-        you choose above are already loaded, so there is nothing to upload and nothing is sent
-        anywhere. You can stop at any step and your work stays on this device.</p>
+        you choose above are already loaded, so you can go straight through it without uploading
+        anything. Step 1 also lets you read a synthetic document of your own, held in memory for
+        this session only. Nothing is sent anywhere. You can stop at any step and your work stays
+        on this device.</p>
       </div>
 
       <h2>What happens, in order</h2>
@@ -88,6 +90,7 @@
       <h1 id="h-1" tabindex="-1">Check the values we read from your documents</h1>
       <p class="lede">Each value below is shown together with the box on the page it was read from.
       Choose a field name to light up its box. Nothing here is inferred about the person.</p>
+      <div id="upload-body"></div>
       <div id="documents-body"></div>
       <div class="step-nav" id="nav-1"></div>
     </section>
@@ -158,8 +161,11 @@
         the mapping.</p>
         <ul id="mapping-list">
           <li><strong>1. Upload documents, show extraction evidence</strong> — walkthrough step 1.
-          The documents are pre-loaded rather than uploaded; every value carries the box on the
-          page it came from.</li>
+          The household's documents are pre-loaded, and the panel at the top of that step reads a
+          synthetic document you upload yourself. Either way every value carries the box on the
+          page it came from. An uploaded document is read on its own and is not added to the
+          household, because working out whose document it is and what it replaces would mean
+          guessing.</li>
           <li><strong>2. Edit one field, show downstream values update</strong> — walkthrough
           step 2.</li>
           <li><strong>3. Ask a rule question, show an authoritative citation</strong> —

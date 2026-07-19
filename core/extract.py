@@ -30,6 +30,7 @@ Coordinate system: PDF points, bottom-left origin, matching the pack gold exactl
 
 from __future__ import annotations
 
+import io
 import json
 import re
 import sys
@@ -117,7 +118,9 @@ class LineBoxConvention:
 WATERMARK_MIN_SIZE = 20.0
 
 #: Field labels are 8pt Helvetica-Bold. The "TRAINING FIXTURE" banner is 9pt bold and the
-#: footer is 7pt regular, so this window isolates labels cleanly.
+#: footer is 7pt regular, so this window isolates labels cleanly *in the pack's own
+#: typography*. It is a house style, not a property of pay stubs, and `is_label` is only
+#: the first of two ways a label can be recognised -- see `_label_runs`.
 LABEL_SIZE_RANGE = (7.5, 8.5)
 
 
@@ -495,6 +498,50 @@ def _abstain(name: str, reason: str) -> dict[str, Any]:
     return _extracted_field(name, None, None, None, "abstain", None, reason)
 
 
+def _label_runs(
+    line: Sequence[Word],
+    document_type: str,
+    field_mapper: FieldMapper,
+) -> list[list[Word]]:
+    """Label runs on one line, found two ways, in left-to-right order.
+
+    **1. By typography.** `Word.is_label` -- small, bold, ALL-CAPS. This is the pack's own
+    house style and it is what the gold was measured against, so it stays first and
+    unchanged.
+
+    **2. By vocabulary.** An ALL-CAPS run whose text is a label we already have in
+    `LABEL_MAP` for this document type, at any size and any weight.
+
+    Why the second path exists: `LABEL_SIZE_RANGE` is an absolute window fitted to one
+    generator's 8pt bold labels. Measured against documents that differ *only* in label
+    typography, it was the sole point of failure -- 10pt bold, 9pt bold and 7.5pt regular
+    labels each scored 0, while the 8.4pt control scored 9/9. The layout, the wording and
+    the values were identical. That is a brittle reason to read nothing.
+
+    Why it relaxes on vocabulary rather than on size: a looser size window admits new
+    *strings* as labels, which is how an extractor starts producing values it should not
+    have. This admits no new strings at all. It only stops insisting that a phrase we
+    already recognise be set in the type size the pack happens to use. A run still has to
+    match a known label exactly, still has to have a value in the column beneath it, and
+    that value still has to parse -- so this cannot turn an abstention into a wrong answer,
+    only into a right one or another abstention.
+
+    Note `text.upper() == text` is true of every date and every amount, since digits have
+    no case. The vocabulary test is what keeps those out: "2026-07-03" matches no label.
+    """
+    typographic = _split_runs([w for w in line if w.is_label()])
+
+    rest = [w for w in line if not w.is_label() and w.text.upper() == w.text]
+    recovered = [
+        run for run in _split_runs(rest)
+        if field_mapper(document_type, _join_run(run)) is not None
+    ]
+
+    runs = typographic + recovered
+    runs.sort(key=lambda run: run[0].x0)
+    return runs
+
+
 def extract_fields_from_page(
     words: Sequence[Word],
     document_type: str,
@@ -510,7 +557,7 @@ def extract_fields_from_page(
     unmapped: list[str] = []
 
     for line in lines:
-        label_runs = _split_runs([w for w in line if w.is_label()])
+        label_runs = _label_runs(line, document_type, field_mapper)
         if not label_runs:
             continue
         # A label's column ends where the next label on the same row begins.
@@ -661,23 +708,40 @@ def assess_staleness(
 
 
 def extract_document(
-    pdf_path: str | Path,
+    pdf_path: str | Path | bytes,
     document_type: str | None = None,
     field_mapper: FieldMapper = deterministic_mapper,
     convention: LineBoxConvention = LineBoxConvention(),
     reference_date: date = REFERENCE_DATE,
     window_days: int = CURRENCY_WINDOW_DAYS,
     expiring_soon_days: int | None = DEFAULT_EXPIRING_SOON_DAYS,
+    file_name: str | None = None,
+    document_id: str | None = None,
 ) -> dict[str, Any]:
     """Turn a PDF into a `DocumentView` (CONTRACTS.md section 3). Pure and deterministic.
 
     Same bytes in, same JSON out, on any machine, with no network and no model.
-    """
-    path = Path(pdf_path)
-    doc_type = document_type or infer_document_type(path)
-    document_id, household_id = infer_ids(path)
 
-    with pdfplumber.open(path) as pdf:
+    `pdf_path` may be raw bytes, for a document that exists only in memory (an upload).
+    In that case there is no file name to read a type or an id out of, so `document_type`
+    and `document_id` must be supplied by the caller -- see `infer_document_type`, which
+    answers "unknown" for anything not named the way the pack names its files.
+    """
+    in_memory = isinstance(pdf_path, (bytes, bytearray))
+    if in_memory:
+        source: Any = io.BytesIO(bytes(pdf_path))
+        display_name = file_name or "upload.pdf"
+        doc_type = document_type or "unknown"
+        resolved_id, household_id = (document_id or "UPLOAD", "")
+    else:
+        path = Path(pdf_path)
+        source = path
+        display_name = file_name or path.name
+        doc_type = document_type or infer_document_type(path)
+        inferred_id, household_id = infer_ids(path)
+        resolved_id = document_id or inferred_id
+
+    with pdfplumber.open(source) as pdf:
         page_sizes = [(round(float(p.width), 2), round(float(p.height), 2)) for p in pdf.pages]
         page_count = len(pdf.pages)
         all_words: list[Word] = []
@@ -739,10 +803,10 @@ def extract_document(
                 break
 
     return {
-        "document_id": document_id,
+        "document_id": resolved_id,
         "household_id": household_id,
         "document_type": doc_type,
-        "file_name": path.name,
+        "file_name": display_name,
         "page_count": page_count,
         "page_size_points": list(page_sizes[0]) if page_sizes else None,
         "fields": fields,

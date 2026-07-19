@@ -222,7 +222,7 @@ def _engine():
 
 
 def read_detections(
-    pdf_path: str | Path, page_number: int = 1, scale: float = RENDER_SCALE
+    pdf_path: str | Path | bytes, page_number: int = 1, scale: float = RENDER_SCALE
 ) -> list[Detection]:
     """OCR one page and return detections in PDF points, bottom-left origin.
 
@@ -412,24 +412,39 @@ def extract_fields_from_detections(
 
 
 def extract_document_ocr(
-    pdf_path: str | Path,
+    pdf_path: str | Path | bytes,
     document_type: str | None = None,
     scale: float = RENDER_SCALE,
     reference_date=REFERENCE_DATE,
     window_days: int = CURRENCY_WINDOW_DAYS,
     expiring_soon_days: int | None = DEFAULT_EXPIRING_SOON_DAYS,
+    file_name: str | None = None,
+    document_id: str | None = None,
 ) -> dict[str, Any]:
     """Turn a rasterized PDF into a `DocumentView` -- same contract as `extract_document`.
 
     Deterministic: the ONNX models run fixed weights on a fixed rendering, so the same
     bytes in give the same JSON out, with no network and no LLM.
-    """
-    path = Path(pdf_path)
-    doc_type = document_type or infer_document_type(path)
-    document_id, household_id = infer_ids(path)
 
-    rendered = render_page_png(path, 1, scale)
-    detections = read_detections(path, 1, scale)
+    Accepts raw bytes for an in-memory upload, on the same terms as `core.extract_document`:
+    with no file name there is nothing to infer a type or an id from, so the caller supplies
+    both.
+    """
+    if isinstance(pdf_path, (bytes, bytearray)):
+        source: Any = bytes(pdf_path)
+        display_name = file_name or "upload.pdf"
+        doc_type = document_type or "unknown"
+        resolved_id, household_id = (document_id or "UPLOAD", "")
+    else:
+        path = Path(pdf_path)
+        source = path
+        display_name = file_name or path.name
+        doc_type = document_type or infer_document_type(path)
+        inferred_id, household_id = infer_ids(path)
+        resolved_id = document_id or inferred_id
+
+    rendered = render_page_png(source, 1, scale)
+    detections = read_detections(source, 1, scale)
     found = extract_fields_from_detections(detections, doc_type)
 
     fields: list[dict[str, Any]] = []
@@ -455,10 +470,10 @@ def extract_document_ocr(
                 break
 
     return {
-        "document_id": document_id,
+        "document_id": resolved_id,
         "household_id": household_id,
         "document_type": doc_type,
-        "file_name": path.name,
+        "file_name": display_name,
         "page_count": 1,
         "page_size_points": [
             round(rendered.page_width_points, 2),

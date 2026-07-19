@@ -91,6 +91,13 @@ class Session:
     # 키가 (document_id, field) 단위이므로 한 정정의 취소가 다른 정정을 건드리지 않는다.
     originals: dict[tuple[str, str], dict[str, Any]] = field(default_factory=dict)
     events: list[dict[str, Any]] = field(default_factory=list)
+    # 사용자가 올린 문서. **팩 문서(`views`)와 같은 자루에 넣지 않는다** — 섞는 순간
+    # 세대 계산·체크리스트·연소득이 골드 없는 문서를 먹기 시작하고, 그건 인수 데모가
+    # 요구하지 않은 데다 근거 없는 추측을 요구한다. 여기 있는 것은 자기 자신에 대해서만 말한다.
+    uploads: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # 올린 PDF 원본 바이트. 페이지 이미지를 그리려면 필요한데, 디스크에 쓰지 않기로 했으므로
+    # 세션 안에 들고 있는다. 세션이 폐기되면 이 사전도 같이 사라진다 — 그게 전부다.
+    upload_bytes: dict[str, bytes] = field(default_factory=dict)
 
     def log(self, action: str, **detail: Any) -> None:
         """동의·조작·규칙버전을 남긴다. **문서 원문은 절대 남기지 않는다.**
@@ -208,6 +215,28 @@ class Store:
                 s.log("field_corrected", document_id=document_id, field=field_name)
                 return True
         return False
+
+    # ── 업로드 (인수 데모 1단계: 문서를 올리고 추출 근거를 보인다) ─────────
+    def add_upload(self, s: Session, data: bytes, file_name: str,
+                   document_type: str) -> dict[str, Any]:
+        """올린 문서를 읽어 **세션 메모리에만** 담는다. 디스크에 닿지 않는다."""
+        from api import upload as upload_mod
+
+        view = upload_mod.read_upload(data, file_name, document_type)
+        # **직전 업로드는 여기서 사라진다.** 화면은 언제나 마지막에 올린 문서 하나만 보여주므로
+        # 그 이상 들고 있을 이유가 없고, 들고 있으면 세션 메모리가 올린 만큼 계속 늘어난다.
+        # 개수 상한을 두는 것보다 이쪽이 정직하다 — 상한은 "10장까지는 남아 있다"고 약속하는데
+        # 그 약속을 쓰는 화면이 없다. 이렇게 하면 세션이 쥐는 문서 바이트는 항상 한 장분이다.
+        s.uploads.clear()
+        s.upload_bytes.clear()
+        uid = view["upload_id"]
+        s.uploads[uid] = view
+        s.upload_bytes[uid] = data
+        # 파일 이름도 원문도 남기지 않는다 — 브리프: "log consent, actions, and rule
+        # versions - not raw document contents".
+        s.log("document_uploaded", document_type=document_type,
+              extraction_path=view["extraction_path"])
+        return view
 
     def undo_correction(self, s: Session, document_id: str, field_name: str) -> bool:
         """한 정정만 되돌린다 — 그 필드를 추출된 값으로, 다른 정정은 건드리지 않고.

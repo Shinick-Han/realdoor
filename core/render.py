@@ -95,7 +95,7 @@ def pixels_to_pdf_bbox(
 
 
 def render_page_png(
-    pdf_path: str | Path,
+    pdf_source: str | Path | bytes,
     page_number: int = 1,
     scale: float = DEFAULT_SCALE,
 ) -> PageImage:
@@ -103,13 +103,22 @@ def render_page_png(
 
     The returned `scale` is authoritative: callers must use it (not a hardcoded value)
     when converting boxes, so that changing DPI can never desynchronise the overlay.
+
+    `pdf_source` may be raw bytes. An uploaded document is held in memory for the life of
+    one session and never written to disk, so there is no path to hand in for it; pypdfium2
+    opens a buffer just as happily as a file.
     """
-    path = Path(pdf_path)
-    document = pypdfium2.PdfDocument(path)
+    if isinstance(pdf_source, (bytes, bytearray)):
+        document = pypdfium2.PdfDocument(bytes(pdf_source))
+        label = "the uploaded document"
+    else:
+        path = Path(pdf_source)
+        document = pypdfium2.PdfDocument(path)
+        label = path.name
     try:
         if not 1 <= page_number <= len(document):
             raise ValueError(
-                f"page {page_number} out of range for {path.name} ({len(document)} pages)"
+                f"page {page_number} out of range for {label} ({len(document)} pages)"
             )
         page = document[page_number - 1]
         width_points, height_points = float(page.get_width()), float(page.get_height())
