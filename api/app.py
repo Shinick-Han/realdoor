@@ -78,11 +78,24 @@ app.add_middleware(DecisionGate)
 app.add_middleware(limits.RateLimit)
 
 
+# Warming reads all 24 pack documents. With a cold cache that takes over a minute, and a
+# host that health-checks the port will conclude the process is dead and restart it —
+# which starts the warm again, so the container never reaches the end of its own boot. The
+# app is useful before the warm finishes (health answers, the UI serves), so the warm runs
+# behind the port rather than in front of it. `STORE.warm()` is idempotent and the request
+# paths call it themselves, so a request that arrives first simply waits for the same work
+# instead of racing it.
 @app.on_event("startup")
 def _startup() -> None:
-    info = STORE.warm()
-    print(f"[realdoor] warmed {info['documents']} documents · {info['engine']}",
-          flush=True)
+    import threading
+
+    def _warm() -> None:
+        info = STORE.warm()
+        print(f"[realdoor] warmed {info['documents']} documents · {info['engine']}",
+              flush=True)
+
+    threading.Thread(target=_warm, name="realdoor-warm", daemon=True).start()
+    print("[realdoor] serving; warming in the background", flush=True)
 
 
 def _session(x_session_id: str | None):
