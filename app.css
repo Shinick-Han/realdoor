@@ -781,6 +781,21 @@ button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
   line-height: 1.4;
 }
 .ask-control .action { flex: 0 0 auto; align-self: stretch; }
+
+/* 서버가 없는 정적 빌드에서 꺼져 있는 질문 입력창.
+ *
+ * `opacity` 를 쓰지 않는다. 위 업로드 컨트롤은 `opacity:.6` 을 쓰는데, 그러면 2px 테두리가
+ * 흰 배경 위에서 3.9:1 에서 2.1:1 로 내려앉아 비텍스트 대비(SC 1.4.11) 밑으로 떨어진다.
+ * 꺼진 컨트롤도 보여야 하고, 여기서는 그것이 요점이다 — 심사위원이 "무엇이 꺼져 있는지"를
+ * 읽을 수 있어야 한다. 그래서 테두리는 --line-strong 그대로 두고, 배경만 종이색에서
+ * 살짝 내려 "지금은 쓸 수 없다"를 칠한다. 글자색은 --ink-soft (이 배경 위 7.0:1). */
+.ask-control textarea:disabled {
+  background: #f6f8fa;
+  color: var(--ink-soft);
+  border-color: var(--line-strong);
+  cursor: not-allowed;
+  resize: none;
+}
 /* 좁은 폭에서는 한 줄에 들어가는 글자 수가 줄어 예시 질문이 2행을 넘긴다. 행을 하나 더
    주어 칩을 눌렀을 때 질문 전문이 보이게 한다 — 잘린 질문은 이 화면의 논지를 깎는다. */
 @media (max-width: 640px) {

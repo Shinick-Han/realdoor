@@ -813,6 +813,18 @@
     "You do not need to include your name, address or phone number to ask about a rule.":
       "규칙에 대해 물으실 때 이름·주소·전화번호를 넣지 않으셔도 됩니다.",
 
+    // 정적 빌드에서 꺼져 있는 질문 입력창의 안내. 1단계 업로드 패널과 같은 배치이므로
+    // 어투도 같게 옮긴다 — 못 하는 것을 먼저 말하고, 그 다음에 무엇을 돌리면 되는지.
+    // 판정 어휘("자격")는 쓰지 않는다. 지명·확인은 판정이 아니라 경로 선택이다.
+    "This copy has no server, so it cannot answer a question you type":
+      "이 사본에는 서버가 없어서, 직접 타이핑하신 질문에는 답할 수 없습니다",
+    "The box below is where you write a question in your own words. Answering one is done by the rule handlers, which run on a server, so on this static build the box is switched off rather than hidden — the feature exists, this copy just has nothing to run it. Start the server and the same box becomes live:":
+      "아래 칸은 직접 자기 말로 질문을 쓰는 곳입니다. 그 질문에 답하는 일은 서버에서 도는 규칙 처리기가 합니다. 이 화면은 정적 빌드라서 입력칸을 숨기지 않고 꺼 두었습니다. 기능이 없는 것이 아니라 이 사본에 그것을 돌릴 것이 없을 뿐입니다. 서버를 띄우면 같은 입력칸이 그대로 살아납니다:",
+    "Then open http://127.0.0.1:8077 and return to step 3.":
+      "그런 다음 http://127.0.0.1:8077 을 열고 3단계로 돌아오세요.",
+    "Typing here is also the one place a model is involved. The deterministic router only knows a fixed set of phrasings; when you ask in wording it does not recognise, a classifier reads your question text and names one label out of the 21 intents this system can already answer, or none. That label is a nomination and nothing more — an anchor phrase for the named intent is added to your question, the deterministic router is asked again, and if it does not independently arrive at the same intent the nomination is discarded. The model never writes a sentence you read, and it cannot reach an answer the deterministic code could not reach on its own.":
+      "여기에 타이핑하는 것이 모델이 관여하는 유일한 지점이기도 합니다. 결정론적 라우터는 정해진 표현만 알아봅니다. 그 라우터가 알아보지 못하는 말투로 물으시면, 분류기가 질문 글자를 읽고 이 시스템이 이미 답할 수 있는 21개 의도 중 하나를 지목하거나, 아무것도 지목하지 않습니다. 그 이름은 지명일 뿐입니다. 지목된 의도의 앵커 문구를 질문에 덧붙여 결정론적 라우터에 다시 묻고, 그 라우터가 스스로 같은 의도에 이르지 못하면 그 지명은 폐기됩니다. 모델은 여러분이 읽는 문장을 쓰지 않으며, 결정론적 코드가 스스로 도달할 수 없는 답에는 닿을 수 없습니다.",
+
     "currently English — activate for Korean": "현재 영어 — 누르면 한국어로 바뀝니다",
 
     // ── api/plain.py — 짧게 다시 쓰인 본문 중 데이터가 박히지 않은 것 ──────────

@@ -860,14 +860,21 @@
       }
     };
 
-    // If nobody chose a source and we are being served from a local server, ask that origin
-    // whether it is our API. A judge who clones the repo, starts the server and opens "/"
-    // should see the real pipeline answering, not bundled output that reads as a mock.
+    // If nobody chose a source and we are being served over http(s), ask that origin whether
+    // it is our API. A judge who clones the repo and starts the server, and a judge who opens
+    // the hosted live URL, should both see the real pipeline answering rather than bundled
+    // output that reads as a mock.
     //
-    // The probe is deliberately limited to loopback hosts. On static hosting there is no API
-    // to find, and probing anyway would print a 404 in the console of a product whose whole
-    // argument is that it leaves nothing unexplained. A red line in the console that we know
-    // is harmless is still a red line the judge has to ask about.
+    // This probe used to be limited to loopback hosts, to keep a 404 out of the console on
+    // static hosting. That was the wrong trade the moment the app got a real deployment: on
+    // any hosted origin the whitelist made the page fall back to fixtures **while the API was
+    // answering 200 one directory up** — uploads refused, the gate panel claiming there is no
+    // server to test. A silent wrong answer is worse than a console line.
+    //
+    // So the rule is now: probe unless we already know there is nothing to find. We know that
+    // in exactly one case — the static fallback on GitHub Pages — and skipping there keeps
+    // that build's console as clean as it was. Any other static host gets one 404 line and
+    // then stays static, because `r.ok` is false and the fixtures path is what we return.
     //
     // The URL is relative on purpose: the page can be served under a sub-path, and an
     // absolute "/api/health" would escape it and hit the domain root instead.
@@ -875,9 +882,9 @@
       var chosen = typeof window.REALDOOR_API === "string" || fromQuery !== null ||
                    params.has("fixtures");   // ?fixtures forces the offline path back on
       var host = window.location.hostname;
-      var localServer = /^https?:$/.test(window.location.protocol) &&
-                        (host === "localhost" || host === "127.0.0.1" || host === "[::1]");
-      if (chosen || live || !localServer) return Promise.resolve(source.live);
+      var served = /^https?:$/.test(window.location.protocol);
+      var knownStaticHost = /(^|\.)github\.io$/i.test(host);
+      if (chosen || live || !served || knownStaticHost) return Promise.resolve(source.live);
       return fetch("api/health")
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (body) {
@@ -2596,6 +2603,55 @@
           onclick: function () { input.value = question; submitQuestion(question); }
         }, [question]);
       })));
+    } else {
+      /* No server: the box stays on the page, switched off.
+       *
+       * This is the same arrangement as the upload controls on step 1, and for the same
+       * reason — a hidden feature is an absent feature to anyone reading the deployed
+       * build. Removing the box left the hosted copy with no way to type a question at
+       * all, which is the one thing this step exists to demonstrate.
+       *
+       * The callout carries what the box cannot do first, then the command that makes it
+       * work, then what the server actually adds here. The recorded-question buttons below
+       * are untouched: they are the path that does work in this build. */
+      root.appendChild(h("div", { class: "callout" }, [
+        h("h3", { text: "This copy has no server, so it cannot answer a question you type" }),
+        h("p", {
+          text: "The box below is where you write a question in your own words. Answering " +
+                "one is done by the rule handlers, which run on a server, so on this static " +
+                "build the box is switched off rather than hidden — the feature exists, " +
+                "this copy just has nothing to run it. Start the server and the same box " +
+                "becomes live:"
+        }),
+        h("p", { class: "mono", text: "python -m uvicorn api.app:app --port 8077" }),
+        h("p", { class: "hint", text: "Then open http://127.0.0.1:8077 and return to step 3." }),
+        h("p", {
+          text: "Typing here is also the one place a model is involved. The deterministic " +
+                "router only knows a fixed set of phrasings; when you ask in wording it " +
+                "does not recognise, a classifier reads your question text and names one " +
+                "label out of the 21 intents this system can already answer, or none. That " +
+                "label is a nomination and nothing more — an anchor phrase for the named " +
+                "intent is added to your question, the deterministic router is asked again, " +
+                "and if it does not independently arrive at the same intent the nomination " +
+                "is discarded. The model never writes a sentence you read, and it cannot " +
+                "reach an answer the deterministic code could not reach on its own."
+        })
+      ]));
+
+      /* The control group itself, disabled: same markup, same classes, same two hints as
+       * the live branch above, so what a judge sees switched off is what turns on. */
+      root.appendChild(h("form", {
+        class: "ask-input-row",
+        onsubmit: function (event) { event.preventDefault(); }
+      }, [
+        h("label", { for: "ask-input", class: "ask-label", text: "Ask about a rule" }),
+        h("div", { class: "ask-control" }, [
+          h("textarea", { id: "ask-input", rows: "2", autocomplete: "off", disabled: true }),
+          h("button", { type: "submit", class: "action", disabled: true, text: "Ask" })
+        ]),
+        h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }),
+        h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." })
+      ]));
     }
 
     root.appendChild(h("h3", { text: "Recorded questions", style: { marginTop: "0" } }));
