@@ -18,12 +18,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pytest  # noqa: E402
 
 from core.extract import (  # noqa: E402
+    FREE_TEXT_FIELDS,
     LABEL_MAP,
     LABEL_SYNONYMS,
     LineBoxConvention,
+    MIN_HEADER_ROW_CELLS,
     ParseError,
+    TYPED_VALUE_X_TOLERANCE,
+    VALUE_X_TOLERANCE,
     Word,
+    _caption_refusal,
     _column_alignment,
+    _header_row_words,
+    _split_runs,
+    _x_tolerance,
     _label_runs,
     _mapper_stages,
     _TrackingMapper,
@@ -380,6 +388,170 @@ class TestNormalisation:
     def test_a_trailing_colon_and_case_are_folded(self) -> None:
         assert normalize_label("Pay Date:") == "PAY DATE"
         assert normalize_label("  net   pay  ") == "NET PAY"
+
+
+# ======================================================================================
+# Cause 4 -- "a label is never a value" only ever protected labels we had a word for
+# ======================================================================================
+# Every wrong value on the confirmation set (14 published documents, never scored until
+# after this code was written) was the same bug: a run that names a field, sitting where a
+# value goes, read as a value because our vocabulary did not contain it. See the block above
+# `_is_caption_cell` in `core/extract.py`.
+#
+# The three cases are reproduced below from the real files, and each is also asserted as a
+# geometry fixture so the regression survives the PDFs being unavailable.
+
+CONFIRM = Path(__file__).resolve().parent.parent / "testdata" / "confirm_raw"
+
+
+def _header_words(words):
+    return _header_row_words(group_lines(words))
+
+
+class TestACaptionIsNotAValue:
+    def test_a_run_ending_in_a_colon_is_refused_for_a_free_text_field(self) -> None:
+        """`seattle_housing_employment_verification_blank.pdf`, reduced to its geometry.
+
+        "Employee Name:" with an empty fill-in, and the next caption on the row read as the
+        name. The colon is the document's own punctuation: it introduces something else.
+        """
+        run = [word("Job", 311.7, 328.0, 299.3), word("Title:", 330.0, 348.1, 299.3)]
+        assert _caption_refusal("person_name", run, frozenset()) is not None
+
+    def test_the_colon_test_does_not_reach_a_typed_field(self) -> None:
+        """`parse_value` already refuses "Job Title:" as a date or an amount, so extending
+        the rule there would be a rule doing no work -- and a rule doing no work is one whose
+        cost nobody can measure."""
+        run = [word("Job", 311.7, 328.0, 299.3), word("Title:", 330.0, 348.1, 299.3)]
+        for field in ("pay_date", "gross_pay", "regular_hours"):
+            assert _caption_refusal(field, run, frozenset()) is None
+
+    def test_a_header_row_cell_is_refused_for_a_free_text_field(self) -> None:
+        """`osu_sample_earnings_statement.pdf` page 2, at the x-positions pdfplumber reports.
+
+        `Deduction Code | Description | Employee | Employer` -- the canonical label EMPLOYEE
+        matched a column heading, so the run to its right is the *next column's heading*.
+        It carries no colon; only the page's own table structure says what it is.
+        """
+        words = [
+            word("Deduction", 93.0, 130.0, 178.5), word("Code", 132.0, 151.0, 178.5),
+            word("Description", 255.0, 297.0, 178.5),
+            word("Employee", 389.0, 425.0, 178.5),
+            word("Employer", 510.1, 545.0, 178.5),
+        ]
+        header = _header_words(words)
+        employer = [w for w in words if w.text == "Employer"]
+        assert _caption_refusal("person_name", employer, header) is not None
+        assert _caption_refusal("gross_pay", employer, header) is None
+
+    def test_two_cells_are_a_label_beside_its_value_not_a_header_row(self) -> None:
+        """The count that must NOT qualify, and the reason the threshold is three.
+
+        A caption with its value to the right is the commonest layout on any form. If two
+        cells made a header row, every side-by-side name on every pay stub would be refused.
+        """
+        words = [
+            word("Employee", 100.0, 140.0, 500.0),
+            word("Mara", 200.0, 224.0, 500.0), word("North", 226.0, 252.0, 500.0),
+        ]
+        assert len(_split_runs(words)) == 2 < MIN_HEADER_ROW_CELLS
+        assert _header_words(words) == frozenset()
+
+    def test_a_row_carrying_a_digit_is_data_not_a_header(self) -> None:
+        """A row of values can line up as neatly as the row that names it. What tells them
+        apart is that a heading is words: one digit anywhere and the line is data."""
+        words = [
+            word("Regular", 100.0, 130.0, 500.0),
+            word("40.00", 200.0, 224.0, 500.0),
+            word("14.9000", 300.0, 336.0, 500.0),
+        ]
+        assert _header_words(words) == frozenset()
+
+    def test_the_refusal_is_shape_based_and_confined_to_free_text(self) -> None:
+        """What the header-row test actually keys on, stated plainly so the trade is visible.
+
+        Three caption-shaped cells across one line qualify, and a two-word name IS caption
+        shaped -- so a name printed in such a row would be refused. That is the cost this
+        rule can in principle charge. Measured across the pack, the 26 uploads, the wording
+        hold-out, the external six and the confirmation 14, it charges it nowhere: all 69
+        free-text values read before the change are still read after it. The corpus
+        measurement is the evidence; this fixture only pins that the rule reads shape and
+        page structure, never a name."""
+        words = [
+            word("Employee", 100.0, 140.0, 500.0),
+            word("Department", 200.0, 250.0, 500.0),
+            word("Payroll", 300.0, 330.0, 500.0),
+        ]
+        header = _header_words(words)
+        payroll = [w for w in words if w.text == "Payroll"]
+        assert _caption_refusal("person_name", payroll, header) is not None
+        # ...and a typed field is untouched by it, because its parser already refuses.
+        assert _caption_refusal("net_pay", payroll, header) is None
+
+    def test_no_frequency_word_we_read_is_ever_caption_shaped(self) -> None:
+        """`pay_frequency` is free-text and its values are bare words, which is the shape the
+        header-row test keys on. They are only ever refused if the page prints them in a row
+        of three captions -- never merely for being one word."""
+        for text in ("biweekly", "weekly", "monthly", "fortnightly"):
+            run = [word(text, 100.0, 130.0, 500.0)]
+            assert _caption_refusal("pay_frequency", run, frozenset()) is None
+
+    @pytest.mark.parametrize(
+        "file_name",
+        [
+            "osu_sample_earnings_statement.pdf",
+            "seattle_housing_employment_verification_blank.pdf",
+            "mnhousing_employment_verification_blank.pdf",
+        ],
+    )
+    def test_the_three_confirmation_set_false_positives_are_gone(self, file_name) -> None:
+        """End to end, through the publishers' own bytes. Each of these read a caption as a
+        person's name; all three must now abstain. `scripts/measure_confirm_set.py` scores
+        the whole set."""
+        from core import extract as ex
+
+        path = CONFIRM / file_name
+        if not path.exists():
+            pytest.skip("confirmation-set PDFs are not in the tree")
+        view = ex.extract_document(path, document_type="pay_stub")
+        got = {f["field"]: f for f in view["fields"]}
+        assert got["person_name"]["certainty"] == "abstain", got["person_name"]
+
+
+# ======================================================================================
+# Cause 5 -- one alignment tolerance for fields with a parser and fields without one
+# ======================================================================================
+
+
+class TestTheToleranceIsScopedToTypedFields:
+    def test_typed_fields_get_the_wider_tolerance(self) -> None:
+        for field in ("pay_date", "pay_period_start", "gross_pay", "net_pay", "hourly_rate"):
+            assert _x_tolerance(field) == TYPED_VALUE_X_TOLERANCE
+
+    def test_free_text_fields_keep_the_tight_one(self) -> None:
+        for field in sorted(FREE_TEXT_FIELDS):
+            assert _x_tolerance(field) == VALUE_X_TOLERANCE
+
+    def test_an_unnamed_field_gets_the_tight_one(self) -> None:
+        """The widening has to be asked for. A caller that has not said which field it is
+        resolving must not be widened by default."""
+        assert _x_tolerance("") == VALUE_X_TOLERANCE
+
+    def test_the_scoping_is_what_stops_a_measured_false_positive(self) -> None:
+        """`orangeusd_sample_paystub.pdf` is the document that made this scoped rather than
+        global: at 8.0pt for every field, `person_name` reads the column heading "Employee
+        ID" on a page whose name field is genuinely absent. The caption rule above refuses
+        it too, so this is defence in depth -- but the scoping is the one that does not
+        depend on the run happening to look like a caption."""
+        from core import extract as ex
+
+        path = CONFIRM / "orangeusd_sample_paystub.pdf"
+        if not path.exists():
+            pytest.skip("confirmation-set PDFs are not in the tree")
+        view = ex.extract_document(path, document_type="pay_stub")
+        got = {f["field"]: f for f in view["fields"]}
+        answered = [name for name, f in got.items() if f["certainty"] != "abstain"]
+        assert answered == [], f"invented {answered} on a page that carries none of them"
 
 
 def _run_standalone() -> int:

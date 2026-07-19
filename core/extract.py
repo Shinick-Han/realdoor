@@ -370,12 +370,16 @@ LABEL_SYNONYMS: dict[str, dict[str, str]] = {
         "PAYMENT DATE": "pay_date",
         "PAYCHECK DATE": "pay_date",
         "DATE OF PAY": "pay_date",
+        # PeopleSoft calls the payment an "advice" and dates it accordingly; the phrase is
+        # the whole entry, so it names one thing and cannot be read as "the date of what?".
+        "ADVICE DATE": "pay_date",
         "PERIOD COVERED": "pay_period_start",
         "PERIOD BEGINNING": "pay_period_start",
         "PERIOD BEGIN": "pay_period_start",
         "PERIOD START": "pay_period_start",
         "PAY PERIOD BEGINNING": "pay_period_start",
         "PAY PERIOD START": "pay_period_start",
+        "PAY BEGIN DATE": "pay_period_start",
         "FROM": "pay_period_start",
         "TO": "pay_period_end",
         "THRU": "pay_period_end",
@@ -383,6 +387,8 @@ LABEL_SYNONYMS: dict[str, dict[str, str]] = {
         "PERIOD END": "pay_period_end",
         "PAY PERIOD ENDING": "pay_period_end",
         "PAY PERIOD END": "pay_period_end",
+        "PAY END DATE": "pay_period_end",
+        "FOR PAY PERIOD ENDING": "pay_period_end",
         "PAY CYCLE": "pay_frequency",
         "PAYROLL CYCLE": "pay_frequency",
         "PAYROLL FREQUENCY": "pay_frequency",
@@ -738,6 +744,12 @@ TEXT_FIELD_MAX_WORDS: dict[str, int] = {
 #: those three.
 DIGITLESS_FIELDS = frozenset({"person_name", "pay_frequency", "benefit_frequency"})
 
+#: The free-text fields, derived from the two tables above rather than listed again, so that
+#: typing a new field enrols it automatically. These are exactly the fields whose parser is
+#: a shape test rather than a type test, and therefore exactly the fields that need
+#: `_caption_refusal` -- see the block above `_is_caption_cell`.
+FREE_TEXT_FIELDS = frozenset(TEXT_FIELD_MAX_WORDS) | DIGITLESS_FIELDS
+
 
 def _check_text_shape(field_name: str, raw: str) -> None:
     """Raise `ParseError` when a string cannot be this field's value. Type check, no more."""
@@ -876,6 +888,33 @@ VALUE_Y_WINDOW = (6.0, 22.0)
 #: A value is left-aligned with its label to within this many points.
 VALUE_X_TOLERANCE = 3.0
 
+#: The same tolerance for fields `parse_value` type-checks -- dates, months, money, integers.
+#:
+#: 3.0pt is the pack's own printing tolerance, and on documents we did not draw it is too
+#: tight: a real form sets a caption in one size and the value beneath it in another, and the
+#: two left edges land several points apart without either being in the wrong column. Widening
+#: it recovers those, and widening it also lets a run from the *neighbouring* column reach the
+#: label -- so the question is what happens when it does.
+#:
+#: For a typed field, nothing: the neighbouring column's content has to parse as a date or an
+#: amount before it can become a value, and `parse_value` refuses it if it does not. For a
+#: free-text field there is no such refusal, and the cost was measured rather than reasoned
+#: about -- raising the tolerance for every field adds a `person_name` false positive on
+#: `orangeusd_sample_paystub.pdf`, a document in the confirmation set. So the raise is scoped
+#: to exactly the fields that carry their own guard, and `FREE_TEXT_FIELDS` keeps 3.0.
+TYPED_VALUE_X_TOLERANCE = 8.0
+
+
+def _x_tolerance(field_name: str) -> float:
+    """How far this field's value may sit from its label's edge. See the two constants above.
+
+    An empty name -- a caller that has not said which field it is resolving -- gets the tight
+    tolerance. The widening has to be asked for by naming a field that carries a parser.
+    """
+    if not field_name or field_name in FREE_TEXT_FIELDS:
+        return VALUE_X_TOLERANCE
+    return TYPED_VALUE_X_TOLERANCE
+
 #: Side-by-side layouts put the value in a column to the right of the label, on the label's
 #: own baseline. The gap that separates a *column* from the next *word of a sentence* is the
 #: only thing telling those two apart, so it is measured rather than assumed: a word space at
@@ -896,6 +935,19 @@ def _arithmetic_enabled() -> bool:
     import os
 
     return os.environ.get("REALDOOR_ARITHMETIC", "").strip() == "1"
+
+
+def _columns_enabled() -> bool:
+    """Is the column-header path switched on? Off by default, like the arithmetic flag.
+
+    Read through a function for the same two reasons: a test can flip the environment
+    variable and see the change, and `core.columns` is never imported when the flag is off,
+    so with it off this module's output is bit-identical to what it was before that file
+    existed.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_COLUMNS", "").strip() == "1"
 
 
 def infer_document_type(pdf_path: str | Path) -> str:
@@ -1025,6 +1077,8 @@ def _scan_page(
     """One pass of label-anchored extraction. Fills `found` in place, returns unmapped."""
     unmapped: list[str] = []
     anchors, label_words = _label_anchors(lines, document_type, field_mapper)
+    # Computed once per page: the page's own column-header rows. See `_caption_refusal`.
+    header_words = _header_row_words(lines)
     for line in lines:
         label_runs = _label_runs(line, document_type, field_mapper)
         if not label_runs:
@@ -1041,7 +1095,8 @@ def _scan_page(
                 continue  # first occurrence wins; forms do not repeat labels
             column_right = starts[index + 1] if index + 1 < len(starts) else float("inf")
             resolved = _resolve_value(
-                lines, run, column_right, field_name, convention, is_exact, label_words
+                lines, run, column_right, field_name, convention, is_exact, label_words,
+                header_words,
             )
             # The column beneath the label is the pack's own layout and stays first. Only
             # when it yields *nothing at all* do the two other placements get a turn, and
@@ -1051,13 +1106,38 @@ def _scan_page(
             # hunting elsewhere on the page for a value we have already located and rejected.
             if resolved is None:
                 resolved = _side_by_side_value(
-                    line, label_runs, index, column_right, field_name, convention, is_exact
+                    line, label_runs, index, column_right, field_name, convention, is_exact,
+                    header_words,
                 )
             if resolved is None:
                 resolved = _caption_value(
                     lines, anchors, run, column_right, field_name, convention, is_exact,
-                    label_words,
+                    label_words, header_words,
                 )
+            # ------------------------------------------------------------------------
+            # Column headers (opt-in, `REALDOOR_COLUMNS=1`) -- see `core/columns.py`
+            # ------------------------------------------------------------------------
+            # Last, and only when the three rules above produced **no value**. "No value"
+            # includes an abstention, because `_resolve_value` records a run it located and
+            # then refused as an abstention rather than leaving the field out -- ADP's
+            # `Gross Pay` is exactly that, the run beneath the label being the word
+            # "Statutory". Replacing an abstention changes no answer.
+            #
+            # Placing it here is the whole safety argument, and it is structural rather
+            # than a matter of how careful the new code is: there is no path by which this
+            # branch can replace, move or re-box a value one of the earlier rules found.
+            # It turns abstentions into values, or it does nothing.
+            if _columns_enabled() and (
+                resolved is None or resolved.get("certainty") == "abstain"
+            ):
+                from core import columns
+
+                recovered = columns.column_value(
+                    lines, run, column_right, field_name, convention, is_exact, label_words,
+                    header_words,
+                )
+                if recovered is not None:
+                    resolved = recovered
             if resolved is not None:
                 found[field_name] = resolved
     return unmapped
@@ -1220,7 +1300,10 @@ def _cluster_size(values: Sequence[float], tolerance: float) -> int:
 
 
 def _column_alignment(
-    runs: Sequence[Sequence[Word]], label_x0: float, label_x1: float
+    runs: Sequence[Sequence[Word]],
+    label_x0: float,
+    label_x1: float,
+    tolerance: float = VALUE_X_TOLERANCE,
 ) -> str:
     """"left", "right" or "unknown", read off the runs stacked in one column.
 
@@ -1233,26 +1316,138 @@ def _column_alignment(
     """
     if len(runs) < 2:
         return "unknown"
-    left = _cluster_size([run[0].x0 for run in runs], VALUE_X_TOLERANCE)
-    right = _cluster_size([max(w.x1 for w in run) for run in runs], VALUE_X_TOLERANCE)
+    left = _cluster_size([run[0].x0 for run in runs], tolerance)
+    right = _cluster_size([max(w.x1 for w in run) for run in runs], tolerance)
     if right > left and any(
-        abs(max(w.x1 for w in run) - label_x1) <= VALUE_X_TOLERANCE for run in runs
+        abs(max(w.x1 for w in run) - label_x1) <= tolerance for run in runs
     ):
         return "right"
-    if left > right and any(abs(run[0].x0 - label_x0) <= VALUE_X_TOLERANCE for run in runs):
+    if left > right and any(abs(run[0].x0 - label_x0) <= tolerance for run in runs):
         return "left"
     return "unknown"
 
 
 def _aligned_with_label(
-    run: Sequence[Word], label_x0: float, label_x1: float, alignment: str
+    run: Sequence[Word],
+    label_x0: float,
+    label_x1: float,
+    alignment: str,
+    tolerance: float = VALUE_X_TOLERANCE,
 ) -> bool:
     """Does this run sit in the label's column, under the measured alignment?"""
-    if alignment != "right" and abs(run[0].x0 - label_x0) <= VALUE_X_TOLERANCE:
+    if alignment != "right" and abs(run[0].x0 - label_x0) <= tolerance:
         return True
-    if alignment != "left" and abs(max(w.x1 for w in run) - label_x1) <= VALUE_X_TOLERANCE:
+    if alignment != "left" and abs(max(w.x1 for w in run) - label_x1) <= tolerance:
         return True
     return False
+
+
+# --------------------------------------------------------------------------------------
+# A caption is a label, wherever our vocabulary happens to stop
+# --------------------------------------------------------------------------------------
+# "A label is never a value" is the rule `_runs_in_window` enforces, and it is the property
+# this extractor's zero-wrong claim rests on. It protects only *recognised* labels. A run
+# that names a field we have no word for is invisible as a label, and therefore readable as
+# a value -- and the free-text fields have no parser that can refuse it. Measured on the
+# confirmation set, that one hole produced every wrong value on the whole set:
+#
+#   * `osu_sample_earnings_statement.pdf` p2 -- the canonical label `EMPLOYEE` matched the
+#     header cell "Employee" in `Deduction Code | Description | Employee | Employer`, and
+#     the one run to its right is the *next column's header*. person_name = "Employer",
+#     certainty **high**.
+#   * `seattle_housing_employment_verification_blank.pdf` -- "Employee Name:" with an empty
+#     fill-in; the next caption on the row, "Job Title:", read as the name.
+#   * `mnhousing_employment_verification_blank.pdf` -- "Employee Name:" with the next
+#     question's caption, "Presently Employed:", sitting 21.6pt below inside
+#     `VALUE_Y_WINDOW`.
+#
+# The two tests below are deliberately not a vocabulary. Neither one knows what "Employer"
+# or "Job Title" mean; both read something the document itself printed:
+#
+#   1. **The colon.** A run ending in ':' is punctuated by its author as an introduction to
+#      something else. No name, address or frequency word is ever printed with one.
+#   2. **The header row.** A line whose every run is a short, digit-free caption, three or
+#      more of them across the line, is a row that names columns. Its cells are captions by
+#      the page's own structure -- the thing that makes it a header row is that it holds no
+#      data at all. Nothing on such a line is a value, including the cell we happened to
+#      recognise and the cell beside it.
+#
+# Scope is deliberate: this applies only to `FREE_TEXT_FIELDS`. Every other field is already
+# protected by `parse_value` -- "Employer" is not money and "Job Title:" is not a date -- so
+# extending the refusal there would be a rule doing no work, and a rule doing no work is a
+# rule whose cost nobody can measure.
+
+#: How many cells make a line a header row rather than a label sitting beside its value. A
+#: two-cell line is the commonest layout on any form -- caption, then the value -- so two is
+#: exactly the count that must NOT qualify. Three captions in a row, and the line is naming
+#: columns.
+MIN_HEADER_ROW_CELLS = 3
+
+
+def _is_caption_cell(run: Sequence[Word]) -> bool:
+    """Is this run shaped like the name of something, rather than like a value?
+
+    Same three properties `looks_like_a_label` tests, for the same reason -- it has a
+    letter, it is short, it is not a number. A digit anywhere disqualifies it, which is what
+    keeps a row of amounts or dates from being mistaken for the row that names them.
+    """
+    text = _join_run(run)
+    if any(character.isdigit() for character in text):
+        return False
+    return looks_like_a_label(text)
+
+
+def _header_row_words(lines: Sequence[Sequence[Word]]) -> frozenset[int]:
+    """Every word on this page that sits in a row of three or more captions.
+
+    Computed once per page and threaded like `label_words`, because the question it answers
+    -- "is this run one of the page's own column headings?" -- is a property of the page and
+    not of the label being resolved.
+    """
+    out: set[int] = set()
+    for line in lines:
+        runs = _split_runs(line)
+        if len(runs) < MIN_HEADER_ROW_CELLS:
+            continue
+        if all(_is_caption_cell(run) for run in runs):
+            out.update(id(word) for run in runs for word in run)
+    return frozenset(out)
+
+
+def _caption_refusal(
+    field_name: str, run: Sequence[Word], header_words: frozenset[int]
+) -> str | None:
+    """Why this run cannot be this field's value, or None if nothing objects.
+
+    Returns a reason string rather than a bool so the refusal can be said out loud in a
+    note if a caller ever wants to, and so the two tests never collapse into one opaque
+    predicate.
+    """
+    if field_name not in FREE_TEXT_FIELDS:
+        return None
+    text = _join_run(run).strip()
+    if text.endswith(":"):
+        return "the page punctuates this run as a caption (it ends in a colon)"
+    if run and all(id(word) in header_words for word in run):
+        return "this run is a cell in one of the page's own column-header rows"
+    return None
+
+
+def _first_caption_run(
+    runs: Sequence[Sequence[Word]], header_words: frozenset[int]
+) -> float | None:
+    """x0 of the leftmost caption-shaped run, or None if there is not one.
+
+    Asked with no field name, so it applies the two caption tests on their own terms -- this
+    is a question about the page ("where does this cell end?"), not about a field. It reads
+    the same two properties `_caption_refusal` reads, which is the point: one idea of what a
+    caption is, used both to refuse one as a value and to let one bound a cell.
+    """
+    for run in runs:
+        text = _join_run(run).strip()
+        if text.endswith(":") or (run and all(id(word) in header_words for word in run)):
+            return run[0].x0
+    return None
 
 
 def _runs_in_window(
@@ -1262,6 +1457,8 @@ def _runs_in_window(
     column_right: float,
     above: bool = False,
     label_words: frozenset[int] = frozenset(),
+    field_name: str = "",
+    header_words: frozenset[int] = frozenset(),
 ) -> list[list[Word]]:
     """Every run inside the label's column and vertical window, with no alignment test.
 
@@ -1278,8 +1475,16 @@ def _runs_in_window(
     looked for. Skipping label runs here does not admit them anywhere else: they remain
     labels, they still bound columns, and they still shield their own values from
     `_caption_value`.
+
+    A run refused by `_caption_refusal` is dropped here for the same reason and with the
+    same consequences: an unrecognised caption is a label we have no word for, so it is not
+    a candidate, it does not count towards `contested`, and it cannot win by being the only
+    thing in the window. It is dropped rather than merely out-ranked because a caption is
+    never the right answer -- picking the runner-up instead would be choosing between two
+    readings, which this module does not do.
     """
     near, far = VALUE_Y_WINDOW
+    tolerance = _x_tolerance(field_name)
     out: list[list[Word]] = []
     for line in lines:
         delta = (line[0].baseline - label_baseline) if above else (label_baseline - line[0].baseline)
@@ -1288,13 +1493,14 @@ def _runs_in_window(
         in_column = [
             w
             for w in line
-            if w.x0 >= label_x0 - VALUE_X_TOLERANCE and w.x0 < column_right - VALUE_X_TOLERANCE
+            if w.x0 >= label_x0 - tolerance and w.x0 < column_right - tolerance
         ]
         if in_column:
             out.extend(
                 run
                 for run in _split_runs(in_column)
                 if not all(id(w) in label_words for w in run)
+                and _caption_refusal(field_name, run, header_words) is None
             )
     return out
 
@@ -1307,6 +1513,7 @@ def _resolve_value(
     convention: LineBoxConvention,
     is_exact: bool,
     label_words: frozenset[int] = frozenset(),
+    header_words: frozenset[int] = frozenset(),
 ) -> dict[str, Any] | None:
     """Find the value belonging to one label, or return None so the caller abstains."""
     label_x0 = label_run[0].x0
@@ -1314,11 +1521,15 @@ def _resolve_value(
     label_baseline = label_run[0].baseline
 
     in_window = _runs_in_window(
-        lines, label_x0, label_baseline, column_right, label_words=label_words
+        lines, label_x0, label_baseline, column_right, label_words=label_words,
+        field_name=field_name, header_words=header_words,
     )
-    alignment = _column_alignment(in_window, label_x0, label_x1)
+    tolerance = _x_tolerance(field_name)
+    alignment = _column_alignment(in_window, label_x0, label_x1, tolerance)
     candidates = [
-        run for run in in_window if _aligned_with_label(run, label_x0, label_x1, alignment)
+        run
+        for run in in_window
+        if _aligned_with_label(run, label_x0, label_x1, alignment, tolerance)
     ]
 
     if not candidates:
@@ -1392,6 +1603,7 @@ def _build_value_field(
     convention: LineBoxConvention,
     is_exact: bool,
     layout_note: str,
+    header_words: frozenset[int] = frozenset(),
 ) -> dict[str, Any] | None:
     """Turn a located run into a field, or None if it does not parse as this field's type.
 
@@ -1399,7 +1611,15 @@ def _build_value_field(
     that fails to parse is evidence the geometry guess was wrong, and the caller should fall
     through to the next rule (and ultimately to the ordinary "no label found" abstention)
     rather than record this run as the located-but-unreadable value.
+
+    `_caption_refusal` is checked here, before `parse_value`, and returns None for the same
+    reason: a caption is evidence the geometry guess landed on the next field's name rather
+    than on this field's value. Every speculative rule -- side-by-side, caption-above, and
+    the opt-in column reader -- passes through this function, so stating the refusal once
+    here covers all three.
     """
+    if _caption_refusal(field_name, run, header_words) is not None:
+        return None
     source_text = _join_run(run)
     try:
         value, clean = parse_value(field_name, source_text)
@@ -1429,6 +1649,7 @@ def _side_by_side_value(
     field_name: str,
     convention: LineBoxConvention,
     is_exact: bool,
+    header_words: frozenset[int] = frozenset(),
 ) -> dict[str, Any] | None:
     """Value on the label's own baseline, in a column to its right.
 
@@ -1449,6 +1670,22 @@ def _side_by_side_value(
     known label ("PAY DATE has not been assigned yet") reads as a label-value pair and the
     trailing words become the value. Free-text fields such as `person_name` and `address`
     accept any string, so parsing would not catch it -- only the geometry can.
+
+    **An unrecognised caption closes the cell.** `column_right` is the next *recognised*
+    label's x0, so a caption we have no word for does not bound anything, and everything past
+    it stays in the cell -- which makes the cell look like it holds two things, and we abstain.
+    The UNC advice is exactly that: `Pay Begin Date  07/10/2017  Advice #: 0000123456` reads as
+    two runs in one cell because "Advice #:" is not in either table. `_caption_refusal`'s two
+    tests already say what a caption is without needing a word for it, so the same reading that
+    stops a caption becoming a value also lets it act as the boundary it visually is.
+
+    That is a change to this rule's semantics rather than a consequence of the refusal, so it
+    was measured on its own: across the pack, the 26 uploads, the wording hold-out, the
+    external six and the confirmation 14, under both flag settings, it moves exactly one field
+    -- UNC's `pay_period_start`, from an abstention to 2017-07-10, which is what the page
+    prints and what `testdata/external_truth.json` records. It can only ever *narrow* the cell,
+    so like every other test here it turns readings into abstentions or abstentions into
+    readings, never one value into another.
     """
     label_run = label_runs[index]
     label_end = max(w.x1 for w in label_run)
@@ -1457,13 +1694,16 @@ def _side_by_side_value(
     right = [
         w
         for w in line
-        if w.x0 >= label_end and w.x0 < column_right - VALUE_X_TOLERANCE
+        if w.x0 >= label_end and w.x0 < column_right - _x_tolerance(field_name)
         and id(w) not in label_words
     ]
     if not right:
         return None
 
     runs = _split_runs(right)
+    barrier = _first_caption_run(runs, header_words)
+    if barrier is not None:
+        runs = [run for run in runs if run[0].x0 < barrier]
     if len(runs) != 1:
         return None
 
@@ -1474,6 +1714,7 @@ def _side_by_side_value(
     return _build_value_field(
         run, field_name, convention, is_exact,
         "value read from the same line as its label, in the column to its right",
+        header_words=header_words,
     )
 
 
@@ -1486,6 +1727,7 @@ def _caption_value(
     convention: LineBoxConvention,
     is_exact: bool,
     label_words: frozenset[int] = frozenset(),
+    header_words: frozenset[int] = frozenset(),
 ) -> dict[str, Any] | None:
     """Value *above* its label, with the label used as a caption underneath it.
 
@@ -1510,11 +1752,15 @@ def _caption_value(
     label_baseline = label_run[0].baseline
 
     in_window = _runs_in_window(
-        lines, label_x0, label_baseline, column_right, above=True, label_words=label_words
+        lines, label_x0, label_baseline, column_right, above=True, label_words=label_words,
+        field_name=field_name, header_words=header_words,
     )
-    alignment = _column_alignment(in_window, label_x0, label_x1)
+    tolerance = _x_tolerance(field_name)
+    alignment = _column_alignment(in_window, label_x0, label_x1, tolerance)
     candidates = [
-        run for run in in_window if _aligned_with_label(run, label_x0, label_x1, alignment)
+        run
+        for run in in_window
+        if _aligned_with_label(run, label_x0, label_x1, alignment, tolerance)
     ]
 
     # Unchanged, and stricter than `_resolve_value` on purpose: looking upward is only ever
@@ -1530,6 +1776,7 @@ def _caption_value(
     return _build_value_field(
         run, field_name, convention, is_exact,
         "value read from the line above its label, which is used as a caption beneath it",
+        header_words=header_words,
     )
 
 
@@ -1541,6 +1788,13 @@ def _claimed_from_above(
     Same window and same alignment tolerance as `_resolve_value`, because this is asking the
     inverse of the question `_resolve_value` asks. If the answer is yes, the run is another
     field's value and the caption rule must not touch it.
+
+    Deliberately left at the tight `VALUE_X_TOLERANCE` rather than following the field's own
+    `_x_tolerance`. This is not asking "could this be my value?" but "is this already someone
+    else's?", and the two do not want the same number. Widening it would shield *more* runs
+    and so only ever produce more abstentions -- but it is also not what any measurement
+    asked for, and an unmeasured change to the ownership test is exactly the kind of quiet
+    move that shifts a whole form up by one row. It stays where it was.
     """
     near, far = VALUE_Y_WINDOW
     x0 = run[0].x0
