@@ -83,6 +83,16 @@ def main() -> int:
 
     write("selftest", selftest_mod.build(list(s.views.values()), respond))
 
+    # ── 지역 비교표 (화면 4의 참고 패널) ──────────────────────────────────────────
+    # 이 파일만은 파이프라인 출력이 아니다. `pack_ext/mtsp_regions.json` 을 **그대로**
+    # 옮긴다. 여기서 값을 고르거나 다시 계산하지 않는 이유: 이 표는 채점에 쓰이지 않는
+    # 참고 자료이고, 참고 자료일수록 원본과 한 글자도 달라지면 안 된다. 보스턴 행은
+    # is_pack_frozen=true 이며 pack/data/mtsp_2026_boston_cambridge_quincy.csv 와 일치한다
+    # — 화면이 "이 팩이 실제로 쓴 값"이라고 말하는 근거가 그 일치다.
+    print("지역 비교표 (화면 4 참고 패널 — 파이프라인 출력 아님, 원본 그대로 복사)")
+    write("mtsp_regions",
+          json.loads((ROOT / "pack_ext" / "mtsp_regions.json").read_text(encoding="utf-8")))
+
     print("\n픽스처는 실제 파이프라인 출력이다. 손으로 편집하지 말 것.")
     return 0
 

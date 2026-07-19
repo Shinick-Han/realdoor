@@ -120,8 +120,8 @@
       "세입자가 수행하는 일이 아니기 때문에 진행 과정에 번호를 붙이지 않았습니다. 적대적 시험 묶음과 정적 무판정 가드가 매 실행마다 이 경로들을 통과시킵니다.",
     "The controls, demonstrated live": "통제를 실제로 실행해 보이기",
     "Our own numbers": "우리가 낸 숫자",
-    "Our measured results, including the parts that were not run and the ones that came out badly. Published as measured.":
-      "우리가 측정한 결과입니다. 실행하지 못한 항목과 나쁘게 나온 항목까지 포함합니다. 측정된 그대로 공개합니다.",
+    "Our measured results, including the parts we did not run. Published as measured, whether or not they flatter us.":
+      "우리가 측정한 결과입니다. 실행하지 않은 항목까지 포함합니다. 우리에게 유리하든 아니든, 측정된 그대로 공개합니다.",
 
     // ── index.html: 사이드 레일과 푸터 ──────────────────────────────────────
     "What this system is unsure about": "이 시스템이 확신하지 못하는 것",

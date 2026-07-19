@@ -320,11 +320,282 @@ def deterministic_mapper(document_type: str, label: str) -> str | None:
     return LABEL_MAP.get(document_type, {}).get(label.upper())
 
 
-def unmapped_labels(pdf_path: str | Path, document_type: str | None = None) -> list[str]:
-    """Label strings on the page that `deterministic_mapper` does not recognise.
+# --------------------------------------------------------------------------------------
+# A second, wider vocabulary for the same fields (the `FieldMapper` seam, filled in)
+# --------------------------------------------------------------------------------------
+# `LABEL_MAP` is the pack's own vocabulary and it is exact. Measured against documents
+# that differ from the pack *only* in label wording -- same layout, same typography, same
+# values -- it recovered 7 of 22 fields (31.8%). A synonym is not a near miss to an exact
+# dict lookup; it is a total miss, so a page a human reads instantly came back blank.
+#
+# This table is the same kind of object as `LABEL_MAP`: a closed, hand-written set of
+# strings. It is deliberately NOT merged into `LABEL_MAP`, for one concrete reason --
+# `ocr/ocr_extract.py` builds its own lookup from `LABEL_MAP`, and the OCR path resolves
+# labels against fuzzy character detections rather than exact text. Widening the
+# vocabulary *there* would be a different argument with a different risk, and it is not
+# the argument made here. Keeping the tables separate leaves the OCR path bit-identical.
+#
+# What is deliberately NOT in here: bare tokens whose meaning depends on context.
+# "NAME" (employee's or employer's?), "RATE" (of pay or of tax?) and "TOTAL HOURS"
+# (regular, or regular + overtime?) were all considered and left out. Each could name
+# something other than the field it resembles, and a synonym that names the wrong thing
+# is the one way this table could produce a wrong answer instead of an abstention.
+LABEL_SYNONYMS: dict[str, dict[str, str]] = {
+    "application_summary": {
+        "APPLICANT NAME": "person_name",
+        "NAME OF APPLICANT": "person_name",
+        "PRIMARY APPLICANT": "person_name",
+        "HEAD OF HOUSEHOLD": "person_name",
+        "HOUSEHOLD MEMBERS": "household_size",
+        "NUMBER IN HOUSEHOLD": "household_size",
+        "NO. IN HOUSEHOLD": "household_size",
+        "PERSONS IN HOUSEHOLD": "household_size",
+        "FAMILY SIZE": "household_size",
+        "HOUSEHOLD COUNT": "household_size",
+        "ADDRESS": "address",
+        "HOME ADDRESS": "address",
+        "STREET ADDRESS": "address",
+        "CURRENT ADDRESS": "address",
+        "RESIDENCE ADDRESS": "address",
+        "DATE OF APPLICATION": "application_date",
+        "DATE SUBMITTED": "application_date",
+        "SUBMITTED ON": "application_date",
+    },
+    "pay_stub": {
+        "EMPLOYEE NAME": "person_name",
+        "EMPLOYEE'S NAME": "person_name",
+        "NAME OF EMPLOYEE": "person_name",
+        "CHECK DATE": "pay_date",
+        "DATE PAID": "pay_date",
+        "PAYMENT DATE": "pay_date",
+        "PAYCHECK DATE": "pay_date",
+        "DATE OF PAY": "pay_date",
+        "PERIOD COVERED": "pay_period_start",
+        "PERIOD BEGINNING": "pay_period_start",
+        "PERIOD BEGIN": "pay_period_start",
+        "PERIOD START": "pay_period_start",
+        "PAY PERIOD BEGINNING": "pay_period_start",
+        "PAY PERIOD START": "pay_period_start",
+        "FROM": "pay_period_start",
+        "TO": "pay_period_end",
+        "THRU": "pay_period_end",
+        "PERIOD ENDING": "pay_period_end",
+        "PERIOD END": "pay_period_end",
+        "PAY PERIOD ENDING": "pay_period_end",
+        "PAY PERIOD END": "pay_period_end",
+        "PAY CYCLE": "pay_frequency",
+        "PAYROLL CYCLE": "pay_frequency",
+        "PAYROLL FREQUENCY": "pay_frequency",
+        "PAY SCHEDULE": "pay_frequency",
+        "FREQUENCY": "pay_frequency",
+        "HOURS WORKED": "regular_hours",
+        "HRS WORKED": "regular_hours",
+        "REG HOURS": "regular_hours",
+        "REGULAR HRS": "regular_hours",
+        "RATE OF PAY": "hourly_rate",
+        "PAY RATE": "hourly_rate",
+        "BASE RATE": "hourly_rate",
+        "REGULAR RATE": "hourly_rate",
+        "RATE PER HOUR": "hourly_rate",
+        "HOURLY WAGE": "hourly_rate",
+        "TOTAL EARNINGS": "gross_pay",
+        "GROSS EARNINGS": "gross_pay",
+        "GROSS WAGES": "gross_pay",
+        "GROSS INCOME": "gross_pay",
+        "GROSS AMOUNT": "gross_pay",
+        "TOTAL GROSS": "gross_pay",
+        "TOTAL GROSS PAY": "gross_pay",
+        "TAKE HOME PAY": "net_pay",
+        "TAKE-HOME PAY": "net_pay",
+        "NET AMOUNT": "net_pay",
+        "NET EARNINGS": "net_pay",
+        "NET WAGES": "net_pay",
+    },
+    "employment_letter": {
+        "EMPLOYEE NAME": "person_name",
+        "EMPLOYEE'S NAME": "person_name",
+        "NAME OF EMPLOYEE": "person_name",
+        "DATE OF LETTER": "document_date",
+        "LETTER DATED": "document_date",
+        "WEEKLY HOURS": "weekly_hours",
+        "HOURS/WEEK": "weekly_hours",
+        "HOURS PER WEEK WORKED": "weekly_hours",
+        "AVERAGE WEEKLY HOURS": "weekly_hours",
+        "SCHEDULED HOURS PER WEEK": "weekly_hours",
+        "RATE OF PAY": "hourly_rate",
+        "PAY RATE": "hourly_rate",
+        "BASE RATE": "hourly_rate",
+        "CURRENT RATE": "hourly_rate",
+        "RATE PER HOUR": "hourly_rate",
+        "HOURLY WAGE": "hourly_rate",
+    },
+    "benefit_letter": {
+        "BENEFICIARY": "person_name",
+        "CLAIMANT": "person_name",
+        "RECIPIENT NAME": "person_name",
+        "NAME OF RECIPIENT": "person_name",
+        "DATE OF LETTER": "document_date",
+        "NOTICE DATE": "document_date",
+        "LETTER DATED": "document_date",
+        "MONTHLY BENEFIT": "monthly_benefit",
+        "MONTHLY BENEFIT AMOUNT": "monthly_benefit",
+        "MONTHLY PAYMENT": "monthly_benefit",
+        "MONTHLY AWARD": "monthly_benefit",
+        "BENEFIT AMOUNT": "monthly_benefit",
+        "PAYMENT AMOUNT": "monthly_benefit",
+        "PAYMENT FREQUENCY": "benefit_frequency",
+        "BENEFIT FREQUENCY": "benefit_frequency",
+        "PAYMENT SCHEDULE": "benefit_frequency",
+        "PAID": "benefit_frequency",
+    },
+    "gig_statement": {
+        "DRIVER": "person_name",
+        "CONTRACTOR": "person_name",
+        "PARTNER": "person_name",
+        "PAYEE": "person_name",
+        "WORKER NAME": "person_name",
+        "STATEMENT PERIOD": "statement_month",
+        "REPORTING MONTH": "statement_month",
+        "REPORTING PERIOD": "statement_month",
+        "MONTH": "statement_month",
+        "TOTAL RECEIPTS": "gross_receipts",
+        "GROSS REVENUE": "gross_receipts",
+        "GROSS PAYMENTS": "gross_receipts",
+        "TOTAL EARNINGS": "gross_receipts",
+        "GROSS EARNINGS": "gross_receipts",
+        "TOTAL FARES": "gross_receipts",
+        "SERVICE FEES": "platform_fees",
+        "SERVICE FEE": "platform_fees",
+        "PLATFORM FEE": "platform_fees",
+        "PLATFORM COMMISSION": "platform_fees",
+        "COMMISSION": "platform_fees",
+        "FEES": "platform_fees",
+    },
+}
+
+_LABEL_PUNCT_RE = re.compile(r"[\s:]+")
+
+
+def normalize_label(text: str) -> str:
+    """Upper-case, collapse whitespace, drop a trailing colon.
+
+    Only ever used to compare a label against a closed set of strings. It does not widen
+    what counts as a label run, so it cannot admit a string that is not already in one of
+    the two tables.
+    """
+    return _LABEL_PUNCT_RE.sub(" ", text.upper()).strip()
+
+
+#: Canonical table plus synonyms, normalized once at import.
+_WIDE_LABELS: dict[str, dict[str, str]] = {
+    doc_type: {
+        **{normalize_label(k): v for k, v in LABEL_MAP.get(doc_type, {}).items()},
+        **{normalize_label(k): v for k, v in LABEL_SYNONYMS.get(doc_type, {}).items()},
+    }
+    for doc_type in set(LABEL_MAP) | set(LABEL_SYNONYMS)
+}
+
+
+def synonym_mapper(document_type: str, label: str) -> str | None:
+    """Closed-set lookup over the canonical labels *and* the hand-written synonyms.
+
+    Same shape as `deterministic_mapper` and just as deterministic: an exact membership
+    test against a table written by hand and frozen in source. No model, no network, no
+    inference, no partial or fuzzy matching. A string that is in neither table returns
+    `None` and the caller abstains exactly as before.
+    """
+    return _WIDE_LABELS.get(document_type, {}).get(normalize_label(label))
+
+
+# --------------------------------------------------------------------------------------
+# Provenance notes -- how a reader tells the three paths apart
+# --------------------------------------------------------------------------------------
+# Three things can name a field, and they do not deserve equal trust, so a reader must be
+# able to count them separately:
+#
+#   canonical label   -- `LABEL_MAP`. No note. May reach certainty="high".
+#   synonym table     -- `LABEL_SYNONYMS`. Hand-written, frozen, offline, reproducible.
+#   model mapper      -- `core.label_llm`. Needs a key and a network; not reproducible.
+#
+# The last two are both capped at certainty="low", but lumping them under one note would
+# hide the only distinction a sceptical reader actually cares about: which numbers they
+# can reproduce on their own machine with no key. So they carry different notes and
+# `scripts/measure_label_mapping.py` reports them as separate columns.
+SYNONYM_NOTE = "label resolved by a non-exact mapper"
+MODEL_MAPPER_NOTE = "label resolved by the model mapper (closed set; see core/label_llm.py)"
+
+
+def model_mapper(document_type: str, label: str) -> str | None:
+    """`FieldMapper` backed by a model, constrained to `EXPECTED_FIELDS[document_type]`.
+
+    Imported lazily so that `core.extract` keeps its promise of importing nothing that
+    can touch a network. Returns None whenever the model is off, offline, unsure, or
+    answers outside the closed set -- see `core/label_llm.py` for what is withheld.
+    """
+    from core import label_llm
+
+    return label_llm.model_mapper(document_type, label)
+
+
+def layered_mapper(document_type: str, label: str) -> str | None:
+    """Tables first, model only for what they missed.
+
+    The order is the reproducibility argument, not a performance one. Everything the two
+    frozen tables can name is named by them, identically on every machine; the model is
+    consulted only for strings both tables returned None for. A judge running offline
+    therefore reproduces every table-resolved field exactly, and loses only the extra
+    ones -- which are marked, and countable, precisely so that loss is visible.
+    """
+    found = synonym_mapper(document_type, label)
+    if found is not None:
+        return found
+    return model_mapper(document_type, label)
+
+
+class _TrackingMapper:
+    """Wraps a mapper and remembers which field names the *model* leg produced.
+
+    `extract_fields_from_page` needs this to label provenance honestly. It cannot infer
+    it from "which fields appeared in pass 3", because admitting more labels also shifts
+    column boundaries, and a synonym-named field can surface for that reason alone.
+    Attributing such a field to the model would overstate what the model did.
+    """
+
+    def __init__(self, document_type: str) -> None:
+        self.document_type = document_type
+        self.from_model: set[str] = set()
+
+    def __call__(self, document_type: str, label: str) -> str | None:
+        found = synonym_mapper(document_type, label)
+        if found is not None:
+            return found
+        found = model_mapper(document_type, label)
+        if found is not None:
+            self.from_model.add(found)
+        return found
+
+
+def tracking_layered_mapper(document_type: str = "") -> _TrackingMapper:
+    """A `layered_mapper` that also tags model-named fields with `MODEL_MAPPER_NOTE`.
+
+    Use this rather than `layered_mapper` when the provenance of a field matters -- which
+    is any time the result is being counted. `layered_mapper` maps identically but leaves
+    every non-exact field carrying the generic synonym note.
+    """
+    return _TrackingMapper(document_type)
+
+
+def unmapped_labels(
+    pdf_path: str | Path,
+    document_type: str | None = None,
+    mapper: FieldMapper = synonym_mapper,
+) -> list[str]:
+    """Label strings on the page that `mapper` does not recognise.
 
     This is the exact input an LLM mapping step would consume: label text only, with no
     values and no coordinates attached. Use it to decide whether a model is worth adding.
+    Pass `mapper=deterministic_mapper` to ask the narrower question -- what the pack's own
+    frozen vocabulary alone would miss.
     """
     path = Path(pdf_path)
     doc_type = document_type or infer_document_type(path)
@@ -334,7 +605,7 @@ def unmapped_labels(pdf_path: str | Path, document_type: str | None = None) -> l
             for line in group_lines(read_words(page, page_number)):
                 for run in _split_runs([w for w in line if w.is_label()]):
                     label = _join_run(run)
-                    if deterministic_mapper(doc_type, label) is None:
+                    if mapper(doc_type, label) is None:
                         out.append(label)
     return out
 
@@ -449,6 +720,13 @@ VALUE_Y_WINDOW = (6.0, 22.0)
 #: A value is left-aligned with its label to within this many points.
 VALUE_X_TOLERANCE = 3.0
 
+#: Side-by-side layouts put the value in a column to the right of the label, on the label's
+#: own baseline. The gap that separates a *column* from the next *word of a sentence* is the
+#: only thing telling those two apart, so it is measured rather than assumed: a word space at
+#: these type sizes is 2-3pt, and the pack's own columns clear 60pt. Anything under this is
+#: read as prose continuing the label, and we abstain.
+SIDE_BY_SIDE_MIN_GAP = 12.0
+
 _DOC_TYPE_RE = re.compile(r"^(hh-\d+)_(d\d+)_(.+)$", re.IGNORECASE)
 
 
@@ -542,20 +820,17 @@ def _label_runs(
     return runs
 
 
-def extract_fields_from_page(
-    words: Sequence[Word],
+def _scan_page(
+    lines: Sequence[Sequence[Word]],
     document_type: str,
     convention: LineBoxConvention,
-    field_mapper: FieldMapper = deterministic_mapper,
-) -> tuple[dict[str, dict[str, Any]], list[str]]:
-    """Label-anchored extraction for one page.
-
-    Returns (fields keyed by name, labels we could not map).
-    """
-    lines = group_lines(words)
-    found: dict[str, dict[str, Any]] = {}
+    field_mapper: FieldMapper,
+    found: dict[str, dict[str, Any]],
+    is_exact: bool,
+) -> list[str]:
+    """One pass of label-anchored extraction. Fills `found` in place, returns unmapped."""
     unmapped: list[str] = []
-
+    anchors = _label_anchors(lines, document_type, field_mapper)
     for line in lines:
         label_runs = _label_runs(line, document_type, field_mapper)
         if not label_runs:
@@ -572,12 +847,113 @@ def extract_fields_from_page(
                 continue  # first occurrence wins; forms do not repeat labels
             column_right = starts[index + 1] if index + 1 < len(starts) else float("inf")
             resolved = _resolve_value(
-                lines, run, column_right, field_name, convention, is_exact=True
+                lines, run, column_right, field_name, convention, is_exact=is_exact
             )
+            # The column beneath the label is the pack's own layout and stays first. Only
+            # when it yields *nothing at all* do the two other placements get a turn, and
+            # each has to prove itself unambiguous on its own terms -- see `_side_by_side_value`
+            # and `_caption_value`. A label whose column value was found but did not parse
+            # returns an abstention, not None, and that abstention stands: we do not go
+            # hunting elsewhere on the page for a value we have already located and rejected.
+            if resolved is None:
+                resolved = _side_by_side_value(
+                    line, label_runs, index, column_right, field_name, convention, is_exact
+                )
+            if resolved is None:
+                resolved = _caption_value(
+                    lines, anchors, run, column_right, field_name, convention, is_exact
+                )
             if resolved is not None:
                 found[field_name] = resolved
+    return unmapped
 
+
+def _label_anchors(
+    lines: Sequence[Sequence[Word]],
+    document_type: str,
+    field_mapper: FieldMapper,
+) -> list[tuple[float, float]]:
+    """(baseline, x0) of every label run on the page, mapped or not.
+
+    Used only to answer one question -- "is this run of words already spoken for by a label
+    sitting above it?" -- so it deliberately includes labels we cannot map. An unmappable
+    label still owns the value underneath it, and that ownership is what blocks the caption
+    rule from stealing it.
+    """
+    return [
+        (run[0].baseline, run[0].x0)
+        for line in lines
+        for run in _label_runs(line, document_type, field_mapper)
+    ]
+
+
+def extract_fields_from_page(
+    words: Sequence[Word],
+    document_type: str,
+    convention: LineBoxConvention,
+    field_mapper: FieldMapper = deterministic_mapper,
+    fallback_mapper: FieldMapper | None = synonym_mapper,
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    """Label-anchored extraction for one page.
+
+    Returns (fields keyed by name, labels neither mapper could map).
+
+    Two passes, and the order is the whole safety argument. The first pass uses
+    `field_mapper` -- the pack's own exact vocabulary -- and is byte-for-byte the pass
+    this function has always made. The second pass runs `fallback_mapper` over the same
+    lines and may only fill fields the first pass **left empty**, because `found` carries
+    over and `field_name in found` short-circuits. A canonical label therefore always
+    beats a synonym no matter where the two sit on the page, so no field that resolves
+    today can be re-resolved to a different value tomorrow.
+
+    Everything the second pass does after naming a field is the unchanged code path: the
+    value must still sit in the column directly beneath the label, still within
+    `VALUE_Y_WINDOW`, still left-aligned to `VALUE_X_TOLERANCE`, and still parse as the
+    type the field requires. Widening the vocabulary moves no box and relaxes no geometry.
+
+    Pass 2 results carry `is_exact=False`, so they land at `certainty="low"` with the note
+    "label resolved by a non-exact mapper" -- a reader can see which fields were recovered
+    this way and which came from the pack's own words. Pass `fallback_mapper=None` to turn
+    the second pass off entirely and get the original behaviour for comparison.
+    """
+    lines = group_lines(words)
+    found: dict[str, dict[str, Any]] = {}
+
+    unmapped = _scan_page(
+        lines, document_type, convention, field_mapper, found, is_exact=True
+    )
+    if fallback_mapper is not None:
+        tracker = fallback_mapper if isinstance(fallback_mapper, _TrackingMapper) else None
+        before = set(found)
+        unmapped = _scan_page(
+            lines, document_type, convention, fallback_mapper, found, is_exact=False
+        )
+        if tracker is not None:
+            _retag_model_provenance(found, set(found) - before, tracker.from_model)
     return found, unmapped
+
+
+def _retag_model_provenance(
+    found: dict[str, dict[str, Any]],
+    newly_found: set[str],
+    named_by_model: set[str],
+) -> None:
+    """Rewrite the note on fields the *model* named, leaving synonym-named ones alone.
+
+    Only the note changes. The value, the box, the page and the certainty were all decided
+    by the unchanged geometry before this runs, so this cannot turn an abstention into an
+    answer or move a number -- it only records which of the two non-exact paths got there.
+    """
+    for name in newly_found & named_by_model:
+        field = found.get(name)
+        if not field:
+            continue
+        note = field.get("notes")
+        field["notes"] = (
+            note.replace(SYNONYM_NOTE, MODEL_MAPPER_NOTE)
+            if note and SYNONYM_NOTE in note
+            else " | ".join(filter(None, [note, MODEL_MAPPER_NOTE]))
+        )
 
 
 def _resolve_value(
@@ -641,6 +1017,196 @@ def _resolve_value(
         "high" if unambiguous else "low",
         source_text,
         notes,
+    )
+
+
+# --------------------------------------------------------------------------------------
+# Two other places a value is allowed to sit (rule CH-SAFETY-001 still holds)
+# --------------------------------------------------------------------------------------
+# The column-beneath-the-label rule above is the pack's own visual grammar, and against
+# documents that differ from the pack *only* in where the value sits it recovered 0 of 22
+# fields. Every label was recognised; there was simply nothing underneath it.
+#
+# Widening the geometry is a different kind of change from widening the vocabulary, and
+# more dangerous. A vocabulary miss abstains. A geometry miss can read the *wrong cell* --
+# find "GROSS PAY", look right, and pick up the neighbouring column's number. That failure
+# produces a confident wrong figure where the old code produced an honest blank, and one
+# wrong figure costs more than twenty abstentions.
+#
+# So each rule below fires only when its layout is unambiguous *by measurement*, and every
+# test is a refusal: more than one candidate, another label in the way, a gap too small to
+# be a column, a value already owned by another label -- any one of them and we abstain
+# exactly as before. Neither rule ever chooses between two candidates. That is the whole
+# safety argument, and it is why the earnings-TABLE layout is deliberately left unsolved:
+# see `_side_by_side_value` for what a table row does to these tests.
+
+
+def _build_value_field(
+    run: Sequence[Word],
+    field_name: str,
+    convention: LineBoxConvention,
+    is_exact: bool,
+    layout_note: str,
+) -> dict[str, Any] | None:
+    """Turn a located run into a field, or None if it does not parse as this field's type.
+
+    Returning None rather than an abstention matters: these rules are speculative, so a run
+    that fails to parse is evidence the geometry guess was wrong, and the caller should fall
+    through to the next rule (and ultimately to the ordinary "no label found" abstention)
+    rather than record this run as the located-but-unreadable value.
+    """
+    source_text = _join_run(run)
+    try:
+        value, clean = parse_value(field_name, source_text)
+    except ParseError:
+        return None
+    notes = layout_note
+    if not is_exact:
+        notes += " | label resolved by a non-exact mapper"
+    if not clean:
+        notes += " | value did not match the expected format for this field"
+    return _extracted_field(
+        field_name,
+        value,
+        run[0].page,
+        _run_box(run, convention),
+        "high" if (clean and is_exact) else "low",
+        source_text,
+        notes,
+    )
+
+
+def _side_by_side_value(
+    line: Sequence[Word],
+    label_runs: Sequence[Sequence[Word]],
+    index: int,
+    column_right: float,
+    field_name: str,
+    convention: LineBoxConvention,
+    is_exact: bool,
+) -> dict[str, Any] | None:
+    """Value on the label's own baseline, in a column to its right.
+
+    This is the most common pay stub layout in existence, and it is the one the pack does
+    not use. Three measurements have to agree before we read anything:
+
+    **One candidate.** The words between this label and the next label on the row must form
+    exactly one run. Two runs means two things sit in the cell and we cannot say which is
+    the value, so we abstain.
+
+    **No label in the way.** `column_right` is the next label's x0, so a table header row
+    (`EMPLOYEE | PAY DATE | REGULAR HOURS | ...`) leaves an empty span between neighbouring
+    headers and produces no candidate at all. This is the test that keeps the earnings-table
+    layout abstaining rather than pairing a header with whatever number is nearest.
+
+    **A column gap, not a word space.** The gap between the end of the label and the start of
+    the run must clear `SIDE_BY_SIDE_MIN_GAP`. Without it, prose that happens to open with a
+    known label ("PAY DATE has not been assigned yet") reads as a label-value pair and the
+    trailing words become the value. Free-text fields such as `person_name` and `address`
+    accept any string, so parsing would not catch it -- only the geometry can.
+    """
+    label_run = label_runs[index]
+    label_end = max(w.x1 for w in label_run)
+    label_words = {id(w) for run in label_runs for w in run}
+
+    right = [
+        w
+        for w in line
+        if w.x0 >= label_end and w.x0 < column_right - VALUE_X_TOLERANCE
+        and id(w) not in label_words
+    ]
+    if not right:
+        return None
+
+    runs = _split_runs(right)
+    if len(runs) != 1:
+        return None
+
+    run = runs[0]
+    if run[0].x0 - label_end < SIDE_BY_SIDE_MIN_GAP:
+        return None
+
+    return _build_value_field(
+        run, field_name, convention, is_exact,
+        "value read from the same line as its label, in the column to its right",
+    )
+
+
+def _caption_value(
+    lines: Sequence[Sequence[Word]],
+    label_anchors: Sequence[tuple[float, float]],
+    label_run: Sequence[Word],
+    column_right: float,
+    field_name: str,
+    convention: LineBoxConvention,
+    is_exact: bool,
+) -> dict[str, Any] | None:
+    """Value *above* its label, with the label used as a caption underneath it.
+
+    Looking upward is the most dangerous thing in this module, because in an ordinary
+    top-down form the line above a label is the *previous* label's value. Reading it would
+    shift every field up by one row and report a whole page of confident wrong answers --
+    the exact failure this codebase exists to avoid.
+
+    What makes it safe is the ownership test. A value in a top-down form has its own label
+    sitting directly above it, inside the same `VALUE_Y_WINDOW` and left-aligned to the same
+    tolerance. A caption layout's value has nothing above it at all. So before reading a run
+    that sits above a label, we ask whether some other label already owns it, and if anything
+    does, we abstain. In a top-down form that test fails for every row, and the rule never
+    fires. `_label_anchors` deliberately counts labels we could not map, so an unrecognised
+    label still shields its own value.
+
+    The remaining tests match `_resolve_value`: the run must be left-aligned with the label,
+    inside the label's column, and it must be the only candidate.
+    """
+    label_x0 = label_run[0].x0
+    label_baseline = label_run[0].baseline
+    near, far = VALUE_Y_WINDOW
+
+    candidates: list[list[Word]] = []
+    for line in lines:
+        delta = line[0].baseline - label_baseline  # positive == above the label
+        if not (near <= delta <= far):
+            continue
+        in_column = [
+            w
+            for w in line
+            if w.x0 >= label_x0 - VALUE_X_TOLERANCE and w.x0 < column_right - VALUE_X_TOLERANCE
+        ]
+        if not in_column:
+            continue
+        for run in _split_runs(in_column):
+            if abs(run[0].x0 - label_x0) <= VALUE_X_TOLERANCE:
+                candidates.append(run)
+
+    if len(candidates) != 1:
+        return None
+
+    run = candidates[0]
+    if _claimed_from_above(label_anchors, run):
+        return None
+
+    return _build_value_field(
+        run, field_name, convention, is_exact,
+        "value read from the line above its label, which is used as a caption beneath it",
+    )
+
+
+def _claimed_from_above(
+    label_anchors: Sequence[tuple[float, float]], run: Sequence[Word]
+) -> bool:
+    """Does some label sit directly above this run, in the position that would own it?
+
+    Same window and same alignment tolerance as `_resolve_value`, because this is asking the
+    inverse of the question `_resolve_value` asks. If the answer is yes, the run is another
+    field's value and the caption rule must not touch it.
+    """
+    near, far = VALUE_Y_WINDOW
+    x0 = run[0].x0
+    baseline = run[0].baseline
+    return any(
+        near <= (anchor_baseline - baseline) <= far and abs(anchor_x0 - x0) <= VALUE_X_TOLERANCE
+        for anchor_baseline, anchor_x0 in label_anchors
     )
 
 
@@ -711,6 +1277,7 @@ def extract_document(
     pdf_path: str | Path | bytes,
     document_type: str | None = None,
     field_mapper: FieldMapper = deterministic_mapper,
+    fallback_mapper: FieldMapper | None = synonym_mapper,
     convention: LineBoxConvention = LineBoxConvention(),
     reference_date: date = REFERENCE_DATE,
     window_days: int = CURRENCY_WINDOW_DAYS,
@@ -749,7 +1316,9 @@ def extract_document(
         for page_number, page in enumerate(pdf.pages, start=1):
             words = read_words(page, page_number)
             all_words.extend(words)
-            page_fields, _ = extract_fields_from_page(words, doc_type, convention, field_mapper)
+            page_fields, _ = extract_fields_from_page(
+                words, doc_type, convention, field_mapper, fallback_mapper
+            )
             for name, value in page_fields.items():
                 found.setdefault(name, value)
 
