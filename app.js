@@ -1108,8 +1108,11 @@
       }
     });
 
+    // `action` 이 빠져 있어서 이 버튼만 브라우저 기본 회색으로 그려졌다. 화면의 다른 주
+    // 행동 버튼 다섯 개는 전부 `action action--lead` 다. 그 결과 1단계에서 주 행동이
+    // 바로 위 파일 선택 버튼보다 약해 보여 위계가 뒤집혀 있었다.
     var submit = h("button", {
-      type: "submit", class: "action--lead",
+      type: "submit", class: "action action--lead",
       disabled: Source.live ? null : true,
       text: state.uploadBusy ? "Reading…" : "Read this document"
     });
