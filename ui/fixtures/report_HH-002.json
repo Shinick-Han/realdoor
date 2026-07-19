@@ -1,6 +1,6 @@
 {
  "household_id": "HH-002",
- "generated_at": "2026-07-19T05:44:43Z",
+ "generated_at": "2026-07-19T06:40:58Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
@@ -669,8 +669,8 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:89d7fa7a7f1c",
- "session_id": "7c4d93119b19",
+ "engine_version": "sha:a023f37c6936",
+ "session_id": "7f7ec51218e1",
  "plain": {
   "messages": [
    {
@@ -736,5 +736,28 @@
    "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
   },
   "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your pay stubs show different totals. One stub shows $960 and another shows $1,395. We used $960 as your regular pay, because the hours and the hourly rate on that stub add up to it, and we treated the difference as extra pay for one period rather than counting it across the year. If that extra pay comes every time, your yearly figure would be higher. Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say."
+ },
+ "confirmation": {
+  "confirmed": 0,
+  "corrected": 0,
+  "not_confirmed": 26,
+  "not_read": 1,
+  "fields": 27,
+  "seen_by_a_person": 0
+ },
+ "activity_log": {
+  "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+  "ruleset_version": "pack-v1/2026-05-01",
+  "engine_version": "sha:a023f37c6936",
+  "counts": {
+   "session_created": 1
+  },
+  "events": [
+   {
+    "n": 1,
+    "action": "session_created",
+    "what_happened": "This session was created"
+   }
+  ]
  }
 }

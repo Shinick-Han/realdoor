@@ -24,7 +24,7 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
    }
   },
   "answer_income": {
@@ -49,7 +49,7 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
    }
   },
   "refusal_decide_for_me": {
@@ -91,7 +91,7 @@ window.REALDOOR_FIXTURES = {
       "basis": "logic.constants.READINESS_STATUSES, read during this request"
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
     "plain": {
      "headline": "We get your file ready for the person who decides. We are not that person",
      "body": "What we do is make sure the housing worker who reads your file has everything they need the first time you hand it over. What we cannot do is tell you the outcome, and no software can: that call needs income checks, household proofs and status checks that are not in these papers. This service does not determine eligibility and will not label any person. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
@@ -124,7 +124,7 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
     "plain": {
      "headline": "We can only talk about your own file",
      "body": "This session holds your documents and nobody else's. We never show one person's papers to another person. That holds even if you ask us directly.",
@@ -167,7 +167,7 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
     "plain": {
      "headline": "We read that as text in your document, not as an order",
      "body": "Some documents contain sentences that try to tell this service what to do. We store that text and show it to you, and it changes nothing. The sums and the checks in this service are fixed code. No sentence in any document can reach them.",
@@ -200,7 +200,7 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+    "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
    }
   }
  },
@@ -270,7 +270,7 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -906,8 +906,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "7c4d93119b19",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "7f7ec51218e1",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -951,11 +951,34 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
    },
    "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker, who will read it and decide what happens next. Nothing is missing, out of date, or unclear enough to stop them starting, so you should not have to send the same thing twice. This does not tell you what they will say — that decision needs checks that are not in these papers, and no software can stand in for it. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 0,
+   "not_confirmed": 26,
+   "not_read": 0,
+   "fields": 26,
+   "seen_by_a_person": 0
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    }
+   ]
   }
  },
  "report_HH-001_after_rejected_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -1615,8 +1638,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "c0c8af8c4063",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "9319ab6a06cb",
   "plain": {
    "messages": [
     {
@@ -1702,11 +1725,43 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
    },
    "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your pay stubs show different totals. One stub shows $2,166 and another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it, and we treated the difference as extra pay for one period rather than counting it across the year. If that extra pay comes every time, your yearly figure would be higher. Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say. Check the pay stub dated 27 June 2026. You changed the total pay on this stub to $2,500, but its own hours and hourly rate, 76 hours at $28.50 an hour, come to $2,166. Because the two do not match, we left this stub out when we worked out your yearly income. Your change is saved, and a housing worker can see it. Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 1,
+   "not_confirmed": 25,
+   "not_read": 0,
+   "fields": 26,
+   "seen_by_a_person": 1
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1,
+    "field_corrected": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    },
+    {
+     "n": 2,
+     "action": "field_corrected",
+     "what_happened": "A value was corrected",
+     "document_id": "HH-001-D02",
+     "field": "gross_pay",
+     "evidence_kind": "corrected_by_renter"
+    }
+   ]
   }
  },
  "report_HH-001_after_size_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -2342,8 +2397,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "387212369b9b",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "9a45d04b5350",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -2387,11 +2442,43 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
    },
    "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker, who will read it and decide what happens next. Nothing is missing, out of date, or unclear enough to stop them starting, so you should not have to send the same thing twice. This does not tell you what they will say — that decision needs checks that are not in these papers, and no software can stand in for it. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 1,
+   "not_confirmed": 25,
+   "not_read": 0,
+   "fields": 26,
+   "seen_by_a_person": 1
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1,
+    "field_corrected": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    },
+    {
+     "n": 2,
+     "action": "field_corrected",
+     "what_happened": "A value was corrected",
+     "document_id": "HH-001-D01",
+     "field": "household_size",
+     "evidence_kind": "corrected_by_renter"
+    }
+   ]
   }
  },
  "report_HH-002": {
   "household_id": "HH-002",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -3060,8 +3147,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "7c4d93119b19",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "7f7ec51218e1",
   "plain": {
    "messages": [
     {
@@ -3127,11 +3214,34 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
    },
    "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your pay stubs show different totals. One stub shows $960 and another shows $1,395. We used $960 as your regular pay, because the hours and the hourly rate on that stub add up to it, and we treated the difference as extra pay for one period rather than counting it across the year. If that extra pay comes every time, your yearly figure would be higher. Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 0,
+   "not_confirmed": 26,
+   "not_read": 1,
+   "fields": 27,
+   "seen_by_a_person": 0
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    }
+   ]
   }
  },
  "report_HH-003": {
   "household_id": "HH-003",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -3799,8 +3909,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "7c4d93119b19",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "7f7ec51218e1",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -3852,11 +3962,34 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
    },
    "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker, who will read it and decide what happens next. Nothing is missing, out of date, or unclear enough to stop them starting, so you should not have to send the same thing twice. This does not tell you what they will say — that decision needs checks that are not in these papers, and no software can stand in for it. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 0,
+   "not_confirmed": 26,
+   "not_read": 0,
+   "fields": 26,
+   "seen_by_a_person": 0
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    }
+   ]
   }
  },
  "report_HH-004": {
   "household_id": "HH-004",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -4593,8 +4726,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "7c4d93119b19",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "7f7ec51218e1",
   "plain": {
    "messages": [
     {
@@ -4711,11 +4844,34 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
    },
    "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Nothing in your file backs up your gig earnings. Your gig earnings statement covers June 2026, and it is the only paper you gave us that shows this money, so nothing independent confirms the amount. We still counted this money in full in your yearly total, and told the housing worker that no other paper supports it. Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates. Your gig earnings statement does not show a full date. It shows June 2026, but not which day of the month. We need the day to tell whether the paper is recent enough, and we will not guess one, because a guessed date could put your paper on the wrong side of the line. Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 0,
+   "not_confirmed": 27,
+   "not_read": 0,
+   "fields": 27,
+   "seen_by_a_person": 0
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    }
+   ]
   }
  },
  "report_HH-005": {
   "household_id": "HH-005",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
@@ -5359,8 +5515,8 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "7c4d93119b19",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "7f7ec51218e1",
   "plain": {
    "messages": [
     {
@@ -5426,11 +5582,34 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
    },
    "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your employer's letter is too old to use. It is dated 14 April 2026, which is before the cut-off. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it. Ask your employer for a new letter dated 19 May 2026 or later, then upload it."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 0,
+   "not_confirmed": 25,
+   "not_read": 1,
+   "fields": 26,
+   "seen_by_a_person": 0
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    }
+   ]
   }
  },
  "report_HH-006": {
   "household_id": "HH-006",
-  "generated_at": "2026-07-19T05:44:43Z",
+  "generated_at": "2026-07-19T06:40:58Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
@@ -6123,8 +6302,8 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:89d7fa7a7f1c",
-  "session_id": "7c4d93119b19",
+  "engine_version": "sha:a023f37c6936",
+  "session_id": "7f7ec51218e1",
   "plain": {
    "messages": [],
    "abstentions": [],
@@ -6176,10 +6355,33 @@ window.REALDOOR_FIXTURES = {
     "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
    },
    "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker, who will read it and decide what happens next. Nothing is missing, out of date, or unclear enough to stop them starting, so you should not have to send the same thing twice. This does not tell you what they will say — that decision needs checks that are not in these papers, and no software can stand in for it. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+  },
+  "confirmation": {
+   "confirmed": 0,
+   "corrected": 0,
+   "not_confirmed": 27,
+   "not_read": 0,
+   "fields": 27,
+   "seen_by_a_person": 0
+  },
+  "activity_log": {
+   "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+   "ruleset_version": "pack-v1/2026-05-01",
+   "engine_version": "sha:a023f37c6936",
+   "counts": {
+    "session_created": 1
+   },
+   "events": [
+    {
+     "n": 1,
+     "action": "session_created",
+     "what_happened": "This session was created"
+    }
+   ]
   }
  },
  "selftest": {
-  "generated_at": "2026-07-19T05:44:45Z",
+  "generated_at": "2026-07-19T06:41:01Z",
   "sections": {
    "extraction": {
     "status": "measured",

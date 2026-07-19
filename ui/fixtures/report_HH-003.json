@@ -1,6 +1,6 @@
 {
  "household_id": "HH-003",
- "generated_at": "2026-07-19T05:44:43Z",
+ "generated_at": "2026-07-19T06:40:58Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "READY_TO_REVIEW",
@@ -668,8 +668,8 @@
  ],
  "abstentions": [],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:89d7fa7a7f1c",
- "session_id": "7c4d93119b19",
+ "engine_version": "sha:a023f37c6936",
+ "session_id": "7f7ec51218e1",
  "plain": {
   "messages": [],
   "abstentions": [],
@@ -721,5 +721,28 @@
    "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
   },
   "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker, who will read it and decide what happens next. Nothing is missing, out of date, or unclear enough to stop them starting, so you should not have to send the same thing twice. This does not tell you what they will say — that decision needs checks that are not in these papers, and no software can stand in for it. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+ },
+ "confirmation": {
+  "confirmed": 0,
+  "corrected": 0,
+  "not_confirmed": 26,
+  "not_read": 0,
+  "fields": 26,
+  "seen_by_a_person": 0
+ },
+ "activity_log": {
+  "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+  "ruleset_version": "pack-v1/2026-05-01",
+  "engine_version": "sha:a023f37c6936",
+  "counts": {
+   "session_created": 1
+  },
+  "events": [
+   {
+    "n": 1,
+    "action": "session_created",
+    "what_happened": "This session was created"
+   }
+  ]
  }
 }

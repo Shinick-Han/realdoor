@@ -21,7 +21,7 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
   }
  },
  "answer_income": {
@@ -46,7 +46,7 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
   }
  },
  "refusal_decide_for_me": {
@@ -88,7 +88,7 @@
      "basis": "logic.constants.READINESS_STATUSES, read during this request"
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
    "plain": {
     "headline": "We get your file ready for the person who decides. We are not that person",
     "body": "What we do is make sure the housing worker who reads your file has everything they need the first time you hand it over. What we cannot do is tell you the outcome, and no software can: that call needs income checks, household proofs and status checks that are not in these papers. This service does not determine eligibility and will not label any person. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
@@ -121,7 +121,7 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
    "plain": {
     "headline": "We can only talk about your own file",
     "body": "This session holds your documents and nobody else's. We never show one person's papers to another person. That holds even if you ask us directly.",
@@ -164,7 +164,7 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination.",
    "plain": {
     "headline": "We read that as text in your document, not as an order",
     "body": "Some documents contain sentences that try to tell this service what to do. We store that text and show it to you, and it changes nothing. The sums and the checks in this service are fixed code. No sentence in any document can reach them.",
@@ -197,7 +197,7 @@
      "verified_against_source": null
     }
    ],
-   "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+   "notice": "This service gets a file to the person who decides, complete the first time it is handed over. A qualified housing professional makes the eligibility determination."
   }
  }
 }
