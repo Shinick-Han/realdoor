@@ -540,6 +540,17 @@
     [/^The remaining (\d+) open item\(s\) are listed in full below\.$/, function (m) {
       return "남은 " + m[1] + "개 항목은 아래에 전부 나열되어 있습니다.";
     }],
+    // 한 항목이 여러 건을 대표할 때, 위의 개수와 어긋나 보이지 않도록 그 사실을 말한다.
+    [/^Counted above as (\d+) entries\. They are the same item, and each one is kept in full under Technical details\.$/,
+      function (m) {
+        return "위 개수에는 " + m[1] + "건으로 잡혀 있습니다. 같은 항목이며, 각 건은 " +
+               "기술 세부정보에 그대로 보관되어 있습니다.";
+      }],
+    [/^(\d+) separate checks raised this one item\. Each check is listed in full under Technical details\.$/,
+      function (m) {
+        return "서로 다른 검사 " + m[1] + "건이 이 한 항목을 제기했습니다. 각 검사는 " +
+               "기술 세부정보에 전부 나열되어 있습니다.";
+      }],
     [/^Abstentions \((\d+)\)$/, function (m) { return "기권 (" + m[1] + ")"; }],
     [/^Reasons this needs review \((\d+)\)$/, function (m) {
       return "검토가 필요한 이유 (" + m[1] + ")";
