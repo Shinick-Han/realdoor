@@ -35,7 +35,7 @@ colorTo: gray
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: Ready, not eligible — application-readiness copilot for renters
+short_description: Ready, not eligible — application readiness for renters
 ---
 YAML
 

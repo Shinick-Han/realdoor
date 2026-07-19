@@ -76,8 +76,9 @@ def main() -> int:
     records = build_all()
     passed, failures = validate(records)
 
-    print(f"제출 레코드 {len(records)}건 · 스키마 통과 {passed} · 실패 {len(failures)}")
-    print(f"스키마: {SCHEMA_PATH.relative_to(ROOT).as_posix()}")
+    print(f"submission records {len(records)} · schema pass {passed} · "
+          f"fail {len(failures)}")
+    print(f"schema: {SCHEMA_PATH.relative_to(ROOT).as_posix()}")
     for line in failures:
         print(f"  ✗ {line}")
 
@@ -95,7 +96,8 @@ def main() -> int:
         combined.write_text(
             "\n".join(json.dumps(rec, ensure_ascii=False) for _, rec in records) + "\n",
             encoding="utf-8")
-        print(f"기록: {OUT_DIR.relative_to(ROOT).as_posix()}/ ({len(records)}개 + jsonl)")
+        print(f"written: {OUT_DIR.relative_to(ROOT).as_posix()}/ "
+              f"({len(records)} files + jsonl)")
 
     return 1 if failures else 0
 

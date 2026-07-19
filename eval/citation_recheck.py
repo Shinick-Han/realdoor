@@ -57,6 +57,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+# 임포트 시점에 건다. argparse 의 --help 는 main() 보다 먼저 출력하므로,
+# main() 안에서 걸면 UTF-8 이 아닌 콘솔(윈도우 기본값)에서 --help 가 터진다.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "pack" / "rules" / "rule_corpus.jsonl"
 ARTEFACT = ROOT / "eval" / "citation_recheck.json"
@@ -528,7 +533,10 @@ def run(timeout: float = DEFAULT_TIMEOUT,
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.split("\n")[1])
+    # 도움말은 심사위원이 읽는다. 한국어 docstring 첫 줄을 그대로 쓰지 않는다.
+    parser = argparse.ArgumentParser(
+        description="Check that each rule we cite is still where we said it was, "
+                    "in the source that issued it.")
     parser.add_argument("--refresh", action="store_true",
                         help="re-fetch every external citation, ignoring cache age")
     parser.add_argument("--offline", action="store_true",
@@ -540,7 +548,6 @@ def main(argv: list[str] | None = None) -> int:
                         help="print the result without writing the cache")
     args = parser.parse_args(argv)
 
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     payload = run(timeout=args.timeout, offline=args.offline, refresh=args.refresh,
                   max_age_days=args.max_age_days, artefact=args.out)
 

@@ -43,7 +43,7 @@ def extract_all() -> list[dict]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", choices=["gold", "real"], default="real")
-    ap.add_argument("--household", help="한 세대만")
+    ap.add_argument("--household", help="only this household")
     ap.add_argument("--out", type=Path)
     a = ap.parse_args()
 
@@ -60,9 +60,9 @@ def main() -> int:
         reports[hid] = build_report(houses[hid],
                                     required_document_types(hid, checklists))
 
-    print(f"{'세대':<10}{'상태':<18}{'연환산소득':>12}{'한도':>10}"
-          f"{'비교':<22}{'기권':>5}  사유")
-    print("-" * 108)
+    print(f"{'household':<10}{'status':<18}{'income':>12}{'limit':>10}"
+          f"  {'comparison':<20}{'abstained':>10}  reason")
+    print("-" * 118)
     for hid, r in reports.items():
         d = r if isinstance(r, dict) else r.__dict__
         status = d.get("readiness_status", "?")
@@ -80,12 +80,12 @@ def main() -> int:
         print(f"{hid:<10}{status:<18}"
               f"{(f'{inc:,.0f}' if inc is not None else '-'):>12}"
               f"{(f'{thr:,.0f}' if thr else '-'):>10}"
-              f"  {cmp_:<20}{abst:>5}  {', '.join(r for r in reasons if r)[:34]}")
+              f"  {cmp_:<20}{abst:>10}  {', '.join(r for r in reasons if r)[:34]}")
 
     if a.out:
         a.out.write_text(json.dumps(reports, ensure_ascii=False, indent=1, default=str),
                          encoding="utf-8")
-        print(f"\n저장: {a.out}")
+        print(f"\nwritten: {a.out}")
     return 0
 
 

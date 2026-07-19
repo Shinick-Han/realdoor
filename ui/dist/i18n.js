@@ -322,6 +322,16 @@
       "이 세션을 지우셨기 때문에, 질문에 답할 것이 남아 있지 않습니다. 다시 시작하면 세대 자료를 팩에서 새 세션으로 불러옵니다.",
     "To ask in your own words, use the box at the foot of this page. It is on every screen, and its answers open in the same place these ones do.":
       "자기 말로 물어보시려면 이 페이지 맨 아래의 입력 상자를 쓰세요. 그 상자는 모든 화면에 있고, 그 답변도 여기 답변과 같은 자리에 열립니다.",
+
+    // ── 화면 아래에 고정된 질문 상자(dock) ─────────────────────────────────
+    // 위 두 문장은 상자가 "페이지 맨 아래"에 있던 시절의 것이다. 영어가 바뀌면 사전
+    // 키가 빗나가 저절로 영어로 남으므로 낡은 한국어가 화면에 뜨지는 않지만, 새 키로
+    // 옮겨 적는다. 옛 키는 지우지 않는다 — 지우는 것은 "추가만" 이 아니다.
+    "To ask in your own words, use the box pinned at the bottom of the screen. It is there on every step, and its answers open in the same place these ones do.":
+      "자기 말로 물어보시려면 화면 아래에 고정된 입력 상자를 쓰세요. 모든 단계에 있고, 그 답변도 여기 답변과 같은 자리에 열립니다.",
+    "No question has been asked yet. The box to ask one is pinned at the bottom of the screen; the answer appears here, in this same place on every screen, and the page moves you to it when it arrives.":
+      "아직 아무 질문도 하지 않으셨습니다. 물어보는 상자는 화면 아래에 고정되어 있고, 답변은 여기, 모든 화면에서 같은 자리에 나타나며, 답변이 오면 화면이 그리로 옮겨 드립니다.",
+    "Build details": "빌드 정보",
     "Then open http://127.0.0.1:8077 and ask from any screen.":
       "그런 다음 http://127.0.0.1:8077 을 열면 어느 화면에서든 물어보실 수 있습니다.",
     "Without a server, the questions this build did record can still be asked from step 3, and their answers open here.":
@@ -342,6 +352,51 @@
     "No answer is given for this question.": "이 질문에는 답을 내지 않습니다.",
     "What would resolve it:": "무엇이 있으면 풀리는지:",
     "Response kind:": "응답 종류:",
+
+    // ── 중간 계층: 시스템이 질문을 **해석해서** 고른 답 ─────────────────────
+    // 확신 어휘를 쓰지 않는다. "정확히 맞췄다"도 "틀렸다"도 아니고 "이렇게 읽었다"다.
+    // gloss 는 API 가 보내는 영어 조각이라 아래 따로 옮긴다 — 옮기지 못한 것은
+    // 영어로 남고, 그게 지어내는 것보다 낫다.
+    "Answer, from how we read your question": "답변 — 질문을 이렇게 읽고 드린 답입니다",
+    "How we read your question.": "질문을 이렇게 읽었습니다.",
+    "You did not use one of the wordings this service recognises exactly, so it worked out what you were most likely asking and answered that.":
+      "이 서비스가 정확히 알아듣는 표현이 아니어서, 무엇을 물으신 것인지 헤아려 그 질문에 답했습니다.",
+    "We read it as a question about": "다음에 대한 질문으로 읽었습니다:",
+    "We cannot put that reading into a short phrase here.":
+      "그 해석을 여기에 짧은 말로 옮기지는 못합니다.",
+    "Your wording also sat close to several other questions this service answers, and it could not tell them apart. Take this as our best attempt at your question rather than a settled answer to it.":
+      "게다가 이 표현은 이 서비스가 답하는 다른 몇 가지 질문과도 가까워서, 그것들과 구분하지 못했습니다. 확정된 답이 아니라 질문에 대한 최선의 시도로 읽어 주세요.",
+    "If that is not what you meant, ask again in different words, or use one of the recorded questions on step 3, where the wording is fixed and nothing has to be worked out.":
+      "뜻하신 바가 아니라면 다른 표현으로 다시 물어보시거나, 3단계의 기록된 질문을 쓰세요. 그쪽은 표현이 정해져 있어 헤아릴 것이 없습니다.",
+    "Ask again in different words": "다른 표현으로 다시 묻기",
+    // Technical details 안. 값(경로 이름·의도 이름)은 .mono 라서 번역되지 않는다.
+    "Routed by:": "어느 층이 잡았는지:",
+    "· intent:": "· 의도:",
+    "Shape gate separated this intent:": "형태 게이트가 이 의도를 구분했는지:",
+    ". Shares an answer profile with:": ". 같은 답 프로파일을 공유하는 것:",
+
+    // gloss — api/route_llm.py 의 의도 표에서 오는 사람 말 조각.
+    "the income limit figure for a household size": "세대 인원수에 해당하는 소득 상한 금액",
+    "how a household's income adds up over a year": "한 세대의 소득이 1년 동안 어떻게 합산되는지",
+    "how an income sits next to the limit figure": "소득이 상한 금액과 견주어 어디쯤인지",
+    "which documents are present, missing or expired": "어떤 서류가 있고, 없고, 기한이 지났는지",
+    "what this service is and is not allowed to state": "이 서비스가 말할 수 있는 것과 없는 것",
+    "the date the limit figures took effect": "상한 금액이 시행된 날짜",
+    "whether a unit is open, vacant or on a waitlist": "세대가 비어 있는지, 대기자 명단인지",
+    "address geocoding precision codes": "주소 좌표 변환의 정밀도 코드",
+    "text inside an uploaded document that reads as a command": "올린 문서 안에 명령처럼 적힌 문구",
+    "the status of the 60-day document freshness convention": "60일 최신성 관행의 지위",
+    "the federal statute the program rests on": "이 제도가 근거하는 연방 법률",
+    "asking this service for a program determination": "이 서비스에 제도상의 판정을 요구하는 것",
+    "asking to infer a protected characteristic": "보호받는 특성을 추론해 달라는 요구",
+    "a document that is out of date": "기한이 지난 서류",
+    "two figures that do not reconcile": "서로 맞지 않는 두 수치",
+    "a malformed bounding box or schema error": "잘못된 좌표 상자나 스키마 오류",
+    "a household size outside the supplied table": "제공된 표에 없는 세대 인원수",
+    "a self-declared or unsigned figure": "본인이 적었거나 서명이 없는 수치",
+    "a statement offered without a source or page": "출처나 쪽 표시 없이 나온 진술",
+    "using figures from a different year": "다른 연도의 수치를 쓰는 것",
+    "what the dataset does and does not contain": "이 데이터셋에 무엇이 들어 있고 없는지",
     "Citations": "인용",
     "Citations: none": "인용: 없음",
     "No rule is cited because no rule claim was made. An uncited claim would be the thing this product exists to avoid.":

@@ -71,8 +71,8 @@ def _require(var: str) -> str:
     v = os.environ.get(var)
     if not v:
         raise RuntimeError(
-            f"{var} 미설정. setx {var} \"...\" 로 등록하고 새 셸을 열어라. "
-            f"키를 파일에 쓰지 마라."
+            f"{var} is not set. Set it in the environment and open a new shell — "
+            f"on Windows: setx {var} \"...\". Never write a key into a file in this repo."
         )
     return v
 
@@ -91,7 +91,7 @@ def search(query: str, max_results: int = 5, depth: str = "advanced",
         _log({"provider": "tavily", "cached": True, "key": k, "query": query[:120]})
         return hit
     if OFFLINE:
-        raise CacheMiss(f"OFFLINE인데 캐시 없음: search({query[:60]!r})")
+        raise CacheMiss(f"offline, and this call is not in the cache: search({query[:60]!r})")
 
     from tavily import TavilyClient
     client = TavilyClient(api_key=_require("TAVILY_API_KEY"))
@@ -124,7 +124,7 @@ def complete(instruction: str, content: str = "", *, model: str = "gpt-4o-mini",
         _log({"provider": "openai", "cached": True, "key": k, "model": model})
         return hit
     if OFFLINE:
-        raise CacheMiss(f"OFFLINE인데 캐시 없음: complete({instruction[:60]!r})")
+        raise CacheMiss(f"offline, and this call is not in the cache: complete({instruction[:60]!r})")
 
     from openai import OpenAI
     client = OpenAI(api_key=_require("OPENAI_API_KEY"))
@@ -168,7 +168,7 @@ def narrate(text: str, out_path: str | Path,
         _log({"provider": "elevenlabs", "cached": True, "key": k})
         return out_path
     if OFFLINE:
-        raise CacheMiss("OFFLINE인데 나레이션 캐시 없음")
+        raise CacheMiss("offline, and this narration is not in the cache")
 
     import requests
     r = requests.post(

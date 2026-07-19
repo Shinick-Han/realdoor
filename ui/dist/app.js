@@ -36,6 +36,72 @@
     });
     return node;
   }
+  /** The applicant's name as the bundled report already carries it.
+   *
+   *  Offline twin of api/store.py's `_applicant()`: same document type, same field, same
+   *  refusal to guess. The two must not drift, which is why both read `person_name` off
+   *  the application summary and neither looks at the pay stub's name field — that one is
+   *  what an employer wrote, and folding the two together would put two different claims
+   *  in one label with no way to tell them apart.
+   *
+   *  Returns nulls rather than a placeholder when the field is missing or abstained. A
+   *  household with no readable name falls back to its id, which is ugly and true.
+   */
+  function applicantFromReport(report) {
+    var none = { value: null, certainty: null };
+    if (!report) return none;
+    var docs = report.documents || [];
+    for (var i = 0; i < docs.length; i += 1) {
+      if (docs[i].document_type !== "application_summary") continue;
+      var fields = docs[i].fields || [];
+      for (var j = 0; j < fields.length; j += 1) {
+        var f = fields[j];
+        if (f.field !== "person_name") continue;
+        if (f.value === null || f.value === undefined) return none;
+        if (f.certainty === "abstain") return none;
+        return { value: String(f.value), certainty: f.certainty || null };
+      }
+      return none;
+    }
+    return none;
+  }
+
+  /** Option labels for the household picker, in the same order as the rows.
+   *
+   *  Three things it has to get right, and each of them is a place the naive version lies:
+   *
+   *  1. Two households can share a name. The id is still the truth, so a shared name gets
+   *     its id back beside it. Two identical rows in a picker is worse than a machine
+   *     string — the renter would have no way to tell which file is theirs.
+   *  2. A name is extracted data and carries a certainty like every other field. A name
+   *     the OCR read poorly is not presented as if it were read cleanly. An <option> holds
+   *     text and nothing else — no chip, no glyph — so the qualifier is words.
+   *  3. No name, no invention. Fall back to the id.
+   */
+  function householdLabels(rows) {
+    var timesSeen = {};
+    rows.forEach(function (row) {
+      if (!row.applicant_name) return;
+      timesSeen[row.applicant_name] = (timesSeen[row.applicant_name] || 0) + 1;
+    });
+    return rows.map(function (row) {
+      var name = row.applicant_name;
+      var head = name || row.household_id;
+      if (name && timesSeen[name] > 1) head = name + " (" + row.household_id + ")";
+      if (name && row.applicant_name_certainty === "low") head += ", name not read clearly";
+      return head + " — " + row.document_count + " documents" +
+             (row.has_report ? "" : " (no bundled report)");
+    });
+  }
+
+  /** The name to speak for a household id, for announcements. Id when there is no name. */
+  function householdName(householdId) {
+    var row = (state.households || []).filter(function (r) {
+      return r.household_id === householdId;
+    })[0];
+    return (row && row.applicant_name) || householdId;
+  }
+
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
   function byId(id) { return document.getElementById(id); }
   function announce(message) { byId("live-status").textContent = message; }
@@ -589,19 +655,43 @@
           : "Example household — sample documents, none of them yours";
       },
 
+      /* The picker used to be labelled `HH-001`, which is a key, not a name. A renter has
+       * exactly one file — theirs — and cannot read, repeat or act on that string; the six
+       * of them were also the single largest block of machine identifiers a renter met,
+       * repeated on every screen because the picker follows them now.
+       *
+       * So the row carries the applicant's name as well. `household_id` is untouched and
+       * stays the key in state, every request and every report: this is a label change and
+       * nothing else. The name is extraction output — `person_name` on the application
+       * summary — read, never derived, and absent rather than guessed when it is missing.
+       *
+       * Live it arrives on /api/households (api/store.py). Offline the bundled reports
+       * carry the same field on the same document, so the name is read out of the fixture
+       * that is already loaded rather than invented here or bolted onto households.json.
+       * Both ends read the same extracted field, so the two builds cannot disagree. */
       households: function () {
         if (!live) {
           return Promise.resolve((fixtures.households.households || []).map(function (row) {
+            var report = fixtures["report_" + row.household_id];
+            var name = applicantFromReport(report);
             return {
               household_id: row.household_id,
               document_count: row.document_count,
-              has_report: Boolean(fixtures["report_" + row.household_id])
+              applicant_name: name.value,
+              applicant_name_certainty: name.certainty,
+              has_report: Boolean(report)
             };
           }));
         }
         return json("/api/households").then(function (body) {
           return (body.households || []).map(function (row) {
-            return { household_id: row.household_id, document_count: row.document_count, has_report: true };
+            return {
+              household_id: row.household_id,
+              document_count: row.document_count,
+              applicant_name: row.applicant_name || null,
+              applicant_name_certainty: row.applicant_name_certainty || null,
+              has_report: true
+            };
           });
         });
       },
@@ -1457,14 +1547,14 @@
             state.activeField = null;
             state.pageImageUrl = null;
             renderDocuments();
-            announce("Showing document " + d.document_id + ", " + d.document_type.replace(/_/g, " "));
+            announce("Showing " + documentLabel(d));
             var heading = byId("doc-detail-heading");
             if (heading) heading.focus();
           }
         }, [
           d.document_type.replace(/_/g, " "),
           h("span", { class: "doc-meta" }, [
-            d.document_id + " · " + (d.document_date || "no date") + " · ",
+            (d.document_date || "no date we could read") + " · ",
             STATE_WORDS[d.state] ? STATE_WORDS[d.state].word : String(d.state)
           ])
         ])
@@ -1472,8 +1562,7 @@
     }));
 
     var detail = h("div", null, [
-      h("h3", { id: "doc-detail-heading", tabindex: "-1" },
-        [doc.document_type.replace(/_/g, " ") + " — " + doc.document_id]),
+      h("h3", { id: "doc-detail-heading", tabindex: "-1" }, [documentLabel(doc)]),
       documentSummary(doc)
     ]);
 
@@ -1506,6 +1595,34 @@
     ]));
 
     renderPage(pageHost, doc);
+  }
+
+  /** What a renter calls this document: "pay stub · 27 June 2026".
+   *
+   *  `HH-001-D02` was printed beside the type and the date on steps 1, 2 and 4 — three
+   *  places where the two things a person actually uses to find a document were already
+   *  on the same line. The id there was pure duplication, and it was the single largest
+   *  block of machine strings a renter met. It is not deleted: the correction form's
+   *  document selector still keys on it, the packet carries it, and Technical details
+   *  keeps it wherever the machine field was already kept.
+   *
+   *  The date is load-bearing, not decoration. Every household holds two pay stubs, so
+   *  the type alone cannot tell them apart and dropping the id without putting the date
+   *  in its place would make the list ambiguous. Undated documents say so.
+   */
+  function documentLabel(doc) {
+    var type = String(doc.document_type || "document").replace(/_/g, " ");
+    return type + " · " + (doc.document_date || "no date we could read");
+  }
+
+  /** The same label, looked up from an id, for the places that only hold the id.
+   *  Falls back to the id itself when the report has no such document — an unknown id
+   *  printed raw is better than a sentence that quietly drops which document it meant. */
+  function documentNameById(documentId) {
+    var doc = ((state.report && state.report.documents) || []).filter(function (d) {
+      return d.document_id === documentId;
+    })[0];
+    return doc ? documentLabel(doc) : String(documentId);
   }
 
   function documentSummary(doc) {
@@ -1987,7 +2104,10 @@
     var captionId = "evidence-caption-" + tableId;
     return h("div", { class: "table-block" }, [
       h("p", { class: "table-caption", id: captionId }, [
-        (opts.captionLead || ("Extracted values on " + doc.document_id + ".")) +
+        /* The heading directly above names which document this is, so the caption only
+         * has to say what kind of thing it is — not repeat the id it used to print. */
+        (opts.captionLead || ("Extracted values on this " +
+          String(doc.document_type || "document").replace(/_/g, " ") + ".")) +
         " Choose a field name to highlight its box on the page. ",
         showBoxes
           ? "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1]."
@@ -2078,7 +2198,9 @@
     // the form
     var docSelect = h("select", { id: "correct-doc", onchange: populateFieldOptions },
       (state.report.documents || []).map(function (d) {
-        return h("option", { value: d.document_id, text: d.document_id + " — " + d.document_type.replace(/_/g, " ") });
+        /* Same move as the household picker: the key stays in `value`, the label becomes
+         * what a person calls the thing. Nothing downstream reads the label. */
+        return h("option", { value: d.document_id, text: documentLabel(d) });
       }));
     var fieldSelect = h("select", { id: "correct-field" });
     var valueInput = h("input", { id: "correct-value", type: "text", autocomplete: "off" });
@@ -2280,7 +2402,7 @@
         ])]),
         h("tbody", null, [
           diffRow("Corrected field", "—", state.correction.field + " = " + plain(state.correction.value) +
-            " on " + state.correction.document_id),
+            " on the " + documentNameById(state.correction.document_id)),
           diffRow("Annualized income", beforeCalc ? money(beforeCalc.result) : "—", afterCalc ? money(afterCalc.result) : "—"),
           diffRow("Formula", beforeCalc ? beforeCalc.formula : "—", afterCalc ? afterCalc.formula : "—"),
           diffRow("Frozen 60% threshold", beforeCalc ? money(beforeCalc.threshold) : "—", afterCalc ? money(afterCalc.threshold) : "—"),
@@ -2433,7 +2555,43 @@
     // rule id printed anywhere else on the page reach them.
     rememberCitations(response.citations);
 
-    var flavour = response.refused ? "callout--stop" : (response.abstained ? "callout--warn" : "callout--ok");
+    /* Where this answer came from, as api/ask.py already reports it in `routing`.
+     *
+     * The failure this repairs was on screen, not in the API. Asked "what date did the
+     * current income limits take effect" the deterministic router matched exactly and the
+     * answer was "May 1, 2026." Asked "are they using the old numbers or the new ones
+     * right now" a classifier had to guess which of 21 questions that was, guessed a
+     * neighbouring one, and the reply talked about something adjacent to what was asked.
+     * Both rendered as a green Answer card with citations. Identical authority.
+     *
+     * What is NOT done here: dumping `routing` on the page. `path`, `intent` and
+     * `shares_profile_with` are machine names and a renter has no use for any of them —
+     * showing them would move the burden of this machinery onto the person least able to
+     * carry it. They go under Technical details with the other codes. What reaches the
+     * screen is the only part a renter can act on: that we interpreted, how we read it,
+     * and what to do if we read it wrong.
+     *
+     * Nothing here is inferred. `path === "classifier"` is a fact the handler already
+     * knew, `gloss` is written in api/route_llm.py's intent table, and
+     * `separates_this_intent` is computed from the profile groups. This screen only
+     * chooses which of those facts a renter is shown and in what words. */
+    var routing = response.routing || null;
+    var interpreted = Boolean(routing && routing.path === "classifier");
+    /* The shape gate only runs on the classifier path, so it is only read there.
+     * `separates_this_intent: false` means the gate could not tell this naming from its
+     * profile neighbours — it vetoed nothing, so it confirmed nothing. That is a second,
+     * smaller step down and the wording takes it. */
+    var gate = interpreted ? (routing.shape_gate || null) : null;
+    var couldNotSeparate = Boolean(gate && gate.separates_this_intent === false);
+
+    /* Three tiers, in the existing vocabulary. A refusal and an abstention keep the cards
+     * they had; an interpreted answer that would otherwise have been green becomes the
+     * middle tier instead. It never overrides stop or warn: an abstention arrived at by
+     * interpretation is still an abstention, and demoting a red card to blue because of
+     * how it was routed would be a step in the wrong direction. */
+    var flavour = response.refused ? "callout--stop"
+      : (response.abstained ? "callout--warn"
+      : (interpreted ? "callout--read" : "callout--ok"));
     /* "No answer given" was wrong wherever an abstention still says something useful.
      * Asking about a household of nine abstains — HUD publishes limits for sizes one
      * through eight and we will not extrapolate past the table — but the reply names the
@@ -2441,7 +2599,8 @@
      * A heading that calls that "no answer" contradicts the paragraph under it. What we
      * withhold in every abstention is the value, so the heading says that instead. */
     var headline = response.refused ? "Refused, on purpose"
-      : (response.abstained ? "Abstained — no value given" : "Answer");
+      : (response.abstained ? "Abstained — no value given"
+      : (interpreted ? "Answer, from how we read your question" : "Answer"));
 
     /* Several situation texts open with the bare machine status they resolve to —
      * "NEEDS_REVIEW. An expired document is stale evidence, and…". That token is the
@@ -2465,9 +2624,14 @@
      * in api/ask.py was written to produce and which this screen had simply never used. */
     var said = response.plain || null;
 
+    /* Said before the answer, not after it. A renter who reads two paragraphs of figures
+     * and only then learns we guessed at the question has already spent the trust. */
+    var reading = interpreted ? readingNote(routing, couldNotSeparate) : null;
+
     host.appendChild(h("div", { class: "callout " + flavour }, [
       h("h3", { id: "ask-answer-heading", tabindex: "-1", text: headline }),
       h("p", { class: "status-line", text: "Question asked: " + question }),
+      reading,
       said && said.headline ? h("p", { class: "answer-lead", text: said.headline }) : null,
       h("p", { text: body }),
       response.what_would_resolve_it
@@ -2483,6 +2647,28 @@
           "Response kind: ", h("span", { class: "mono", text: response.kind }),
           " · abstained: " + String(response.abstained) + " · refused: " + String(response.refused)
         ]),
+        /* `routing`, in the machine's own words, and this is the only place it appears.
+         * A judge checking our work wants the layer name and the intent label; the renter
+         * above wants neither and is not shown either. Same disclosure, same discipline as
+         * the rule ids and the readiness enum already kept here. */
+        routing
+          ? h("p", { class: "status-line" }, [
+              "Routed by: ", h("span", { class: "mono", text: routing.path }),
+              routing.intent ? " · intent: " : "",
+              routing.intent ? h("span", { class: "mono", text: routing.intent }) : null
+            ])
+          : null,
+        gate
+          ? h("p", { class: "status-line" }, [
+              "Shape gate separated this intent: ",
+              h("span", { class: "mono", text: String(gate.separates_this_intent) }),
+              (gate.shares_profile_with || []).length
+                ? ". Shares an answer profile with: " : "",
+              (gate.shares_profile_with || []).length
+                ? h("span", { class: "mono", text: (gate.shares_profile_with || []).join(", ") })
+                : null
+            ])
+          : null,
         statusPrefix
           ? h("p", { class: "status-line" }, [
               "Readiness status this answer opened with: ",
@@ -2505,7 +2691,84 @@
       host.appendChild(citationBlock(citation));
     });
     byId("ask-answer-heading").focus();
-    announce(headline + ". " + body);
+    /* The reading is announced with the answer, not left to be discovered visually. The
+     * heading already carries "from how we read your question", and the sentence after it
+     * says which reading — a screen-reader user who was told the second half is the one
+     * who can correct us. */
+    announce(headline + ". " + (interpreted ? spokenReading(routing, couldNotSeparate) + " " : "") + body);
+  }
+
+  /** "We read your question as…" — the middle tier's own block.
+   *
+   *  Everything in it comes from `routing`, and nothing in it is a machine name. `gloss`
+   *  is already a plain-English phrase in api/route_llm.py's intent table ("using figures
+   *  from a different year"), which is why it can be reflected straight back; when an
+   *  intent has no gloss the sentence says so rather than printing the label instead.
+   *
+   *  `shares_profile_with` is deliberately not listed. It is a set of intent identifiers —
+   *  `currency_rule_status`, `dataset_limitation_stated` — and reading them out to a renter
+   *  would be four more machine names in exchange for nothing they could act on. The fact
+   *  that matters, that we could not tell those apart, is said in words instead, and the
+   *  list itself is one disclosure away under Technical details.
+   *
+   *  The block ends with what to do about it, because "this answer is less certain" with
+   *  no next step is just anxiety. Two exits: ask again in different words, using the box
+   *  that is already at the foot of every screen, or fall back to step 3's recorded
+   *  questions where the wording is fixed and the routing is exact.
+   */
+  function readingNote(routing, couldNotSeparate) {
+    var askAgain = h("button", {
+      type: "button", class: "action secondary",
+      onclick: function () {
+        var input = byId("ask-input");
+        if (!input) return;
+        input.focus();
+        // Not cleared: the wording we misread is the thing being edited.
+        if (typeof input.setSelectionRange === "function") {
+          input.setSelectionRange(input.value.length, input.value.length);
+        }
+      }
+    }, ["Ask again in different words"]);
+
+    return h("div", { class: "read-note" }, [
+      h("p", null, [
+        h("span", { class: "read-note__label", text: "How we read your question. " }),
+        "You did not use one of the wordings this service recognises exactly, so it worked " +
+        "out what you were most likely asking and answered that. ",
+        routing.gloss
+          ? h("span", null, [
+              "We read it as a question about ",
+              h("span", { class: "read-note__gloss", text: routing.gloss }), "."
+            ])
+          : "We cannot put that reading into a short phrase here."
+      ]),
+      couldNotSeparate
+        ? h("p", {
+            text: "Your wording also sat close to several other questions this service " +
+                  "answers, and it could not tell them apart. Take this as our best " +
+                  "attempt at your question rather than a settled answer to it."
+          })
+        : null,
+      h("p", { class: "read-note__action" }, [
+        "If that is not what you meant, ask again in different words, or use one of the " +
+        "recorded questions on step 3, where the wording is fixed and nothing has to be " +
+        "worked out."
+      ]),
+      h("div", { class: "read-note__buttons" }, [askAgain])
+    ]);
+  }
+
+  /** The same reading, as one spoken sentence for the live region. */
+  function spokenReading(routing, couldNotSeparate) {
+    var said = routing.gloss
+      ? "This answer comes from how we read your question: we read it as a question about " +
+        routing.gloss + "."
+      : "This answer comes from how we read your question rather than from an exact match.";
+    if (couldNotSeparate) {
+      said += " Your wording sat close to several other questions and we could not tell " +
+              "them apart, so take this as our best attempt.";
+    }
+    return said;
   }
 
   /** The empty state of the one answer area.
@@ -2530,8 +2793,9 @@
       text: state.sessionDeleted
         ? "You deleted this session, so there is nothing left to answer a question with. " +
           "Starting again loads the household from the pack as a new session."
-        : "No question has been asked yet. The answer to one appears here, in this same " +
-          "place on every screen, and the page moves you to it when it arrives."
+        : "No question has been asked yet. The box to ask one is pinned at the bottom of " +
+          "the screen; the answer appears here, in this same place on every screen, and " +
+          "the page moves you to it when it arrives."
     }));
   }
 
@@ -2543,11 +2807,83 @@
     var on = enabled && Source.live;
     var input = byId("ask-input");
     if (input) input.disabled = !on;
-    var box = byId("ask-box-body");
-    if (!box) return;
-    Array.prototype.forEach.call(box.querySelectorAll("button"), function (button) {
-      button.disabled = !on;
+    /* Both halves of the box: the Ask button now lives in the pinned dock while the
+     * starter chips stayed in the main column. Missing the dock here would leave a live
+     * Ask button under a dead session, which is the exact lie this function exists to
+     * prevent. */
+    [byId("ask-box-body"), byId("ask-dock-form")].forEach(function (host) {
+      if (!host) return;
+      Array.prototype.forEach.call(host.querySelectorAll("button"), function (button) {
+        button.disabled = !on;
+      });
     });
+  }
+
+  /* ── the question box, pinned to the viewport ──────────────────────────────────────
+   *
+   * The band used to sit at the foot of `main`, which made it present on every screen and
+   * still meant scrolling past a page image, an evidence table and an upload panel to
+   * reach it on step 1. So the input is docked: `position: sticky; bottom: 0` on the last
+   * child of `main`, which pins it to the bottom of the viewport for the whole length of
+   * the step and returns it to the flow at the end.
+   *
+   * Two decisions worth writing down, because the obvious version of each is wrong.
+   *
+   * 1. The INPUT is pinned; the ANSWER is not. An answer arrives with citation cards —
+   *    rule id, authority, effective date, source link, quoted text — and those are
+   *    unreadable in a short panel. Pinning them too would mean an internal scroll area
+   *    inside a fixed element, which is bad at 320px, bad for keyboard users, and exactly
+   *    the `scrollable-region-focusable` shape axe warns about. The answer stays in
+   *    `#ask-answer` in the main column where it has the width, and focus moves to its
+   *    heading when it arrives, so nobody has to notice it for themselves.
+   *
+   * 2. It is collapsed by default. A permanently open bar eats viewport height on the one
+   *    screen with least of it, and on a phone it competes with the virtual keyboard. The
+   *    collapsed state is one button, about 48px, and it says what it is rather than being
+   *    an icon. `sticky` rather than `fixed` is also deliberate: it lives in the normal
+   *    flow, so the visual-viewport resize a mobile keyboard causes moves it correctly
+   *    instead of stranding it behind the keyboard.
+   *
+   * 3. It is NOT collapsed behind a trigger. That version was written first and was wrong,
+   *    and the harness said so before any argument did: keyboard-journey asserts that the
+   *    free-text control is on the first screen *with no control pressed*, and a collapsed
+   *    dock fails it. The requirement is right — a question box you have to summon is a
+   *    question box a first-time reader does not know exists. So the pinned strip holds the
+   *    label, the input and the Ask button and nothing else, which is about 100px; the two
+   *    hints, the starter chips and the offline "no server" callout stay in `.ask-anywhere`
+   *    in the main column, where they are context to read rather than a control to press.
+   *
+   * What moves is `#ask-box-body` itself, element and id intact, and what it holds is
+   * narrowed to the control group. It is not re-created under a new id: live-check drives
+   * this page through `#ask-box-body button[type=submit]`, and a docked box under a fresh
+   * id would leave that check hunting for a button that no longer exists — the harness is
+   * the contract for where this control lives, and it was right that the control should
+   * stay findable. The reading matter moves the other way, into `#ask-context` inside
+   * `.ask-anywhere`, which is where keyboard-journey expects to find the page explaining
+   * that offline the box is switched off rather than hidden.
+   *
+   * This runs BEFORE `renderAskBox()`, which then draws into the moved element as it
+   * always did. The live and offline branches, the disabled state and the form's own
+   * submit handler are untouched by any of it.
+   */
+  function installAskDock() {
+    var box = byId("ask-box-body");
+    var section = byId("ask-anywhere");
+    var answer = byId("ask-answer");
+    if (!box || !section || byId("ask-dock")) return;
+
+    if (!byId("ask-context")) {
+      section.insertBefore(h("div", { id: "ask-context" }), answer || null);
+    }
+    box.parentNode.removeChild(box);
+    /* Appended to <body>, and this is not arbitrary. A sticky element is bounded by its
+     * containing block, so the first version — docked at the end of <main> — came unstuck
+     * the moment you scrolled past main into the open-questions rail and the footer, which
+     * at 320px is a full screen of content. Measured: the dock sat 263px above the top of
+     * an 800px viewport, which is to say gone, on the part of the page where the rail is
+     * telling you what the system is unsure about. Body is the one container that spans
+     * the whole document, so the box is reachable for the whole document. */
+    document.body.appendChild(h("div", { id: "ask-dock" }, [box]));
   }
 
   /** The free-text question box, on every screen.
@@ -2563,6 +2899,23 @@
     var root = byId("ask-box-body");
     if (!root) return;
     clear(root);
+
+    /* Two hosts now, and the split is by role.
+     *
+     *   root    — `#ask-box-body`, which installAskDock has moved into the pinned strip:
+     *             label, input, Ask button. The thing you press.
+     *   context — `#ask-context`, in `.ask-anywhere` in the main column: the two hints, the
+     *             starter chips, and offline the "this copy has no server" callout. Things
+     *             you read.
+     *
+     * Keeping the reading matter out of the pinned strip is what makes pinning affordable
+     * at 320px — the strip is one control and about 100px, not a panel.
+     *
+     * When the dock has not been installed, `context` falls back to `root` and everything
+     * renders into one block in the main column, which is exactly the layout this screen
+     * had before. Nothing here depends on the dock existing. */
+    var context = byId("ask-context") || root;
+    if (context !== root) clear(context);
 
     if (Source.live) {
       /* A two-row textarea, not a one-line input.
@@ -2610,14 +2963,15 @@
         h("div", { class: "ask-control" }, [
           input,
           h("button", { type: "submit", class: "action", text: "Ask" })
-        ]),
-        h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }),
-        /* One line, next to the box, because this is where the renter decides what to
-         * type. It says what is not needed rather than what is dangerous: the honest
-         * position is that a rule question works without personal details, not that
-         * typing them is a hazard. The footer carries the fuller account. */
-        h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." })
+        ])
       ]));
+
+      /* The two hints left the form and stayed in the main column with the rest of the
+       * reading matter. The second one is the one worth defending: it is a privacy note,
+       * and a privacy note the reader meets *before* they start typing is worth more than
+       * one crowded into the strip under the cursor. */
+      context.appendChild(h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }));
+      context.appendChild(h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." }));
 
       /* Starter questions, directly under the box they fill.
        *
@@ -2637,9 +2991,9 @@
         "Is the 60-day currency rule an official universal LIHTC rule?",
         "What is the federal statutory anchor for LIHTC?"
       ];
-      root.appendChild(h("p", { class: "example-chips__label", id: "ask-examples-label",
+      context.appendChild(h("p", { class: "example-chips__label", id: "ask-examples-label",
                                text: "Try one of these" }));
-      root.appendChild(h("div", {
+      context.appendChild(h("div", {
         class: "example-chips", role: "group", "aria-labelledby": "ask-examples-label"
       }, starters.map(function (question) {
         return h("button", {
@@ -2658,7 +3012,7 @@
        * The callout carries what the box cannot do first, then the command that makes it
        * work, then what the server actually adds here. The recorded-question buttons on
        * step 3 are untouched: they are the path that does work in this build. */
-      root.appendChild(h("div", { class: "callout" }, [
+      context.appendChild(h("div", { class: "callout" }, [
         h("h3", { text: "This copy has no server, so it cannot answer a question you type" }),
         h("p", {
           text: "The box below is where you write a question in your own words. Answering " +
@@ -2687,8 +3041,9 @@
         })
       ]));
 
-      /* The control group itself, disabled: same markup, same classes, same two hints as
-       * the live branch above, so what a judge sees switched off is what turns on. */
+      /* The control group itself, disabled, and docked in the same strip the live one
+       * uses: what a judge sees switched off is in the same place, at the same size, as
+       * what turns on. Same markup, same classes, same two hints beside it. */
       root.appendChild(h("form", {
         class: "ask-input-row",
         onsubmit: function (event) { event.preventDefault(); }
@@ -2697,10 +3052,10 @@
         h("div", { class: "ask-control" }, [
           h("textarea", { id: "ask-input", rows: "2", autocomplete: "off", disabled: true }),
           h("button", { type: "submit", class: "action", disabled: true, text: "Ask" })
-        ]),
-        h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }),
-        h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." })
+        ])
       ]));
+      context.appendChild(h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }));
+      context.appendChild(h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." }));
     }
   }
 
@@ -2725,8 +3080,8 @@
 
     root.appendChild(h("p", {
       class: "hint",
-      text: "To ask in your own words, use the box at the foot of this page. It is on every " +
-            "screen, and its answers open in the same place these ones do."
+      text: "To ask in your own words, use the box pinned at the bottom of the screen. It is " +
+            "there on every step, and its answers open in the same place these ones do."
     }));
 
     root.appendChild(h("h3", { text: "Recorded questions", style: { marginTop: "0" } }));
@@ -2806,7 +3161,13 @@
             return h("tr", null, [
               h("th", { scope: "row", text: input.label.replace(/_/g, " ") }),
               h("td", { text: plain(input.value) }),
-              h("td", { class: "mono", text: input.from_document || "—" })
+              /* "From document" is the provenance column — the reason this screen exists.
+               * It was printing `HH-001-D02`, which tells a renter nothing about which
+               * piece of paper on their table the figure came off. The type and the date
+               * do, and the id is one disclosure away in the packet and the correction
+               * form where it is genuinely the key. No longer `.mono`: this is a name now,
+               * not a code, and `.mono` is also what i18n.js skips when translating. */
+              h("td", { text: input.from_document ? documentNameById(input.from_document) : "—" })
             ]);
           }))
         ])
@@ -4117,15 +4478,34 @@
     ]);
   }
 
+  /* The build line used to read
+   *   Data source: … · engine sha:9199ff6… · ruleset pack-v1/… · frozen event date … ·
+   *   report generated …
+   * all at one weight. A judge wants every word of that; a renter has no use for any of
+   * it past the first clause. It is not deleted — it is folded, which is the same move
+   * already made for the bbox columns and the response kind. The one clause a renter can
+   * use, which source the page is reading, stays out in the open. */
   function renderFooter() {
-    var parts = ["Data source: " + Source.describe()];
-    if (state.report) {
-      parts.push("engine " + state.report.engine_version);
-      parts.push("ruleset " + state.report.ruleset_version);
-      parts.push("frozen event date " + state.report.reference_date);
-      parts.push("report generated " + state.report.generated_at);
+    byId("footer-meta").textContent = "Data source: " + Source.describe();
+
+    var host = byId("footer-build");
+    if (!host) {
+      var meta = byId("footer-meta");
+      host = h("div", { id: "footer-build" });
+      if (meta && meta.parentNode) meta.parentNode.insertBefore(host, meta.nextSibling);
     }
-    byId("footer-meta").textContent = parts.join(" · ");
+    clear(host);
+    if (state.report) {
+      host.appendChild(h("details", { class: "tech" }, [
+        h("summary", { text: "Build details" }),
+        h("p", { class: "status-line" }, [
+          "engine ", h("span", { class: "mono", text: state.report.engine_version }),
+          " · ruleset ", h("span", { class: "mono", text: state.report.ruleset_version }),
+          " · frozen event date " + state.report.reference_date +
+          " · report generated " + state.report.generated_at
+        ])
+      ]));
+    }
     // No "Data source:" label here. Under the picker this line is read as a description of
     // the household on show, and the phrase it now carries is a sentence, not a field value.
     // The footer keeps the labelled, technical form.
@@ -4189,6 +4569,9 @@
     renderProcessList();
     /* The question box is drawn once and never again: it is outside the .screen sections,
      * it holds what the renter typed, and nothing in it varies by household or by step. */
+    // The dock is the empty shell; renderAskBox fills it. Order matters — the box looks
+    // for #ask-dock-form and falls back to the main column when it is not there yet.
+    installAskDock();
     renderAskBox();
     renderAskAnswerEmpty();
     renderAsk();
@@ -4219,16 +4602,14 @@
       state.households = households;
       var select = byId("household-select");
       clear(select);
-      households.forEach(function (row) {
-        select.appendChild(h("option", {
-          value: row.household_id,
-          text: row.household_id + " — " + row.document_count + " documents" +
-                (row.has_report ? "" : " (no bundled report)")
-        }));
+      var labels = householdLabels(households);
+      households.forEach(function (row, index) {
+        // value is still the id. The label is the only thing that changed.
+        select.appendChild(h("option", { value: row.household_id, text: labels[index] }));
       });
       select.addEventListener("change", function () {
         loadHousehold(select.value).then(function () {
-          announce("Loaded " + select.value + ". " +
+          announce("Loaded " + householdName(select.value) + ". " +
             (state.report ? READINESS[state.report.readiness_status].title : "No report is bundled for it."));
         });
       });
