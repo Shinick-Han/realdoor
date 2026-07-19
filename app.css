@@ -297,6 +297,18 @@ details.tech > summary {
 details.tech > summary:hover { text-decoration: underline; }
 details.tech > * { margin-top: .4rem; }
 
+/* A rule id, rendered as a reference. Two shapes, and the difference between them is
+   load-bearing: `a.rule-ref` goes to an outside authority (huduser.gov, uscode.house.gov,
+   ecfr.gov) and inherits the ordinary link colour, underline and focus ring so it reads as
+   what it is. `.rule-ref--own` is this challenge's own frozen rule — it is never an anchor,
+   never accent-coloured, and carries its provenance in words after the id. Styling the two
+   alike would let a rule we wrote pass for federal law. */
+.rule-ref { overflow-wrap: anywhere; }
+.rule-ref--own { color: inherit; }
+.rule-ref__note { color: var(--ink-soft); }
+.rule-ref-list { margin: 0 0 .8em; padding-left: 1.2rem; font-size: .86rem; }
+.rule-ref-list li { margin-bottom: .15rem; }
+
 /* ── USWDS summary box: a short checklist of what to do next ────────── */
 .summary-box {
   border: 2px solid var(--accent);
