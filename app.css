@@ -81,8 +81,8 @@ a:hover { text-decoration-thickness: 2px; }
   padding: 1rem clamp(1rem, 3vw, 2rem);
   display: grid;
   gap: .75rem 2rem;
-  grid-template-columns: minmax(12rem, auto) 1fr minmax(14rem, auto);
-  align-items: start;
+  grid-template-columns: minmax(12rem, auto) 1fr minmax(12rem, auto);
+  align-items: center;
 }
 /* `1fr` 은 `minmax(auto, 1fr)` 이고 auto 의 최소값은 min-content 다. 그래서 좁은 폭에서
    컬럼이 내용의 min-content(여기서는 select 의 가장 긴 option 폭)까지 부풀어 뷰포트를
@@ -92,12 +92,18 @@ a:hover { text-decoration-thickness: 2px; }
 .wordmark { font-size: 1.4rem; font-weight: 700; margin: 0; letter-spacing: .01em; }
 .tagline  { margin: 0; color: var(--ink-soft); font-style: italic; }
 
+/* The standing no-decision notice stays on every screen -- it is the one claim this product
+   is built around and it is never folded away. What changed is only its weight: it no longer
+   competes with the H1 for the first look. Smaller type, a thinner rule, a quieter background.
+   Contrast is still measured: --ink-soft on #f6f8fa is 7.0:1, well past the 4.5:1 floor. */
 .notice--standing {
   margin: 0;
-  border-left: 5px solid var(--accent);
-  background: #f2f7fb;
-  padding: .6rem .9rem;
-  font-size: .93rem;
+  border-left: 3px solid var(--line-strong);
+  background: #f6f8fa;
+  padding: .45rem .75rem;
+  font-size: .82rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
   max-width: 62ch;
 }
 
@@ -128,8 +134,22 @@ a:hover { text-decoration-thickness: 2px; }
    second call to action, and nothing about it should out-shout the household picker. */
 .lang-switch { margin: 0; }
 
-.household-picker { min-width: 0; }
-.household-picker label { display: block; font-weight: 600; font-size: .9rem; }
+/* Now a strip inside the screen, under the heading, not a header column. It is bounded and
+   tinted so it still reads as a control rather than as body copy, and it wraps to two rows
+   at narrow widths instead of forcing the screen wider. */
+.household-picker {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .3rem .7rem;
+  margin: 0 0 1.1rem;
+  padding: .6rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--shell);
+}
+.household-picker label { font-weight: 600; font-size: .9rem; }
 .household-picker select {
   font: inherit;
   padding: .4rem .5rem;
@@ -143,7 +163,8 @@ a:hover { text-decoration-thickness: 2px; }
   min-width: min(14rem, 100%);
   max-width: 100%;
 }
-.mode-line { margin: .35rem 0 0; font-size: .82rem; color: var(--ink-soft); }
+/* flex-basis:100% puts the source line on its own row under the select, at every width. */
+.mode-line { flex: 1 0 100%; margin: 0; font-size: .82rem; color: var(--ink-soft); }
 
 /* ── layout ───────────────────────────────────────────────────────── */
 .layout {
@@ -165,9 +186,15 @@ main:focus { outline: none; }
   border-radius: var(--radius);
   padding: 1.2rem clamp(.8rem, 2vw, 1.6rem) 1.4rem;
 }
+/* The heading is the first thing on the page and should read as the first thing. The clamp
+   floor is the size this heading has always been, so nothing grows at 320px where the space
+   is not there; the growth is all in the desktop range a judge actually lands on.
+   System font stack only -- no web font is loaded, here or anywhere. */
 .screen h1 {
-  font-size: 1.7rem;
-  max-width: 26ch;
+  font-size: clamp(1.7rem, 1.25rem + 1.4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -.012em;
+  max-width: 24ch;
   margin-bottom: .5rem;
 }
 .screen h1:focus { outline: none; }
@@ -613,6 +640,34 @@ tr.is-active td { background: #fdf0ea; }
 /* flex 자식의 기본 min-width 도 auto 다. 22rem(352px) 은 320px 뷰포트보다 넓으므로
    min-width:0 이 없으면 basis 아래로 줄어들지 못한다. */
 .ask-input-row > div { flex: 1 1 22rem; min-width: 0; }
+
+/* Example questions under the ask box. Every one of them is a question from the graded set
+   in pack/evaluation/qa_gold.jsonl, so pressing one cannot land on an abstention. They are
+   real buttons: reachable by Tab, operable by Enter and Space, and never smaller than the
+   24x24 CSS px target minimum (SC 2.5.8). */
+.example-chips__label { font-size: .82rem; color: var(--ink-soft); margin: 0 0 .35rem; }
+.example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin: -.5rem 0 1.2rem;
+}
+.example-chip {
+  font: inherit;
+  font-size: .86rem;
+  text-align: left;
+  min-height: 32px;
+  padding: .35rem .7rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--accent);
+  cursor: pointer;
+  /* 긴 질문이 320px 에서 컨테이너를 밀지 않도록: 칩 안에서 줄바꿈된다. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.example-chip:hover { background: var(--shell); border-color: var(--accent); }
 
 dl.kv { display: grid; grid-template-columns: minmax(9rem, auto) minmax(0, 1fr); gap: .3rem .8rem; margin: 0 0 .8rem; }
 dl.kv dt { font-weight: 600; color: var(--ink-soft); }

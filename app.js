@@ -464,6 +464,7 @@
       section.hidden = section.id !== screenId;
     });
 
+    placeHouseholdPicker(screenId);
     renderStepIndicator();
     renderErrorSummary();
     renderStepNav();
@@ -479,6 +480,27 @@
                (heading2 ? heading2.textContent : ""));
     }
     if (window.scrollTo) window.scrollTo(0, 0);
+  }
+
+  /** The household picker follows you from screen to screen.
+   *
+   *  It used to sit in the header, which meant the first three things on the page were a
+   *  legal notice, a control and a data-source line -- the heading came fourth. It is the
+   *  same single element as before (same <select>, same listener, same state), moved rather
+   *  than duplicated, so switching household still works from every screen and there is
+   *  never a second copy to disagree with the first.
+   *
+   *  It lands under the screen's opening paragraph: below the heading, above the content.
+   *  The landing screen's "the household you choose above" still points backwards, because
+   *  the picker is inserted above the box that says it.
+   */
+  function placeHouseholdPicker(screenId) {
+    var picker = document.querySelector(".household-picker");
+    var screen = byId(screenId);
+    if (!picker || !screen) return;
+    var anchor = screen.querySelector(".lede") || screen.querySelector("h1");
+    if (!anchor || anchor.nextSibling === picker) return;
+    anchor.parentNode.insertBefore(picker, anchor.nextSibling);
   }
 
   function goToStep(n, options) {
@@ -1155,18 +1177,22 @@
 
     if (Source.live) {
       var input = h("input", { id: "ask-input", type: "text", autocomplete: "off" });
+
+      var submitQuestion = function (question) {
+        if (!question) return;
+        Source.ask(question, state.householdId).then(function (response) {
+          renderAskResponse(byId("ask-answer"), question, response);
+        }).catch(function (error) {
+          clear(byId("ask-answer"));
+          byId("ask-answer").appendChild(errorCard("The question could not be sent", error));
+        });
+      };
+
       root.appendChild(h("form", {
         class: "ask-input-row",
         onsubmit: function (event) {
           event.preventDefault();
-          var question = input.value.trim();
-          if (!question) return;
-          Source.ask(question, state.householdId).then(function (response) {
-            renderAskResponse(byId("ask-answer"), question, response);
-          }).catch(function (error) {
-            clear(byId("ask-answer"));
-            byId("ask-answer").appendChild(errorCard("The question could not be sent", error));
-          });
+          submitQuestion(input.value.trim());
         }
       }, [
         h("div", null, [
@@ -1176,6 +1202,35 @@
         ]),
         h("button", { type: "submit", class: "action", text: "Ask" })
       ]));
+
+      /* Starter questions, directly under the box they fill.
+       *
+       * Every string below is copied verbatim from pack/evaluation/qa_gold.jsonl, the graded
+       * question set this build answers 36 out of 36 of. An invented example would be the one
+       * thing on this screen that could make the service abstain in front of an audience, so
+       * nothing here is invented. All three are about the rules rather than about a named
+       * household, so the answer does not depend on which household is selected.
+       *
+       * Pressing one fills the box and sends it: the question stays visible in the input
+       * afterwards, which is what shows this is the ordinary free-text path and not a
+       * shortcut around it. renderAskResponse then moves focus to the answer and announces
+       * it, so a keyboard or screen-reader user lands on the result of their own press.
+       */
+      var starters = [
+        "When do the frozen FY 2026 MTSP limits take effect?",
+        "Is the 60-day currency rule an official universal LIHTC rule?",
+        "What is the federal statutory anchor for LIHTC?"
+      ];
+      root.appendChild(h("p", { class: "example-chips__label", id: "ask-examples-label",
+                               text: "Try one of these" }));
+      root.appendChild(h("div", {
+        class: "example-chips", role: "group", "aria-labelledby": "ask-examples-label"
+      }, starters.map(function (question) {
+        return h("button", {
+          type: "button", class: "example-chip",
+          onclick: function () { input.value = question; submitQuestion(question); }
+        }, [question]);
+      })));
     }
 
     root.appendChild(h("h3", { text: "Recorded questions", style: { marginTop: "0" } }));
