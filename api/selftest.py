@@ -224,6 +224,56 @@ def plain_language_section() -> dict[str, Any]:
     }
 
 
+def intent_router_section() -> dict[str, Any]:
+    """입구의 LLM 분류기가 실제로 무엇을 했는지. 지어내는 항목이 없다.
+
+    여기 실리는 숫자는 전부 프로세스가 시작된 뒤 **실측된 카운터**다. 캐시 적중은
+    게이트웨이가 usage 로그에 남긴 `cached` 플래그에서 읽으며, 읽지 못한 호출이
+    하나라도 있으면 비율을 계산하지 않고 `null` 로 둔다 — 추정치를 적중률처럼
+    보이게 두느니 비워 둔다.
+    """
+    from api import route_llm
+
+    s = route_llm.stats()
+    audit = route_llm.anchor_audit()
+    calls = s["calls"]
+    measurable = s["cache_hits_measurable"]
+
+    return {
+        "status": "measured" if s["enabled"] else "not_run",
+        "enabled": s["enabled"],
+        "model": s["model"] if s["enabled"] else None,
+        "known_intents": s["intents_known"],
+        "questions_reaching_the_classifier": s["attempts"],
+        "calls": calls,
+        "cache_hits": s["cache_hits"] if measurable else None,
+        "cache_hit_rate": (round(s["cache_hits"] / calls, 4)
+                           if measurable and calls else None),
+        "classifier_said_unknown": s["returned_unknown"],
+        "rejected_label_outside_closed_set": s["rejected_unknown_label"],
+        "rejected_deterministic_router_disagreed": s["rejected_router_disagreed"],
+        "rejected_no_anchor": s["rejected_no_anchor"],
+        "accepted": s["accepted"],
+        "offline_or_uncached": s["offline_or_uncached"],
+        "timeouts": s["timeouts"],
+        "errors": s["errors"],
+        "anchor_audit_ok": audit["ok"],
+        "anchor_audit_detail": {k: v for k, v in audit.items() if k != "ok"},
+        "note": (
+            "The classifier returns one label from a closed set and never writes a "
+            "sentence; every sentence a renter reads is still built by deterministic "
+            "code. A label is only acted on after the deterministic router is asked "
+            "again and agrees, so the classifier can point at existing answers but "
+            "cannot create one. It is reached only when every deterministic layer is "
+            "silent, which is why the graded question set does not touch it. Only the "
+            "question text is sent; no document content or household data leaves this "
+            "process. Counters are since process start, not since the pack was "
+            "written. When the router is switched off these figures read not_run "
+            "rather than zero-as-success."
+        ),
+    }
+
+
 def build(views: list[dict[str, Any]], respond) -> dict[str, Any]:
     sections: dict[str, Any] = {}
     for name, fn in (
@@ -234,6 +284,7 @@ def build(views: list[dict[str, Any]], respond) -> dict[str, Any]:
         ("citations", citations_section),
         ("accessibility", accessibility_section),
         ("plain_language", plain_language_section),
+        ("intent_router", intent_router_section),
     ):
         try:
             sections[name] = fn()

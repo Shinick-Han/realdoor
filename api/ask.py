@@ -27,13 +27,21 @@ ask.py — 규칙 질문 처리 + 적대적 입력 방어.
      한도가 얼마죠?" 라고 말한다. 별칭은 세입자 어휘를 같은 정규 의도로 옮긴다.
      **정규 라우터가 이미 잡은 질문에는 절대 손대지 않는다.** 그래서 별칭은 답의
      내용을 바꿀 수 없고, 오직 어떤 표현이 그 답에 도달하는지만 바꾼다.
+
+  6. LLM 의도 분류기 (`api/route_llm.py`)
+     별칭 표는 손으로 만든 것이라 언제나 표현을 다 덮지 못한다. 그 남는 표현만
+     모델에게 맡긴다. **모델은 닫힌 집합에서 라벨 하나를 고를 뿐 문장을 쓰지 않고**,
+     그 라벨조차 정규 라우터의 동의를 받아야 효력이 생긴다. 그래서 위 첫 문단의
+     주장 — 판단 경로에 LLM이 없다 — 은 그대로다. 모델은 입구의 안내원이고,
+     소득 계산·한도 조회·준비도 판정은 여전히 모델을 본 적이 없는 순수 함수다.
+     결정론 층이 하나라도 질문을 잡으면 모델은 호출되지도 않는다.
 """
 from __future__ import annotations
 
 import re
 from typing import Any
 
-from api import plain, situations
+from api import plain, route_llm, situations
 from logic.answer_rules import answer as answer_rule, route as canonical_route
 from logic.household import load_pack_checklists, load_rule_corpus
 
@@ -246,7 +254,28 @@ def handle(question: str, household_id: str | None,
         return _situation(situations.build(situation_route, households))
 
     # ── 정상 질문: 세입자 어휘를 정규 의도로 옮긴 뒤 결정론 규칙 응답기로 ─
-    ans = answer_rule(_with_aliases(q, canonical), household_id, households=households,
+    routed = _with_aliases(q, canonical)
+
+    # ── 6) 마지막 1인치: 결정론 층이 **전부 침묵할 때만** 분류기를 부른다 ──
+    #
+    # 도달 조건이 곧 안전 논증이다. 정규 라우터가 잡았거나(canonical), 상황 라우터가
+    # 잡았거나, 손으로 만든 별칭이 잡았으면 여기 오지 않는다. qa_gold 36문항과 적대
+    # 팩 12입력은 전부 그 위에서 처리되므로 이 줄을 지나가지 않는다 —
+    # `test_route_llm.py` 가 호출 카운터로 그걸 강제한다.
+    #
+    # 분류기는 **라벨 하나**를 돌려주고, `route_llm.confirm()` 이 그 라벨을 정규
+    # 라우터에게 되물어 동의를 받은 뒤에야 질문이 앵커와 함께 다시 흐른다. 실패·
+    # 타임아웃·오프라인은 전부 `None` 이고, `None` 이면 아래 코드가 예전과 똑같이
+    # `unrouted` 기권을 낸다.
+    if canonical is None and routed == q:
+        found = route_llm.resolve(q)
+        if found is not None:
+            routed = found.anchored_question
+            recheck = situations.match(routed, canonical_route(routed))
+            if recheck is not None:
+                return _situation(situations.build(recheck, households))
+
+    ans = answer_rule(routed, household_id, households=households,
                       checklists=load_pack_checklists())
     d = ans.to_dict()
     d["refused"] = False
