@@ -1,14 +1,3 @@
----
-title: RealDoor
-emoji: 🚪
-colorFrom: blue
-colorTo: gray
-sdk: docker
-app_port: 7860
-pinned: false
-short_description: Ready, not eligible — application-readiness copilot for renters
----
-
 # RealDoor
 
 RealDoor helps an affordable-housing applicant get their documents into a state a
