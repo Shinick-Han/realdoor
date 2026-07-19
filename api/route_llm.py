@@ -47,10 +47,22 @@ from logic.answer_rules import ROUTES as _CANONICAL_ROUTES, route as canonical_r
 
 #: 공용 게이트웨이. 디스크 캐시·temperature 0·usage.jsonl 로깅·HN_OFFLINE 이 이미
 #: 배선돼 있다. 여기서 다시 만들지 않는다. 판단 로직은 저기 두지 않는다.
-_PROVIDERS_DIR = Path(
-    os.environ.get("HN_PROVIDERS_DIR")
-    or Path.home() / "source" / "hacknation-cmd" / "tools"
-)
+#:
+#: 탐색 순서에서 **레포 안의 사본이 먼저**다. 이 저장소만 클론한 사람 —
+#: 심사위원이 정확히 그렇게 한다 — 도 분류기를 돌릴 수 있어야 하고, 개발 기계에만
+#: 있는 경로에 기대면 제출물이 그 기계 밖에서 조용히 반쪽이 된다. 파일에는 비밀이
+#: 없다. 키는 환경변수에서만 읽는다.
+def _providers_dir() -> Path:
+    override = os.environ.get("HN_PROVIDERS_DIR")
+    if override:
+        return Path(override)
+    vendored = Path(__file__).resolve().parent.parent / "tools"
+    if (vendored / "providers.py").is_file():
+        return vendored
+    return Path.home() / "source" / "hacknation-cmd" / "tools"
+
+
+_PROVIDERS_DIR = _providers_dir()
 
 MODEL = os.environ.get("REALDOOR_LLM_MODEL", "gpt-4o-mini")
 TIMEOUT_SECONDS = float(os.environ.get("REALDOOR_LLM_TIMEOUT", "6"))
