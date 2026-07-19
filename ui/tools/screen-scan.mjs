@@ -97,6 +97,10 @@ for (const householdId of HOUSEHOLDS) {
   // the current screen, so a hand-hidden screen takes the picker down with it, and more
   // to the point a walk that skips the navigation is not a walk through the flow.
   await page.goto(url);
+
+  // Step 1 opens with nothing loaded now; one click opens the prepared example.
+  await page.locator("#example-open button").waitFor({ timeout: 30000 });
+  await page.locator("#example-open button").click();
   await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);
   await page.locator("#household-select").waitFor({ state: "visible" });
   await page.selectOption("#household-select", householdId);

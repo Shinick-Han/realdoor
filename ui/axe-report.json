@@ -10,7 +10,7 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-19T10:34:32.443Z",
+ "generated_at": "2026-07-19T11:48:53.615Z",
  "screens_per_origin": 7,
  "total_violations": 0,
  "violations_by_impact": {},
@@ -180,7 +180,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step4-calculation",
@@ -218,13 +218,13 @@
        ]
       }
      ],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step6-check-and-packet",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "how-this-works",
@@ -292,7 +292,7 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 32
     }
    ]
   },
@@ -428,7 +428,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step4-calculation",
@@ -466,13 +466,13 @@
        ]
       }
      ],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step6-check-and-packet",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "how-this-works",
@@ -540,7 +540,7 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 32
     }
    ]
   },
@@ -658,7 +658,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step4-calculation",
@@ -696,13 +696,13 @@
        ]
       }
      ],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step6-check-and-packet",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "how-this-works",
@@ -770,7 +770,7 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 32
     }
    ]
   },
@@ -888,7 +888,7 @@
      "screen": "step3-ask",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step4-calculation",
@@ -926,13 +926,13 @@
        ]
       }
      ],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "step6-check-and-packet",
      "violations": [],
      "incomplete": [],
-     "rules_passed": 31
+     "rules_passed": 30
     },
     {
      "screen": "how-this-works",
@@ -1000,7 +1000,7 @@
        ]
       }
      ],
-     "rules_passed": 33
+     "rules_passed": 32
     }
    ]
   }

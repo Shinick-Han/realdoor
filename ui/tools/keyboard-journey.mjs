@@ -23,7 +23,13 @@ const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
 const page = await context.newPage();
 await page.goto(pageUrl);
-await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);
+
+/* Step 1 now opens with nothing loaded: upload is the front door and the six prepared
+ * households are a secondary offer on the same screen. The example is opened further down,
+ * *after* the tab-order checks — those measure the page as it is delivered, and a click
+ * would move the sequential-focus starting point and make the walk start somewhere a fresh
+ * reader never starts. */
+await page.locator("#example-open button").waitFor({ timeout: 30000 });
 
 const steps = [];
 function record(name, ok, detail) {
@@ -77,6 +83,13 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
   const tabs = await page.locator('[role="tab"]').count();
   record("No tab bar exists — the flow is linear, not parallel",
     tablists === 0 && tabs === 0, `${tablists} tablists, ${tabs} tabs`);
+
+  /* The one click a judge takes to reach the graded pack. Everything below this walks the
+   * six steps on a loaded file, exactly as before; everything above it measured the screen
+   * as delivered, which is now a screen holding nothing. */
+  await page.locator("#example-open button").click();
+  await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0,
+    { timeout: 20000 });
 
   /* There used to be a landing screen in front of step 1 carrying a process list and a
    * "Before you start" trust line. Both were demo instructions, and both now live on the
@@ -259,10 +272,19 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
 
 // ── step 5: what is missing or out of date ──────────────────────────────────────
 {
-  // switch to HH-005, which holds the genuinely expired document
+  /* Switch to HH-005, which holds the genuinely expired document.
+   *
+   * The picker used to follow the reader onto every screen, so this could select from
+   * wherever it happened to be standing. It does not any more: the prepared files are a
+   * secondary offer and their control stays on step 1, with steps 2-6 carrying a one-line
+   * banner naming what is open and a button back. So this walks back the way a reader
+   * walks back, changes the file, and returns. */
+  await page.locator("#file-banner button").click();
+  await page.waitForFunction(() => !document.getElementById("screen-1").hidden, { timeout: 10000 });
   await page.locator("#household-select").focus();
   await page.selectOption("#household-select", "HH-005");
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(400);
+  for (const id of ["step-next", "step-next", "step-next"]) { await pressById(id); await page.waitForTimeout(150); }
   await page.locator("#h-4").focus();
   await pressById("step-next");
 

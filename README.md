@@ -25,19 +25,24 @@ Hack-Nation #6 — Challenge 3 (RealPage).
 
 ## Try it
 
-**Live:** https://shinick-han.github.io/realdoor/
+**Live:** https://shinick-realdoor.hf.space
 
-Three things to do once it loads, **in this order** — step 2 is on the default household,
-so change the picker after it, not before:
+Uploading a document, asking a question in your own words, the output gate returning
+its own 500 — all of that needs the server, and that link is the server.
 
-1. **Stay on `HH-001` and walk steps 1 → 2.** Step 2 offers the two corrections the
+Three things to do once it loads, **in this order**. The page opens holding nothing —
+upload is the front door, and the prepared files are a second offer on the same screen:
+
+1. **Press "Open the example file for Mara North"** on step 1, under *"Or open a prepared
+   example file"*. That loads `HH-001` in one click. Then **walk steps 1 → 2.** Step 2 offers the two corrections the
    pipeline actually ran as one-press buttons. Press *"Household size is 3, not 1"* and the
    before/after table moves the frozen threshold from $72,000 to $92,580 while the income
    figure stays put — a corrected value changing what it should change and nothing else.
    Press the other one and watch a correction get **recorded and then not used**, because
    the corrected figure no longer agrees with the hours and rate on the same document.
-2. **Now change the household to `HH-004 — 4 documents`** using the `Household` select
-   under the heading, and go to step 5. `HH-001` has every document in order, so its
+2. **Now change the file to `HH-004 — 4 documents`.** From step 2, press **"Change on
+   step 1"** in the line under the heading, use the `Prepared example file` select, then
+   go to step 5. `HH-001` has every document in order, so its
    checklist has nothing to show you. `HH-004` is missing an employment letter and has a
    gig statement dated to the month with no day — the system says so and abstains rather
    than inventing a date. `HH-005` has an employment letter that fell outside the 60-day
@@ -45,7 +50,7 @@ so change the picker after it, not before:
 3. Open **"How this works, and how we tested it"** in the header. The refusals, the
    prompt-injection probe, the output gate and session deletion all live there.
 
-All six households carry a bundled report, so the picker renders any of them offline.
+All six households carry a bundled report, so the prepared-file select on step 1 renders any of them offline.
 
 **What the hosted build withholds, and why.** Steps 2 and 3 replay recorded pipeline
 output, and both recordings were made in an `HH-001` session. So on any other household

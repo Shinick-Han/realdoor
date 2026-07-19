@@ -1,0 +1,575 @@
+{
+ "manifest_version": 1,
+ "name": "confirmation set (untuned hold-out)",
+ "created": "2026-07-19",
+ "purpose": "A set of real, published US income documents collected for a one-time confirmation measurement. None of these documents were used to choose the extractor's arithmetic identities or tolerances. They are NOT a development set and must not become one: measure once, then retire.",
+ "ordering_discipline": {
+  "statement": "Structural, not merely asserted. The collector had web access only during collection, and every value in `expected` / `expect_absent` below was transcribed from a rendered page image BEFORE any extractor code was read or run.",
+  "files_deliberately_not_read": [
+   "core/extract.py",
+   "core/label_llm.py",
+   "logic/**",
+   "testdata/external_truth.json",
+   "scripts/measure_external_holdout.py"
+  ],
+  "extractor_run": false,
+  "measurement_run": false,
+  "transcription_method": "Each PDF rendered with PyMuPDF at 140 dpi (higher-dpi crops used only to resolve small embedded screenshots) and read as an image. No document's ground truth was taken from its raw text layer.",
+  "note": "Field values were read off the image by a human-equivalent reading pass. Where a value could not be read confidently it was placed in expect_absent with an 'illegible' note rather than guessed."
+ },
+ "field_vocabulary": [
+  "person_name",
+  "pay_date",
+  "pay_period_start",
+  "pay_period_end",
+  "pay_frequency",
+  "regular_hours",
+  "hourly_rate",
+  "gross_pay",
+  "net_pay",
+  "document_date",
+  "employer_name"
+ ],
+ "conventions": {
+  "expected": "Field name -> the value a careful human reads off the rendered page, transcribed verbatim as printed (including masked components such as 'XX' for a redacted year).",
+  "expect_absent": "Fields the page genuinely carries no readable value for. A caption, a column header, a printed menu of options ('circle one: hourly weekly monthly'), or an unchecked checkbox is NOT a value. Blank forms are almost entirely expect_absent.",
+  "pay_frequency": "Recorded only when a frequency word is actually printed on the page. Frequency inferred from the length of the pay period is deliberately NOT recorded as expected — it is listed in expect_absent with a note.",
+  "document_date": "Recorded only when the page carries a date describing the document itself. A publisher's revision/publication footer (e.g. 'May 2018', 'Ver 1/2020') is treated as publication metadata, not a document_date, and is noted rather than expected."
+ },
+ "composition_summary": {
+  "documents": 14,
+  "filled_pay_stubs": 7,
+  "filled_stubs_with_multiple_earnings_rows": 6,
+  "blank_forms": 4,
+  "explainer_or_glossary_pages": 3,
+  "documents_with_no_text_layer": 0,
+  "documents_with_some_image_only_pages": 1,
+  "shortfall": "The '>= 1 scanned document with no text layer' target was NOT met. See not_obtained.scanned_document_search."
+ },
+ "publishers_excluded_as_already_used": [
+  "courts.ca.gov",
+  "files.consumerfinance.gov",
+  "finance.unc.edu",
+  "utep.edu",
+  "usbr.gov",
+  "vba.va.gov",
+  "forms.labor.ny.gov"
+ ],
+ "documents": [
+  {
+   "file_name": "ca_dlse_paystub_hourly.pdf",
+   "source_url": "https://www.dir.ca.gov/dlse/PayStub.pdf",
+   "publisher": "California Dept. of Industrial Relations, Labor Commissioner's Office",
+   "retrieved": "2026-07-19",
+   "sha256": "7dfa1113373118f76336bed338a13b196b982d3203a1c676a6da2c37f0c107c9",
+   "bytes": 512726,
+   "pages": 1,
+   "kind": "filled_pay_stub",
+   "multi_row_earnings": true,
+   "what_it_is": "The California Labor Commissioner's official example of a compliant itemized wage statement for an hourly worker, with a regular line and an overtime line.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {
+    "person_name": "Johnson, Bob",
+    "employer_name": "SMITH AND COMPANY, INC.",
+    "pay_period_start": "1/7/XX",
+    "pay_period_end": "1/13/XX",
+    "regular_hours": "40.00",
+    "hourly_rate": "18.00",
+    "gross_pay": "774.00",
+    "net_pay": "560.71"
+   },
+   "expect_absent": [
+    "pay_date",
+    "pay_frequency",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) The year is masked as literal 'XX' in both period dates — the page shows '1/7/XX to 1/13/XX', so no parseable calendar year exists; anything that resolves these to a real year has invented it. (2) The single caption 'PAY RATE' is followed by TWO rates, '18.00 regular' and '27.00 overtime'; only 18.00 is the regular hourly rate. (3) 'HOURS' is a column header, not a field label. (4) There is no pay/check date anywhere on the page — only a period. (5) A 7-day period implies weekly, but no frequency word is printed. (6) 'May 2018' in the bottom-right is the publication date of the Labor Commissioner's sample, not a statement date. (7) 'SICK LEAVE: 24.00 HOURS AVAILABLE' is a leave balance and must not be read as hours worked. ARITHMETIC: 720.00 + 54.00 = 774.00 gross; 774.00 - 213.29 = 560.71 net."
+  },
+  {
+   "file_name": "ca_dlse_paystub_piecerate.pdf",
+   "source_url": "https://www.dir.ca.gov/dlse/paystubforpiecerate.pdf",
+   "publisher": "California Dept. of Industrial Relations, Labor Commissioner's Office",
+   "retrieved": "2026-07-19",
+   "sha256": "861f9d8c7b009b8e4f622e08627f0a1684add6aebb78657165f26e1aacbc26df",
+   "bytes": 533978,
+   "pages": 1,
+   "kind": "filled_pay_stub",
+   "multi_row_earnings": true,
+   "what_it_is": "The Labor Commissioner's official example of a compliant itemized wage statement for a piece-rate worker, showing piece counts, productive/non-productive/rest-time hour lines, and annotation callouts.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {
+    "person_name": "Johnson, Bob",
+    "employer_name": "Smith And Company, Inc.",
+    "pay_period_start": "1/7/XX",
+    "pay_period_end": "1/13/XX",
+    "pay_date": "1/20/XX",
+    "regular_hours": "40.00",
+    "gross_pay": "$774.85",
+    "net_pay": "$561.56"
+   },
+   "expect_absent": [
+    "hourly_rate",
+    "pay_frequency",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) No single hourly rate exists. The page shows three piece rates (0.50/ft, 0.25/ft, 0.10/ft) and four different derived hourly rates ($19.55 productive, $15.00 non-productive, $19.37 rest/double-time, $9.69 overtime); picking any one as 'the' hourly rate is wrong. (2) '$720.00' appears TWICE with two different meanings — as 'Total Earned for Productive Work' (the piece-rate subtotal) and as the Amount of the 'Productive' hours line. (3) '$213.29' also appears twice (Deductions block and summary block). (4) Gross is $774.85, but the naive sum of the piece-rate amounts is $720.00 — the difference is non-productive and rest time. (5) 'Regular: 40.00' under 'Total Hours in Pay Period' sits beside 'Overtime: 0.00' and 'Double time: 0.00'; the earnings table's own 'Total' is also 40.00 but is built from 36.83 + 1.50 + 1.67. (6) The bare caption 'Date:' (value 1/20/XX) is the pay date; period dates are separately captioned. (7) Year masked as 'XX' throughout. (8) 'May 2019' footer is publication metadata. (9) Two prose callout boxes sit beside the stub and are commentary, not fields."
+  },
+  {
+   "file_name": "hi_ags_pay_statement_example_2021.pdf",
+   "source_url": "https://ags.hawaii.gov/hip/files/2021/03/Flyer-New-Pay-Statement-Example-2021.pdf",
+   "publisher": "State of Hawaii, Dept. of Accounting and General Services (Hawaii Information Portal)",
+   "retrieved": "2026-07-19",
+   "sha256": "80b3473e248673779bb2ceb9812dc51c7b7617ffa291f4cee5d9f6a7dce9d145",
+   "bytes": 818450,
+   "pages": 5,
+   "kind": "filled_pay_stub",
+   "multi_row_earnings": true,
+   "what_it_is": "Hawaii's published sample of the state's employee pay statement for a fictional employee, with a numbered legend naming each region of the stub.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi (page 1); higher-dpi crops used to confirm the summary row",
+   "expected": {
+    "person_name": "John Aloha",
+    "employer_name": "State of Hawaii Central Payroll",
+    "pay_period_start": "02/16/2021",
+    "pay_period_end": "02/28/2021",
+    "pay_date": "03/19/2021",
+    "gross_pay": "2,328.01",
+    "net_pay": "1,511.38"
+   },
+   "expect_absent": [
+    "regular_hours",
+    "hourly_rate",
+    "pay_frequency",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) The 'Regular' earnings line carries an AMOUNT (2,168.50) but NO hours and NO rate — the Hours and Rate cells on that row are empty. The only current-period hours on the stub are 3.25 + 0.75 + 1.00 = 5.00, all of them overtime/comp-time, so 'TOTAL: 5.00' hours is emphatically not regular hours. Any regular_hours value is invented. (2) Likewise no regular rate: the rates printed (37.532308, 25.021154, 37.530000) belong to overtime and comp-time lines. (3) A SECOND row also labelled 'Regular' carries a NEGATIVE amount, -18.77 (a retroactive adjustment) — the label appears twice with different signs. (4) Current sits beside YTD throughout; YTD gross is 15,132.49 against current 2,328.01. (5) 'FED TAXABLE GROSS' 1,979.80 is adjacent to 'TOTAL GROSS' 2,328.01 — the taxable figure is not gross pay. (6) The pay date is captioned 'Advice Date' (03/19/2021), well after 'Pay End Date' (02/28/2021). (7) The right-hand LEGEND is a numbered glossary of captions, not data. (8) Pages 2-5 are explanatory prose about the same statement."
+  },
+  {
+   "file_name": "ou_sample_check_stub.pdf",
+   "source_url": "https://ou.edu/content/dam/payroll/docs/Sample%20Check%20Stub.pdf",
+   "publisher": "University of Oklahoma, Payroll and Employee Services",
+   "retrieved": "2026-07-19",
+   "sha256": "b8fad9f23d606d234710c427eead2d8ee908b63e18d2e4d92b79e6e65bd92a2e",
+   "bytes": 151802,
+   "pages": 2,
+   "kind": "filled_pay_stub",
+   "multi_row_earnings": true,
+   "what_it_is": "The University of Oklahoma's annotated sample PeopleSoft check stub, with red circles and numbered callouts over a stub whose employee-identity fields have been left blank.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi; higher-dpi crops used to confirm the earnings and totals bands",
+   "expected": {
+    "employer_name": "University of Oklahoma",
+    "pay_period_start": "01/09/2016",
+    "pay_period_end": "01/22/2016",
+    "pay_date": "02/05/2016",
+    "hourly_rate": "12.480800",
+    "regular_hours": "68.43",
+    "gross_pay": "1,251.09",
+    "net_pay": "750.14"
+   },
+   "expect_absent": [
+    "person_name",
+    "pay_frequency",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) THE BIG ONE — 'Huston Huffman' appears as a line item under 'AFTER-TAX DEDUCTION / Description' with amount 5.00. It is the name of OU's Huston Huffman Fitness Center (a membership deduction), NOT a person. The stub's actual employee fields ('Employee ID:', 'Department:', 'Location:', 'Job Title:') are all captioned and all EMPTY, so this is the single most person-name-shaped string on the page and it is wrong. (2) The caption 'Pay Rate:' is present and BLANK; the real rate 12.480800 appears only inside the earnings table's 'Rate' column. (3) regular_hours 68.43 is the 'Hourly Regular Earnings' row; the band 'TOTAL: 80.00' includes 3.57 paid leave and 8.00 holiday leave and is not regular hours. (4) 'FED TAXABLE GROSS' 980.38 sits immediately beside 'TOTAL GROSS' 1,251.09. (5) Every block has a Current and a YTD column side by side (YTD gross 3,753.28, YTD net 2,249.62). (6) 'Pay Group: HRY-Hourly Payroll' names a payroll group, not a pay frequency; the 14-day period implies biweekly but no frequency word is printed. (7) Page 2 is prose explaining the callouts."
+  },
+  {
+   "file_name": "osu_sample_earnings_statement.pdf",
+   "source_url": "https://hr.oregonstate.edu/sites/hr.oregonstate.edu/files/benefits/sample_earning.pdf",
+   "publisher": "Oregon State University, Office of Human Resources",
+   "retrieved": "2026-07-19",
+   "sha256": "afcc6968d6b6b6e354470b6c45c8d37dc8650fccbeb15481d71ac9d96d8729fe",
+   "bytes": 703799,
+   "pages": 3,
+   "kind": "filled_pay_stub",
+   "multi_row_earnings": true,
+   "what_it_is": "Oregon State University's sample monthly earnings statement, surrounded by marginal prose callouts explaining each section.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi; higher-dpi crop used to confirm the summary and earnings bands",
+   "expected": {
+    "employer_name": "Oregon State University",
+    "pay_date": "31 JAN 2019",
+    "gross_pay": "5994.00",
+    "net_pay": "4327.06"
+   },
+   "expect_absent": [
+    "person_name",
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) The employee-identity box is captioned by a marginal callout that reads 'This section identifies the employee, with their check delivery department code and their mailing address' — and the box itself is entirely EMPTY. The prose promises a name that is not there. (2) No start/end dates exist: the period is given only as the heading 'January 2019 Earnings'. Deriving 2019-01-01/2019-01-31 is invention, not reading. (3) 'YTD Subject 5845.92' and the deductions column 'Applicable Gross 5845.92' are taxable-base figures that differ from gross 5994.00. (4) Because this is the January statement, Current and YTD are IDENTICAL (5994.00 / 5994.00), so a reader that grabs the wrong column is accidentally right here and will be wrong elsewhere — do not treat a pass on this field as evidence. (5) Earnings are two lines: 'Salary, Unclassified 5682.77' and 'Vacation Time Taken HRS 9.00@0 311.23'; 5682.77 + 311.23 = 5994.00. The '9.00@0' is vacation hours at rate zero, and 9.00 also appears in the Leave block as vacation Taken — the same number in two places meaning the same thing but rendered differently. (6) A salaried statement: no hourly rate and no regular hours anywhere. (7) '12/2019' in the footer is the document's publication date. (8) Leave balances (354.00, 260.50, 32.65) are hour-shaped and must not be read as worked hours."
+  },
+  {
+   "file_name": "bonita_certificated_check_sample.pdf",
+   "source_url": "https://do.bonita.k12.ca.us/documents/Payroll/Certificated%20Check%20Sample.pdf",
+   "publisher": "Bonita Unified School District (San Dimas, CA)",
+   "retrieved": "2026-07-19",
+   "sha256": "40c986154eab2f2076092cf7ea50e067865ce56b8dc469302f6a50cdb6fbb282",
+   "bytes": 94783,
+   "pages": 1,
+   "kind": "filled_pay_stub",
+   "multi_row_earnings": false,
+   "what_it_is": "A school district's example of a certificated (teacher) monthly payroll check advice, with lettered A-J callouts and a field-explanation key beneath it.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {
+    "person_name": "JONES, JAMES",
+    "employer_name": "BONITA UNIFIED",
+    "pay_period_end": "9/30/2018",
+    "pay_date": "09-30-2018",
+    "gross_pay": "6,333.00",
+    "net_pay": "4,623.86"
+   },
+   "expect_absent": [
+    "pay_period_start",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) The column captioned 'RATE' holds 6,333.00 — a MONTHLY salary rate, not an hourly rate. It is the largest rate-captioned number on the page and equals gross pay exactly, so an hourly_rate of 6333.00 is the natural wrong answer. (2) The column captioned 'UNITS' holds 23.00 — these are working DAYS, not hours. A regular_hours of 23.00 is the natural wrong answer. (3) 'C M' in the BASIS column is the pay-basis code (certificated / monthly); the key at the bottom explains that BASIS encodes 'monthly, hourly, etc.', but the word 'monthly' itself is never printed as a value. (4) Only an END DATE (9/30/2018) is given; there is no period start. (5) '6,333.00' appears THREE times — as RATE, as AMOUNT, and as GROSS PAY — and a fourth time as 'GROSS EARN'S' in the Current Taxable Balances block. (6) YTD columns run beside every current figure (YTD gross earnings 56,997.00). (7) The header carries two organisation names: 'SCHOOL DISTRICT OF LOS ANGELES COUNTY' (the county office of education that processes the payroll) and 'BONITA UNIFIED' (the actual employer, repeated at the bottom under 'DISTRICT NAME'). (8) 'EMPLOYEE ID XX9999999' is a masked identifier, not a name."
+  },
+  {
+   "file_name": "il_dol_day_labor_wage_notice_sample.pdf",
+   "source_url": "https://labor.illinois.gov/content/dam/soi/en/web/idol/employees/documents/samplepayment.pdf",
+   "publisher": "Illinois Department of Labor",
+   "retrieved": "2026-07-19",
+   "sha256": "b395caafb78b0bbcadda99ceefbc9974a4cfd8e51457e2aee972c1b5d7633a08",
+   "bytes": 11712,
+   "pages": 1,
+   "kind": "filled_pay_stub",
+   "multi_row_earnings": true,
+   "what_it_is": "Illinois DOL's filled sample wage payment notice under the Day and Temporary Labor Services Act, showing one temp worker's week split across two client worksites at different rates.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {
+    "employer_name": "ABC Staffing",
+    "pay_period_start": "8/21/2005",
+    "pay_period_end": "8/27/05",
+    "pay_date": "9/2/05",
+    "gross_pay": "440",
+    "net_pay": "262"
+   },
+   "expect_absent": [
+    "person_name",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) NO employee name appears anywhere on this statement — but 'Jones Mfg Corp' is printed below the table in an 'Example:' block illustrating what a client code expands to. It is a third-party client company, not the employer and not a person. The actual employer is 'ABC Staffing'. (2) There is no single hourly rate: the worker was paid 10/hr at client 342 (Mon-Wed) and 12/hr then 13/hr at client 541 (Thu, Fri). Rates live in per-weekday 'Rate | Hours' sub-columns. (3) Total hours worked (24 + 16 = 40) is never printed as a figure. The number 440 sits in the 'This Period' column on the 'Gross Pay:' row and is DOLLARS, not hours — it is the most hours-plausible integer on the page. (4) The 'This Period' column prints whole numbers with no decimals or currency symbols (240, 200, 440, 66, 44, 178, 262) while 'Year to Date' beside it prints formatted decimals (3,322.00, 5,426.00, 3,072.64) — same quantities, two different renderings, side by side. (5) The two period dates are written inconsistently: '8/21/2005 to 8/27/05' (four-digit then two-digit year). (6) The 'Earnings' rows Overtime, Holiday and Vacation are present as labels with entirely EMPTY cells for both clients — captions with no values. (7) 'Revised December 2005' is the form's publication footer. ARITHMETIC: 240 + 200 = 440 gross; 440 - 178 = 262 net."
+  },
+  {
+   "file_name": "lcc_understanding_your_paycheck.pdf",
+   "source_url": "https://www.lcc.edu/divisions-departments/financial-services/payroll/documents/understanding-your-pay-check.pdf",
+   "publisher": "Lansing Community College",
+   "retrieved": "2026-07-19",
+   "sha256": "588c4bdee0324dbfec8364aa813d5941ab54a33011d56b2302f1aa494d32d8d4",
+   "bytes": 661687,
+   "pages": 4,
+   "kind": "explainer_with_embedded_filled_stub",
+   "multi_row_earnings": false,
+   "what_it_is": "A community college's 'Understanding Your Pay Check/Stub' guide: numbered prose sections, each illustrated by a cropped screenshot of a fictional employee's real online pay statement.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi; higher-dpi crops used to read the embedded screenshots",
+   "expected": {
+    "person_name": "Doe, Jane",
+    "employer_name": "Lansing Community College",
+    "pay_date": "Sep 15, 2017",
+    "pay_period_start": "Aug 27, 2017",
+    "pay_period_end": "Sep 09, 2017",
+    "gross_pay": "$325.81",
+    "net_pay": "$264.45"
+   },
+   "expect_absent": [
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "document_date"
+   ],
+   "note": "TRAPS: (1) This is the explainer genre — most of the page is a definition list where the left column ('Gross Amount', 'Total Personal Deductions', 'Net Pay', 'Total Employer Contributions') looks exactly like field labels and the right side is prose defining them. The prose contains sentences such as 'Hourly employees calculate gross amount by multiplying the number of hours worked by the hourly rate', which describes a rate without stating one. (2) The only real values live inside small embedded screenshots, not in the page's own layout. (3) 'Current Period' and 'YTD Amount' are adjacent columns: gross 325.81 vs 4,398.36, net 264.45 vs 3,598.99. (4) 'Total Employer Contributions: $113.20' is employer-side money and is neither gross nor net. (5) The bottom-of-page footer contains a Windows file path and the date 04/17/2019 — document production metadata, not a statement date. (6) The stub's own tab strip ('Summary  Earnings  Benefits, Deductions and Taxes  Check or Direct Deposit') is navigation chrome that reads like section headers. (7) 'Banner ID: X00123456' is a student/employee system ID."
+  },
+  {
+   "file_name": "md_labor_paystatement_template_instructions.pdf",
+   "source_url": "https://labor.maryland.gov/labor/wages/esspaystatementtemplateinstructions.pdf",
+   "publisher": "Maryland Department of Labor, Division of Labor and Industry",
+   "retrieved": "2026-07-19",
+   "sha256": "4cb04e8b5eb17c58c3dde71717eee154093b335c86fafd2945cc8417f4ec39a0",
+   "bytes": 132927,
+   "pages": 3,
+   "kind": "explainer_glossary",
+   "multi_row_earnings": false,
+   "what_it_is": "Maryland's instructions to employers on filling in the state's optional pay statement template — a glossary that defines each required pay-statement field in prose.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "document_date",
+    "employer_name"
+   ],
+   "note": "TRAPS: This is the purest form of the caption-without-value case, and it carries NO field data at all. The document's own section headings are literally the field names — 'Pay Date', 'Pay Period Start and End Date', 'Employer Information', 'Name:', 'Address:', 'Telephone Number:' — each followed by a sentence of prose telling an employer what to write there ('The date the payment is made.', 'Enter your company's legal name as registered with the state'). Every one of those is a heading, not a label with a value. Additional hazards: (1) 'Maryland Department of Labor' and 'Division of Labor and Industry' are the publisher, not an employer_name — the page is addressed TO employers, about their own statements. (2) 'effective on October 1, 2024' is a statutory effective date embedded in a sentence and is not a document_date or pay_date. (3) The heading 'Employer Information' appears TWICE on page 1, the second time introducing unrelated content about overtime exemption. (4) Any non-empty extraction from this document is a fabrication."
+  },
+  {
+   "file_name": "orangeusd_sample_paystub.pdf",
+   "source_url": "https://www.orangeusd.org/uploaded/District/Departments/Payroll/forms/samplepaystub.pdf",
+   "publisher": "Orange County Superintendent of Schools (hosted by Orange Unified School District)",
+   "retrieved": "2026-07-19",
+   "sha256": "4315c7f5b0cd89149db637b23fa156a57e88a17bc999e9cd3b7c38edd2c80b2e",
+   "bytes": 195901,
+   "pages": 1,
+   "kind": "blank_form_with_explainer",
+   "multi_row_earnings": false,
+   "what_it_is": "An EMPTY paycheck-stub template — every caption and column header of a real district pay stub, with no employee and no earnings filled in — above a numbered key explaining each region.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "document_date",
+    "employer_name"
+   ],
+   "note": "TRAPS: This is the strongest single test of whether the extractor invents values out of captions, because the caption set is COMPLETE and the value set is EMPTY. Present-but-empty captions include 'Employee Name', 'District Name', 'Check Number', 'Employee ID', 'Payroll Issue Date', 'Payroll Ending Date', 'Description', 'Rate of Pay', 'Hours/Units', 'Earnings', 'Gross Pay', 'NET PAY'. Specific hazards: (1) The Tax Deductions block is NOT empty — it is filled with literal zeros ('FEDERAL 0.00', 'STATE 0.00', 'OASDI 0.00', 'MEDICARE 0.00', 'TOTAL: 0.00' in both Current and Calendar-YTD columns). A zero is a printed value; it is still not gross or net pay, both of which are blank. (2) 'Orange County Superintendent of Schools' is printed as a header above the empty 'District Name' caption — it is the form's publisher, and the employer field is blank. (3) The explanatory key below defines 'Rate of Pay: The rate of pay for job performed' and 'Hours/Units: Number of Units, Hours or Days paid or docked' — prose describing fields that hold nothing. (4) The net-pay formula printed at the bottom ('GROSS PAY minus Federal & State Taxes ...') is arithmetic guidance with no operands."
+  },
+  {
+   "file_name": "seattle_housing_employment_verification_blank.pdf",
+   "source_url": "https://www.seattlehousing.org/sites/default/files/Employment_Verification.pdf",
+   "publisher": "Seattle Housing Authority",
+   "retrieved": "2026-07-19",
+   "sha256": "b91010b54361c3c8c3a38436bfa6c83c7fdb8cff071a693b68aeff7d3c51b2af",
+   "bytes": 113943,
+   "pages": 1,
+   "kind": "blank_form",
+   "multi_row_earnings": false,
+   "what_it_is": "A public housing authority's blank employment verification form, to be completed by a resident's employer — exactly the paperwork a housing office hands out.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "document_date",
+    "employer_name"
+   ],
+   "note": "TRAPS: (1) The frequency menu — 'Current Wages/Salary: $____ (circle one) hourly weekly bi-weekly semi-monthly monthly yearly other' — prints SEVEN frequency words on the page as an unmarked menu. None is selected. Any pay_frequency extracted here was chosen from a list of options, not read from a value. (2) 'Presently Employed: Yes ... No' likewise prints both answers in bold as circle-one options; neither is circled. (3) 'Seattle Housing Authority' appears as a logo — it is the form's publisher and specifically NOT the employer; the employer fields ('TO: (Name & address of employer)', 'Employer (Company) Name and Address') are blank ruled lines. (4) Rate captions with empty lines: 'Overtime Rate: $____ per hour', 'Shift Differential Rate: $____ per hour', 'Average # of regular hours per week: ____'. (5) 'FAX: (206) 256-7026' is a real, complete, digit-rich value on the page — the only one — and it is a fax number. (6) A barcode sits at the top. (7) Three separate 'Date' captions appear, all with blank lines."
+  },
+  {
+   "file_name": "mnhousing_employment_verification_blank.pdf",
+   "source_url": "https://www.mnhousing.gov/get/MHFA_006201",
+   "publisher": "Minnesota Housing Finance Agency",
+   "retrieved": "2026-07-19",
+   "sha256": "d131c99b55fd1386bd6975ef0b044a9a835a9108c2492507835269548aad599e",
+   "bytes": 134675,
+   "pages": 1,
+   "kind": "blank_form",
+   "multi_row_earnings": false,
+   "what_it_is": "Minnesota Housing's blank employment verification form for an applicant/tenant's employer to complete, carrying the HUD misuse-penalty notice.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "document_date",
+    "employer_name"
+   ],
+   "note": "TRAPS: (1) The form instructs 'Employer, please fill in ALL blanks. Enter N/A if an item is not applicable' — an imperative sentence sitting where a filled form would carry data. (2) Two circle-one frequency menus, each printing 'hourly weekly bi-weekly semi-monthly monthly yearly other': one after 'Current gross wages/salary: $____' and one after 'Commissions, bonuses, tips, other: $____'. Fourteen frequency words on the page, zero selected. (3) 'Complete only if above wage data is unavailable: Year-to-date earnings: $____ From __/__/__ through __/__/__' — a date-range skeleton with slashes and underscores that is shaped exactly like a pay period and holds nothing. (4) Multiple Yes/No pairs printed as options (presently employed, seasonal work, retirement account). (5) 'Ver 1/2020' in the footer is the form's version stamp, not a document date. (6) Long penalty prose at the bottom cites '$5,000', 'Title 18, Section 1001', '42 USC 408' — dollar and number tokens inside legal text."
+  },
+  {
+   "file_name": "wa_dshs_14252_employment_verification.pdf",
+   "source_url": "https://www.dshs.wa.gov/sites/default/files/forms/pdf/14-252.pdf",
+   "publisher": "Washington State Department of Social and Health Services",
+   "retrieved": "2026-07-19",
+   "sha256": "cc00dbff9dd47c4383de232b8088438b2c8b4518885059e27ebffde091d39209",
+   "bytes": 103656,
+   "pages": 1,
+   "kind": "blank_form",
+   "multi_row_earnings": false,
+   "what_it_is": "Washington State's blank DSHS 14-252 employment verification form, split into a client-signature section and an employer section covering wages, hours and schedule.",
+   "text_layer": true,
+   "read_from": "rendered image at 140 dpi",
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "document_date",
+    "employer_name"
+   ],
+   "note": "TRAPS: (1) 'Pay frequency: [] Daily [] Weekly [] Every two weeks [] Two times a month [] Monthly' — five frequency options as UNCHECKED checkboxes. Unlike a circle-one list this one is rendered as real checkbox glyphs, so a reader that treats a checkbox as a filled control rather than an empty one will invent a frequency. (2) The captions 'EMPLOYEE'S NAME' and 'EMPLOYER'S NAME' sit in adjacent empty boxes; 'Department of Social and Health Services' and the mailing address 'DSHS, PO BOX 11699, TACOMA WA 98411-9905' are complete, filled-looking values belonging to the state agency that publishes the form — not to any employer. (3) 'AVERAGE HOURS PER WEEK' and 'RATE OF PAY OR SALARY (HOURLY, DAILY OR PIECE RATE)' are captioned empty cells; the parenthetical lists three rate bases without stating one. (4) A gross-income grid with six empty 'MONTH:' / '$' cells across two rows ('last three months' and 'current month and anticipated next two months'). (5) A seven-column Monday-to-Sunday work schedule grid, entirely empty, whose weekday headers look like data columns. (6) Four more Yes/No option pairs (tips, commissions, bonuses, overtime). (7) 'DSHS 14-252 (REV. 06/2020)' is a form revision stamp. (8) '888-338-7410' is the agency fax number."
+  },
+  {
+   "file_name": "kcha_section8_doc21.pdf",
+   "source_url": "https://www.kcha.org/documents/21.pdf",
+   "publisher": "King County Housing Authority (WA)",
+   "retrieved": "2026-07-19",
+   "sha256": "8e82d99b38b4e7d9bd2b33eff91268e1eeb7ec7edfd2f3a9f5ddd3bf408336e5",
+   "bytes": 1485367,
+   "pages": 15,
+   "kind": "housing_packet_partial_image_only",
+   "multi_row_earnings": false,
+   "what_it_is": "A housing authority's Section 8 briefing/application packet; two of its fifteen pages are inserted as full-page images with no text layer of their own (a HUD-1141 anti-fraud notice and a companion page).",
+   "text_layer": "mixed",
+   "read_from": "rendered image at 140 dpi",
+   "expected": {},
+   "expect_absent": [
+    "person_name",
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "pay_frequency",
+    "regular_hours",
+    "hourly_rate",
+    "gross_pay",
+    "net_pay",
+    "document_date",
+    "employer_name"
+   ],
+   "note": "INCLUDED FOR THE OCR PATH, WITH A CAVEAT — read this before scoring it. Pages 2 and 3 (1-indexed) are full-page raster images and return ZERO characters from the text layer; the other 13 pages are born-digital text. So this document exercises image-only page handling but does NOT satisfy the 'scanned document with no text layer' target, because a router that checks the document as a whole will find plenty of text and never reach OCR. It also carries no income field values of any kind — pages 2-3 are a HUD anti-fraud flyer (form HUD-1141, 12/2005). TRAPS: (1) 'Fined up to $10,000' and 'imprisoned for up to five years' are dollar and duration tokens inside the image-only pages, recoverable only via OCR and meaningless as income fields. (2) 'form HUD-1141 (12/2005)' is a form stamp. (3) The packet elsewhere contains income-related instructional prose that names document types without carrying their values."
+  }
+ ],
+ "not_obtained": [
+  {
+   "source_url": "https://www.dol.gov/sites/dolgov/files/WHD/legacy/files/Form_WH-501.PDF",
+   "intended_as": "blank federal wage statement form",
+   "status": "HTTP 403 (server returned an HTML error page, not a PDF)",
+   "note": "Not substituted. dol.gov appears to block non-browser clients."
+  },
+  {
+   "source_url": "https://www.sc.edu/about/offices_and_divisions/payroll/documents/hcm_peoplesoft_resources/read_pay_stub.pdf",
+   "intended_as": "University of South Carolina annotated sample paycheck stub",
+   "status": "HTTP 403 (returned an XML error body)",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.durhamtech.edu/sites/default/files/media-files/cgl/paycheck-stub-example.pdf",
+   "intended_as": "Durham Tech example paycheck stub",
+   "status": "connection failed (TLS connect timeout, retried)",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.tdhca.texas.gov/sites/default/files/SFHP-division/htf/forms-docs/docs/EmployVer.pdf",
+   "intended_as": "Texas DHCA blank employment verification form",
+   "status": "HTTP 403 (HTML error page)",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.dfas.mil/Portals/98/17-3_LES.PDF",
+   "intended_as": "DFAS sample Leave and Earnings Statement (filled federal LES)",
+   "status": "HTTP 403",
+   "note": "All .mil hosts attempted (dfas.mil, afpc.af.mil, 7atc.army.mil) returned 403 to this client. Not substituted."
+  },
+  {
+   "source_url": "https://www.hud.gov/sites/documents/9887.pdf",
+   "intended_as": "HUD blank consent/verification document package",
+   "status": "HTTP 403 (also 52675.pdf, 52646.pdf — same host, same result)",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.kansascityfed.org/documents/167/paycheck-Putting-Your-Paycheck-to-Work-student-activities.pdf",
+   "intended_as": "Kansas City Fed financial-literacy paystub activity (filled sample stub for 'Julie Jones')",
+   "status": "connection reset / timeout on repeated attempts",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.reynolds.k12.or.us/sites/default/files/fileattachments/district/page/2131/reading_your_paycheck_stub.pdf",
+   "intended_as": "Reynolds School District 'Reading Your Paycheck Stub' with filled example",
+   "status": "HTTP 403",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.slusd.us/wp-content/uploads/2024/12/Understanding-your-Pay-Stub.pdf",
+   "intended_as": "San Leandro USD pay stub explainer",
+   "status": "connection timed out",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.newcastlede.gov/DocumentCenter/View/16783/Employment-Verification-PDF",
+   "intended_as": "New Castle County DE Section 8 verification of employment",
+   "status": "HTTP 403",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.warrencountyohio.gov/humanservices/doc/Forms/EmploymentVerification.pdf",
+   "intended_as": "Warren County OH employment verification (a 'rev 6-11' form, hoped to be a scan)",
+   "status": "HTTP 403",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.hhs.texas.gov/sites/default/files/documents/h1028.pdf",
+   "intended_as": "Texas HHSC Form H1028 employment verification",
+   "status": "HTTP 403",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://gainesvillehousingauthority.org/wp-content/uploads/2012/11/Self-Employment-Income-Verification-Form.pdf",
+   "intended_as": "Gainesville HA self-employment income verification (2012 upload, hoped to be a scan)",
+   "status": "HTTP 525 (TLS handshake failure)",
+   "note": "Not substituted."
+  },
+  {
+   "source_url": "https://www.nd.gov/eforms/Doc/sfn00368.pdf",
+   "intended_as": "North Dakota DHHS verification of employment",
+   "status": "connection timed out",
+   "note": "Not substituted."
+  }
+ ],
+ "scanned_document_search": {
+  "target": ">= 1 scanned document with no text layer, to exercise the OCR path",
+  "met": false,
+  "what_was_tried": "Roughly two dozen candidate PDFs were downloaded and each was tested programmatically for extractable characters per page. Hunting grounds included small and large public housing authority application/recertification packets (Aberdeen HA, Bristol RI, King County HA, HACP Pittsburgh, Clearwater HA, Raleigh HA, NYCHA, NYC HPD), county and state human-services verification forms (WA DSHS, Warren County OH, ND DHHS, TX HHSC), USDA Rural Development and tribal housing material, older wp-content uploads dating to 2012, and federal LES guides.",
+  "why_it_failed": "Every reachable candidate carried a full text layer. This looks systematic rather than unlucky: PDFs that are pure scans are not text-indexed, so keyword search engines largely cannot surface them, and agencies publishing to the web in the accessibility era either author born-digital PDFs or run OCR before posting. Searching by scan-shaped filenames ('scan0001.pdf' and similar) also returned nothing.",
+  "closest_available": "kcha_section8_doc21.pdf, whose pages 2-3 are full-page images returning zero characters. It exercises image-only PAGE handling but not document-level OCR routing, and it carries no income values.",
+  "suggested_next_step": "Do not paper over this. If the OCR path must be measured, it needs a document sourced deliberately — e.g. a physically scanned income document contributed by a person, or a publisher contacted directly — and that document should be added to this set only under the same before-any-extractor transcription discipline, not folded in after a scoring run."
+ },
+ "caveats": [
+  "Publisher diversity: ca_dlse_paystub_hourly.pdf and ca_dlse_paystub_piecerate.pdf share a publisher (California DIR / Labor Commissioner) and a fictional employer and employee ('Smith And Company, Inc.' / 'Johnson, Bob'). They are different document types with different traps, but they are not independent samples and should not be counted as two publishers.",
+  "Six of the fourteen documents are annotated 'sample' stubs published to teach employees how to read their own pay — a genre that is over-represented here relative to what a housing office actually receives, because publishers rarely post genuine filled stubs. Their annotations (callout numbers, marginal prose, red circles) are themselves part of what makes them hard, but they are not typical page furniture.",
+  "Fictional employees dominate: John Aloha, Bob Johnson, Jane Doe, James Jones. Name extraction is being tested against placeholder names, which may be easier or harder than real ones in ways not measured here.",
+  "No document here is older than 2005 or newer than 2024.",
+  "Three documents (osu, ou, il_dol) have no person_name at all. That is deliberate and valuable, but it means person_name has only 4 positive cases across the set."
+ ]
+}

@@ -68,26 +68,47 @@
     <section class="screen" id="screen-1" aria-labelledby="h-1">
       <p class="step-caption" id="cap-1">Step 1 of 6</p>
       <h1 id="h-1" tabindex="-1">Check the values we read from your documents</h1>
-      <p class="lede">RealDoor reads the documents for one household and shows you where on the page
-      every value came from. On this step, each value is shown together with the box it was read
-      from. Choose a field name to light up its box. Nothing here is inferred about the person.</p>
+      <p class="lede">RealDoor reads a document you give it and shows you where on the page every
+      value came from. Each value is shown together with the box it was read from; choose a field
+      name to light up its box. Nothing here is inferred about the person.</p>
 
-      <!-- The household picker and the data-source line sit under the H1 rather than in the
-           header: a judge landing on the page should read the heading first, not a control.
-           app.js moves this same element into whichever screen is on show, so it stays
-           reachable from every step without ever sitting above the heading. -->
-      <div class="household-picker">
-        <label for="household-select">Household</label>
-        <select id="household-select"></select>
-        <p class="mode-line" id="mode-line">Data source: loading…</p>
-      </div>
+      <!-- ── the front door ──────────────────────────────────────────────────────────
+           Upload comes first, and this is the point of the screen rather than a detail of
+           its layout. What used to be here was a picker listing six prepared households,
+           with the upload panel below it — so the first thing this product said about
+           itself was "choose one of these six records", which is a demo affordance and not
+           what the thing is. A person arriving with their own paperwork has exactly one
+           file, theirs, and no use for a list of other people's.
+
+           Nothing is loaded until they say so. Steps 2 to 6 each say plainly that they are
+           waiting on a document rather than showing an empty table with nobody in it. -->
+      <div id="upload-body"></div>
+
+      <!-- ── the prepared files, as what they are ────────────────────────────────────
+           Second, and clearly an example rather than the main control — but still one
+           click away, with no upload flow to get past first. The six packs are the
+           measured artefact (extraction 159/159, calculation 90/90, qa_gold 36/36 are all
+           counted on them), so a judge checking those numbers has to be able to open one
+           immediately. app.js fills #example-open with that one button; the select beside
+           it is for reaching the other five. -->
+      <section class="example-offer" aria-labelledby="example-offer-heading">
+        <h2 id="example-offer-heading">Or open a prepared example file</h2>
+        <p>If you would rather look around first, this copy carries six made-up household files.
+        They belong to nobody. Everything the six steps do — the evidence boxes, the corrections,
+        the checklist, the packet — works the same on them as on a document of your own.</p>
+        <div id="example-open"></div>
+        <div class="household-picker">
+          <label for="household-select">Prepared example file</label>
+          <select id="household-select"></select>
+          <p class="mode-line" id="mode-line">Data source: loading…</p>
+        </div>
+      </section>
 
       <!-- The pointer to the household that actually shows the checklist doing work. It was
            under the process list on the landing screen; that list is now on the judges' page,
            and this sentence is for the renter, so it stays on the first screen they meet. -->
       <div id="landing-hint"></div>
 
-      <div id="upload-body"></div>
       <div id="documents-body"></div>
       <div class="step-nav" id="nav-1"></div>
     </section>

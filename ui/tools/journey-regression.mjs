@@ -64,6 +64,12 @@ function fieldValue(report, documentId, field) {
 const codes = (report) => (report.review_reasons || []).map((r) => r.code);
 
 await page.goto(`${base}/?live`);
+
+/* Step 1 now opens with nothing loaded: upload is the front door and the six prepared
+ * households are a secondary offer on the same screen. This walk is about the prepared
+ * pack, so it takes the one click a judge takes to open it. */
+await page.locator("#example-open button").waitFor({ timeout: 30000 });
+await page.locator("#example-open button").click();
 await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0,
   { timeout: 20000 });
 

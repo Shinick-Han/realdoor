@@ -886,6 +886,18 @@ SIDE_BY_SIDE_MIN_GAP = 12.0
 _DOC_TYPE_RE = re.compile(r"^(hh-\d+)_(d\d+)_(.+)$", re.IGNORECASE)
 
 
+def _arithmetic_enabled() -> bool:
+    """Is the arithmetic-verification path switched on? Off by default, like the label model.
+
+    Read through a function rather than captured at import so that a test can flip the
+    environment variable and see the change, and so that `core.verified` -- and with it the
+    whole identity search -- is never imported when the flag is off.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_ARITHMETIC", "").strip() == "1"
+
+
 def infer_document_type(pdf_path: str | Path) -> str:
     """Derive the document type from the pack's file naming convention."""
     stem = Path(pdf_path).stem
@@ -1641,15 +1653,60 @@ def extract_document(
         page_sizes = [(round(float(p.width), 2), round(float(p.height), 2)) for p in pdf.pages]
         page_count = len(pdf.pages)
         all_words: list[Word] = []
+        words_by_page: list[list[Word]] = []
         found: dict[str, dict[str, Any]] = {}
         for page_number, page in enumerate(pdf.pages, start=1):
             words = read_words(page, page_number)
             all_words.extend(words)
+            words_by_page.append(words)
             page_fields, _ = extract_fields_from_page(
                 words, doc_type, convention, field_mapper, fallback_mapper
             )
             for name, value in page_fields.items():
                 found.setdefault(name, value)
+
+    # ----------------------------------------------------------------------------------
+    # Arithmetic verification (opt-in, `REALDOOR_ARITHMETIC=1`)
+    # ----------------------------------------------------------------------------------
+    # Runs AFTER the label-anchored passes and may only fill fields they left empty. It runs
+    # after rather than before because its physical bound is derived from values the label
+    # path has already read: the pay period is what tells 74.50 hours from a year-to-date
+    # 28,707.21.
+    #
+    # With the flag off, nothing below this line executes and `core.verified` is not even
+    # imported, so this function's output is bit-identical to what it was before.
+    if _arithmetic_enabled():
+        from core import verified
+
+        # "Blank" means no answer, which includes a field the label path *located* and then
+        # refused -- `_resolve_value` records those in `found` as abstentions rather than
+        # leaving them out. ADP is exactly that case: `Gross Pay` is found as a label, the run
+        # beneath it is not money, and the abstention that follows is what used to sit here.
+        # Replacing an abstention changes no answer, so this still only ever fills blanks.
+        def _blank(name: str) -> bool:
+            existing = found.get(name)
+            return existing is None or existing.get("certainty") == "abstain"
+
+        wanted = [
+            name
+            for name in EXPECTED_FIELDS.get(doc_type, ())
+            if name in verified.VERIFIABLE_FIELDS and _blank(name)
+        ]
+        if wanted:
+            all_proposals: list[dict[str, dict[str, Any]]] = []
+            for words in words_by_page:
+                answers, proposals = verified.verify_page(
+                    words, doc_type, found, convention, wanted
+                )
+                for name, value in answers.items():
+                    if _blank(name):
+                        found[name] = value
+                all_proposals.append(proposals)
+            # Every page's answers before any page's proposal -- see `verify_page`.
+            for proposals in all_proposals:
+                for name, value in proposals.items():
+                    if _blank(name):
+                        found[name] = value
 
     fields: list[dict[str, Any]] = []
     has_text_layer = bool(all_words)

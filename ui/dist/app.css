@@ -21,6 +21,12 @@
   --warn-bg:    #fbf0df;
   --stop-bg:    #fbe9e7;
 
+  /* How much of the bottom of the viewport the pinned question strip is allowed to own.
+     Two rules below depend on this being one number: the clearance the page reserves for
+     every scroll it performs, and the exemption the strip's own controls hold against it.
+     They must cancel exactly, so they read it from here rather than each spelling it out. */
+  --dock-scroll-clearance: 8rem;
+
   --radius: 6px;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -37,7 +43,35 @@ html { -webkit-text-size-adjust: 100%; }
    coming to rest behind the dock. Nothing is ever permanently obscured either way: the
    dock is the last element in the document, so at maximum scroll it sits in the flow with
    the whole page above it. */
-html { scroll-padding-bottom: 8rem; }
+html { scroll-padding-bottom: var(--dock-scroll-clearance); }
+
+/* …with one exemption, and it is the reason typing in the question box used to drag the
+   page to the bottom of the document.
+
+   The clearance above says "when you scroll something into view, also keep 8rem clear
+   below it". Applied to a control *inside* the strip, that is a condition the browser can
+   never satisfy: the strip is stuck to the bottom edge of the viewport, so the 8rem the
+   browser is being asked to clear beneath it is always off-screen. It scrolls, the sticky
+   strip re-sticks to the bottom, the condition is still unmet, and it scrolls again — 84px
+   for every caret move, which is once per keystroke. Measured at 1280x900: click into the
+   box, scrollY 0 → 471; type a short sentence, scrollY → 3445 of a 4345px document.
+
+   `scroll-margin` is the target's half of the same arithmetic, so a negative one here
+   cancels the container's padding for exactly these elements and nothing else. Every other
+   scroll target on the page keeps the full 8rem — the step navigation and the last row of
+   the evidence table still come to rest above the strip rather than behind it.
+
+   This is deliberately not `#ask-dock { position: static }`. Removing sticky was measured
+   too and it is worse, not better: the strip's in-flow position is the very end of the
+   document, so focusing the box then jumps the reader 3445px in one movement. Sticky is
+   what keeps the box painted where the reader is looking; the bug was never sticky's. */
+#ask-dock textarea,
+#ask-dock input,
+#ask-dock select,
+#ask-dock button,
+#ask-dock a {
+  scroll-margin-bottom: calc(-1 * var(--dock-scroll-clearance));
+}
 
 body {
   margin: 0;
@@ -142,6 +176,45 @@ a:hover { text-decoration-thickness: 2px; }
    same focus treatment as the one other header control -- it is a reading aid, not a
    second call to action, and nothing about it should out-shout the household picker. */
 .lang-switch { margin: 0; }
+
+/* ── the prepared files, offered second ───────────────────────────────────────────
+   The upload panel above this is a .summary-box: white paper, a 4px accent rule, the
+   weight the front door of the product should carry. This block deliberately does not
+   match it. Same shell tint as the picker inside it, a plain 1px border, no accent — it
+   reads as an aside to the screen rather than as its second equal half, which is what a
+   prepared example is. It is not made quiet enough to miss: the button inside it is a
+   full .action--lead, because one obvious click is the requirement. */
+.example-offer {
+  margin: 1.6rem 0 0;
+  padding: 1rem clamp(.8rem, 2vw, 1.2rem) 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--shell);
+}
+.example-offer h2 { font-size: 1.15rem; margin: 0 0 .4rem; }
+.example-offer > p { margin: 0 0 .8rem; max-width: 72ch; }
+.example-offer #example-open { margin: 0 0 1rem; }
+.example-offer #example-open .hint { margin: 0 0 .5rem; }
+/* Inside the offer the picker is on paper, so it stays legible as a control against the
+   tinted block rather than dissolving into it. */
+.example-offer .household-picker { background: var(--paper); margin-bottom: 0; }
+
+/* ── what is open, on steps 2 to 6 ────────────────────────────────────────────────
+   The picker's replacement away from step 1. One line and one way back; it is a caption,
+   not a control panel, and it is styled to stay well under the heading it sits below. */
+.file-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem .8rem;
+  margin: 0 0 1.1rem;
+  padding: .5rem .8rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--shell);
+}
+.file-banner__what { margin: 0; font-size: .92rem; color: var(--ink); }
 
 /* Now a strip inside the screen, under the heading, not a header column. It is bounded and
    tinted so it still reads as a control rather than as body copy, and it wraps to two rows
