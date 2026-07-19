@@ -91,7 +91,15 @@ window.REALDOOR_FIXTURES = {
       "basis": "logic.constants.READINESS_STATUSES, read during this request"
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+    "plain": {
+     "headline": "We cannot tell you whether you will get the home",
+     "body": "This service does not determine eligibility and will not label any person. What we do is get your paperwork ready and check the numbers in it. A trained housing worker is the one who makes that call, and only they can make it. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.",
+     "action": "Ask us what your yearly income comes to, what the limit is for your household size, or what is still missing from your file.",
+     "code": "eligibility_refused",
+     "detail": "CH-DECISION-001: readiness only; the determination is the human handoff.",
+     "kind": "response"
+    }
    }
   },
   "refusal_cross_applicant": {
@@ -116,7 +124,15 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+    "plain": {
+     "headline": "We can only talk about your own file",
+     "body": "This session holds your documents and nobody else's. We never show one person's papers to another person. That holds even if you ask us directly.",
+     "action": "Ask about your own documents. If you are helping someone else, open their own session with them.",
+     "code": "cross_applicant_refused",
+     "detail": "CH-SAFETY-001: cross-applicant disclosure refused.",
+     "kind": "response"
+    }
    }
   },
   "refusal_embedded_instruction": {
@@ -151,7 +167,15 @@ window.REALDOOR_FIXTURES = {
       "verified_against_source": null
      }
     ],
-    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination."
+    "notice": "This service reports readiness only. A qualified housing professional makes the eligibility determination.",
+    "plain": {
+     "headline": "We read that as text in your document, not as an order",
+     "body": "Some documents contain sentences that try to tell this service what to do. We store that text and show it to you, and it changes nothing. The sums and the checks in this service are fixed code. No sentence in any document can reach them.",
+     "action": "Ask about a rule, a document you need, or one of the numbers we worked out.",
+     "code": "embedded_instruction_ignored",
+     "detail": "CH-SAFETY-001: embedded instruction quarantined as data.",
+     "kind": "response"
+    }
    }
   },
   "abstain_unrouted": {
@@ -246,10 +270,12 @@ window.REALDOOR_FIXTURES = {
  },
  "report_HH-001": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-18T21:25:18Z",
+  "generated_at": "2026-07-19T01:56:38Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
+  "annualized_income": 56316.0,
+  "comparison": "below_or_equal",
   "review_reasons": [],
   "documents": [
    {
@@ -880,15 +906,58 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:5888d56a60f6",
-  "session_id": "7e9a4e3a114e"
+  "engine_version": "sha:adae4d0d7f69",
+  "session_id": "485e2962952e",
+  "plain": {
+   "messages": [],
+   "abstentions": [],
+   "checklist": {
+    "CHK-APPLICATION-SUMMARY": {
+     "headline": "We have your application form",
+     "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-PAY-STUB": {
+     "headline": "We have your pay stub",
+     "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-001-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-EMPLOYMENT-LETTER": {
+     "headline": "We have your employer's letter",
+     "body": "It is in your file and it is recent enough to use. It is dated 6 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D04 is dated 2026-07-06, current with 48 day(s) of the window remaining",
+     "kind": "status"
+    }
+   },
+   "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+   "status": {
+    "headline": "Your paperwork is ready for a person to read",
+    "body": "We have what we need to hand your file to a housing worker. They will read it and decide what happens next. This does not tell you what they will say. It means nothing is missing, out of date, or unclear enough to stop them starting.",
+    "action": "You do not need to send anything else right now. Wait for the housing worker to come back to you.",
+    "code": "READY_TO_REVIEW",
+    "detail": "READY_TO_REVIEW: required evidence is present, current under the 60-day convention, internally consistent, and traceable to page-level source boxes.",
+    "kind": "status",
+    "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
+   },
+   "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker. They will read it and decide what happens next. This does not tell you what they will say. It means nothing is missing, out of date, or unclear enough to stop them starting. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+  }
  },
  "report_HH-001_after_rejected_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-18T21:25:18Z",
+  "generated_at": "2026-07-19T01:56:38Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
+  "annualized_income": 56316.0,
+  "comparison": "below_or_equal",
   "review_reasons": [
    {
     "check": "consistent",
@@ -1543,15 +1612,100 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:5888d56a60f6",
-  "session_id": "12d66ad47cc8"
+  "engine_version": "sha:adae4d0d7f69",
+  "session_id": "aa3a66b099bb",
+  "plain": {
+   "messages": [
+    {
+     "headline": "Your pay stubs show different totals",
+     "body": "One stub shows $2,166. Another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it. We treated the difference as extra pay for one period only, so we did not count it across the whole year. If that extra pay comes every time, your yearly figure would be higher than the one we worked out.",
+     "action": "Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say.",
+     "code": "PAY_STUB_TOTAL_CONFLICT",
+     "detail": "the pay stubs report different gross totals; the recurring base is taken from the stub that reconciles with its own hours and rate, and the excess is not annualized (stub totals ['2,166.00', '2,500.00']; using 2,166.00 from HH-001-D03, which reconciles with its own hours and rate; HH-001-D02 (2,500.00) was not used as the recurring base because its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00)",
+     "kind": "problem",
+     "precision_note": "We say the extra pay was 'not counted across the whole year' rather than 'ignored'. It was neither ignored nor annualized: it is reported and set aside. Calling it ignored would understate what we did with it."
+    },
+    {
+     "headline": "Check the pay stub dated 27 June 2026",
+     "body": "You changed the total pay on this stub to $2,500. The other numbers on the same stub add up to a different amount: 76 hours at $28.50 an hour comes to $2,166. Because the two do not match, we could not tell which one is your regular pay. We left this stub out when we worked out your yearly income. We saved your change, and a housing worker can see it.",
+     "action": "Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too.",
+     "code": "RENTER_CORRECTION_NOT_USED",
+     "detail": "a value the renter corrected was NOT used as the recurring base, because after the correction that document no longer settles what the recurring pay is; the annualized amount does not reflect the correction (gross_pay on HH-001-D02 was corrected to 2,500.00, but its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00 on that same document; the recurring base was taken from HH-001-D03 instead, so the corrected figure does not change the annualized amount)",
+     "kind": "problem",
+     "precision_note": "We say 'we left this stub out', not 'we ignored your change'. The change is stored and shown to the reviewer; what it did not do is move the total. Saying we ignored it would be false, and saying it was applied would be worse."
+    }
+   ],
+   "abstentions": [
+    {
+     "headline": "Your pay stubs show different totals",
+     "body": "One stub shows $2,166. Another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it. We treated the difference as extra pay for one period only, so we did not count it across the whole year. If that extra pay comes every time, your yearly figure would be higher than the one we worked out.",
+     "action": "Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say.",
+     "code": "PAY_STUB_TOTAL_CONFLICT",
+     "detail": "the pay stubs report different gross totals; the recurring base is taken from the stub that reconciles with its own hours and rate, and the excess is not annualized (stub totals ['2,166.00', '2,500.00']; using 2,166.00 from HH-001-D03, which reconciles with its own hours and rate; HH-001-D02 (2,500.00) was not used as the recurring base because its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00)",
+     "kind": "problem",
+     "precision_note": "We say the extra pay was 'not counted across the whole year' rather than 'ignored'. It was neither ignored nor annualized: it is reported and set aside. Calling it ignored would understate what we did with it.",
+     "what_would_resolve_it": "the renter or employer confirms whether the extra pay recurs",
+     "about": "annualized_wage_income"
+    },
+    {
+     "headline": "Check the pay stub dated 27 June 2026",
+     "body": "You changed the total pay on this stub to $2,500. The other numbers on the same stub add up to a different amount: 76 hours at $28.50 an hour comes to $2,166. Because the two do not match, we could not tell which one is your regular pay. We left this stub out when we worked out your yearly income. We saved your change, and a housing worker can see it.",
+     "action": "Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too.",
+     "code": "RENTER_CORRECTION_NOT_USED",
+     "detail": "a value the renter corrected was NOT used as the recurring base, because after the correction that document no longer settles what the recurring pay is; the annualized amount does not reflect the correction (gross_pay on HH-001-D02 was corrected to 2,500.00, but its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00 on that same document; the recurring base was taken from HH-001-D03 instead, so the corrected figure does not change the annualized amount)",
+     "kind": "problem",
+     "precision_note": "We say 'we left this stub out', not 'we ignored your change'. The change is stored and shown to the reviewer; what it did not do is move the total. Saying we ignored it would be false, and saying it was applied would be worse.",
+     "what_would_resolve_it": "the renter also corrects regular_hours or hourly_rate on that document so the three figures agree, or the renter or employer confirms which document reflects recurring pay",
+     "about": "annualized_wage_income"
+    }
+   ],
+   "checklist": {
+    "CHK-APPLICATION-SUMMARY": {
+     "headline": "We have your application form",
+     "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-PAY-STUB": {
+     "headline": "We have your pay stub",
+     "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-001-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-EMPLOYMENT-LETTER": {
+     "headline": "We have your employer's letter",
+     "body": "It is in your file and it is recent enough to use. It is dated 6 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D04 is dated 2026-07-06, current with 48 day(s) of the window remaining",
+     "kind": "status"
+    }
+   },
+   "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+   "status": {
+    "headline": "Your file needs a few things before a person can read it",
+    "body": "Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork.",
+    "action": "Work through your list below. Each item says exactly what to send or who to ask.",
+    "code": "NEEDS_REVIEW",
+    "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
+    "kind": "status",
+    "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
+   },
+   "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork. Work through your list below. Each item says exactly what to send or who to ask. Your pay stubs show different totals. One stub shows $2,166. Another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it. We treated the difference as extra pay for one period only, so we did not count it across the whole year. If that extra pay comes every time, your yearly figure would be higher than the one we worked out. Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say. Check the pay stub dated 27 June 2026. You changed the total pay on this stub to $2,500. The other numbers on the same stub add up to a different amount: 76 hours at $28.50 an hour comes to $2,166. Because the two do not match, we could not tell which one is your regular pay. We left this stub out when we worked out your yearly income. We saved your change, and a housing worker can see it. Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too."
+  }
  },
  "report_HH-001_after_size_correction": {
   "household_id": "HH-001",
-  "generated_at": "2026-07-18T21:25:18Z",
+  "generated_at": "2026-07-19T01:56:38Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "READY_TO_REVIEW",
+  "annualized_income": 56316.0,
+  "comparison": "below_or_equal",
   "review_reasons": [],
   "documents": [
    {
@@ -2182,15 +2336,58 @@ window.REALDOOR_FIXTURES = {
   ],
   "abstentions": [],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:5888d56a60f6",
-  "session_id": "fb44d45984e7"
+  "engine_version": "sha:adae4d0d7f69",
+  "session_id": "d3a39dc497f5",
+  "plain": {
+   "messages": [],
+   "abstentions": [],
+   "checklist": {
+    "CHK-APPLICATION-SUMMARY": {
+     "headline": "We have your application form",
+     "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-PAY-STUB": {
+     "headline": "We have your pay stub",
+     "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-001-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-EMPLOYMENT-LETTER": {
+     "headline": "We have your employer's letter",
+     "body": "It is in your file and it is recent enough to use. It is dated 6 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-001-D04 is dated 2026-07-06, current with 48 day(s) of the window remaining",
+     "kind": "status"
+    }
+   },
+   "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+   "status": {
+    "headline": "Your paperwork is ready for a person to read",
+    "body": "We have what we need to hand your file to a housing worker. They will read it and decide what happens next. This does not tell you what they will say. It means nothing is missing, out of date, or unclear enough to stop them starting.",
+    "action": "You do not need to send anything else right now. Wait for the housing worker to come back to you.",
+    "code": "READY_TO_REVIEW",
+    "detail": "READY_TO_REVIEW: required evidence is present, current under the 60-day convention, internally consistent, and traceable to page-level source boxes.",
+    "kind": "status",
+    "precision_note": "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable."
+   },
+   "screen_text": "Your paperwork is ready for a person to read. We have what we need to hand your file to a housing worker. They will read it and decide what happens next. This does not tell you what they will say. It means nothing is missing, out of date, or unclear enough to stop them starting. You do not need to send anything else right now. Wait for the housing worker to come back to you."
+  }
  },
  "report_HH-004": {
   "household_id": "HH-004",
-  "generated_at": "2026-07-18T21:25:18Z",
+  "generated_at": "2026-07-19T01:56:38Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
+  "annualized_income": 51008.0,
+  "comparison": "below_or_equal",
   "review_reasons": [
    {
     "check": "present",
@@ -2922,15 +3119,129 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:5888d56a60f6",
-  "session_id": "7e9a4e3a114e"
+  "engine_version": "sha:adae4d0d7f69",
+  "session_id": "485e2962952e",
+  "plain": {
+   "messages": [
+    {
+     "headline": "Nothing in your file backs up your gig earnings",
+     "body": "Your gig earnings statement covers June 2026. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+     "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+     "code": "GIG_INCOME_UNCORROBORATED",
+     "detail": "this income is documented only by a self-reported statement, with no independent corroborating document (HH-004-D04 covers 2026-06; no corroborating document is present)",
+     "kind": "problem",
+     "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction.",
+     "other_details": [
+      "Independent corroboration of gig income: no independent corroboration of gig income found in this file"
+     ]
+    },
+    {
+     "headline": "Your gig earnings statement does not show a full date",
+     "body": "It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line.",
+     "action": "Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent.",
+     "code": "DOCUMENT_UNDATABLE",
+     "detail": "Gig platform earnings statement: HH-004-D04 is dated 2026-06 (month precision); the 60-day convention cannot be applied without inventing a day",
+     "kind": "problem"
+    }
+   ],
+   "abstentions": [
+    {
+     "headline": "Nothing in your file backs up your gig earnings",
+     "body": "Your gig earnings statement covers June 2026. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+     "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+     "code": "GIG_INCOME_UNCORROBORATED",
+     "detail": "this income is documented only by a self-reported statement, with no independent corroborating document (HH-004-D04 covers 2026-06; no corroborating document is present)",
+     "kind": "problem",
+     "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction.",
+     "what_would_resolve_it": "the renter uploads platform earnings records, bank deposits, or a 1099 covering the same period",
+     "about": "annualized_gig_income"
+    },
+    {
+     "headline": "Nothing in your file backs up your gig earnings",
+     "body": "Your gig earnings statement is in your file. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+     "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+     "code": "GIG_INCOME_UNCORROBORATED",
+     "detail": "a required document type is not present in the file (no independent corroboration of gig income found in this file)",
+     "kind": "problem",
+     "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction.",
+     "what_would_resolve_it": "the renter uploads the missing document",
+     "about": "CHK-GIG-INCOME-CORROBORATION"
+    },
+    {
+     "headline": "Your gig earnings statement does not show a full date",
+     "body": "It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line.",
+     "action": "Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent.",
+     "code": "DOCUMENT_UNDATABLE",
+     "detail": "the document states a month but no day, so the 60-day currency convention cannot be applied without inventing a date (HH-004-D04 is dated 2026-06 (month precision); the 60-day convention cannot be applied without inventing a day)",
+     "kind": "problem",
+     "what_would_resolve_it": "the renter supplies a day-precise statement or confirms the date",
+     "about": "CHK-GIG-STATEMENT"
+    }
+   ],
+   "checklist": {
+    "CHK-APPLICATION-SUMMARY": {
+     "headline": "We have your application form",
+     "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-004-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-PAY-STUB": {
+     "headline": "We have your pay stub",
+     "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-004-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-004-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-EMPLOYMENT-LETTER": {
+     "headline": "We still need your employer's letter",
+     "body": "Your file does not have an employer's letter in it yet. A housing worker needs it before they can start reading your file.",
+     "action": "Ask your employer for a signed letter confirming your job, then upload it.",
+     "code": "REQUIRED_DOCUMENT_MISSING",
+     "detail": "Employment verification letter: no employment verification letter found in this file; two pay stubs reporting the same gross pay already document this wage source",
+     "kind": "problem"
+    },
+    "CHK-GIG-INCOME-CORROBORATION": {
+     "headline": "Nothing in your file backs up your gig earnings",
+     "body": "Your gig earnings statement is in your file. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it.",
+     "action": "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.",
+     "code": "GIG_INCOME_UNCORROBORATED",
+     "detail": "Independent corroboration of gig income: no independent corroboration of gig income found in this file",
+     "kind": "problem",
+     "precision_note": "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction."
+    },
+    "CHK-GIG-STATEMENT": {
+     "headline": "Your gig earnings statement does not show a full date",
+     "body": "It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line.",
+     "action": "Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent.",
+     "code": "DOCUMENT_UNDATABLE",
+     "detail": "Gig platform earnings statement: HH-004-D04 is dated 2026-06 (month precision); the 60-day convention cannot be applied without inventing a day",
+     "kind": "problem"
+    }
+   },
+   "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+   "status": {
+    "headline": "Your file needs a few things before a person can read it",
+    "body": "Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork.",
+    "action": "Work through your list below. Each item says exactly what to send or who to ask.",
+    "code": "NEEDS_REVIEW",
+    "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
+    "kind": "status",
+    "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
+   },
+   "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork. Work through your list below. Each item says exactly what to send or who to ask. Nothing in your file backs up your gig earnings. Your gig earnings statement covers June 2026. It is the only paper you gave us that shows this money. It comes from you, so on its own it does not confirm the amount. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong. We are telling the housing worker that no other paper supports it. Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates. Your gig earnings statement does not show a full date. It shows June 2026, but not which day of the month. We need the day to work out whether the paper is recent enough. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. We will not guess a day, because a guessed date could put your paper on the wrong side of that line. Ask for a gig earnings statement that shows the full date, or tell us the exact date on the one you already sent."
+  }
  },
  "report_HH-005": {
   "household_id": "HH-005",
-  "generated_at": "2026-07-18T21:25:18Z",
+  "generated_at": "2026-07-19T01:56:38Z",
   "ruleset_version": "pack-v1/2026-05-01",
   "reference_date": "2026-07-18",
   "readiness_status": "NEEDS_REVIEW",
+  "annualized_income": 45968.0,
+  "comparison": "below_or_equal",
   "review_reasons": [
    {
     "check": "current",
@@ -3569,11 +3880,72 @@ window.REALDOOR_FIXTURES = {
    }
   ],
   "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
-  "engine_version": "sha:5888d56a60f6",
-  "session_id": "7e9a4e3a114e"
+  "engine_version": "sha:adae4d0d7f69",
+  "session_id": "485e2962952e",
+  "plain": {
+   "messages": [
+    {
+     "headline": "Your employer's letter is too old to use",
+     "body": "It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it.",
+     "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+     "code": "EMPLOYMENT_LETTER_EXPIRED",
+     "detail": "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+     "kind": "problem"
+    }
+   ],
+   "abstentions": [
+    {
+     "headline": "Your employer's letter is too old to use",
+     "body": "It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it.",
+     "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+     "code": "EMPLOYMENT_LETTER_EXPIRED",
+     "detail": "the document is dated outside the challenge's 60-day currency window (HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18))",
+     "kind": "problem",
+     "what_would_resolve_it": "the renter uploads a document dated on or after 2026-05-19",
+     "about": "CHK-EMPLOYMENT-LETTER"
+    }
+   ],
+   "checklist": {
+    "CHK-APPLICATION-SUMMARY": {
+     "headline": "We have your application form",
+     "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-005-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-PAY-STUB": {
+     "headline": "We have your pay stub",
+     "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+     "action": "You do not need to do anything about this one.",
+     "code": "DOCUMENT_PRESENT_AND_CURRENT",
+     "detail": "HH-005-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-005-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+     "kind": "status"
+    },
+    "CHK-EMPLOYMENT-LETTER": {
+     "headline": "Your employer's letter is too old to use",
+     "body": "It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it.",
+     "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+     "code": "EMPLOYMENT_LETTER_EXPIRED",
+     "detail": "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+     "kind": "problem"
+    }
+   },
+   "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+   "status": {
+    "headline": "Your file needs a few things before a person can read it",
+    "body": "Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork.",
+    "action": "Work through your list below. Each item says exactly what to send or who to ask.",
+    "code": "NEEDS_REVIEW",
+    "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
+    "kind": "status",
+    "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
+   },
+   "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork. Work through your list below. Each item says exactly what to send or who to ask. Your employer's letter is too old to use. It is dated 14 April 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026. Nothing is wrong with the rest of your file. One out-of-date paper is enough to hold the whole file until someone replaces it. Ask your employer for a new letter dated 19 May 2026 or later, then upload it."
+  }
  },
  "selftest": {
-  "generated_at": "2026-07-18T21:25:18Z",
+  "generated_at": "2026-07-19T01:56:40Z",
   "sections": {
    "extraction": {
     "status": "measured",
@@ -3623,11 +3995,135 @@ window.REALDOOR_FIXTURES = {
     "status": "measured",
     "tool": "axe-core",
     "standard": "WCAG 2.2 AA",
-    "scans": 14,
+    "scans": 32,
     "violations": 0,
-    "incomplete": 6,
+    "incomplete": 12,
     "artefact": "ui/axe-report.json",
     "note": "Incomplete means axe declined to judge, not that a check passed. Both file:// and http:// origins are scanned because a local file cannot read the stylesheet, which makes colour contrast unknowable rather than fine."
+   },
+   "plain_language": {
+    "status": "measured",
+    "codes_with_plain_wording": 21,
+    "situations_with_plain_wording": 12,
+    "messages_checked": 35,
+    "renter_facing_strings": 105,
+    "free_of_raw_identifiers": 1.0,
+    "uses_second_person_per_string": 0.9524,
+    "uses_second_person_per_message": 1.0,
+    "active_voice_best_effort": 0.9526,
+    "problem_messages_carrying_an_action": 1.0,
+    "action_gaps": [],
+    "actions_needing_a_trained_person": [
+     "HOUSEHOLD_SIZE_OUTSIDE_FROZEN_TABLE",
+     "NO_FROZEN_THRESHOLD",
+     "PAY_FREQUENCY_NOT_RECOGNIZED",
+     "no_frozen_threshold"
+    ],
+    "household_id_leaks": [],
+    "readability": {
+     "status": "measured",
+     "screens": [
+      {
+       "screen": "answer_screens",
+       "words": 941,
+       "sentences": 70,
+       "flesch_kincaid_grade": 5.35,
+       "smog_grade": 8.01,
+       "spread_between_the_two": 2.66,
+       "smog_is_extrapolated": false
+      },
+      {
+       "screen": "document_problem_screen",
+       "words": 458,
+       "sentences": 37,
+       "flesch_kincaid_grade": 4.59,
+       "smog_grade": 7.11,
+       "spread_between_the_two": 2.52,
+       "smog_is_extrapolated": false
+      },
+      {
+       "screen": "income_problem_screen",
+       "words": 825,
+       "sentences": 60,
+       "flesch_kincaid_grade": 4.98,
+       "smog_grade": 7.46,
+       "spread_between_the_two": 2.48,
+       "smog_is_extrapolated": false
+      },
+      {
+       "screen": "limit_problem_screen",
+       "words": 330,
+       "sentences": 24,
+       "flesch_kincaid_grade": 5.68,
+       "smog_grade": 7.79,
+       "spread_between_the_two": 2.11,
+       "smog_is_extrapolated": true
+      },
+      {
+       "screen": "status_screens",
+       "words": 200,
+       "sentences": 20,
+       "flesch_kincaid_grade": 3.24,
+       "smog_grade": 6.51,
+       "spread_between_the_two": 3.27,
+       "smog_is_extrapolated": true
+      }
+     ],
+     "screens_too_short_to_measure": [],
+     "minimum_sample_words": 100,
+     "widest_spread": 3.27,
+     "note": "Two formulas, reported together with the gap between them. A per-string grade is not defensible and is not produced. SMOG needs 30 sentences to be used as defined; screens below that are marked as extrapolated. WCAG 2.2 SC 3.1.5 Reading Level is Level AAA and is not required at AA -- we adopt it voluntarily and do not claim AA obliges it."
+    },
+    "note": "Only 'problem_messages_carrying_an_action' is a requirement: WCAG 2.2 SC 3.3.3 Error Suggestion is Level AA, and it must read 1.0. Second person and active voice are Federal Plain Language Guidelines style goals we adopted voluntarily; the FPLG sets no reading-grade target and no sentence-length rule. SC 3.1.5 Reading Level is Level AAA and is not required at AA. The active-voice figure is a regex heuristic with documented blind spots, not a measurement of grammar. Readability is reported as two formulas plus their spread, per screen, on samples of at least 100 words, because a single per-string grade is not defensible."
+   },
+   "rendered_screens": {
+    "status": "measured",
+    "tool": "screen-scan",
+    "origin": "file:// (offline, bundled fixtures — the state the submitted build opens in)",
+    "households_walked": [
+     "HH-001",
+     "HH-004",
+     "HH-005"
+    ],
+    "steps_per_household": 6,
+    "identifier_patterns": [
+     "HH-\\d{3}-D\\d{2}",
+     "CHK-[A-Z][A-Z-]+",
+     "CH-[A-Z]+-\\d+"
+    ],
+    "visible_machine_identifiers": 72,
+    "visible_machine_identifiers_by_step": "step1-documents 21, step2-correct 13, step3-ask 0, step4-calculation 37, step5-checklist 0, step6-check-and-packet 1",
+    "screens_needing_older_wording": 0,
+    "plain_wording_gaps": [],
+    "page_errors": 0,
+    "artefact": "ui/screen-scan.json",
+    "note": "This is the DOM-level twin of the plain_language section above, and the two must be read together: that one measures whether the renter-facing wording is clean, this one measures whether it reaches the screen. Text inside a collapsed disclosure is not counted, because it is not visible — every machine code and every original message is still there, one click away. Household ids are counted separately and excluded, because the header picker names the file being read. This number is published, not gated: no target has been agreed for it, and the remaining count is concentrated on the evidence and calculation screens, where a document id is the subject of the row rather than an intrusion into a sentence."
+   },
+   "intent_router": {
+    "status": "measured",
+    "enabled": true,
+    "model": "gpt-4o-mini",
+    "known_intents": 21,
+    "questions_reaching_the_classifier": 0,
+    "calls": 0,
+    "cache_hits": 0,
+    "cache_hit_rate": null,
+    "classifier_said_unknown": 0,
+    "rejected_label_outside_closed_set": 0,
+    "rejected_deterministic_router_disagreed": 0,
+    "rejected_no_anchor": 0,
+    "accepted": 0,
+    "offline_or_uncached": 0,
+    "timeouts": 0,
+    "errors": 0,
+    "anchor_audit_ok": true,
+    "anchor_audit_detail": {
+     "intents": 21,
+     "anchors_missing": [],
+     "anchors_for_unknown_intents": [],
+     "anchors_not_round_tripping": []
+    },
+    "note": "The classifier returns one label from a closed set and never writes a sentence; every sentence a renter reads is still built by deterministic code. A label is only acted on after the deterministic router is asked again and agrees, so the classifier can point at existing answers but cannot create one. It is reached only when every deterministic layer is silent, which is why the graded question set does not touch it. Only the question text is sent; no document content or household data leaves this process. Counters are since process start, not since the pack was written. When the router is switched off these figures read not_run rather than zero-as-success."
    }
   },
   "honesty_note": "Every number here is produced by re-running the measurement, not copied from a previous run. Sections that cannot be measured are marked not_run rather than filled in."

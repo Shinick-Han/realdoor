@@ -278,6 +278,14 @@ main:focus { outline: none; }
 .reason-heading { font-weight: 700; margin: 0 0 .2rem; }
 .reason-message { margin: 0 0 .4rem; }
 
+/* The action is the thing the reader came to do, so it is the heaviest text in the card
+   and the reasoning sits under it. Same treatment everywhere an action appears, so a
+   renter learns the shape once. */
+.do-this { margin: 0 0 .4rem; }
+.do-this__label { font-weight: 700; }
+.do-this--lead { font-size: 1.08rem; line-height: 1.45; margin: 0 0 .5rem; }
+.card-why { color: var(--ink-soft); font-size: .92rem; margin: 0 0 .5rem; }
+
 /* Machine codes live here and only here: kept for verification, never the headline. */
 details.tech { font-size: .86rem; }
 details.tech > summary {
@@ -456,6 +464,18 @@ table { border-collapse: collapse; width: 100%; font-size: .92rem; }
    생김새는 기존 caption 규칙(431행)과 같게 두어 화면상 달라진 것이 없게 한다. */
 .table-block { margin-bottom: 1rem; }
 .table-block .table-scroll { margin-bottom: 0; }
+
+/* One control for the whole table, not one per row. Sits outside .table-scroll so it
+   cannot be pushed off-screen by the very column it governs. */
+.table-toggle {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  margin: 0 0 .45rem;
+  font-size: .9rem;
+}
+.table-toggle input { width: 1.05rem; height: 1.05rem; margin: 0; flex: none; }
+.table-toggle label { cursor: pointer; }
 .table-caption {
   text-align: left;
   font-weight: 600;
