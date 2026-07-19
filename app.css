@@ -430,6 +430,10 @@ details.tech > * { margin-top: .4rem; }
 .q-item p { font-size: .88rem; margin-bottom: .4rem; }
 .q-resolve { color: var(--ok); font-weight: 600; }
 .q-empty { font-size: .9rem; }
+/* Says out loud that one visible item stands for more than one counted entry. Quieter
+   than the item it qualifies, because it is a note about the count and not a new problem;
+   it must never be so quiet that the count above looks like it shrank on its own. */
+.q-folded { color: var(--ink-soft); font-size: .82rem; }
 
 /* ── generic blocks ───────────────────────────────────────────────── */
 .card {

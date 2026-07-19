@@ -230,9 +230,70 @@
     return (state.report.review_reasons || []).filter(function (r) { return reasonStep(r) === n; });
   }
 
+  /** Fold entries that the plain layer maps to the same renter-visible problem.
+   *
+   *  Two different machine checks can raise one problem. HH-004 raises
+   *  GIG_INCOME_UNCORROBORATED from both the presence check and the consistency check, and
+   *  its abstentions[] carries that same problem twice under two different subjects. The
+   *  result in the rail was the same sentence, four times, in one panel.
+   *
+   *  api/plain.py already folds review_reasons[] this way for the main flow and says why:
+   *  "showing a renter two near-identical boxes is its own failure to communicate". The
+   *  rail was the one surface still walking the unfolded list. This is the same decision,
+   *  made at render time, which is what abstentions[] requires: that list carries no code
+   *  of its own and its plain twin is positionally aligned with it, so the pairing has to
+   *  happen first and the folding second.
+   *
+   *  Folding is a display decision and it is stated on screen. The section counts stay the
+   *  machine counts, a folded item says how many entries it stands for, and every member's
+   *  own machine strings are kept under that item's Technical details. Nothing is dropped
+   *  and no number quietly shrinks.
+   *
+   *  `keyOf` returning a falsy key means "we could not map this one" -- those are never
+   *  folded together, because two things we could not identify are not thereby the same
+   *  thing.
+   */
+  function foldByKey(entries, keyOf) {
+    var order = [];
+    var groups = {};
+    entries.forEach(function (entry, index) {
+      var key = keyOf(entry, index) || ("unmapped:" + index);
+      if (!groups[key]) { groups[key] = []; order.push(key); }
+      groups[key].push(entry);
+    });
+    return order.map(function (key) { return groups[key]; });
+  }
+
+  /** The visible sentence that keeps a folded rail item honest against the count above it. */
+  function foldedNote(count) {
+    return h("p", {
+      class: "q-folded",
+      text: "Counted above as " + count + " entries. They are the same item, and each one " +
+            "is kept in full under Technical details."
+    });
+  }
+
+  /** The same admission on a step, where the reader is looking at the item and not a list. */
+  function raisedByNote(count) {
+    return h("p", {
+      class: "q-folded",
+      text: count + " separate checks raised this one item. Each check is listed in full " +
+            "under Technical details."
+    });
+  }
+
+  /** The step's open items, one per renter-visible problem rather than one per check.
+   *  Used by both the error summary and the inline items so the two lists cannot differ
+   *  in length -- the GOV.UK pattern is one summary link per inline item, and two links
+   *  reading the same sentence and pointing at the same anchor is not that pattern. */
+  function foldedReasonsForStep(n) {
+    return foldByKey(reasonsForStep(n), function (reason) { return reason.code; });
+  }
+
   /** The inline message, next to the thing it concerns. Its text is the same string the
    *  error summary at the top of the page links with — character for character. */
-  function reasonCard(reason) {
+  function reasonCard(group) {
+    var reason = group[0];
     var said = plainForReason(reason);
     return h("div", { class: "reason", id: "reason-" + reason.code, tabindex: "-1" }, [
       h("p", { class: "reason-heading", text: reasonHeading(reason) }),
@@ -241,37 +302,47 @@
         h("span", { class: "do-this__label", text: "What you can do: " }),
         said.action
       ]) : null,
+      group.length > 1 ? raisedByNote(group.length) : null,
       h("details", { class: "tech" }, [
-        h("summary", { text: "Technical details" }),
-        h("dl", { class: "kv" }, [
-          h("dt", { text: "Code" }),  h("dd", { class: "mono", text: reason.code }),
-          h("dt", { text: "Check" }), h("dd", { class: "mono", text: reason.check }),
-          h("dt", { text: "Rule" }),  h("dd", { class: "mono", text: reason.rule_id }),
-          // The logic layer's own sentence, verbatim. Demoted, never dropped: this is the
-          // string 300+ tests assert on and the one a judge checks the rewrite against.
-          h("dt", { text: "Message" }), h("dd", { class: "mono", text: reason.message })
-        ]),
+        h("summary", { text: "Technical details" })
+      ].concat(group.map(function (entry) {
+        // One block per check. The logic layer's own sentence stays verbatim in each:
+        // that is the string 300+ tests assert on and the one a judge checks the rewrite
+        // against, so folding the cards must not fold the evidence.
+        return h("dl", { class: "kv" }, [
+          h("dt", { text: "Code" }),  h("dd", { class: "mono", text: entry.code }),
+          h("dt", { text: "Check" }), h("dd", { class: "mono", text: entry.check }),
+          h("dt", { text: "Rule" }),  h("dd", { class: "mono", text: entry.rule_id }),
+          h("dt", { text: "Message" }), h("dd", { class: "mono", text: entry.message })
+        ]);
+      })).concat([
         (said && said.other_details || []).length
           ? h("p", { class: "mono", text: said.other_details.join("  ·  ") })
           : null,
         said && said.precision_note
           ? h("p", { text: "Why this wording: " + said.precision_note })
           : null
-      ])
+      ]))
     ]);
   }
 
-  /** All open items belonging to one step, rendered inline beneath that step's content. */
-  function stepReasonBlock(n) {
-    var reasons = reasonsForStep(n);
-    if (!reasons.length) return null;
+  /** All open items belonging to one step, rendered inline beneath that step's content.
+   *
+   *  `only` lets a screen that has already rendered some of its own open items in context
+   *  pass the remainder. Step 5 does that: see `renderChecklist`.
+   */
+  function stepReasonBlock(n, only) {
+    var groups = only
+      ? foldByKey(only, function (reason) { return reason.code; })
+      : foldedReasonsForStep(n);
+    if (!groups.length) return null;
     var headingId = "step-open-" + n;
     return h("section", { class: "reason-block", "aria-labelledby": headingId }, [
       h("h3", { id: headingId, style: { marginTop: "0" },
-        text: reasons.length === 1
+        text: groups.length === 1
           ? "One thing on this step needs a person to look at it"
-          : reasons.length + " things on this step need a person to look at them" }),
-      h("div", null, reasons.map(reasonCard))
+          : groups.length + " things on this step need a person to look at them" }),
+      h("div", null, groups.map(reasonCard))
     ]);
   }
 
@@ -605,7 +676,11 @@
     clear(host);
     var step = stepByScreen(state.screen);
     if (!step) return;
-    var reasons = reasonsForStep(step.n);
+    // Folded to one entry per renter-visible problem, exactly as the inline items are, so
+    // the summary and the page below it stay the same list. Where two checks raised one
+    // problem the inline item says so on its face; the machine list is never shortened,
+    // and the rail still carries every reason the reasoning layer emitted.
+    var reasons = foldedReasonsForStep(step.n).map(function (group) { return group[0]; });
     if (!reasons.length) return;
 
     host.appendChild(h("div", {
@@ -1445,22 +1520,38 @@
    *  The card previously put fifteen machine identifiers on screen at the same visual
    *  weight as "What you can do", which is how the one line that matters got lost.
    */
-  function checklistCard(item) {
+  function checklistCard(item, anchored) {
     var said = plainForChecklistItem(item);
     var action = (said && said.action) || item.action_for_renter;
     var done = item.state === "present";
-    return h("div", { class: "card" }, [
+    var reasons = anchored || [];
+    // When this card *is* the step's open item, it becomes the error summary's target
+    // rather than being shadowed by a second copy of itself further down the page. The
+    // two class names below are what the summary/inline contract is expressed in, and
+    // ui/tools/keyboard-journey.mjs asserts the pair on whatever the summary links to;
+    // `.reason-heading` is a span so the state chip stays out of the compared text.
+    var attrs = { class: "card" };
+    if (reasons.length) {
+      attrs.class = "card reason";
+      attrs.id = "reason-" + reasons[0].code;
+      attrs.tabindex = "-1";
+    }
+    var headline = (said && said.headline) || item.label;
+    var whyClass = reasons.length ? "card-why reason-message" : "card-why";
+    return h("div", attrs, [
       h("h4", { style: { marginTop: "0" } }, [
-        (said && said.headline) || item.label, " ", stateChip(item.state)
+        reasons.length ? h("span", { class: "reason-heading", text: headline }) : headline,
+        " ", stateChip(item.state)
       ]),
       action && !done
         ? h("p", { class: "do-this do-this--lead" }, [
             h("span", { class: "do-this__label", text: "What you can do: " }), action
           ])
         : null,
-      said ? h("p", { class: "card-why", text: said.body }) : null,
-      !said && item.detail ? h("p", { class: "card-why", text: item.detail }) : null,
+      said ? h("p", { class: whyClass, text: said.body }) : null,
+      !said && item.detail ? h("p", { class: whyClass, text: item.detail }) : null,
       done && action ? h("p", { class: "card-why", text: action }) : null,
+      reasons.length > 1 ? raisedByNote(reasons.length) : null,
       h("details", { class: "tech" }, [
         h("summary", { text: "Technical details" }),
         h("dl", { class: "kv" }, [
@@ -1475,7 +1566,20 @@
         ].concat(said ? [
           h("dt", { text: "Code" }), h("dd", { class: "mono", text: said.code })
         ] : []))
-      ])
+      ].concat(reasons.map(function (reason) {
+        // The review reason's own machine fields. They travelled with the duplicate card
+        // this one replaced, so they move here rather than disappearing with it.
+        return h("dl", { class: "kv" }, [
+          h("dt", { text: "Raised as" }), h("dd", { class: "mono", text: reason.code }),
+          h("dt", { text: "Check" }), h("dd", { class: "mono", text: reason.check }),
+          h("dt", { text: "Rule" }), h("dd", { class: "mono", text: reason.rule_id }),
+          h("dt", { text: "Message" }), h("dd", { class: "mono", text: reason.message })
+        ]);
+      })).concat(
+        (said && said.precision_note)
+          ? [h("p", { text: "Why this wording: " + said.precision_note })]
+          : []
+      ))
     ]);
   }
 
@@ -1512,15 +1616,41 @@
       ]));
     }
 
+    // Step 5's open items ARE the checklist items. Rendering both put the same problem on
+    // screen twice: once as its checklist card and again, word for word, under "One thing
+    // on this step needs a person to look at it" at the foot of the page. The GOV.UK error
+    // summary pattern needs the inline item to *exist* so the summary can point at it; it
+    // does not need a second copy of it. So the reason is folded into the card it is
+    // about -- that card takes the anchor the summary links to, and the reason's own
+    // machine fields join that card's Technical details. A reason with no matching card
+    // still gets its own block below, because a thing with nowhere to live must not
+    // silently stop being shown.
+    //
+    // Matched on the code the plain layer assigned to each, not on label text: both sides
+    // come from api/plain.py, so this is one identifier compared with itself.
+    var pending = reasonsForStep(5);
+    var anchoredByItem = {};
+    checklist.forEach(function (item) {
+      var said = plainForChecklistItem(item);
+      var code = said && said.code;
+      if (!code || !pending.length) return;
+      var mine = pending.filter(function (reason) { return reason.code === code; });
+      if (!mine.length) return;
+      pending = pending.filter(function (reason) { return reason.code !== code; });
+      anchoredByItem[item.item_id] = mine;
+    });
+
     order.forEach(function (stateName) {
       var items = checklist.filter(function (item) { return item.state === stateName; });
       if (!items.length) return;
       var words = STATE_WORDS[stateName];
       root.appendChild(h("h3", null, [words.word + " (" + items.length + ")"]));
-      items.forEach(function (item) { root.appendChild(checklistCard(item)); });
+      items.forEach(function (item) {
+        root.appendChild(checklistCard(item, anchoredByItem[item.item_id]));
+      });
     });
 
-    var openItems = stepReasonBlock(5);
+    var openItems = stepReasonBlock(5, pending);
     if (openItems) root.appendChild(openItems);
   }
 
@@ -1940,61 +2070,91 @@
               "item is accounted for. An empty list means nothing was withheld, not that nothing was checked."
       }));
     }
-    abstentions.forEach(function (item, index) {
-      // `about` is sometimes a checklist id such as CHK-EMPLOYMENT-LETTER, and `reason` is
-      // the logic layer's precise sentence, ids and all. Neither is what a renter should
-      // meet first: the plain layer's wording leads, and both machine strings stay
-      // verbatim under Technical details.
-      var said = plainForAbstention(index, item);
-      root.appendChild(h("div", { class: "q-item" }, [
-        h("h3", { text: (said && said.headline) || abstentionHeading(item) }),
-        h("p", { text: said ? said.body : item.reason }),
-        said && said.action
-          ? h("p", { class: "q-resolve", text: said.action })
-          : h("p", { class: "q-resolve", text: "Resolved by: " + item.what_would_resolve_it }),
-        h("details", { class: "tech" }, [
-          h("summary", { text: "Technical details" }),
-          h("dl", { class: "kv" }, [
-            h("dt", { text: "About" }), h("dd", { class: "mono", text: String(item.about) }),
-            h("dt", { text: "Reason" }), h("dd", { class: "mono", text: String(item.reason) }),
-            h("dt", { text: "Resolved by" }),
-            h("dd", { class: "mono", text: String(item.what_would_resolve_it) })
-          ].concat(said ? [
-            h("dt", { text: "Code" }), h("dd", { class: "mono", text: said.code })
-          ] : []))
-        ])
-      ]));
+    // Pair each abstention with its plain twin first -- that pairing is positional and
+    // cannot survive reordering -- then fold the pairs by the code the plain layer gave
+    // them. `about` is sometimes a checklist id such as CHK-EMPLOYMENT-LETTER, and
+    // `reason` is the logic layer's precise sentence, ids and all. Neither is what a
+    // renter should meet first: the plain layer's wording leads, and both machine strings
+    // stay verbatim under Technical details.
+    var paired = abstentions.map(function (item, index) {
+      return { item: item, said: plainForAbstention(index, item) };
     });
+    foldByKey(paired, function (pair) { return pair.said && pair.said.code; })
+      .forEach(function (group) {
+        var said = group[0].said;
+        var lead = group[0].item;
+        root.appendChild(h("div", { class: "q-item" }, [
+          h("h3", { text: (said && said.headline) || abstentionHeading(lead) }),
+          // The rail says what is unsettled and what would settle it. The full
+          // explanation is one disclosure away here and in full view on the step this
+          // item belongs to -- a summary panel that restates every paragraph is not a
+          // summary panel.
+          said && said.action
+            ? h("p", { class: "q-resolve", text: said.action })
+            : h("p", { class: "q-resolve", text: "Resolved by: " + lead.what_would_resolve_it }),
+          group.length > 1 ? foldedNote(group.length) : null,
+          h("details", { class: "tech" }, [
+            h("summary", { text: "Technical details" }),
+            said && said.body ? h("p", { text: said.body }) : null,
+            said && said.code
+              ? h("p", { class: "mono", text: "Code: " + said.code })
+              : null
+          ].concat(group.map(function (pair) {
+            return h("dl", { class: "kv" }, [
+              h("dt", { text: "About" }),
+              h("dd", { class: "mono", text: String(pair.item.about) }),
+              h("dt", { text: "Reason" }),
+              h("dd", { class: "mono", text: String(pair.item.reason) }),
+              h("dt", { text: "Resolved by" }),
+              h("dd", { class: "mono", text: String(pair.item.what_would_resolve_it) })
+            ]);
+          })))
+        ]));
+      });
 
     root.appendChild(h("h3", { text: "Reasons this needs review (" + reasons.length + ")" }));
     if (!reasons.length) {
       root.appendChild(h("p", { class: "q-empty", text: "None recorded for this household." }));
     }
-    reasons.forEach(function (reason) {
-      var n = reasonStep(reason);
-      var said = plainForReason(reason);
-      root.appendChild(h("div", { class: "q-item" }, [
-        // A human heading, not the machine code. The code stays available one disclosure away.
-        h("h3", { text: reasonHeading(reason) }),
-        h("p", { text: said ? said.body : reason.message }),
-        said && said.action ? h("p", { class: "q-resolve", text: said.action }) : null,
-        h("p", { style: { marginBottom: "0" } }, [
-          h("button", {
-            type: "button", class: "change-link",
-            onclick: function () { state.returnTo = null; goToStep(n); }
-          }, [
-            "Go to step " + n,
-            h("span", { class: "visually-hidden", text: " to see this item in context" })
-          ])
-        ]),
-        h("details", { class: "tech" }, [
-          h("summary", { text: "Technical details" }),
-          h("p", { class: "mono",
-            text: reason.code + " · check: " + reason.check + " · rule: " + reason.rule_id }),
-          h("p", { class: "mono", style: { marginBottom: "0" }, text: reason.message })
-        ])
-      ]));
-    });
+    // Folded on code *and* step, so a folded item's single "Go to step N" link is right
+    // for every entry inside it. Two reasons sharing a code but landing on different steps
+    // stay apart, because one link cannot honestly stand for both.
+    foldByKey(reasons, function (reason) { return reason.code + " @ " + reasonStep(reason); })
+      .forEach(function (group) {
+        var reason = group[0];
+        var n = reasonStep(reason);
+        var said = plainForReason(reason);
+        root.appendChild(h("div", { class: "q-item" }, [
+          // A human heading, not the machine code. The code stays available one disclosure away.
+          h("h3", { text: reasonHeading(reason) }),
+          said && said.action ? h("p", { class: "q-resolve", text: said.action }) : null,
+          group.length > 1 ? foldedNote(group.length) : null,
+          // The link is the rail's actual work: it is the only thing here that takes you
+          // to the item. It stays above the disclosure, never inside it.
+          h("p", { style: { marginBottom: "0" } }, [
+            h("button", {
+              type: "button", class: "change-link",
+              onclick: function () { state.returnTo = null; goToStep(n); }
+            }, [
+              "Go to step " + n,
+              h("span", { class: "visually-hidden", text: " to see this item in context" })
+            ])
+          ]),
+          h("details", { class: "tech" }, [
+            h("summary", { text: "Technical details" }),
+            said && said.body ? h("p", { text: said.body }) : null
+          ].concat(group.map(function (entry) {
+            // One block per folded member, each carrying its own check and rule: the
+            // members differ in exactly those fields, so printing the first one's and
+            // calling it the group's would be the quiet loss this fold is meant to avoid.
+            return h("div", null, [
+              h("p", { class: "mono",
+                text: entry.code + " · check: " + entry.check + " · rule: " + entry.rule_id }),
+              h("p", { class: "mono", style: { marginBottom: "0" }, text: entry.message })
+            ]);
+          })))
+        ]));
+      });
   }
 
   // ── shared bits ─────────────────────────────────────────────────────────────────
