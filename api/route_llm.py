@@ -29,6 +29,13 @@ route_llm.py — 입구의 분류기. **판단 경로에는 여전히 모델이 
 보내는 것을 조건부로 두는데, 질문 텍스트만 보내면 그 조건 자체를 건드리지 않는다.
 (캐시에 저장되는 것도 출력 라벨뿐이다 — 질문 원문은 키의 해시로만 남는다.)
 
+그 질문 텍스트는 사용자가 타이핑한다. 나가기 직전에 `api.redact` 가 **형태만 보고도
+식별자인 줄 아는 것** — 이메일·전화번호·SSN 형태·번지 붙은 주소·스스로 밝힌 우편번호 —
+을 자리표시자로 바꾼다. 이것은 개인정보 필터가 **아니다.** 이름이나 직장처럼 문맥으로만
+알 수 있는 것은 그대로 나간다. 걸러내려면 판단해야 하고 판단하려면 보내야 하므로,
+우리는 그 부분을 풀지 못했고 푼 척하지 않는다. 자세한 한계는 `api/redact.py` 에 적었다.
+앵커를 붙여 결정론 라우터에 되묻는 단계는 **원문**으로 한다 — 제거는 나가는 쪽에만 쓴다.
+
 끄는 법: `REALDOOR_LLM_ROUTER=0`. 키가 없거나 `HN_OFFLINE=1` 이고 캐시가 비어 있으면
 스스로 조용히 물러난다. 데모가 네트워크에 매달리지 않는다.
 """
@@ -42,7 +49,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from api import situations
+from api import redact, situations
 from logic.answer_rules import ROUTES as _CANONICAL_ROUTES, route as canonical_route
 
 #: 공용 게이트웨이. 디스크 캐시·temperature 0·usage.jsonl 로깅·HN_OFFLINE 이 이미
@@ -190,21 +197,34 @@ _STATS: dict[str, Any] = {
     "offline_or_uncached": 0,
     "timeouts": 0,
     "errors": 0,
+    # 나가기 직전의 식별자 제거. `scrubbed` 는 **시도한** 문장 수이고, 0 이 아닌
+    # `redacted_items` 만 실제로 바뀐 것이다. 둘을 나눠 세는 이유는 "돌렸지만 아무
+    # 것도 못 찾았다"와 "돌리지 않았다"가 다른 사실이기 때문이다.
+    "scrubbed": 0,
+    "redacted_items": 0,
+    "questions_with_a_redaction": 0,
+    "redacted_by_pattern": {},
 }
 
 
 def stats() -> dict[str, Any]:
     out = dict(_STATS)
+    out["redacted_by_pattern"] = dict(_STATS["redacted_by_pattern"])
     out["enabled"] = is_enabled()
     out["model"] = MODEL
     out["intents_known"] = len(known_intents())
+    out["redaction_patterns"] = list(redact.pattern_names())
     return out
 
 
 def reset_stats() -> None:
     for key, value in list(_STATS.items()):
+        if isinstance(value, bool):
+            continue
         if isinstance(value, int):
             _STATS[key] = 0
+        elif isinstance(value, dict):
+            _STATS[key] = {}
     _STATS["cache_hits_measurable"] = True
 
 
@@ -272,6 +292,18 @@ def classify(question: str) -> str | None:
     text = (question or "").strip()
     if not text:
         return None
+
+    # 나가는 문장에서만 지운다. 아래 `confirm()` 은 원문을 쓴다 — 결정론 라우터는
+    # 이 프로세스 안에 있으므로 가릴 이유가 없고, 가리면 라우팅만 나빠진다.
+    scrubbed = redact.scrub(text)
+    _STATS["scrubbed"] += 1
+    if scrubbed.removed:
+        _STATS["redacted_items"] += scrubbed.removed
+        _STATS["questions_with_a_redaction"] += 1
+        for name, hits in scrubbed.by_pattern.items():
+            _STATS["redacted_by_pattern"][name] = (
+                _STATS["redacted_by_pattern"].get(name, 0) + hits)
+    text = scrubbed.text
 
     providers = _providers()
     schema = _schema()

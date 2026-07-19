@@ -315,6 +315,31 @@ def intent_router_section() -> dict[str, Any]:
         "errors": s["errors"],
         "anchor_audit_ok": audit["ok"],
         "anchor_audit_detail": {k: v for k, v in audit.items() if k != "ok"},
+        # ── 나가기 직전의 식별자 제거 ────────────────────────────────────
+        "identifier_patterns_looked_for": ", ".join(s["redaction_patterns"]),
+        "questions_scrubbed_before_sending": s["scrubbed"],
+        "questions_with_a_redaction": s["questions_with_a_redaction"],
+        "identifiers_replaced": s["redacted_items"],
+        # 측정 패널은 한 줄에 값 하나를 그린다. 중첩 객체는 "[object Object]" 로
+        # 도착하므로 문자열로 편다.
+        "identifiers_replaced_by_pattern": ", ".join(
+            f"{name} {count}" for name, count in sorted(
+                s["redacted_by_pattern"].items())) or "none",
+        "redaction_note": (
+            "Before a question is sent, shapes that are identifiers on sight — an "
+            "email address, a phone number, a nine-digit number written as a social "
+            "security number, a street address carrying a house number, a postal code "
+            "that says it is one — are replaced with a placeholder such as "
+            "[address removed]. Placeholders rather than deletions, so the sentence "
+            "keeps its shape and the topic stays findable. This is not a personal-data "
+            "filter and must not be read as one. A name, an employer, a school, a "
+            "landlord — anything that is identifying only because of what the sentence "
+            "means — is not caught here and is sent as typed. Catching those would "
+            "require judging the sentence, and judging it would require sending it, "
+            "which is the thing being avoided; that problem is unsolved here rather "
+            "than solved quietly. A count of zero on this row means no known shape was "
+            "found, not that the question carried nothing personal."
+        ),
         "note": (
             "The classifier returns one label from a closed set and never writes a "
             "sentence; every sentence a renter reads is still built by deterministic "
@@ -323,7 +348,10 @@ def intent_router_section() -> dict[str, Any]:
             "cannot create one. It is reached only when every deterministic layer is "
             "silent, which is why the graded question set does not touch it. Only the "
             "question text is sent; no document content or household data leaves this "
-            "process. Counters are since process start, not since the pack was "
+            "process. The question text is written by the renter, so recognisable "
+            "identifier shapes are replaced before it is sent — see redaction_note "
+            "for what that does and does not reach. Counters are since process start, "
+            "not since the pack was "
             "written. When the router is switched off these figures read not_run "
             "rather than zero-as-success."
         ),
