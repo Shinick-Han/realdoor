@@ -52,8 +52,13 @@
     "RealDoor reads the documents for one household, shows you where on the page every value came from, and tells you what is still missing or out of date. It does not decide whether anyone qualifies for anything — a housing professional does that.":
       "RealDoor 는 한 세대의 서류를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여주고, 아직 없거나 기한이 지난 것이 무엇인지 알려 줍니다. 누구에게 자격이 있는지는 판정하지 않습니다 — 그것은 주택 전문가가 합니다.",
     "Before you start": "시작하기 전에",
-    "This walkthrough takes about ten minutes. The documents for the household you choose above are already loaded, so there is nothing to upload and nothing is sent anywhere. You can stop at any step and your work stays on this device.":
-      "이 과정은 약 10분 걸립니다. 위에서 고른 세대의 서류는 이미 불러와 있으므로 올릴 것도 없고, 어디로도 전송되지 않습니다. 어느 단계에서든 멈출 수 있고 작업 내용은 이 기기에 남습니다.",
+    // ⚠ 이 문단의 영어는 업로드 기능이 들어오면서 바뀌었다. 예전 한국어는 "올릴 것도
+    //   없고" 라고 말했는데, 이제 1단계에 올리기 패널이 있으므로 그 문장은 거짓이다.
+    //   영어가 바뀌면 사전 키가 빗나가 저절로 영어로 남으므로 낡은 한국어가 화면에
+    //   뜨지는 않았지만, 새 키로 옮겨 적으면서 "올릴 필요는 없다(없는 게 아니라)" 로
+    //   뜻을 맞춘다.
+    "This walkthrough takes about ten minutes. The documents for the household you choose above are already loaded, so you can go straight through it without uploading anything. Step 1 also lets you read a synthetic document of your own, held in memory for this session only. Nothing is sent anywhere. You can stop at any step and your work stays on this device.":
+      "이 과정은 약 10분 걸립니다. 위에서 고른 세대의 서류는 이미 불러와 있어서, 아무것도 올리지 않고 그대로 끝까지 진행하실 수 있습니다. 1단계에서는 직접 만드신 합성 문서를 올려 읽어 볼 수도 있습니다. 그 문서는 이번 세션의 메모리에만 있습니다. 어디로도 전송되지 않습니다. 어느 단계에서든 멈출 수 있고 작업 내용은 이 기기에 남습니다.",
     "What happens, in order": "진행 순서",
 
     // ── index.html: 각 단계의 제목과 안내문 ─────────────────────────────────
@@ -94,8 +99,11 @@
     "The challenge brief specifies a six-step acceptance demo. Our numbered walkthrough is written for the renter, not for that list, so the two do not line up one to one. This is the mapping.":
       "과제 설명서는 6단계 수용 데모를 요구합니다. 우리의 번호 매긴 진행 과정은 그 목록이 아니라 세입자를 위해 쓰여 있어서, 둘은 1대1로 맞아떨어지지 않습니다. 아래가 그 대응표입니다.",
     "1. Upload documents, show extraction evidence": "1. 서류 업로드, 추출 근거 제시",
-    "— walkthrough step 1. The documents are pre-loaded rather than uploaded; every value carries the box on the page it came from.":
-      "— 진행 과정 1단계. 서류는 업로드가 아니라 미리 불러와 있으며, 모든 값은 그것이 나온 문서상의 근거 위치를 달고 있습니다.",
+    // ⚠ 예전 한국어는 "업로드가 아니라 미리 불러와 있으며" 였다. 업로드 패널이
+    //   생기면서 이제 **둘 다**이므로 그 문장은 거짓이다. 영어의 "Either way" 가
+    //   하는 일(두 경로 모두 근거 위치를 단다)을 한국어에서도 그대로 남긴다.
+    "— walkthrough step 1. The household's documents are pre-loaded, and the panel at the top of that step reads a synthetic document you upload yourself. Either way every value carries the box on the page it came from. An uploaded document is read on its own and is not added to the household, because working out whose document it is and what it replaces would mean guessing.":
+      "— 진행 과정 1단계. 세대의 서류는 미리 불러와 있고, 그 단계 맨 위의 패널에서는 직접 올리신 합성 문서를 읽습니다. 어느 쪽이든 모든 값은 그것이 나온 문서상의 근거 위치를 달고 있습니다. 올리신 문서는 그 문서 하나만 놓고 읽으며 세대에 합치지 않습니다. 누구의 문서인지, 무엇을 대신하는지를 따지려면 짐작해야 하기 때문입니다.",
     "2. Edit one field, show downstream values update": "2. 한 항목 수정, 하위 값 갱신 제시",
     "— walkthrough step 2.": "— 진행 과정 2단계.",
     "3. Ask a rule question, show an authoritative citation": "3. 규칙 질문, 권위 있는 인용 제시",
@@ -805,7 +813,210 @@
     "You do not need to include your name, address or phone number to ask about a rule.":
       "규칙에 대해 물으실 때 이름·주소·전화번호를 넣지 않으셔도 됩니다.",
 
-    "currently English — activate for Korean": "현재 영어 — 누르면 한국어로 바뀝니다"
+    "currently English — activate for Korean": "현재 영어 — 누르면 한국어로 바뀝니다",
+
+    // ── api/plain.py — 짧게 다시 쓰인 본문 중 데이터가 박히지 않은 것 ──────────
+    // 사전은 RULES 보다 먼저 조회된다. 그래서 "Your stubs show different totals."
+    // 처럼 위쪽 규칙의 `(.+)` 에 잘못 걸릴 수 있는 문장은 여기 정확히 적어 둔다 —
+    // 규칙이 먼저 잡으면 "명세서에 적힌 금액은 different totals 입니다" 가 된다.
+    "Your stubs show different totals. On no stub do the hours and the hourly rate settle which figure is your regular pay, so rather than guess we left your wages out of the yearly income figure.":
+      "명세서마다 총액이 다릅니다. 어느 명세서에서도 근무시간과 시급이 정기 급여가 얼마인지를 확정해 주지 못했습니다. 그래서 짐작하는 대신, 임금을 연 소득 금액에서 빼 두었습니다.",
+    "The totals on your pay stubs are not the same. We used the stub whose hours and hourly rate add up to its own total, and left the difference out of your yearly figure, because we cannot tell whether it comes every time.":
+      "급여명세서마다 총액이 다릅니다. 근무시간과 시급이 그 명세서의 총액과 맞아떨어지는 명세서를 썼고, 차액은 연 소득에서 빼 두었습니다. 그 차액이 매번 나오는 것인지 알 수 없기 때문입니다.",
+    "Some of your documents carry one name and some carry another. That happens for ordinary reasons, such as a married name or a typing mistake, and we cannot tell which it is, so we are asking rather than deciding.":
+      "제출하신 서류 중 일부에는 한 이름이, 일부에는 다른 이름이 적혀 있습니다. 혼인 후 성이 바뀌었거나 오타가 났거나 하는 흔한 이유로 그럴 수 있는데, 어느 쪽인지 저희는 알 수 없습니다. 그래서 판단하지 않고 여쭤봅니다.",
+    "None of the documents in your file gave us a pay amount we could rely on. That is not a finding about your money: the papers we have do not settle the figure, so we did not invent one.":
+      "제출하신 서류 중 어느 것에서도 믿고 쓸 수 있는 급여 금액을 얻지 못했습니다. 이것은 당신의 소득에 대한 판단이 아닙니다. 저희가 가진 서류가 금액을 확정해 주지 못했을 뿐이고, 그래서 금액을 지어내지 않았습니다.",
+    // ⚠ NO_FROZEN_THRESHOLD. 주어가 반드시 우리여야 한다. "기준액이 없다"는 거짓이다 —
+    //   기준액은 존재하고, 우리에게 출처를 댈 수 있는 사본이 없을 뿐이다. 둘째 문장이
+    //   그 구별을 지므로 빼지 않는다.
+    "The one official table we are allowed to use covers households of one to eight people, and yours is larger. A limit for your size does exist; we simply do not have it, because we will not take a number from outside that table.":
+      "저희가 쓸 수 있는 단 하나의 공식 표는 1인부터 8인까지의 세대를 담고 있는데, 이 세대는 그보다 큽니다. 이 세대 규모에 해당하는 기준액은 분명히 있습니다. 저희가 그것을 가지고 있지 않을 뿐이고, 그 표 바깥의 숫자를 가져다 쓰지는 않습니다.",
+    "The income limit depends on how many people live with you, and we could not read that number from your application form.":
+      "소득 기준액은 함께 사는 사람이 몇 명인지에 따라 달라지는데, 신청서에서 그 숫자를 읽어내지 못했습니다.",
+    "We can turn five pay schedules into a yearly figure: weekly, every two weeks, twice a month, monthly and once a year. Your document names a different one, and we will not invent a multiplier of our own for it.":
+      "연 소득으로 바꿀 수 있는 지급 주기는 다섯 가지입니다. 주급, 2주급, 월 2회, 월급, 연 1회입니다. 제출하신 서류에는 그와 다른 주기가 적혀 있는데, 그에 대해 저희가 임의로 곱하는 수를 만들지는 않습니다.",
+    "Tell us how often you are paid: weekly, every two weeks, twice a month, monthly or once a year. Or upload a pay stub that says it on the page.":
+      "급여를 얼마나 자주 받으시는지 알려 주세요. 주급, 2주급, 월 2회, 월급, 연 1회 중 하나입니다. 또는 그것이 적혀 있는 급여명세서를 올려 주세요.",
+    "The comparison needs a yearly income figure for you, and we do not have one yet. Once you clear the reasons listed above, it runs on its own.":
+      "비교를 하려면 연 소득 금액이 있어야 하는데, 아직 없습니다. 위에 적힌 사유들이 해소되면 비교는 저절로 실행됩니다.",
+
+    // ── app.js — 1단계 올리기 패널 ─────────────────────────────────────────────
+    // 이 패널은 로컬 서버가 떠 있을 때만 살아 있다. 정적 빌드에서는 숨기지 않고 꺼
+    // 두므로, 꺼져 있을 때의 안내문도 번역 대상이다.
+    "Upload a document of your own": "직접 가진 문서 올리기",
+    "The household above is already loaded from the challenge pack. You can also read a document of your own here. It is read on its own, and it changes nothing in the household below.":
+      "위의 세대는 과제 팩에서 이미 불러와 있습니다. 여기서는 직접 가진 문서를 따로 읽어 볼 수도 있습니다. 그 문서 하나만 놓고 읽으며, 아래 세대의 내용은 아무것도 바뀌지 않습니다.",
+    "Synthetic documents only": "합성 문서만 올려 주세요",
+    // 원문이 일부러 좁게 약속한 자리다. "절대 안전" 이나 "모든 개인정보" 같은 완전성
+    // 어휘를 넣지 않는다. 마지막 문장(그래도 누구의 것도 아닌 문서가 가장 안전하다)이
+    // 앞의 약속을 스스로 좁히는 자리이므로 반드시 남긴다.
+    "Please upload made-up documents, not a real person's pay stub or benefit letter. What you upload is held in this session's memory only, is never written to disk, is never sent anywhere, and is never used to train anything — but the safest document to test with is still one that belongs to nobody.":
+      "실제 사람의 급여명세서나 수급 통지서가 아니라, 지어낸 문서를 올려 주세요. 올리신 문서는 이번 세션의 메모리에만 있고, 디스크에 기록하지 않으며, 어디로도 보내지 않고, 무엇을 학습시키는 데도 쓰지 않습니다. 그래도 시험용으로 가장 안전한 문서는 누구의 것도 아닌 문서입니다.",
+    "This copy has no server, so it cannot read a file you choose":
+      "이 사본에는 서버가 없어서, 고르신 파일을 읽을 수 없습니다",
+    "Reading a PDF is done by the extractor, which runs on a server. This page is the static build, so the controls below are switched off rather than hidden — the feature exists, this copy just has nothing to run it. Start the server and the same panel becomes live:":
+      "PDF 를 읽는 일은 서버에서 도는 추출기가 합니다. 이 화면은 정적 빌드라서, 아래 조작부를 숨기지 않고 꺼 두었습니다. 기능이 없는 것이 아니라 이 사본에 그것을 돌릴 것이 없을 뿐입니다. 서버를 띄우면 같은 패널이 그대로 살아납니다:",
+    "Then open http://127.0.0.1:8077 and return to step 1.":
+      "그런 다음 http://127.0.0.1:8077 을 열고 1단계로 돌아오세요.",
+    "Uploading needs the server, because reading a PDF is done by the extractor rather than by this page.":
+      "올리기는 서버가 있어야 합니다. PDF 를 읽는 일은 이 화면이 아니라 추출기가 하기 때문입니다.",
+
+    "What kind of document is this?": "어떤 종류의 문서입니까?",
+    "Choose the kind of document…": "문서 종류를 고르세요…",
+    // typeWords(): document_type 의 밑줄을 공백으로 바꾼 것. 나머지 넷은 위쪽
+    // "app.js: 문서 화면" 구역에 이미 있고, 이것 하나가 빠져 있었다.
+    "benefit letter": "수급 통지서",
+    "We have to ask. We work out the kind of document from the file's name, and we only recognise the naming the challenge pack uses — so for a file named anything else we would read no fields at all and could not tell you why.":
+      "여쭤볼 수밖에 없습니다. 저희는 문서 종류를 파일 이름에서 알아내는데, 과제 팩이 쓰는 이름 규칙만 알아봅니다. 그래서 다른 이름의 파일이라면 항목을 하나도 읽지 못하면서 그 이유도 알려 드리지 못합니다.",
+    // 파일 선택 버튼. app.js 가 브라우저 기본 컨트롤(브라우저 UI 언어로 그려진다)을
+    // 치우고 <label> 을 버튼으로 그리면서 글자가 "PDF file" 에서 "Choose a PDF" 로
+    // 바뀌었다. 옛 키도 남겨 둔다 — 걸리지 않는 키는 그냥 지나갈 뿐이다.
+    "Choose a PDF": "PDF 고르기",
+    "PDF file": "PDF 파일",
+    "PDF only, up to 10 MB. A scanned page is fine — if there is no text in the file we read the picture instead, and say which of the two we did.":
+      "PDF 만, 10 MB 까지. 스캔한 문서도 괜찮습니다. 파일에 글자가 없으면 그림 쪽을 읽고, 둘 중 어느 쪽으로 읽었는지 알려 드립니다.",
+    "Read this document": "이 문서 읽기",
+    "Reading…": "읽는 중…",
+    "Reading the document…": "문서를 읽는 중…",
+    "Reading the uploaded document…": "올리신 문서를 읽는 중…",
+    "The uploaded document was not accepted.": "올리신 문서를 받아들이지 않았습니다.",
+
+    // 거절 카드. 원문이 "could not" 이 아니라 "did not" 이다 — 못 읽은 것이 아니라
+    // 읽지 않기로 한 것이므로 한국어도 주어를 우리로 두고 그렇게 적는다.
+    "We did not read that file": "그 파일은 읽지 않았습니다",
+    "Choose what kind of document this is first. We cannot work it out from the file name, and guessing is the one thing this service does not do.":
+      "먼저 문서 종류를 골라 주세요. 파일 이름만으로는 알아낼 수 없고, 짐작하는 것은 이 서비스가 하지 않는 단 한 가지입니다.",
+    "Choose a PDF file to read.": "읽을 PDF 파일을 골라 주세요.",
+    "That document could not be read.": "그 문서를 읽지 못했습니다.",
+
+    "Kind of document": "문서 종류",
+    "How we read it": "어떻게 읽었는지",
+    "Fields we could read": "읽어낸 항목",
+    "read as a picture, because the file had no text in it (OCR)":
+      "파일에 글자가 없어서 그림으로 읽었습니다 (OCR)",
+    "read from the text in the file": "파일 안의 글자에서 읽었습니다",
+    "no date we could read on this document": "이 문서에서 읽어낼 수 있는 날짜가 없습니다",
+    "Values read from the document you uploaded.": "올리신 문서에서 읽어낸 값입니다.",
+
+    // ⚠ 읽지 못했을 때의 안내. 이것은 오류가 아니라 정상 동작이다. 원문이 스스로
+    //   "That is an answer, not a failure" 라고 말한다. 한국어가 "실패했습니다" 로
+    //   읽히면 이 화면의 논지가 뒤집히므로, 첫 문장을 그 선언으로 시작한다.
+    "We could not confidently read any field on this document":
+      "이 문서에서 확신을 가지고 읽어낸 항목이 하나도 없습니다",
+    "That is an answer, not a failure. We only report a value when we can point at the place on the page it came from, so when we cannot find it we say nothing rather than guess. Nothing here has gone wrong and nothing has been recorded against you.":
+      "이것은 실패가 아니라 하나의 답입니다. 저희는 값이 나온 문서상의 자리를 가리킬 수 있을 때만 그 값을 알려 드립니다. 그래서 찾지 못하면 짐작하는 대신 아무 말도 하지 않습니다. 잘못된 일은 일어나지 않았고, 당신에게 불리하게 기록된 것도 없습니다.",
+    "Documents we cannot read usually look like one of these:":
+      "읽지 못하는 문서는 대개 다음 중 하나입니다:",
+    "The labels are worded differently from the ones we know — \"TOTAL EARNINGS\" where we look for \"GROSS PAY\".":
+      "항목 이름이 저희가 아는 것과 다르게 적혀 있습니다 — \"GROSS PAY\" 를 찾는 자리에 \"TOTAL EARNINGS\" 가 있는 경우.",
+    "The values sit beside their labels, or in a table, rather than underneath them.":
+      "값이 항목 이름 아래가 아니라 옆에 있거나 표 안에 있습니다.",
+    "It is a form we have never seen, or the kind of document chosen above is not the kind of document this is.":
+      "저희가 본 적 없는 양식이거나, 위에서 고르신 문서 종류가 이 문서의 종류와 다릅니다.",
+    "It is a scan that is too faint or too skewed to read.":
+      "스캔이 너무 흐리거나 많이 기울어져 읽을 수 없습니다.",
+    "You can try choosing a different kind of document above, or hand this one to a person to read. A housing professional reading it is a normal outcome, not a fallback.":
+      "위에서 다른 문서 종류를 골라 다시 해 보시거나, 이 문서를 사람에게 넘겨 읽게 하셔도 됩니다. 공인 주택 전문가가 읽는 것은 차선책이 아니라 정상적인 결말입니다.",
+    "We could not confidently read any field from that document.":
+      "그 문서에서 확신을 가지고 읽어낸 항목이 하나도 없습니다.",
+
+    "What this reading does not tell you": "이 판독이 말해 주지 않는 것",
+
+    // ── api/upload.py — 판독의 한계와 거절 사유 ────────────────────────────────
+    "We read each value from the label above it. We do not check the values against each other, so a document whose own arithmetic disagrees still reads cleanly here.":
+      "각 값은 그 위에 있는 항목 이름을 보고 읽습니다. 값들끼리 서로 대조하지는 않습니다. 그래서 문서 안의 계산이 서로 맞지 않아도 여기서는 깨끗하게 읽힙니다.",
+    "This document was read on its own. It is not added to any household and it changes no figure anywhere else in this walkthrough.":
+      "이 문서는 그 문서 하나만 놓고 읽었습니다. 어떤 세대에도 합치지 않으며, 이 과정의 다른 어떤 숫자도 바꾸지 않습니다.",
+    "Only the document you uploaded most recently is kept. Uploading another replaces it, and deleting the session removes it with everything else.":
+      "가장 최근에 올리신 문서 하나만 남습니다. 다른 문서를 올리면 그것으로 바뀌고, 세션을 삭제하면 나머지와 함께 사라집니다.",
+    "Nothing here means approved, denied, or ineligible. A qualified housing professional makes that determination.":
+      "여기의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판단은 공인 주택 전문가가 합니다.",
+    "This page had no text layer, so it was read by OCR on page 1 only. OCR recovers fewer fields than a text layer does, and what it cannot read it declines to guess.":
+      "이 페이지에는 텍스트 레이어가 없어서 1페이지만 OCR 로 읽었습니다. OCR 은 텍스트 레이어보다 적은 항목을 건져 내고, 읽지 못한 것은 짐작하지 않고 답하지 않습니다.",
+    "Choose what kind of document this is. We cannot tell from the file name: our reader only recognises the pack's own naming convention, and anything else is read as an unknown type, which produces no fields at all.":
+      "이 문서가 어떤 종류인지 골라 주세요. 파일 이름으로는 알 수 없습니다. 저희 판독기는 팩의 이름 규칙만 알아보고, 그 밖의 것은 모르는 종류로 읽혀 항목이 하나도 나오지 않습니다.",
+    "That file is empty.": "그 파일은 비어 있습니다.",
+    "That file is not a PDF. Its first bytes are not a PDF header, whatever its name or type says.":
+      "그 파일은 PDF 가 아닙니다. 이름이나 형식이 무어라 하든, 첫 바이트가 PDF 헤더가 아닙니다.",
+
+    // ── app.js — 세션 수명: 삭제와 되돌리기 ────────────────────────────────────
+    // ⚠ 이 구역에서 두 가지가 반드시 남아야 한다. ① 되돌릴 수 없다는 것,
+    //   ② 새로 시작해도 정정은 복구되지 않는다는 것. 둘 중 하나라도 빠지면
+    //   삭제 버튼을 누르는 사람이 무엇을 잃는지 모르게 된다.
+    "Delete what this service is holding": "이 서비스가 가지고 있는 것 삭제하기",
+    "Everything this service holds about the household lives in one session. Deleting it removes the documents, the values read from them, and every correction from the server process. Requests that follow return 404 because there is nothing left to answer with.":
+      "이 서비스가 이 세대에 대해 가지고 있는 것은 모두 세션 하나 안에 있습니다. 세션을 삭제하면 서류, 그 서류에서 읽어낸 값, 그리고 정정한 내용이 서버 프로세스에서 사라집니다. 그 뒤의 요청은 404 를 돌려받습니다. 답할 것이 남아 있지 않기 때문입니다.",
+    "This cannot be undone, and it does not restore: to carry on afterwards you start again with a new session, without the corrections you made. Download your packet first if you want to keep it. The pack these documents came from is untouched either way.":
+      "이 작업은 되돌릴 수 없고, 복구되지도 않습니다. 이후에 계속하시려면 새 세션으로 다시 시작해야 하며, 그때 정정하신 내용은 없습니다. 남겨 두고 싶으시면 신청 서류 묶음을 먼저 내려받으세요. 이 서류들이 나온 팩은 어느 쪽이든 그대로입니다.",
+    "Delete this session now": "이 세션을 지금 삭제",
+    "Start again with a new session": "새 세션으로 다시 시작",
+
+    "You deleted this session": "이 세션을 삭제하셨습니다",
+    "The documents, the values read from them, and every correction were removed from the server process, and this page is holding nothing. There is no packet to download and nothing here to show, because there is nothing left to answer with.":
+      "서류, 그 서류에서 읽어낸 값, 정정한 내용이 서버 프로세스에서 사라졌고, 이 화면도 아무것도 가지고 있지 않습니다. 내려받을 신청 서류 묶음도, 여기서 보여 드릴 것도 없습니다. 답할 것이 남아 있지 않기 때문입니다.",
+    "Starting again does not bring any of it back. It loads the household from the pack into a new session, and any correction you made is gone with the old one.":
+      "다시 시작해도 그중 어느 것도 돌아오지 않습니다. 팩에서 세대를 새 세션으로 불러올 뿐이고, 정정하신 내용은 지운 세션과 함께 사라졌습니다.",
+    "This session was deleted, so there is nothing to answer with. Starting again loads the household from the pack as a new session.":
+      "이 세션은 삭제되었습니다. 답할 것이 남아 있지 않습니다. 다시 시작하면 팩에서 세대를 새 세션으로 불러옵니다.",
+    "You deleted this session, so there is nothing here to be unsure about.":
+      "이 세션을 삭제하셨으므로, 여기에 확신하지 못할 것이 없습니다.",
+
+    "There is nothing left to delete": "삭제할 것이 남아 있지 않습니다",
+    "This session was already deleted. Nothing was sent to the server this time, because there is no longer an id to send.":
+      "이 세션은 이미 삭제되었습니다. 이번에는 서버로 아무것도 보내지 않았습니다. 보낼 id 가 더 이상 없기 때문입니다.",
+    "This session was already deleted.": "이 세션은 이미 삭제되었습니다.",
+    "Session data cleared from this page": "이 화면이 가지고 있던 세션 데이터를 비웠습니다",
+    "Offline there is no server session to destroy, so this clears everything the page was holding: the report, the correction, and the selected document.":
+      "오프라인에서는 없앨 서버 세션이 없으므로, 이 화면이 가지고 있던 것을 비웁니다. 보고서, 정정 내용, 그리고 고른 문서입니다.",
+    "With the API connected, this same button deletes the session inside the server process.":
+      "API 가 연결되어 있으면, 같은 버튼이 서버 프로세스 안의 세션을 삭제합니다.",
+    "Deleted, and checked": "삭제했고, 확인했습니다",
+    "Deleted, but the check did not come back as expected": "삭제했지만, 확인 결과가 예상과 달랐습니다",
+    "The follow-up request could not be made.": "뒤이은 확인 요청을 보내지 못했습니다.",
+    "Session deleted. The follow-up request returned 404. There is nothing left on this page.":
+      "세션을 삭제했습니다. 뒤이은 요청은 404 를 돌려받았습니다. 이 화면에 남은 것이 없습니다.",
+    "Session deleted, but the follow-up request did not return 404.":
+      "세션을 삭제했지만, 뒤이은 요청이 404 를 돌려받지 않았습니다.",
+
+    "The correction could not be undone": "정정을 되돌리지 못했습니다",
+    "The correction could not be undone. The report still shows the corrected value.":
+      "정정을 되돌리지 못했습니다. 보고서에는 여전히 정정된 값이 보입니다.",
+    "The household could not be loaded again": "세대를 다시 불러오지 못했습니다",
+
+    // ── app.js — 규칙 id 가 근거로 연결된 자리 ─────────────────────────────────
+    // 링크 글자 자체는 아래 RULES 가 만든다(출처 위치 + 호스트 조합이라서).
+    // 여기 있는 것은 그 목록의 머리말이다.
+    "Rules this response stands on:": "이 응답이 근거로 삼은 규칙:",
+    "rules: ": "규칙: ",
+    "LIHTC property data description": "LIHTC 물건 데이터 설명",
+    "Layer description and LVL2KX codes": "레이어 설명과 LVL2KX 코드",
+
+    // ── app.js — 우리 성적표: 읽기 쉬움 측정 ───────────────────────────────────
+    "flesch kincaid grade": "플레시-킨케이드 학년",
+    "smog grade": "SMOG 학년",
+    "spread between the two": "두 값의 차이",
+    "smog is extrapolated": "SMOG 는 외삽값",
+    "screens too short to measure": "측정하기에 너무 짧은 화면",
+    "minimum sample words": "표본 최소 단어 수",
+    "widest spread": "가장 큰 차이",
+    "anchors missing": "근거가 없는 항목",
+    "anchors for unknown intents": "모르는 의도에 붙은 근거",
+    "anchors not round tripping": "왕복이 되지 않는 근거",
+    "none found": "없음",
+    "screens": "화면",
+    "intents": "의도",
+    "status": "상태",
+    "measured": "측정함",
+    // 표 캡션은 두 문장이 한 텍스트 노드로 붙어 나온다. 조각으로는 잡히지 않으므로
+    // 붙은 모양 그대로 키를 둔다.
+    "Values read from the document you uploaded. Choose a field name to highlight its box on the page.":
+      "올리신 문서에서 읽어낸 값입니다. 항목 이름을 고르면 문서 위의 근거 위치가 강조됩니다.",
+    "Choose a field name to highlight its box on the page.":
+      "항목 이름을 고르면 문서 위의 근거 위치가 강조됩니다.",
+    "No file chosen": "고른 파일 없음",
+    "Two formulas, reported together with the gap between them. A per-string grade is not defensible and is not produced. SMOG needs 30 sentences to be used as defined; screens below that are marked as extrapolated. WCAG 2.2 SC 3.1.5 Reading Level is Level AAA and is not required at AA -- we adopt it voluntarily and do not claim AA obliges it.":
+      "공식 두 개를, 둘 사이의 차이와 함께 보고합니다. 문장 하나하나에 등급을 매기는 것은 근거를 댈 수 없어 내지 않습니다. SMOG 는 정의대로 쓰려면 문장 30 개가 필요하므로, 그보다 짧은 화면은 외삽값으로 표시합니다. WCAG 2.2 SC 3.1.5 읽기 수준은 AAA 등급이고 AA 에서는 요구되지 않습니다 — 저희가 자발적으로 채택한 것이며, AA 가 이를 의무로 삼는다고 주장하지 않습니다."
   };
 
   // ── 평문 계층(api/plain.py)의 조립 부품 ────────────────────────────────────
@@ -1307,8 +1518,272 @@
         return "이번 실행에서 측정된 미달 항목 — " + m[1] + ". " +
                (m[2] ? "아예 실행하지 않은 항목: " + m[2].replace(/^Not run at all: /, "") : "") +
                tailOfShortfallNote(m[3]);
-      }]
+      }],
+
+    // ══ app.js: 규칙 id 를 근거로 연결한 링크 글자 ══════════════════════════════
+    // 두 모양이 있다. 외부 출처가 있으면 "— <출처 위치> (<호스트>)", 없으면
+    // "— <출처 위치>, set by this challenge itself (no outside source)".
+    // 출처 위치 이름은 우리가 붙인 라벨이므로 옮기고, 호스트는 주소이므로 두고,
+    // 법령 인용("26 CFR 1.42-5")은 사전에 없으므로 저절로 영어로 남는다 —
+    // 번역된 법령 번호는 그 법령을 가리키지 못한다.
+    [/^PDF page (\d+)$/, function (m) { return "PDF " + m[1] + "쪽"; }],
+    [/^— (.+) \(([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)\)$/, function (m) {
+      var where = lookup(m[1]);
+      return where === null ? null : "— " + where + " (" + m[2] + ")";
+    }],
+    [/^— (.+), set by this challenge itself \(no outside source\)$/, function (m) {
+      var where = lookup(m[1]);
+      return where === null ? null
+        : "— " + where + ". 이 과제가 스스로 정한 것입니다 (외부 출처 없음)";
+    }],
+    [/^— set by this challenge itself \(no outside source\)$/, function () {
+      return "— 이 과제가 스스로 정한 것입니다 (외부 출처 없음)";
+    }],
+    [/^— (?:(.+), )?authority: (.+) \(no outside source\)$/, function (m) {
+      var who = lookup(m[2]);
+      if (who === null) return null;
+      var where = m[1] ? lookup(m[1]) : null;
+      if (m[1] && where === null) return null;
+      return "— " + (where ? where + ". " : "") + "근거 기관: " + who + " (외부 출처 없음)";
+    }],
+
+    // ══ api/plain.py: 짧게 다시 쓰인 카드 본문 ═════════════════════════════════
+    // 아래 규칙들은 평문 계층이 문장을 줄여 다시 쓰면서 새로 생긴 짝이다. 예전
+    // 문장을 겨냥한 위쪽 규칙들은 영어가 바뀌어 더 이상 걸리지 않지만, 지우지 않고
+    // 둔다 — 걸리지 않는 규칙은 조용히 지나갈 뿐이고, 문구가 되돌아갈 때를 위한
+    // 기록이기도 하다.
+
+    // _r_item_present
+    [/^It is in your file(?:, dated (.+?),)? and recent enough to use\.$/, function (m) {
+      return "제출하신 서류 안에 있고" + (m[1] ? ", 날짜는 " + koDate(m[1]) + "이며" : "") +
+             ", 쓸 수 있을 만큼 최근 것입니다.";
+    }],
+
+    // _r_required_missing
+    [/^Your file does not have an? (.+) in it yet, and a housing worker needs it before they can start reading your file\.$/,
+      function (m) {
+        var name = koDoc(m[1]);
+        return name === null ? null
+          : "제출하신 서류에 아직 " + name + "가 없습니다. 주택 담당자가 검토를 시작하려면 이 서류가 있어야 합니다.";
+      }],
+
+    // _r_not_current
+    [/^It is dated (?:(.+?), which is before the cut-off|before the cut-off)\. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it\.$/,
+      function (m) {
+        return (m[1] ? "날짜는 " + koDate(m[1]) + "이고, 기준일보다 앞섭니다. " : "기준일보다 앞선 날짜입니다. ") +
+               "기한이 지난 서류가 하나만 있어도, 나머지에 아무 문제가 없더라도 누군가 새 서류로 바꿀 때까지 전체 검토가 멈춥니다.";
+      }],
+
+    // _r_undatable
+    [/^(?:It shows (.+?), but not which day of the month\.|It does not show which day of the month it covers\.) We need the day to tell whether the paper is recent enough, and we will not guess one, because a guessed date could put your paper on the wrong side of the line\.$/,
+      function (m) {
+        return (m[1] ? koDate(m[1]) + "까지만 적혀 있고, 며칠인지는 적혀 있지 않습니다. "
+                     : "며칠자를 담고 있는지가 적혀 있지 않습니다. ") +
+               "서류가 충분히 최근 것인지 따지려면 날짜가 필요합니다. 그리고 날짜를 지어내지는 않습니다. " +
+               "지어낸 날짜 때문에 서류가 기준선의 반대편에 놓일 수 있기 때문입니다.";
+      }],
+
+    // _r_unreadable
+    [/^Nothing on this (.+) came through clearly enough for us to use, and we did not guess at what it says\. That is a problem with the file we received, not with you or with your paperwork\.$/,
+      function (m) {
+        var name = koDoc(m[1]);
+        return name === null ? null
+          : "이 " + name + "에서 쓸 수 있을 만큼 또렷하게 읽힌 내용이 없고, 무엇이 적혀 있는지 짐작하지 " +
+            "않았습니다. 받은 파일의 문제이지, 당신이나 당신의 서류 문제가 아닙니다.";
+      }],
+
+    // _r_gig_uncorroborated
+    // ⚠ "그래도 전액 연 소득 합계에 넣었다"가 반드시 남아야 한다. 이 문장이 빠지면
+    //   뒷받침 자료가 없다는 말이 "그래서 빼 두었다"로 읽히는데, 그것은 거짓이다.
+    [/^Your gig earnings statement (?:covers (.+?)|is in your file), and it is the only paper you gave us that shows this money, so nothing independent confirms the amount\. We still counted this money in full in your yearly total, and told the housing worker that no other paper supports it\.$/,
+      function (m) {
+        return (m[1] ? "긱 수입 명세서는 " + koDate(m[1]) + "을 담고 있고, "
+                     : "긱 수입 명세서가 제출하신 서류에 있고, ") +
+               "이 돈을 보여주는 자료는 이것 하나뿐이어서 금액을 따로 확인해 주는 자료가 없습니다. " +
+               "그래도 이 돈은 연 소득 합계에 전액 넣었고, 이를 뒷받침하는 다른 자료가 없다는 사실은 " +
+               "주택 담당자에게 알렸습니다.";
+      }],
+
+    // _r_value_not_traceable
+    [/^We read a number from (.+), but we could not point to the exact spot on the page\. A housing worker has to be able to check every number in your file against the page it came from, so until they can, we hold this one aside\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : where + "에서 숫자를 읽었지만, 문서상의 정확한 자리를 가리키지 못했습니다. 주택 담당자는 " +
+            "서류의 모든 숫자를 그것이 나온 문서와 대조할 수 있어야 하므로, 그렇게 될 때까지 이 숫자는 " +
+            "따로 빼 둡니다.";
+      }],
+
+    // _r_correction_not_used
+    [/^(?:You changed the total pay on this stub to (.+?), |You changed a number on this stub, )but (?:its own hours and hourly rate, (.+?) hours at (.+?) an hour, come to (.+?)|the other numbers on the same stub come to a different amount)\. Because the two do not match, we left this stub out when we worked out your yearly income\. Your change is saved, and a housing worker can see it\.$/,
+      function (m) {
+        return (m[1] ? "이 명세서의 총 급여를 " + m[1] + " 으로 고치셨습니다. "
+                     : "이 명세서의 숫자를 고치셨습니다. ") +
+               (m[2] ? "그런데 같은 명세서의 근무시간과 시급, " + m[2] + "시간 × 시급 " + m[3] + " 은 " +
+                       m[4] + " 이 됩니다. "
+                     : "그런데 같은 명세서의 다른 숫자들은 다른 금액이 됩니다. ") +
+               "둘이 맞지 않아서, 연 소득을 계산할 때 이 명세서는 빼 두었습니다. 고치신 내용은 저장되어 " +
+               "있고, 주택 담당자가 볼 수 있습니다.";
+      }],
+
+    // _r_correction_in_use
+    [/^After your change, the hours, the hourly rate and the total on (.+) agree with each other, so we used your figure as your regular pay\. We told the housing worker it came from you rather than from the page, so they can check it\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : "고치신 뒤로 " + where + "의 근무시간, 시급, 총액이 서로 맞습니다. 그래서 고치신 금액을 정기 " +
+            "급여로 보고 계산했습니다. 이 숫자가 문서가 아니라 본인에게서 나왔다는 사실은 주택 담당자에게 " +
+            "알려, 담당자가 대조할 수 있게 했습니다.";
+      }],
+
+    // _r_pay_stub_conflict (a) — 어느 명세서도 정기 급여를 확정하지 못한 경우
+    [/^Your stubs show (.+?)\. On no stub do the hours and the hourly rate settle which figure is your regular pay, so rather than guess we left your wages out of the yearly income figure\.$/,
+      function (m) {
+        return "명세서에 적힌 금액은 " + m[1].replace(/ and /g, ", ") + " 입니다. 어느 명세서에서도 " +
+               "근무시간과 시급이 정기 급여가 얼마인지를 확정해 주지 못했습니다. 그래서 짐작하는 대신, " +
+               "임금을 연 소득 금액에서 빼 두었습니다.";
+      }],
+
+    // _r_pay_stub_conflict (b) — 재직증명서와 명세서가 어긋남
+    [/^The letter points to (.+?) a year and your pay stubs point to (.+?)\. We used the stubs, because a stub shows what you were actually paid, and we are telling the housing worker about the gap\.$/,
+      function (m) {
+        return "증명서는 연 " + m[1] + " 을 가리키고, 급여명세서는 " + m[2] + " 을 가리킵니다. 명세서는 " +
+               "실제로 받으신 금액을 보여주므로 명세서 쪽을 썼습니다. 두 금액의 차이는 주택 담당자에게 " +
+               "알립니다.";
+      }],
+
+    // _r_pay_stub_conflict (c) — 한 명세서 안의 숫자가 서로 안 맞음
+    [/^The stub shows a total of (.+?), but the hours and the hourly rate on the same stub come to a different amount\. We used the stated total and told the housing worker that the two figures do not match\.$/,
+      function (m) {
+        return "명세서에 적힌 총액은 " + (m[1] === "the total" ? "그 총액" : m[1]) + " 인데, 같은 " +
+               "명세서의 근무시간과 시급으로 계산하면 다른 금액이 나옵니다. 적혀 있는 총액을 썼고, 두 " +
+               "금액이 맞지 않는다는 사실은 주택 담당자에게 알렸습니다.";
+      }],
+
+    // _r_pay_stub_conflict (d) — 초과분을 한 회차에만 둔 경우
+    [/^One stub shows (.+?) and another shows (.+?)\. We used (.+?) as your regular pay, because the hours and the hourly rate on that stub add up to it, and we treated the difference as extra pay for one period rather than counting it across the year\. If that extra pay comes every time, your yearly figure would be higher\.$/,
+      function (m) {
+        return "한 명세서에는 " + m[1] + " 이, 다른 명세서에는 " + m[2] + " 이 적혀 있습니다. " + m[3] +
+               " 을 정기 급여로 썼습니다. 그 명세서의 근무시간과 시급을 곱하면 그 금액이 나오기 " +
+               "때문입니다. 차액은 한 해 전체에 곱하지 않고 한 회차에만 있었던 추가 급여로 보았습니다. " +
+               "그 추가 급여가 매번 나온다면 연 소득은 이보다 높아집니다.";
+      }],
+
+    // _r_frequency_not_stated / _r_amount_missing / _r_income_not_traceable
+    [/^To work out a yearly figure we multiply your pay by how often you get it, and that is not stated on (.+)\. We will not read it off the dates, because two payments two weeks apart do not prove that every payment is\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : "연 소득을 내려면 급여에 지급 횟수를 곱해야 하는데, " + where + "에 그것이 적혀 있지 " +
+            "않습니다. 날짜를 보고 짐작하지는 않습니다. 두 번의 지급이 2주 간격이라고 해서 매번 그렇다는 " +
+            "뜻은 아니기 때문입니다.";
+      }],
+    [/^We looked at (.+) for an amount before tax, did not find one we could use, and did not guess at a figure\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : where + "에서 세전 금액을 찾아보았지만 쓸 수 있는 것을 찾지 못했고, 금액을 지어내지 " +
+            "않았습니다.";
+      }],
+    [/^We read a pay amount from (.+), but we could not point a housing worker at the exact spot on the page\. A number nobody can check is one we will not count, so it is not in your yearly figure\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : where + "에서 급여 금액을 읽었지만, 주택 담당자에게 문서상의 정확한 자리를 가리켜 드리지 " +
+            "못했습니다. 아무도 대조할 수 없는 숫자는 세지 않으므로, 이 금액은 연 소득에 들어 있지 " +
+            "않습니다.";
+      }],
+
+    // 기준 문장이 홀로 놓이는 자리 (PlainMessage.basis)
+    [/^A paper counts as recent only if it is dated .+ or later\. That is the \d+-day rule this project follows, counting back from .+\.$/,
+      function (m) { return koCurrency(m[0]); }],
+
+    // ══ api/upload.py: 데이터가 박힌 거절 사유 ═════════════════════════════════
+    [/^We do not know how to read a document of type '(.+?)'\. We can read: (.+)\.$/, function (m) {
+      var kinds = m[2].split(", ").map(function (k) { return lookup(k) || k; }).join(", ");
+      return "'" + m[1] + "' 종류의 문서는 읽을 줄 모릅니다. 읽을 수 있는 것은 " + kinds + " 입니다.";
+    }],
+    [/^That file is (.+?) MB\. The limit is (\d+) MB, because an uploaded document is held in memory for this session only and never written to disk\.$/,
+      function (m) {
+        return "그 파일은 " + m[1] + " MB 입니다. 한도는 " + m[2] + " MB 입니다. 올리신 문서는 이번 " +
+               "세션의 메모리에만 두고 디스크에 기록하지 않기 때문입니다.";
+      }],
+    [/^This service reads PDF documents only\. The browser sent that file as '(.+)'\.$/, function (m) {
+      return "이 서비스는 PDF 문서만 읽습니다. 브라우저는 그 파일을 '" + m[1] + "' 로 보냈습니다.";
+    }],
+    [/^We could not open that PDF \((.+?)\)\. It may be damaged or password-protected\.$/, function (m) {
+      return "그 PDF 를 열지 못했습니다 (" + m[1] + "). 파일이 손상되었거나 암호가 걸려 있을 수 있습니다.";
+    }],
+    [/^The server could not accept that file \(HTTP (\d+)\)\.$/, function (m) {
+      return "서버가 그 파일을 받아들이지 못했습니다 (HTTP " + m[1] + ").";
+    }],
+
+    // ══ app.js: 업로드 결과와 세션 수명에서 데이터가 박힌 문장 ══════════════════
+    [/^(.+) — the document you uploaded$/, function (m) {
+      var kind = lookup(m[1]);
+      return kind === null ? null : kind + " — 올리신 문서";
+    }],
+    [/^Read (\d+) of (\d+) fields from the uploaded document\.$/, function (m) {
+      return "올리신 문서에서 " + m[2] + "개 항목 중 " + m[1] + "개를 읽었습니다.";
+    }],
+    [/^Session (\S+) no longer exists in the API process\. Rather than tell you that and stop, the page then asked the server for this household again using the id it had just destroyed\.$/,
+      function (m) {
+        return "세션 " + m[1] + " 은 API 프로세스에 더 이상 없습니다. 그 말만 하고 멈추는 대신, 이 " +
+               "화면은 방금 없앤 id 로 같은 세대를 서버에 다시 물어보았습니다.";
+      }],
+    [/^GET (\S+) with the deleted id answered HTTP (\d+) — (?:nothing left to answer with|expected 404)\.$/,
+      function (m) {
+        var tail = /expected 404/.test(m[0]) ? " — 404 를 기대했습니다." : " — 답할 것이 남아 있지 않습니다.";
+        return "삭제된 id 로 보낸 GET " + m[1] + " 은 HTTP " + m[2] + " 를 돌려주었습니다" + tail;
+      }],
+    // ⚠ "다른 정정은 그대로 남아 있다"가 빠지면, 하나를 되돌린 것이 전부를 되돌린
+    //   것으로 읽힌다. 필드명과 문서 id 는 기계 식별자이므로 옮기지 않는다.
+    [/^Correction undone\. (\S+) on (\S+) is back to the extracted value, and any other correction is still in place\.$/,
+      function (m) {
+        // 조사는 필드명 뒤에 바로 붙이지 않는다. 필드명이 영문 기계 식별자라 받침
+        // 유무를 알 수 없어 "이/가" 를 고를 수 없다. "항목" 을 끼워 넣어 피한다.
+        return "정정을 되돌렸습니다. " + m[2] + " 의 " + m[1] + " 항목이 추출된 값으로 돌아갔고, " +
+               "다른 정정은 그대로 남아 있습니다.";
+      }],
+    [/^Started again\. (\S+) has been loaded from the pack as a new session\. The deleted session was not restored\.$/,
+      function (m) {
+        return "다시 시작했습니다. " + m[1] + " 을 팩에서 새 세션으로 불러왔습니다. 삭제한 세션은 " +
+               "복구되지 않았습니다.";
+      }],
+    [/^Chosen file: (.+)$/, function (m) { return "고른 파일: " + m[1]; }],
+
+    // ══ app.js: 성적표 한 줄 요약 (measureSummary) ═════════════════════════════
+    // "<항목> <값> · <항목>: 3 entries · <항목>: none found" 모양이다. 항목 이름은
+    // 사전에 있고, 숫자는 데이터다. 한 조각이라도 이름을 모르면 줄 전체를 영어로
+    // 둔다 — 절반만 한국어인 줄은 읽는 사람을 더 헷갈리게 한다.
+    [/^[^·]+(?: · [^·]+)+$/, function (m) {
+      var parts = m[0].split(" · ").map(koMeasureSegment);
+      for (var i = 0; i < parts.length; i += 1) if (parts[i] === null) return null;
+      return parts.join(" · ");
+    }]
   ];
+
+  /** 성적표 요약 한 조각. app.js::measureSummary 가 만드는 네 가지 모양을 되받는다. */
+  function koMeasureSegment(segment) {
+    var m, label;
+    if ((m = segment.match(/^(.+?): (\d+) entries$/))) {
+      label = lookup(m[1]);
+      return label === null ? null : label + ": " + m[2] + "건";
+    }
+    if ((m = segment.match(/^(.+?): (\d+) fields$/))) {
+      label = lookup(m[1]);
+      return label === null ? null : label + ": " + m[2] + "개 항목";
+    }
+    if ((m = segment.match(/^(.+?): (.+)$/))) {
+      label = lookup(m[1]);
+      return label === null ? null : label + ": " + (lookup(m[2]) || m[2]);
+    }
+    if ((m = segment.match(/^(.+?) (\S+)$/))) {
+      label = lookup(m[1]);
+      return label === null ? null : label + " " + (lookup(m[2]) || m[2]);
+    }
+    return null;
+  }
 
   var SHORTFALL_TAIL =
     "These are the measurements as they came out at the timestamp above. They are printed here " +
