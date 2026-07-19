@@ -203,7 +203,13 @@
   <h2 class="visually-hidden">About this build</h2>
   <p id="footer-meta"></p>
   <p data-i18n-block="footer-privacy">No external fonts, scripts, images, or analytics. Every request this page makes goes to the
-  address in the bar above it and nowhere else; opened as a file, it makes none at all. The data
+  address in the bar above it and nowhere else; opened as a file, it makes none at all. That is a
+  promise about this page, not about the whole system: when the question classifier is switched on,
+  the server sends your question sentence to a model provider so it can pick a topic label. What we
+  can promise structurally is narrower and harder: no document, no extracted field and no household
+  record is ever part of that request. Before your sentence is sent we replace the identifier shapes
+  we can recognise, such as an email address, a phone number or a street address. We cannot
+  recognise all of them, so a name you type is sent as you typed it. The data
   source is named at the top of the page, and you can force the offline one by adding
   <code>?fixtures</code> to the URL.</p>
 </footer>
