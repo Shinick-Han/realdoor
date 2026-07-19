@@ -560,6 +560,22 @@ button.secondary {
 }
 button.secondary:hover { background: #e6eef4; }
 
+/* A switched-off secondary button.
+ *
+ * Without this it inherited the filled disabled slate from the rule above while `.secondary`
+ * kept supplying accent-blue text, which is dark-on-dark and unreadable. A disabled control
+ * still has to be legible: it is the recorded question this copy cannot answer for the
+ * household on show, and a judge should be able to read what is being withheld. --ink-soft
+ * on --paper is 7.4:1, and the flat border carries the "not pressable" signal instead. */
+button.action.secondary:disabled,
+button.action.secondary[aria-disabled="true"] {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+button.action.secondary:disabled:hover { background: var(--paper); }
+
 .button-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
 
 /* ── state chips: word + glyph, never colour alone ────────────────── */
