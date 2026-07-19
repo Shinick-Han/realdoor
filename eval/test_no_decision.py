@@ -75,6 +75,14 @@ ENUMS = {
 EXCLUDED_DIRS = {
     "pack", ".git", "__pycache__", "node_modules", ".venv", "venv", ".pytest_cache",
     "dist", "build", ".next",
+    # `.cache/extractions` holds extraction output keyed by content. It is a derived
+    # artefact of files this guard already scans, so it adds no coverage -- and because
+    # this walk makes one test per file, leaving it in meant the suite's SIZE followed
+    # how many stale cache entries happened to sit on this disk. The count moved from
+    # 2538 to 2106 on one machine without a line of product code changing. A test count
+    # that answers "what is on your disk" instead of "what is in the repository" is not
+    # a number we can put in a README.
+    ".cache",
 }
 SOURCE_SUFFIXES = {".py", ".ts", ".tsx", ".js", ".jsx"}
 DATA_SUFFIXES = {".json", ".jsonl"}
