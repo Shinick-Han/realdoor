@@ -53,6 +53,12 @@ THE REWRITING RULES (FPLG, page-cited)
 5. No double or stacked negation (III.b.3).
 6. No raw schema identifiers and no machine codes in visible text (III.a.3).
 7. Every problem message ends with a concrete action.
+8. The body carries the state and the one reason for it; the reasoning that produced the
+   state does not belong on the card. Date arithmetic — the floor date, the rule name, the
+   date it counts back from — moves to ``basis`` and renders folded. A settled checklist
+   item used to spend four sentences saying "we have it and it is recent"; three of them
+   were arithmetic nobody with nothing to do needed to read. Moving is not deleting: the
+   sentence is still in the payload, byte for byte, next to the machine ``detail``.
 
 MEANING COMES FIRST
 ===================
@@ -240,6 +246,13 @@ class PlainMessage:
     #: Set when plain phrasing would have changed what is true and we kept the precise
     #: wording on purpose.
     precision_note: str = ""
+    #: The date arithmetic behind a currency judgement: the floor date, the rule that
+    #: produced it, and the date it counts back from. This used to sit in ``body``, where
+    #: it made a settled checklist item four sentences long to say "we have it, it is
+    #: recent". It is reasoning, not news, so it belongs in the folded disclosure next to
+    #: ``detail`` — moved, not deleted. It is not renter-facing prose and the compliance
+    #: checker does not scan it, for the same reason it does not scan ``detail``.
+    basis: str = ""
 
     def __post_init__(self) -> None:
         if not self.headline.strip():
@@ -270,6 +283,8 @@ class PlainMessage:
             out["action_is_handoff"] = True
         if self.precision_note:
             out["precision_note"] = self.precision_note
+        if self.basis:
+            out["basis"] = self.basis
         return out
 
 
@@ -364,10 +379,9 @@ def _r_pay_stub_conflict(ctx: Context, detail: str) -> Rendered:
         return (
             "We could not work out your regular pay",
             amounts_sentence
-            + "On each stub we checked the hours and the hourly rate against the total. "
-            "No stub settled which figure is your regular pay. "
-            "We will not pick one for you, because picking one would be a guess. "
-            "So we did not produce a yearly income figure from your wages.",
+            + "On no stub do the hours and the hourly rate settle which figure is your "
+            "regular pay, so rather than guess we left your wages out of the yearly "
+            "income figure.",
             "Ask your employer which stub shows your normal pay, or upload a stub that "
             "shows a normal week. Then upload it here.",
         )
@@ -380,10 +394,9 @@ def _r_pay_stub_conflict(ctx: Context, detail: str) -> Rendered:
             letter, stubs = _money(found.group(1)), _money(found.group(2))
             return (
                 "Your employer's letter and your pay stubs do not agree",
-                f"The letter points to {letter} a year. Your pay stubs point to "
-                f"{stubs} a year. We used the figure from your pay stubs, because a stub "
-                "shows what you were actually paid. We are telling the housing worker "
-                "about the gap so they can check it.",
+                f"The letter points to {letter} a year and your pay stubs point to "
+                f"{stubs}. We used the stubs, because a stub shows what you were actually "
+                "paid, and we are telling the housing worker about the gap.",
                 "Ask your employer which figure is right. If the letter is wrong, ask "
                 "them for a corrected one and upload it.",
             )
@@ -395,10 +408,9 @@ def _r_pay_stub_conflict(ctx: Context, detail: str) -> Rendered:
         amount = _money(stated[0]) if stated else "the total"
         return (
             f"The numbers on {where} do not add up",
-            f"The stub shows a total of {amount}. The hours and the hourly rate on the "
-            "same stub come to a different amount. We still used the total, because that "
-            "is what the stub says. We are telling the housing worker that the two "
-            "figures do not match.",
+            f"The stub shows a total of {amount}, but the hours and the hourly rate on the "
+            "same stub come to a different amount. We used the stated total and told the "
+            "housing worker that the two figures do not match.",
             "Ask your employer to check this stub. If it is wrong, ask for a corrected "
             "one and upload it.",
         )
@@ -412,19 +424,18 @@ def _r_pay_stub_conflict(ctx: Context, detail: str) -> Rendered:
         other_text = _plural_money(others)
         return (
             "Your pay stubs show different totals",
-            f"One stub shows {base}. Another shows {other_text}. "
-            f"We used {base} as your regular pay, because the hours and the hourly rate "
-            "on that stub add up to it. We treated the difference as extra pay for one "
-            "period only, so we did not count it across the whole year. If that extra "
-            "pay comes every time, your yearly figure would be higher than the one we "
-            "worked out.",
+            f"One stub shows {base} and another shows {other_text}. We used {base} as your "
+            "regular pay, because the hours and the hourly rate on that stub add up to it, "
+            "and we treated the difference as extra pay for one period rather than "
+            "counting it across the year. If that extra pay comes every time, your yearly "
+            "figure would be higher.",
             "Ask your employer whether the extra pay is a regular part of your wages, "
             "then tell us what they say.",
         )
     return (
         "Your pay stubs do not agree with each other",
         "The totals on your pay stubs are not the same. We used the stub whose hours and "
-        "hourly rate add up to its own total. We left the difference out of your yearly "
+        "hourly rate add up to its own total, and left the difference out of your yearly "
         "figure, because we cannot tell whether it comes every time.",
         "Ask your employer which stub shows your normal pay, then tell us what they say.",
     )
@@ -435,10 +446,9 @@ def _r_gig_uncorroborated(ctx: Context, detail: str) -> Rendered:
     period = f" covers {_pretty_date(covers.group(1))}" if covers else " is in your file"
     return (
         "Nothing in your file backs up your gig earnings",
-        f"Your gig earnings statement{period}. It is the only paper you gave us that "
-        "shows this money. It comes from you, so on its own it does not confirm the "
-        "amount. We still counted this money in your yearly total, because leaving it "
-        "out would be its own kind of wrong. We are telling the housing worker that no "
+        f"Your gig earnings statement{period}, and it is the only paper you gave us that "
+        "shows this money, so nothing independent confirms the amount. We still counted "
+        "this money in full in your yearly total, and told the housing worker that no "
         "other paper supports it.",
         "Upload your bank statements, your earnings records from the app you work for, "
         "or a 1099 form covering the same dates.",
@@ -453,8 +463,8 @@ def _r_required_missing(ctx: Context, detail: str) -> Rendered:
     article = "an" if name[:1].lower() in "aeiou" else "a"
     return (
         headline,
-        f"Your file does not have {article} {name} in it yet. A housing worker needs it "
-        "before they can start reading your file.",
+        f"Your file does not have {article} {name} in it yet, and a housing worker needs "
+        "it before they can start reading your file.",
         action,
     )
 
@@ -472,11 +482,10 @@ def _r_item_present(ctx: Context, detail: str) -> Rendered:
     name = DOC_NAMES.get(dtype or "", "document")
     doc_id = ctx.first_doc(detail or "")
     when = _pretty_date((ctx.documents.get(doc_id or "") or {}).get("date"))
-    dated = f" It is dated {when}." if when else ""
+    dated = f", dated {when}," if when else ""
     return (
         f"We have your {name}",
-        f"It is in your file and it is recent enough to use.{dated} "
-        f"{CURRENCY_SENTENCE}",
+        f"It is in your file{dated} and recent enough to use.",
         "You do not need to do anything about this one.",
     )
 
@@ -486,7 +495,8 @@ def _r_not_current(ctx: Context, detail: str) -> Rendered:
     name = DOC_NAMES.get(dtype or "", "document")
     dated = _ISO_DAY.search(detail or "")
     when = _pretty_date(dated.group(0)) if dated else ""
-    when_sentence = f"It is dated {when}. " if when else ""
+    when_sentence = f"It is dated {when}, which is before the cut-off. " if when else \
+        "It is dated before the cut-off. "
     if dtype == "employment_letter":
         action = ("Ask your employer for a new letter dated " + FLOOR_DATE +
                   " or later, then upload it.")
@@ -494,8 +504,8 @@ def _r_not_current(ctx: Context, detail: str) -> Rendered:
         action = f"Upload your {name}, dated {FLOOR_DATE} or later."
     return (
         f"Your {name} is too old to use",
-        f"{when_sentence}{CURRENCY_SENTENCE} Nothing is wrong with the rest of your file. "
-        "One out-of-date paper is enough to hold the whole file until someone replaces it.",
+        f"{when_sentence}One out-of-date paper holds up your whole file until someone "
+        "replaces it, even when nothing is wrong with the rest of it.",
         action,
     )
 
@@ -509,9 +519,9 @@ def _r_undatable(ctx: Context, detail: str) -> Rendered:
         "It does not show which day of the month it covers. "
     return (
         f"Your {name} does not show a full date",
-        f"{shown_sentence}We need the day to work out whether the paper is recent enough. "
-        f"{CURRENCY_SENTENCE} We will not guess a day, because a guessed date could put "
-        "your paper on the wrong side of that line.",
+        f"{shown_sentence}We need the day to tell whether the paper is recent enough, and "
+        "we will not guess one, because a guessed date could put your paper on the wrong "
+        "side of the line.",
         f"Ask for a {name} that shows the full date, or tell us the exact date on the one "
         "you already sent.",
     )
@@ -522,9 +532,9 @@ def _r_unreadable(ctx: Context, detail: str) -> Rendered:
     name = DOC_NAMES.get(dtype or "", "document")
     return (
         f"We could not read your {name}",
-        f"Nothing on this {name} came through clearly enough for us to use. That is a "
-        "problem with the file we received, not with you or with your paperwork. We did "
-        "not guess at what it says.",
+        f"Nothing on this {name} came through clearly enough for us to use, and we did "
+        "not guess at what it says. That is a problem with the file we received, not "
+        "with you or with your paperwork.",
         f"Send the {name} again. A clear photo in good light, or the original file from "
         "your employer or your bank, usually works.",
     )
@@ -536,7 +546,7 @@ def _r_value_not_traceable(ctx: Context, detail: str) -> Rendered:
         "We could not show a housing worker where one of your numbers came from",
         f"We read a number from {where}, but we could not point to the exact spot on the "
         "page. A housing worker has to be able to check every number in your file against "
-        "the page it came from. Until they can, we hold this number aside.",
+        "the page it came from, so until they can, we hold this one aside.",
         "Open your document on screen and check the number against the page. Tell us if it "
         "is right, or correct it.",
     )
@@ -550,22 +560,24 @@ def _r_correction_not_used(ctx: Context, detail: str) -> Rendered:
     sums = _ARITHMETIC.search(detail or "")
 
     if typed:
-        first = f"You changed the total pay on this stub to {typed}. "
+        first = f"You changed the total pay on this stub to {typed}, "
     else:
-        first = "You changed a number on this stub. "
+        first = "You changed a number on this stub, "
     if sums:
         hours, rate, implied = sums.groups()
-        second = (f"The other numbers on the same stub add up to a different amount: "
-                  f"{hours} hours at {_money(rate)} an hour comes to {_money(implied)}. ")
+        second = (f"but its own hours and hourly rate, {hours} hours at {_money(rate)} an "
+                  f"hour, come to {_money(implied)}. ")
     else:
-        second = "The other numbers on the same stub add up to a different amount. "
+        second = "but the other numbers on the same stub come to a different amount. "
 
     headline = f"Check {where}"
+    # Three sentences, and none of them is spare. Drop the first and the renter does not
+    # know what we compared; drop the second and we look like we ignored their change;
+    # drop the third and "we left it out" reads as "we threw it away".
     body = (
         first + second +
-        "Because the two do not match, we could not tell which one is your regular pay. "
-        "We left this stub out when we worked out your yearly income. We saved your "
-        "change, and a housing worker can see it."
+        "Because the two do not match, we left this stub out when we worked out your "
+        "yearly income. Your change is saved, and a housing worker can see it."
     )
     action = ("Tell us which amount is right, or add a stub that shows your usual pay. "
               "If the hours or the hourly rate are also wrong, correct those too.")
@@ -576,11 +588,9 @@ def _r_correction_in_use(ctx: Context, detail: str) -> Rendered:
     where = _doc_phrase(ctx, detail, "your pay stub")
     return (
         "We used the number you corrected",
-        f"You corrected a number on {where}. After your change, the hours, the hourly "
-        "rate and the total on that stub agree with each other. So we used your figure as "
-        "your regular pay, and your yearly income reflects it. We are telling the housing "
-        "worker that this figure came from you rather than from the page, so they can "
-        "check it against the document.",
+        f"After your change, the hours, the hourly rate and the total on {where} agree "
+        "with each other, so we used your figure as your regular pay. We told the housing "
+        "worker it came from you rather than from the page, so they can check it.",
         "Open the document on screen and check your figure against the page one more "
         "time. Tell us if anything still looks wrong.",
     )
@@ -589,10 +599,9 @@ def _r_correction_in_use(ctx: Context, detail: str) -> Rendered:
 def _r_person_name_mismatch(ctx: Context, detail: str) -> Rendered:
     return (
         "The papers in your file do not all show the same name",
-        "Some of your documents carry one name and some carry another. That can happen "
-        "for ordinary reasons, such as a married name, a shortened first name, or a typing "
-        "mistake by whoever wrote the document. We cannot tell which it is, so we are "
-        "asking rather than deciding.",
+        "Some of your documents carry one name and some carry another. That happens for "
+        "ordinary reasons, such as a married name or a typing mistake, and we cannot tell "
+        "which it is, so we are asking rather than deciding.",
         "Tell us which name is yours. If a document has the wrong name on it, ask whoever "
         "issued it for a corrected copy.",
     )
@@ -601,9 +610,9 @@ def _r_person_name_mismatch(ctx: Context, detail: str) -> Rendered:
 def _r_income_not_computable(ctx: Context, detail: str) -> Rendered:
     return (
         "We could not work out a yearly income from your papers",
-        "None of the documents in your file gave us a pay amount we could rely on. This "
-        "is not a finding about your money. It means the papers we have do not settle the "
-        "figure, so we did not invent one.",
+        "None of the documents in your file gave us a pay amount we could rely on. That "
+        "is not a finding about your money: the papers we have do not settle the figure, "
+        "so we did not invent one.",
         "Upload your two most recent pay stubs. If you get benefits or gig income, upload "
         "the award letter or the earnings statement as well.",
     )
@@ -612,10 +621,12 @@ def _r_income_not_computable(ctx: Context, detail: str) -> Rendered:
 def _r_no_frozen_threshold(ctx: Context, detail: str) -> Rendered:
     return (
         "We do not have an income limit for a household of your size",
-        "The rules let us use one official table. It covers households of one to eight "
-        "people, and yours is larger. A larger limit does exist, but it sits outside the "
-        "table this project froze, so we will not take a number from anywhere else. We "
-        "would rather tell you we are missing it than show you a figure we cannot source.",
+        # Two sentences, and the second one cannot go. Without it the headline reads as
+        # "no limit exists for you", which is false: one exists, and what we are short of
+        # is a sourceable copy of it. The subject has to stay us.
+        "The one official table we are allowed to use covers households of one to eight "
+        "people, and yours is larger. A limit for your size does exist; we simply do not "
+        "have it, because we will not take a number from outside that table.",
         "Ask your housing worker for the published income limit for a household of your "
         "size. They can add it and the comparison will run.",
     )
@@ -624,8 +635,8 @@ def _r_no_frozen_threshold(ctx: Context, detail: str) -> Rendered:
 def _r_household_size_unknown(ctx: Context, detail: str) -> Rendered:
     return (
         "We could not tell how many people are in your household",
-        "The income limit depends on how many people live with you. We could not read "
-        "that number from your application form, so we could not look up your limit.",
+        "The income limit depends on how many people live with you, and we could not read "
+        "that number from your application form.",
         "Tell us how many people live in your household, counting yourself.",
     )
 
@@ -634,12 +645,16 @@ def _r_frequency_not_stated(ctx: Context, detail: str) -> Rendered:
     where = _doc_phrase(ctx, detail, "your pay documents")
     return (
         "We could not tell how often you are paid",
-        f"To work out a yearly figure we multiply your pay by how often you get it. "
-        f"{where.capitalize()} does not say whether you are paid weekly, every two weeks, "
-        "twice a month, monthly or once a year. We will not work it out from the dates, "
-        "because two dates two weeks apart do not prove that every payment is two weeks "
-        "apart.",
-        "Tell us how often you are paid, or upload a pay stub that says it on the page.",
+        # "and {where} does not say" would read "your pay documents does not say" on the
+        # plural fallback, which the old four-sentence version also did. Phrased around
+        # the verb instead so both the singular and the plural subject work.
+        f"To work out a yearly figure we multiply your pay by how often you get it, and "
+        f"that is not stated on {where}. We will not read it off the dates, because two "
+        "payments two weeks apart do not prove that every payment is.",
+        # The five accepted answers moved here from the body. They are the thing a renter
+        # acts on, so they belong in the action, not in the explanation.
+        "Tell us how often you are paid: weekly, every two weeks, twice a month, monthly "
+        "or once a year. Or upload a pay stub that says it on the page.",
     )
 
 
@@ -647,9 +662,8 @@ def _r_frequency_not_recognized(ctx: Context, detail: str) -> Rendered:
     return (
         "Your pay schedule is not one we can convert",
         "We can turn five pay schedules into a yearly figure: weekly, every two weeks, "
-        "twice a month, monthly and once a year. Your document names a different one. We "
-        "will not invent a way to convert it, because the multiplier would be ours rather "
-        "than the official one.",
+        "twice a month, monthly and once a year. Your document names a different one, and "
+        "we will not invent a multiplier of our own for it.",
         "Ask your housing worker to convert this pay schedule into a yearly figure. They "
         "can enter it and the rest will follow.",
     )
@@ -659,8 +673,8 @@ def _r_amount_missing(ctx: Context, detail: str) -> Rendered:
     where = _doc_phrase(ctx, detail, "your documents")
     return (
         "We could not read a pay amount in your file",
-        f"We looked at {where} for an amount before tax and did not find one we could "
-        "use. We did not guess at a figure.",
+        f"We looked at {where} for an amount before tax, did not find one we could use, "
+        "and did not guess at a figure.",
         "Open your document on screen and type the amount in yourself, or upload a "
         "clearer copy.",
     )
@@ -671,8 +685,8 @@ def _r_income_not_traceable(ctx: Context, detail: str) -> Rendered:
     return (
         "We could not show where your pay figure came from",
         f"We read a pay amount from {where}, but we could not point a housing worker at "
-        "the exact spot on the page. A number nobody can check is a number we will not "
-        "count, so this one is not in your yearly figure.",
+        "the exact spot on the page. A number nobody can check is one we will not count, "
+        "so it is not in your yearly figure.",
         "Open your document on screen and confirm the amount against the page, or upload a "
         "clearer copy.",
     )
@@ -682,8 +696,7 @@ def _r_income_unavailable(ctx: Context, detail: str) -> Rendered:
     return (
         "We could not compare your income with the limit",
         "The comparison needs a yearly income figure for you, and we do not have one yet. "
-        "We list the reasons above. Once you clear those, the comparison runs on its "
-        "own.",
+        "Once you clear the reasons listed above, it runs on its own.",
         "Work through the other items on your list first. Each one says what to send.",
     )
 
@@ -702,6 +715,10 @@ class Entry:
     sample_detail: str
     action_is_handoff: bool = False
     precision_note: str = ""
+    #: The date arithmetic this code's wording rests on. Every currency judgement rests on
+    #: the same one sentence, so it is attached here once rather than repeated inside four
+    #: renderers' bodies. See ``PlainMessage.basis``.
+    basis: str = ""
     #: "problem" for anything that holds the file up, "status" for a state that needs
     #: no correction. Only problems carry the SC 3.3.3 obligation, so a settled
     #: checklist item is not forced to invent an action it does not have.
@@ -739,16 +756,19 @@ REGISTRY: dict[str, Entry] = {
     "DOCUMENT_NOT_CURRENT": Entry(
         _r_not_current,
         "Benefit award letter: HH-003-D02 is dated 2026-04-14, outside the 60-day window",
+        basis=CURRENCY_SENTENCE,
     ),
     "EMPLOYMENT_LETTER_EXPIRED": Entry(
         _r_not_current,
         "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the "
         "60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+        basis=CURRENCY_SENTENCE,
     ),
     "DOCUMENT_UNDATABLE": Entry(
         _r_undatable,
         "Gig platform earnings statement: HH-004-D04 is dated 2026-06 (month precision); "
         "the 60-day convention cannot be applied without inventing a day",
+        basis=CURRENCY_SENTENCE,
     ),
     "DOCUMENT_UNREADABLE": Entry(
         _r_unreadable,
@@ -831,6 +851,7 @@ REGISTRY: dict[str, Entry] = {
         _r_item_present,
         "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining",
         kind="status",
+        basis=CURRENCY_SENTENCE,
     ),
 }
 
@@ -892,9 +913,12 @@ def trigger_for_abstention(reason: str) -> str | None:
 READY_MESSAGE = PlainMessage(
     headline="Your paperwork is ready for a person to read",
     body=(
-        "We have what we need to hand your file to a housing worker. They will read it "
-        "and decide what happens next. This does not tell you what they will say. It "
-        "means nothing is missing, out of date, or unclear enough to stop them starting."
+        # The second sentence is the whole point of this message and does not shorten.
+        # "Ready" without it reads as an outcome, which is the one thing this product
+        # must never imply.
+        "We have what we need to hand your file to a housing worker, who will read it and "
+        "decide what happens next. This does not tell you what they will say: it means "
+        "nothing is missing, out of date, or unclear enough to stop them starting."
     ),
     action="You do not need to send anything else right now. Wait for the housing worker "
            "to come back to you.",
@@ -913,9 +937,9 @@ READY_MESSAGE = PlainMessage(
 NEEDS_REVIEW_MESSAGE = PlainMessage(
     headline="Your file needs a few things before a person can read it",
     body=(
-        "Some papers are missing, out of date, or do not agree with each other. We list "
-        "each one below, with what to do about it. None of this is a finding about you. "
-        "It is about the paperwork. You can fix paperwork."
+        "Some papers are missing, out of date, or do not agree with each other, and we "
+        "list each one below with what to do about it. None of this is a finding about "
+        "you. It is about the paperwork, and paperwork you can fix."
     ),
     action="Work through your list below. Each item says exactly what to send or who "
            "to ask.",
@@ -1156,6 +1180,7 @@ def message_for(code: str, detail: str, ctx: Context | None = None) -> PlainMess
         kind=entry.kind,
         action_is_handoff=entry.action_is_handoff,
         precision_note=entry.precision_note,
+        basis=entry.basis,
     )
 
 

@@ -284,6 +284,37 @@ def test_readiness_status_never_implies_a_determination():
     assert "READY_TO_REVIEW" in ready.detail, "the exact status term must stay retrievable"
 
 
+def test_the_date_arithmetic_moved_out_of_the_body_but_not_out_of_the_payload():
+    """Shortening the cards moved the currency rule; it must not have dropped it.
+
+    The floor date, the rule that produced it and the date it counts back from used to be
+    three sentences of every currency card's body, including settled items that needed no
+    reading at all. They now travel in `basis`, folded next to `detail`. This test is the
+    difference between having moved them and having deleted them.
+    """
+    for code in ("DOCUMENT_NOT_CURRENT", "EMPLOYMENT_LETTER_EXPIRED", "DOCUMENT_UNDATABLE",
+                 plain.ITEM_PRESENT_CODE):
+        message = plain.message_for(code, plain.REGISTRY[code].sample_detail, plain.Context())
+        assert message.basis == plain.CURRENCY_SENTENCE, (
+            f"{code} lost the date arithmetic it used to state. Shorter is not a licence "
+            f"to drop the reasoning; it belongs in `basis`."
+        )
+        assert "basis" in message.to_dict(), f"{code}: basis must reach the client"
+        assert plain.FLOOR_DATE in message.basis and plain.EVENT_DATE in message.basis
+
+
+def test_a_settled_checklist_item_says_only_what_a_settled_item_needs_to_say():
+    """Nothing to do should not cost four sentences to read."""
+    message = plain.message_for(plain.ITEM_PRESENT_CODE,
+                                plain.REGISTRY[plain.ITEM_PRESENT_CODE].sample_detail,
+                                plain.Context())
+    assert len(plain.sentences(message.body)) <= 2, (
+        f"a settled item's body ran to {len(plain.sentences(message.body))} sentences: "
+        f"{message.body!r}"
+    )
+    assert plain.FLOOR_DATE not in message.body, "the floor date belongs in `basis`"
+
+
 def test_messages_that_risked_a_meaning_change_carry_a_note():
     """Where plain phrasing could have changed what is true, we recorded the decision."""
     for code in ("PAY_STUB_TOTAL_CONFLICT", "RENTER_CORRECTION_NOT_USED",
@@ -292,6 +323,39 @@ def test_messages_that_risked_a_meaning_change_carry_a_note():
             f"{code} was rewritten in a way that risked softening the meaning; "
             f"record what was kept and why in its precision_note"
         )
+
+
+def test_the_load_bearing_sentences_survive_any_future_shortening():
+    """A precision_note records the decision. This asserts the decision is still in force.
+
+    Each of these three bodies has one clause that carries the whole meaning, and each is
+    exactly the clause an editor cutting for length would reach for first:
+
+      * the gig statement is uncorroborated, and the money was counted anyway. Cut the
+        second half and the card reads as though we docked the renter's income.
+      * a correction that did not move the total was neither ignored nor applied. Cut the
+        last sentence and "we left this stub out" reads as "we threw your change away".
+      * a limit for a large household exists; what we lack is a sourceable copy. Cut that
+        and the card asserts something false about the world.
+    """
+    def body(code: str) -> str:
+        return plain.message_for(code, plain.REGISTRY[code].sample_detail,
+                                 plain.Context()).body.lower()
+
+    gig = body("GIG_INCOME_UNCORROBORATED")
+    assert "still counted" in gig and "in full" in gig, (
+        f"the gig card no longer says the money was counted anyway: {gig!r}"
+    )
+    correction = body("RENTER_CORRECTION_NOT_USED")
+    assert "saved" in correction and "housing worker can see it" in correction, (
+        f"the correction card no longer says the change was kept and is visible: "
+        f"{correction!r}"
+    )
+    threshold = body("NO_FROZEN_THRESHOLD")
+    assert "does exist" in threshold and "we simply do not have it" in threshold, (
+        f"the threshold card no longer distinguishes 'we do not have it' from 'there is "
+        f"none': {threshold!r}"
+    )
 
 
 # =====================================================================================

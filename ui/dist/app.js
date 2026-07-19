@@ -124,6 +124,110 @@
     ]);
   }
 
+  // ── a rule id is a reference, not a token ───────────────────────────────────────
+  /* Every screen in this build prints rule ids under "Technical details" — the checklist
+   * card's `required_because_rule_id`, each review reason's `rule_id`, the calculation's
+   * `rule_id` and `threshold_rule_id`, the document's `stale_rule_id`. They were dead
+   * strings: a reader who wanted to know what CH-READINESS-001 or HUD-MTSP-002 actually
+   * says had no way to get there from where the id was written.
+   *
+   * The report already carries the answer. `citations[]` holds, for every rule the report
+   * cites, its authority, effective date, source_url and source_locator — and every rule
+   * id printed anywhere on these screens appears in it. So this is a lookup, not a new
+   * request: no backend change, and no fetch of any kind.
+   *
+   * Two kinds of rule live in that array and the difference is the whole point of this
+   * code. HUD-* and FED-* carry real external authority — huduser.gov, 26 U.S.C. §42 on
+   * uscode.house.gov, 26 CFR §1.42-5 on ecfr.gov — and those become links. CH-* are this
+   * challenge's own frozen convention, whose authority reads `hackathon_simulation` and
+   * whose source is a path inside this repository. Those must never be dressed as outside
+   * authority, so they are never links: they are labelled, in words, as ours.
+   *
+   * Nothing is fetched until a reader clicks. No prefetch, no preconnect, no favicon, no
+   * icon from a remote host — the claim that this page makes no external request on load
+   * has to stay true, and a decorative round-trip would break it for nothing. */
+
+  /** Citations seen on ask/probe responses, which are not part of any report. The report's
+   *  own citations[] is read live in `ruleCitation` and never copied here. */
+  var askCitations = {};
+  function rememberCitations(citations) {
+    (citations || []).forEach(function (citation) {
+      if (citation && citation.rule_id) askCitations[citation.rule_id] = citation;
+    });
+  }
+
+  /** The citation for a rule id, or null when the API never cited it. Structural: it reads
+   *  fields, never sentences, so rewording elsewhere cannot break it. */
+  function ruleCitation(ruleId) {
+    if (!ruleId) return null;
+    var fromReport = (state.report && state.report.citations) || [];
+    for (var i = 0; i < fromReport.length; i++) {
+      if (fromReport[i] && fromReport[i].rule_id === ruleId) return fromReport[i];
+    }
+    return askCitations[ruleId] || null;
+  }
+
+  function externalHost(url) {
+    var match = /^https?:\/\/([^/?#]+)/i.exec(url || "");
+    return match ? match[1].replace(/^www\./i, "") : "";
+  }
+
+  /** Where the link goes, said before it is followed: the publisher's own locator for the
+   *  passage plus the host it lives on. "26 U.S.C. 42 (uscode.house.gov)" is a destination;
+   *  a bare "FED-LIHTC-001" is not, and a link text that names no destination is the thing
+   *  screen-reader users are told to distrust. */
+  function destinationWords(citation) {
+    var host = externalHost(citation.source_url);
+    var locator = citation.source_locator || "";
+    if (locator && host) return locator + " (" + host + ")";
+    return locator || host;
+  }
+
+  /** The same sentence for a rule with no external source, which is the one case where
+   *  saying too little would mislead. It names the authority the API gave us and states
+   *  plainly that there is nothing outside this project to check it against. */
+  function selfIssuedWords(citation) {
+    var authority = (citation.authority || "").replace(/_/g, " ");
+    var whose = /hackathon|simulation|challenge/i.test(citation.authority || "")
+      ? "set by this challenge itself"
+      : "authority: " + (authority || "not stated");
+    var locator = citation.source_locator;
+    return (locator ? locator + ", " : "") + whose + " (no outside source)";
+  }
+
+  /** One rule id, rendered as far as the evidence allows and no further.
+   *
+   *  - external source_url  → a link that says where it goes, opening in a new tab
+   *  - no external source   → the id plus, in words, whose rule it is. Never a link.
+   *  - not cited at all     → exactly what was printed before. It must not vanish quietly.
+   */
+  function ruleRef(ruleId) {
+    var id = (ruleId === null || ruleId === undefined || ruleId === "") ? "" : String(ruleId);
+    if (!id) return h("span", { class: "mono", text: "—" });
+
+    var citation = ruleCitation(id);
+    if (!citation) return h("span", { class: "mono", text: id });
+
+    if (/^https?:\/\//i.test(citation.source_url || "")) {
+      var where = destinationWords(citation);
+      return h("a", {
+        class: "rule-ref",
+        href: citation.source_url,
+        target: "_blank",
+        rel: "noopener noreferrer"
+      }, [
+        h("span", { class: "mono", text: id }),
+        where ? " — " + where : "",
+        h("span", { class: "visually-hidden", text: " (opens in a new tab)" })
+      ]);
+    }
+
+    return h("span", { class: "rule-ref rule-ref--own" }, [
+      h("span", { class: "mono", text: id }),
+      h("span", { class: "rule-ref__note", text: " — " + selfIssuedWords(citation) })
+    ]);
+  }
+
   // ── the linear flow ─────────────────────────────────────────────────────────────
   // Six ordered steps, not seven parallel tabs. The order is the product: you cannot
   // sensibly correct a value you have not seen, or read a calculation built on a value
@@ -312,7 +416,7 @@
         return h("dl", { class: "kv" }, [
           h("dt", { text: "Code" }),  h("dd", { class: "mono", text: entry.code }),
           h("dt", { text: "Check" }), h("dd", { class: "mono", text: entry.check }),
-          h("dt", { text: "Rule" }),  h("dd", { class: "mono", text: entry.rule_id }),
+          h("dt", { text: "Rule" }),  h("dd", null, [ruleRef(entry.rule_id)]),
           h("dt", { text: "Message" }), h("dd", { class: "mono", text: entry.message })
         ]);
       })).concat([
@@ -851,7 +955,7 @@
       h("dt", { text: "File" }), h("dd", { class: "mono", text: doc.file_name }),
       h("dt", { text: "Document date" }), h("dd", { text: doc.document_date || "not stated" }),
       h("dt", { text: "Currency" }), h("dd", null, [stateChip(doc.state), " ", staleText]),
-      h("dt", { text: "Rule" }), h("dd", { class: "mono", text: doc.stale_rule_id || "—" }),
+      h("dt", { text: "Rule" }), h("dd", null, [ruleRef(doc.stale_rule_id)]),
       h("dt", { text: "Read via" }), h("dd", { text: (doc.source || "unknown").replace(/_/g, " ") }),
       h("dt", { text: "Page size" }),
       h("dd", { text: (doc.page_size_points || []).join(" × ") + " pt, " + doc.page_count + " page(s)" })
@@ -1333,6 +1437,11 @@
       return;
     }
 
+    // The ask response carries its own citations[] — including the two federal rules no
+    // report cites, 26 U.S.C. §42 and 26 CFR §1.42-5. Recording them here is what lets a
+    // rule id printed anywhere else on the page reach them.
+    rememberCitations(response.citations);
+
     var flavour = response.refused ? "callout--stop" : (response.abstained ? "callout--warn" : "callout--ok");
     var headline = response.refused ? "Refused, on purpose"
       : (response.abstained ? "Abstained — no answer given" : "Answer");
@@ -1556,8 +1665,8 @@
           h("dt", { text: "Frozen 60% threshold" }),
           h("dd", { text: calc.threshold === null || calc.threshold === undefined
             ? "No threshold applies to this line" : money(calc.threshold) }),
-          h("dt", { text: "Threshold rule" }), h("dd", { class: "mono", text: calc.threshold_rule_id || "—" }),
-          h("dt", { text: "Calculation rule" }), h("dd", { class: "mono", text: calc.rule_id || "—" }),
+          h("dt", { text: "Threshold rule" }), h("dd", null, [ruleRef(calc.threshold_rule_id)]),
+          h("dt", { text: "Calculation rule" }), h("dd", null, [ruleRef(calc.rule_id)]),
           h("dt", { text: "Effective date" }), h("dd", { text: calc.effective_date || "—" })
         ]),
         h("div", { class: "callout" }, [
@@ -1651,7 +1760,7 @@
         h("dl", { class: "kv" }, [
           h("dt", { text: "Item" }), h("dd", { class: "mono", text: item.item_id }),
           h("dt", { text: "Required because" }),
-          h("dd", { class: "mono", text: item.required_because_rule_id }),
+          h("dd", null, [ruleRef(item.required_because_rule_id)]),
           h("dt", { text: "Satisfied by" }),
           h("dd", { class: "mono", text: (item.satisfied_by || []).length
             ? item.satisfied_by.join(", ") : "nothing yet" }),
@@ -1666,7 +1775,7 @@
         return h("dl", { class: "kv" }, [
           h("dt", { text: "Raised as" }), h("dd", { class: "mono", text: reason.code }),
           h("dt", { text: "Check" }), h("dd", { class: "mono", text: reason.check }),
-          h("dt", { text: "Rule" }), h("dd", { class: "mono", text: reason.rule_id }),
+          h("dt", { text: "Rule" }), h("dd", null, [ruleRef(reason.rule_id)]),
           h("dt", { text: "Message" }), h("dd", { class: "mono", text: reason.message })
         ]);
       })).concat(
@@ -1899,14 +2008,26 @@
                 ? Source.ask(example.question, state.householdId)
                 : Promise.resolve(example.response);
               run.then(function (response) {
+                rememberCitations(response.citations);
+                // The rules a probe answer stands on. Each one now names its own source, so
+                // they get a line each: run through the status line behind commas, the
+                // commas inside a rule's own label would swallow the boundaries between them.
+                var ruleIds = response.rule_ids || [];
+                var ruleList = ruleIds.length
+                  ? h("ul", { class: "rule-ref-list" }, ruleIds.map(function (id) {
+                      return h("li", null, [ruleRef(id)]);
+                    }))
+                  : h("p", { class: "status-line", style: { marginBottom: "0" } },
+                      ["rules: ", h("span", { class: "mono", text: "none" })]);
                 host.appendChild(h("div", { class: "callout callout--stop" }, [
                   h("h4", { style: { marginTop: "0" }, text: "Response returned" }),
                   h("p", { text: response.answer }),
                   h("p", { class: "status-line" }, [
                     "kind: ", h("span", { class: "mono", text: response.kind }),
-                    " · refused: " + String(response.refused) + " · abstained: " + String(response.abstained) +
-                    " · rules: " + (response.rule_ids || []).join(", ")
+                    " · refused: " + String(response.refused) + " · abstained: " + String(response.abstained)
                   ]),
+                  ruleIds.length ? h("p", { class: "status-line", style: { marginBottom: ".2rem" }, text: "Rules this response stands on:" }) : null,
+                  ruleList,
                   response.what_would_resolve_it
                     ? h("p", { style: { marginBottom: "0" } },
                         [h("strong", { text: "Offered instead: " }), response.what_would_resolve_it])
@@ -2342,8 +2463,12 @@
             // members differ in exactly those fields, so printing the first one's and
             // calling it the group's would be the quiet loss this fold is meant to avoid.
             return h("div", null, [
-              h("p", { class: "mono",
-                text: entry.code + " · check: " + entry.check + " · rule: " + entry.rule_id }),
+              // The rule is split out of the run-on mono line so it can carry its own
+              // reference. The code and check either side of it are unchanged.
+              h("p", null, [
+                h("span", { class: "mono", text: entry.code + " · check: " + entry.check + " · rule: " }),
+                ruleRef(entry.rule_id)
+              ]),
               h("p", { class: "mono", style: { marginBottom: "0" }, text: entry.message })
             ]);
           })))
