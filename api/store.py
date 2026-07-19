@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+import threading
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -82,7 +83,12 @@ def engine_sha() -> str:
         for source in ENGINE_SOURCES:
             digest.update(source.name.encode())
             try:
-                digest.update(source.read_bytes())
+                # 줄바꿈을 정규화하고 해시한다. 이게 없으면 이 해시는 코드가 아니라
+                # **체크아웃한 플랫폼**을 식별한다: Windows 워킹트리는 CRLF, 컨테이너는
+                # LF 이므로 같은 커밋의 같은 파일이 다른 해시를 낸다. 그러면 이 기계에서
+                # 채운 캐시는 리눅스 컨테이너에서 단 한 건도 맞지 않는다. 한 줄도 다르지
+                # 않은 코드가 다른 코드로 취급되는 것은 이 키가 답해야 할 질문이 아니다.
+                digest.update(source.read_bytes().replace(b"\r\n", b"\n"))
             except OSError:
                 # 파일이 사라졌다면 그 사실 자체가 키의 일부다. 조용히 무시하면 서로 다른
                 # 두 트리가 같은 키를 쓰게 된다.
@@ -300,15 +306,29 @@ class Store:
         self._base: list[dict[str, Any]] = []
         self._sessions: dict[str, Session] = {}
         self._checklists = load_pack_checklists()
+        self._warm_lock = threading.Lock()
 
     # ── 부팅 ────────────────────────────────────────────────────────────
     def warm(self) -> dict[str, Any]:
-        """서버 기동 시 1회. 캐시가 있으면 즉시, 없으면 여기서 OCR 비용을 치른다."""
-        self._base = extract_all()
+        """문서를 읽어 `_base` 를 채운다. 여러 번 불러도 한 번만 일한다.
+
+        기동 시 백그라운드 스레드가 부르고, 세션을 만들 때 요청 경로가 다시 부른다.
+        락이 있는 이유는 **먼저 도착한 요청이 같은 일을 기다리게** 하기 위해서다.
+        락이 없으면 두 요청이 24장을 각각 추출한다.
+        """
+        with self._warm_lock:
+            if not self._base:
+                self._base = extract_all()
         return {"documents": len(self._base), "engine": engine_version()}
 
     # ── 세션 ────────────────────────────────────────────────────────────
     def new_session(self) -> Session:
+        # 기동 직후 warm 이 아직 도는 중에 도착한 요청은, 여기서 그 일이 끝나기를
+        # 기다린다. 기다리지 않으면 `_base` 가 빈 채로 복사되어 이 세션은 **영구히**
+        # 빈 세션이 된다 -- 에러도 없고, 나중에 채워지지도 않는다. 실제로 배포된
+        # 서버가 그 상태로 `{"households":[]}` 를 200 으로 돌려주고 있었고, 헬스체크는
+        # 내내 통과했다. 빈 화면을 조용히 내주느니 첫 요청이 기다리는 편이 낫다.
+        self.warm()
         sid = uuid.uuid4().hex[:12]
         views = {v["document_id"]: json.loads(json.dumps(v, default=str))
                  for v in self._base}
