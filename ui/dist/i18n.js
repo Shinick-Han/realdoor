@@ -24,7 +24,7 @@
  *    index.html 이 평범한 <script> 로 불러온다. 네트워크 요청은 0건이다.
  *
  * ── 번역 규율 ────────────────────────────────────────────────────────────────────
- * 준비도 상태를 판정 어휘로 옮기지 않는다. READY_TO_REVIEW 는 "검토 준비됨"이지
+ * 준비 상태를 판정 어휘로 옮기지 않는다. READY_TO_REVIEW 는 "검토 준비됨"이지
  * "적격"이 아니고, NEEDS_REVIEW 는 "확인 필요"이지 "부적격"이나 "보류"가 아니다.
  * "자격"이라는 단어는 오직 **하지 않는다고 말하는 문장**에서만 쓴다.
  */
@@ -38,9 +38,9 @@
 
     // ── index.html: 머리말·고지·브랜드 ──────────────────────────────────────
     "Skip to main content": "본문으로 건너뛰기",
-    "Ready, not eligible.": "준비되었는가를 말하고, 자격은 말하지 않습니다.",
+    "Ready, not eligible.": "준비 상태를 말합니다. 자격은 말하지 않습니다.",
     "This service reports document readiness only. It does not decide eligibility, and nothing on this screen means approved, denied, or ineligible. A qualified housing professional makes that determination.":
-      "이 서비스는 서류의 준비도만 보고합니다. 자격을 판정하지 않으며, 이 화면의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판정은 자격을 갖춘 주택 전문가가 합니다.",
+      "이 서비스는 서류의 준비 상태만 알려 드립니다. 자격은 판정하지 않습니다. 이 화면의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판단은 공인 주택 전문가가 합니다.",
     "Household": "세대",
     "Data source: loading…": "데이터 출처: 불러오는 중…",
     "About this service": "이 서비스에 대하여",
@@ -50,11 +50,11 @@
     "Get your housing documents ready for a person to review":
       "주택 서류를 사람이 검토할 수 있는 상태로 만드세요",
     "RealDoor reads the documents for one household, shows you where on the page every value came from, and tells you what is still missing or out of date. It does not decide whether anyone qualifies for anything — a housing professional does that.":
-      "RealDoor 는 한 세대의 서류를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여주고, 아직 없거나 기한이 지난 것이 무엇인지 알려줍니다. 누가 무엇에 해당하는지는 판정하지 않습니다 — 그것은 주택 전문가가 합니다.",
+      "RealDoor 는 한 세대의 서류를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여주고, 아직 없거나 기한이 지난 것이 무엇인지 알려 줍니다. 누구에게 자격이 있는지는 판정하지 않습니다 — 그것은 주택 전문가가 합니다.",
     "Before you start": "시작하기 전에",
     "This walkthrough takes about ten minutes. The documents for the household you choose above are already loaded, so there is nothing to upload and nothing is sent anywhere. You can stop at any step and your work stays on this device.":
       "이 과정은 약 10분 걸립니다. 위에서 고른 세대의 서류는 이미 불러와 있으므로 올릴 것도 없고, 어디로도 전송되지 않습니다. 어느 단계에서든 멈출 수 있고 작업 내용은 이 기기에 남습니다.",
-    "What happens, in order": "무슨 일이 어떤 순서로 일어나는지",
+    "What happens, in order": "진행 순서",
 
     // ── index.html: 각 단계의 제목과 안내문 ─────────────────────────────────
     "Step 1 of 6": "6단계 중 1단계",
@@ -66,7 +66,7 @@
 
     "Check the values we read from your documents": "서류에서 읽어낸 값을 확인하세요",
     "Each value below is shown together with the box on the page it was read from. Choose a field name to light up its box. Nothing here is inferred about the person.":
-      "아래의 각 값은 그것을 읽어낸 문서상의 영역과 함께 표시됩니다. 항목 이름을 고르면 해당 영역이 켜집니다. 여기에서 사람에 대해 추측한 것은 하나도 없습니다.",
+      "아래의 각 값은 그것을 읽어낸 문서상의 근거 위치와 함께 표시됩니다. 항목 이름을 고르면 그 위치가 켜집니다. 여기에서 사람에 대해 추측한 것은 하나도 없습니다.",
 
     "Correct a value we read wrong": "잘못 읽은 값을 바로잡으세요",
 
@@ -80,9 +80,9 @@
 
     "See what is missing or out of date": "무엇이 없거나 기한이 지났는지 보세요",
     "What is present, what is missing, what has expired, and what could not be dated — with the one thing you can do about each.":
-      "무엇이 있고, 무엇이 없고, 무엇의 기한이 지났고, 무엇의 날짜를 확정할 수 없었는지 — 각각에 대해 할 수 있는 한 가지와 함께.",
+      "무엇이 있고, 무엇이 없고, 무엇의 기한이 지났고, 무엇의 날짜를 알 수 없었는지 — 각각에 대해 할 수 있는 한 가지와 함께.",
 
-    "Check what we found, then take your packet": "찾아낸 내용을 확인하고, 서류 묶음을 받으세요",
+    "Check what we found, then take your packet": "찾아낸 내용을 확인하고, 신청 서류 묶음을 받으세요",
     "This is everything the earlier steps produced, in one place. Change anything that is wrong before you download it.":
       "앞 단계들이 만들어낸 모든 것이 한자리에 있습니다. 내려받기 전에 틀린 것을 고치세요.",
 
@@ -95,7 +95,7 @@
       "과제 설명서는 6단계 수용 데모를 요구합니다. 우리의 번호 매긴 진행 과정은 그 목록이 아니라 세입자를 위해 쓰여 있어서, 둘은 1대1로 맞아떨어지지 않습니다. 아래가 그 대응표입니다.",
     "1. Upload documents, show extraction evidence": "1. 서류 업로드, 추출 근거 제시",
     "— walkthrough step 1. The documents are pre-loaded rather than uploaded; every value carries the box on the page it came from.":
-      "— 진행 과정 1단계. 서류는 업로드가 아니라 미리 불러와 있으며, 모든 값은 그것이 나온 문서상의 영역을 달고 있습니다.",
+      "— 진행 과정 1단계. 서류는 업로드가 아니라 미리 불러와 있으며, 모든 값은 그것이 나온 문서상의 근거 위치를 달고 있습니다.",
     "2. Edit one field, show downstream values update": "2. 한 항목 수정, 하위 값 갱신 제시",
     "— walkthrough step 2.": "— 진행 과정 2단계.",
     "3. Ask a rule question, show an authoritative citation": "3. 규칙 질문, 권위 있는 인용 제시",
@@ -123,7 +123,7 @@
 
     // ── app.js: 진행 과정 목록의 설명문 ─────────────────────────────────────
     "See each value we read and the exact box on the page it came from.":
-      "우리가 읽은 각 값과, 그것이 나온 문서상의 정확한 영역을 봅니다.",
+      "읽어낸 각 값과, 그 값이 나온 문서상의 정확한 근거 위치를 봅니다.",
     "Change anything we got wrong, and see whether it changed the numbers.":
       "우리가 틀린 것을 바꾸고, 그것이 숫자를 바꿨는지 봅니다.",
     "Get an answer with the rule id, the authority, and the date it took effect.":
@@ -131,7 +131,7 @@
     "Inputs, formula, result and the threshold it is compared against.":
       "입력값, 계산식, 결과, 그리고 비교 대상이 되는 기준액.",
     "The full checklist, and the one thing you can do about each open item.":
-      "전체 점검표와, 남은 항목마다 할 수 있는 한 가지.",
+      "전체 점검 목록과, 남은 항목마다 할 수 있는 한 가지.",
     "Review everything in one place, change what is wrong, then download it.":
       "모든 것을 한자리에서 검토하고, 틀린 것을 고친 뒤 내려받습니다.",
 
@@ -141,7 +141,7 @@
     "Rules": "규칙",
     "The calculation": "계산",
     "Missing or expired": "없음 또는 기한 지남",
-    "Your packet": "내 서류 묶음",
+    "Your packet": "내 신청 서류 묶음",
     "Progress": "진행 상황",
     "— completed": "— 완료됨",
     "— current step": "— 현재 단계",
@@ -153,14 +153,14 @@
     "Return to what we found": "찾아낸 내용으로 돌아가기",
     "Back to the start": "처음으로",
 
-    // ── app.js: 준비도 상태 ────────────────────────────────────────────────
+    // ── app.js: 준비 상태 ────────────────────────────────────────────────
     // 판정 어휘 금지의 핵심 지점. "적격/부적격"이 아니라 "검토 준비"와 "남은 항목"이다.
     "Ready for a person to review": "사람이 검토할 준비가 되었습니다",
     "Every required document is present, current under the frozen 60-day convention, internally consistent, and traceable to a box on the page. This is not approval, and it is not an eligibility outcome.":
-      "필요한 서류가 모두 있고, 동결된 60일 관행 기준으로 유효하며, 서로 모순이 없고, 문서상의 영역까지 추적됩니다. 이것은 승인이 아니며, 자격에 대한 결론도 아닙니다.",
+      "필요한 서류가 모두 있고, 이 프로젝트가 따르는 60일 기준으로 유효하며, 서로 모순이 없고, 문서상의 근거 위치까지 추적됩니다. 이것은 승인이 아니며, 자격에 대한 결론도 아닙니다.",
     "Not ready yet — items still open": "아직 준비되지 않았습니다 — 남은 항목이 있습니다",
     "Something is missing, out of date, undatable, or inconsistent. This is not a refusal and it is not an eligibility outcome; it is a list of what to fix.":
-      "무언가가 없거나, 기한이 지났거나, 날짜를 확정할 수 없거나, 서로 맞지 않습니다. 이것은 거절이 아니며 자격에 대한 결론도 아닙니다. 고쳐야 할 것들의 목록입니다.",
+      "무언가가 없거나, 기한이 지났거나, 날짜를 알 수 없거나, 서로 맞지 않습니다. 이것은 거절이 아니며 자격에 대한 결론도 아닙니다. 고쳐야 할 것들의 목록입니다.",
 
     // ── app.js: 비교 문장 ("비교는 판정이 아니다") ──────────────────────────
     "The annualized amount is at or below the frozen 60% threshold for this household size.":
@@ -171,20 +171,20 @@
       "이 금액에 적용되는 동결된 기준액이 없어서 비교하지 않습니다.",
     "A comparison is not a determination.": "비교는 판정이 아닙니다.",
     "This line says how one number sits against a frozen table. It does not say what happens next; a qualified housing professional decides that.":
-      "이 줄은 숫자 하나가 동결된 표에 대해 어디에 놓이는지를 말할 뿐입니다. 그다음에 무슨 일이 일어나는지는 말하지 않습니다. 그것은 자격을 갖춘 주택 전문가가 정합니다.",
+      "이 줄은 숫자 하나가 동결된 표에 대해 어디에 놓이는지를 말할 뿐입니다. 그다음에 무슨 일이 일어나는지는 말하지 않습니다. 그것은 공인 주택 전문가가 정합니다.",
 
     // ── app.js: 항목 상태와 근거 종류 ───────────────────────────────────────
     "Present": "있음",
     "Missing": "없음",
     "Expired": "기한 지남",
-    "Undatable": "날짜 확정 불가",
+    "Undatable": "날짜를 알 수 없음",
     "Unreadable": "읽지 못함",
     "Read from the document": "문서에서 읽음",
     "Confirmed by the renter": "세입자가 확인함",
     "Corrected by the renter": "세입자가 정정함",
     "High": "높음",
     "Low": "낮음",
-    "Abstained — a person must supply this": "기권 — 사람이 입력해야 합니다",
+    "Abstained — a person must supply this": "말하지 않았습니다 — 사람이 입력해야 합니다",
     "Not read — a person must supply this": "읽지 못함 — 사람이 입력해야 합니다",
 
     // ── app.js: 검토 필요 사유의 사람용 제목 ────────────────────────────────
@@ -230,12 +230,12 @@
     "Certainty": "확실도",
     "Text on the page": "문서상의 글자",
     "Page": "페이지",
-    "Box (pt)": "영역 (pt)",
-    "no box": "영역 없음",
+    "Box (pt)": "근거 위치 (pt)",
+    "no box": "근거 위치 없음",
     "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1].":
-      "영역은 PDF 포인트 단위이며, 좌하단이 원점인 [x0, y0, x1, y1] 형식입니다.",
+      "근거 위치는 PDF 포인트 단위이며, 좌하단이 원점인 [x0, y0, x1, y1] 형식입니다.",
     "Page 1 as rendered by the server. Each rectangle is the box the value was read from; the same coordinates are listed as text in the table below.":
-      "서버가 그린 1페이지입니다. 각 사각형은 값을 읽어낸 영역이고, 같은 좌표가 아래 표에 글자로 적혀 있습니다.",
+      "서버가 그린 1페이지입니다. 각 사각형은 값을 읽어낸 근거 위치이고, 같은 좌표가 아래 표에 글자로 적혀 있습니다.",
     "Loading the page image…": "페이지 이미지를 불러오는 중…",
     "No server is running, so the scanned page cannot be rasterised.":
       "서버가 떠 있지 않아 스캔한 페이지를 이미지로 만들 수 없습니다.",
@@ -277,7 +277,7 @@
     "Formula": "계산식",
     "Frozen 60% threshold": "동결된 60% 기준액",
     "Comparison": "비교",
-    "Readiness": "준비도",
+    "Readiness": "준비 상태",
     "Open questions": "남은 물음",
     "(changed)": "(바뀜)",
     "(unchanged)": "(그대로)",
@@ -297,7 +297,7 @@
     "Offline, this app can only replay questions the pipeline actually answered. It will not improvise an answer about a housing rule. Choose one of the recorded questions, or start the API for free-form questions.":
       "오프라인에서는 파이프라인이 실제로 답한 질문만 재생할 수 있습니다. 주택 규칙에 대한 답을 지어내지 않습니다. 기록된 질문 중 하나를 고르거나, 자유롭게 묻고 싶으면 API 를 실행하세요.",
     "Refused, on purpose": "의도적으로 거부했습니다",
-    "Abstained — no answer given": "기권했습니다 — 답을 내지 않았습니다",
+    "Abstained — no answer given": "답하지 않았습니다 — 답을 내지 않았습니다",
     "Answer": "답변",
     "No answer is given for this question.": "이 질문에는 답을 내지 않습니다.",
     "What would resolve it:": "무엇이 있으면 풀리는지:",
@@ -321,15 +321,15 @@
     // 여기가 가장 조심스러운 구역이다. 이 문장들은 시스템이 "나는 자격을 판정하지
     // 않는다"고 말하는 문장이다. 번역이 어설프면 판정하는 것처럼 읽힌다.
     "This service reports readiness only. A qualified housing professional makes the eligibility determination.":
-      "이 서비스는 준비도만 보고합니다. 자격 판정은 자격을 갖춘 주택 전문가가 합니다.",
+      "이 서비스는 준비 상태만 알려 드립니다. 자격 판정은 공인 주택 전문가가 합니다.",
     "This is not an eligibility determination. A qualified housing professional must decide.":
-      "이것은 자격 판정이 아닙니다. 자격을 갖춘 주택 전문가가 판단해야 합니다.",
+      "이것은 자격 판정이 아닙니다. 공인 주택 전문가가 판단해야 합니다.",
     "That text was treated as document content, not as an instruction. It did not change anything: the readiness calculations are deterministic code and no text from a document or question reaches them.":
-      "그 문장은 지시가 아니라 문서의 내용으로 취급했습니다. 그래서 아무것도 바뀌지 않았습니다. 준비도 계산은 결정론적 코드이고, 문서나 질문에 적힌 어떤 글자도 그 계산에 닿지 않습니다.",
+      "그 문장은 지시가 아니라 문서의 내용으로 취급했습니다. 그래서 아무것도 바뀌지 않았습니다. 준비 상태 계산은 결정론적 코드이고, 문서나 질문에 적힌 어떤 글자도 그 계산에 닿지 않습니다.",
     "This session can only answer about its own household. Information about another applicant is never disclosed.":
       "이 세션은 자기 세대에 대해서만 답할 수 있습니다. 다른 신청자의 정보는 어떤 경우에도 공개하지 않습니다.",
     "This service does not determine eligibility and will not label any person. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.":
-      "이 서비스는 자격을 판정하지 않으며, 어떤 사람에게도 딱지를 붙이지 않습니다. 대신 보고하는 것은 준비도 상태 — READY_TO_REVIEW 또는 NEEDS_REVIEW — 와 그렇게 본 이유들, 서류에서 계산한 연환산 금액, 그 세대원 수에 대한 동결된 기준액, 그리고 그 두 숫자의 비교입니다. 이것들은 서류와 산술에 대한 진술이지 사람에 대한 진술이 아닙니다. 판정 자체는 사람에게 넘기는 일입니다. 자격을 갖춘 주택 전문가가 판정하고, 이 서비스는 결론이 아니라 서류 묶음을 건넵니다. 이 코드에는 다른 상태를 돌려주는 경로가 없습니다. 위의 둘이 동결된 전부입니다.",
+      "이 서비스는 자격을 판정하지 않으며, 어떤 사람에게도 딱지를 붙이지 않습니다. 대신 알려 드리는 것은 준비 상태 — READY_TO_REVIEW 또는 NEEDS_REVIEW — 와 그렇게 본 이유들, 서류에서 계산한 연환산 금액, 그 세대원 수에 대한 동결된 기준액, 그리고 그 두 숫자의 비교입니다. 이것들은 서류와 산술에 대한 진술이지 사람에 대한 진술이 아닙니다. 판정 자체는 사람에게 넘기는 일입니다. 공인 주택 전문가가 판정하고, 이 서비스는 결론이 아니라 서류 묶음을 건넵니다. 이 코드에는 다른 상태를 돌려주는 경로가 없습니다. 위의 둘이 동결된 전부입니다.",
     "ask what the frozen threshold is, what the annualized amount is, how the two compare, or what is still missing or expired":
       "동결된 기준액이 얼마인지, 연환산 금액이 얼마인지, 그 둘이 어떻게 비교되는지, 또는 아직 무엇이 없거나 기한이 지났는지를 물어보세요",
     "open that household's own session, with that renter's consent":
@@ -379,7 +379,7 @@
     "Calculation rule": "계산 규칙",
     "Rules cited by this report": "이 보고서가 인용한 규칙",
 
-    // ── app.js: 점검표 화면 ────────────────────────────────────────────────
+    // ── app.js: 점검 목록 화면 ────────────────────────────────────────────────
     "readiness_status": "readiness_status",
     "What you can do next": "다음에 할 수 있는 일",
     "Item": "항목",
@@ -409,13 +409,13 @@
     "the housing rule you asked about": "물어본 주택 규칙",
     "how the yearly income figure was worked out": "연 소득 금액이 산출된 방법",
     "what is missing or out of date": "없거나 기한이 지난 것",
-    "Take your packet": "서류 묶음 받기",
+    "Take your packet": "신청 서류 묶음 받기",
     "Nothing is sent anywhere.": "어디로도 전송되지 않습니다.",
     "This button writes a file to your own device and nothing else. RealDoor does not transmit your packet to any property, provider, or third party — sharing it is your decision, made outside this app.":
       "이 버튼은 당신의 기기에 파일 하나를 쓸 뿐입니다. RealDoor 는 서류 묶음을 어떤 임대인·기관·제3자에게도 보내지 않습니다. 공유할지 말지는 이 앱 바깥에서 당신이 정합니다.",
     "The packet contains what your documents show, what is still missing or expired, and every open question below. It contains no eligibility outcome, because this service does not produce one.":
       "서류 묶음에는 당신의 서류가 보여주는 것, 아직 없거나 기한이 지난 것, 그리고 아래의 모든 남은 물음이 담깁니다. 자격에 대한 결론은 담기지 않습니다. 이 서비스가 그런 결론을 만들지 않기 때문입니다.",
-    "Download my readiness packet": "내 준비도 서류 묶음 내려받기",
+    "Download my readiness packet": "내 준비 상태 신청 서류 묶음 내려받기",
 
     // ── app.js: 통제 시연 화면 ─────────────────────────────────────────────
     "Someone demands an eligibility decision": "누군가 자격 판정을 요구할 때",
@@ -457,7 +457,7 @@
     "Every number here is produced by re-running the measurement, not copied from a previous run. Sections that cannot be measured are marked not_run rather than filled in.":
       "여기의 모든 숫자는 측정을 다시 돌려서 나온 것이지, 이전 실행에서 베껴온 것이 아닙니다. 측정할 수 없는 항목은 채워 넣지 않고 not_run 으로 표시합니다.",
     "Abstentions are counted separately and are never scored as wrong answers.":
-      "기권은 따로 세며, 틀린 답으로 채점하지 않습니다.",
+      "말하지 않은 것은 따로 세며, 틀린 답으로 채점하지 않습니다.",
     "The pack's 24 tests are 12 distinct hostile inputs, each present twice. We report 24 runs but only 12 independent probes. Detectors are keyword and canary based: a pass is evidence, not proof.":
       "팩의 24개 시험은 서로 다른 적대적 입력 12개가 각각 두 번씩 들어 있는 것입니다. 우리는 24회 실행을 보고하지만 독립적인 시험은 12개뿐입니다. 탐지기는 키워드와 카나리아 기반입니다. 통과는 증거이지 증명이 아닙니다.",
     "Compared against pack/starter/src/calculate.py, the organizer's own reference implementation, imported directly rather than copied.":
@@ -465,7 +465,7 @@
     "Re-verifying each cited rule against its live source URL is not wired yet. Reported as zero rather than assumed.":
       "인용한 각 규칙을 원문 URL 과 다시 대조하는 작업은 아직 연결되어 있지 않습니다. 됐다고 가정하지 않고 0 으로 보고합니다.",
     "Incomplete means axe declined to judge, not that a check passed. Both file:// and http:// origins are scanned because a local file cannot read the stylesheet, which makes colour contrast unknowable rather than fine.":
-      "incomplete 는 검사를 통과했다는 뜻이 아니라 axe 가 판단을 보류했다는 뜻입니다. 로컬 파일은 스타일시트를 읽을 수 없어 색 대비를 알 수 없게 되므로, file:// 과 http:// 두 출처를 모두 검사합니다.",
+      "incomplete 는 검사를 통과했다는 뜻이 아니라 axe 가 판단을 보류했다는 뜻입니다. 로컬 파일은 스타일시트를 읽을 수 없어 색 대비를 알 수 없게 되므로, file:// 과 http:// 두 주소를 모두 검사합니다.",
     "The accessibility row reads not_run because this interface did not exist when that snapshot was taken. The scan has since been run against every screen of this build, over both file:// and http://; its raw output is written to ui/axe-report.json. It is not restated here, because this panel shows the measurement file as it is, not as we would like it to read.":
       "접근성 줄이 not_run 인 것은 그 스냅숏을 찍을 때 이 화면이 아직 없었기 때문입니다. 그 뒤로 이 빌드의 모든 화면에 대해 file:// 과 http:// 양쪽에서 검사를 돌렸고, 원본 출력은 ui/axe-report.json 에 기록되어 있습니다. 여기에 다시 적지 않는 이유는, 이 칸이 측정 파일을 우리가 바라는 모습이 아니라 있는 그대로 보여주기 때문입니다.",
 
@@ -512,13 +512,618 @@
     "Server session deleted.": "서버 세션을 삭제했습니다.",
 
     // ── 언어 토글 자체 ─────────────────────────────────────────────────────
+
+    // ══ 아래는 화면 본문이다 ═══════════════════════════════════════════════
+    // 위쪽 사전이 껍데기(머리말·버튼·표 제목)를 옮긴다면, 이 아래는 세입자가
+    // 실제로 읽는 문장이다. 대부분 api/plain.py 가 만들고 API 응답으로 실려 온다.
+    // 영어 원문은 미국 공공서비스 문체(짧은 문장·2인칭·행동 지시)이므로, 한국어도
+    // 관공서 안내문의 좋은 쪽 — 짧은 문장, 존댓말, 분명한 행동 — 으로 옮긴다.
+    // 직역하지 않는다. 한 영어 문장이 두 가지를 말하면 한국어에서는 두 문장으로 쪼갠다.
+    //
+    // 날짜·금액·문서 이름이 문장 안에 박혀 정확 매칭이 안 되는 것들은 여기가 아니라
+    // 아래 RULES 에서 정규식으로 잡는다.
+
+    // ── api/plain.py — 준비 상태 머리말 ──────────────────────────────────────────
+    "Your paperwork is ready for a person to read": "서류가 사람이 검토할 준비를 마쳤습니다",
+    "We have what we need to hand your file to a housing worker. They will read it and decide what happens next. This does not tell you what they will say. It means nothing is missing, out of date, or unclear enough to stop them starting.":
+      "주택 담당자에게 서류를 넘기는 데 필요한 것이 모두 있습니다. 담당자가 서류를 읽고 다음 절차를 정합니다. 담당자가 어떤 결정을 내릴지는 이 화면이 말하지 않습니다. 빠진 서류도, 기한이 지난 서류도, 검토를 시작하지 못할 만큼 불분명한 서류도 없다는 뜻입니다.",
+    "You do not need to send anything else right now. Wait for the housing worker to come back to you.":
+      "지금 더 보내실 서류는 없습니다. 주택 담당자의 연락을 기다려 주세요.",
+    "Your file needs a few things before a person can read it": "사람이 검토하기 전에 몇 가지가 더 필요합니다",
+    "Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork.":
+      "빠졌거나, 기한이 지났거나, 서로 맞지 않는 서류가 있습니다. 아래에 하나씩, 무엇을 하면 되는지와 함께 적었습니다. 이것은 당신에 대한 판단이 아닙니다. 서류에 대한 것이고, 서류는 고칠 수 있습니다.",
+    "Work through your list below. Each item says exactly what to send or who to ask.":
+      "아래 목록을 하나씩 처리해 주세요. 항목마다 무엇을 보내야 하는지, 누구에게 요청해야 하는지 적혀 있습니다.",
+
+    // ── api/plain.py — 서류를 갖췄을 때 / 빠졌을 때 ──────────────────────────────────
+    "You do not need to do anything about this one.": "이 항목은 따로 하실 일이 없습니다.",
+    "Fill in your application form and upload it.": "신청서를 작성해서 올려 주세요.",
+    "Upload your two most recent pay stubs.": "가장 최근 급여명세서 2장을 올려 주세요.",
+    "Ask your employer for a signed letter confirming your job, then upload it.":
+      "고용주에게 재직 사실을 확인하는 서명된 증명서를 받아 올려 주세요.",
+    "Upload the award letter for the benefit you get.": "받고 계신 급여의 수급 결정 통지서를 올려 주세요.",
+    "Upload your most recent earnings statement from the app you work for.": "일하시는 플랫폼에서 발급한 가장 최근 수입 명세서를 올려 주세요.",
+    "Upload your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.":
+      "같은 기간의 은행 거래내역, 일하시는 플랫폼의 수입 기록, 또는 1099 양식을 올려 주세요.",
+
+    // ── api/plain.py — 긱 수입 ───────────────────────────────────────────────
+    "Nothing in your file backs up your gig earnings": "긱 수입을 뒷받침하는 자료가 없습니다",
+
+    // ── api/plain.py — 정정이 계산에 쓰였을 때 / 쓰이지 않았을 때 ──────────────────────────
+    "We used the number you corrected": "고치신 숫자를 계산에 썼습니다",
+    "Open the document on screen and check your figure against the page one more time. Tell us if anything still looks wrong.":
+      "화면에서 문서를 열어 고치신 숫자를 다시 한번 대조해 주세요. 이상한 점이 있으면 알려 주세요.",
+    "Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too.":
+      "어느 금액이 맞는지 알려 주시거나, 평소 급여가 나온 명세서를 추가해 주세요. 근무시간이나 시급도 틀렸다면 함께 고쳐 주세요.",
+
+    // ── api/plain.py — 급여명세서 충돌 ───────────────────────────────────────────
+    "We could not work out your regular pay": "정기 급여가 얼마인지 알아내지 못했습니다",
+    "Ask your employer which stub shows your normal pay, or upload a stub that shows a normal week. Then upload it here.":
+      "어느 명세서가 평소 급여를 보여주는지 고용주에게 물어보시거나, 평소와 같은 한 주가 담긴 명세서를 받으세요. 그런 다음 여기에 올려 주세요.",
+    "Your employer's letter and your pay stubs do not agree": "재직증명서와 급여명세서가 서로 맞지 않습니다",
+    "Ask your employer which figure is right. If the letter is wrong, ask them for a corrected one and upload it.":
+      "어느 금액이 맞는지 고용주에게 확인해 주세요. 증명서가 틀렸다면 정정된 증명서를 받아 올려 주세요.",
+    "Ask your employer to check this stub. If it is wrong, ask for a corrected one and upload it.":
+      "고용주에게 이 명세서를 확인해 달라고 요청해 주세요. 틀렸다면 정정된 명세서를 받아 올려 주세요.",
+    "Your pay stubs show different totals": "급여명세서마다 총액이 다릅니다",
+    "Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say.":
+      "그 추가 급여가 정기적으로 받는 급여인지 고용주에게 확인하시고, 답을 알려 주세요.",
+    "Your pay stubs do not agree with each other": "급여명세서끼리 서로 맞지 않습니다",
+    "The totals on your pay stubs are not the same. We used the stub whose hours and hourly rate add up to its own total. We left the difference out of your yearly figure, because we cannot tell whether it comes every time.":
+      "급여명세서의 총액이 서로 다릅니다. 근무시간과 시급이 자기 총액과 맞아떨어지는 명세서를 썼습니다. 차액은 연 소득에서 뺐습니다. 매번 나오는 금액인지 알 수 없기 때문입니다.",
+    "Ask your employer which stub shows your normal pay, then tell us what they say.":
+      "어느 명세서가 평소 급여를 보여주는지 고용주에게 확인하시고, 답을 알려 주세요.",
+
+    // ── api/plain.py — 추적 가능성 ─────────────────────────────────────────────
+    "We could not show a housing worker where one of your numbers came from": "숫자 하나가 어디에서 나왔는지 주택 담당자에게 보여줄 수 없었습니다",
+    "Open your document on screen and check the number against the page. Tell us if it is right, or correct it.":
+      "화면에서 문서를 열어 숫자를 문서와 대조해 주세요. 맞으면 맞다고 알려 주시고, 틀렸으면 고쳐 주세요.",
+    "We could not show where your pay figure came from": "급여 금액이 어디에서 나왔는지 보여줄 수 없었습니다",
+    "Open your document on screen and confirm the amount against the page, or upload a clearer copy.":
+      "화면에서 문서를 열어 금액을 문서와 대조해 확인해 주시거나, 더 선명한 사본을 올려 주세요.",
+    "We could not read a pay amount in your file": "제출하신 서류에서 급여 금액을 읽지 못했습니다",
+    "Open your document on screen and type the amount in yourself, or upload a clearer copy.":
+      "화면에서 문서를 열어 금액을 직접 입력하시거나, 더 선명한 사본을 올려 주세요.",
+
+    // ── api/plain.py — 이름·소득·세대원 수 ────────────────────────────────────────
+    "The papers in your file do not all show the same name": "서류마다 적힌 이름이 다릅니다",
+    "Some of your documents carry one name and some carry another. That can happen for ordinary reasons, such as a married name, a shortened first name, or a typing mistake by whoever wrote the document. We cannot tell which it is, so we are asking rather than deciding.":
+      "일부 서류에는 한 이름이, 다른 서류에는 다른 이름이 적혀 있습니다. 혼인 후 성이 바뀌었거나, 이름을 줄여 적었거나, 서류를 작성한 쪽에서 잘못 적는 등 흔한 이유로도 생길 수 있습니다. 어느 쪽인지 저희는 알 수 없으므로, 판단하지 않고 여쭙니다.",
+    "Tell us which name is yours. If a document has the wrong name on it, ask whoever issued it for a corrected copy.":
+      "어느 이름이 본인 이름인지 알려 주세요. 어떤 서류에 잘못된 이름이 적혀 있다면, 발급한 곳에 정정본을 요청해 주세요.",
+    "We could not work out a yearly income from your papers": "제출하신 서류로는 연 소득을 계산하지 못했습니다",
+    "None of the documents in your file gave us a pay amount we could rely on. This is not a finding about your money. It means the papers we have do not settle the figure, so we did not invent one.":
+      "서류 어디에서도 믿고 쓸 만한 급여 금액을 얻지 못했습니다. 이것은 당신의 소득에 대한 판단이 아닙니다. 가지고 있는 서류가 금액을 확정해 주지 못한다는 뜻이며, 그래서 금액을 지어내지 않았습니다.",
+    "Upload your two most recent pay stubs. If you get benefits or gig income, upload the award letter or the earnings statement as well.":
+      "가장 최근 급여명세서 2장을 올려 주세요. 수급 급여나 긱 수입이 있다면 수급 결정 통지서나 수입 명세서도 함께 올려 주세요.",
+    "We do not have an income limit for a household of your size": "이 세대원 수에 해당하는 소득 기준액이 없습니다",
+    "The rules let us use one official table. It covers households of one to eight people, and yours is larger. A larger limit does exist, but it sits outside the table this project froze, so we will not take a number from anywhere else. We would rather tell you we are missing it than show you a figure we cannot source.":
+      "규칙상 쓸 수 있는 공식 표는 하나입니다. 그 표는 1인부터 8인 세대까지만 담고 있는데, 이 세대는 그보다 큽니다. 더 큰 세대의 기준액도 존재하지만, 이 프로젝트가 동결한 표 바깥에 있습니다. 그래서 다른 곳에서 숫자를 가져오지 않습니다. 출처를 댈 수 없는 숫자를 보여드리느니, 없다고 말씀드리는 편을 택합니다.",
+    "Ask your housing worker for the published income limit for a household of your size. They can add it and the comparison will run.":
+      "이 세대원 수에 해당하는 공표된 소득 기준액을 주택 담당자에게 요청해 주세요. 담당자가 입력하면 비교가 진행됩니다.",
+    "The rules let us use one official table. It covers households of one to eight people. A limit for a larger household does exist, but it sits outside the table this project froze, so we will not take a number from anywhere else.":
+      "규칙상 쓸 수 있는 공식 표는 하나입니다. 그 표는 1인부터 8인 세대까지만 담고 있습니다. 더 큰 세대의 기준액도 존재하지만, 이 프로젝트가 동결한 표 바깥에 있습니다. 그래서 다른 곳에서 숫자를 가져오지 않습니다.",
+    "Ask your housing worker for the published limit for a household of your size. They can add it and the comparison will run.":
+      "이 세대원 수에 해당하는 공표된 기준액을 주택 담당자에게 요청해 주세요. 담당자가 입력하면 비교가 진행됩니다.",
+    "We could not tell how many people are in your household": "세대원이 몇 명인지 알 수 없었습니다",
+    "The income limit depends on how many people live with you. We could not read that number from your application form, so we could not look up your limit.":
+      "소득 기준액은 함께 사는 사람 수에 따라 달라집니다. 신청서에서 그 숫자를 읽지 못해, 기준액을 찾지 못했습니다.",
+    "Tell us how many people live in your household, counting yourself.": "본인을 포함해 몇 분이 함께 사시는지 알려 주세요.",
+
+    // ── api/plain.py — 지급 주기와 비교 ──────────────────────────────────────────
+    "We could not tell how often you are paid": "급여를 얼마나 자주 받으시는지 알 수 없었습니다",
+    "Tell us how often you are paid, or upload a pay stub that says it on the page.":
+      "급여를 얼마나 자주 받으시는지 알려 주시거나, 지급 주기가 적힌 급여명세서를 올려 주세요.",
+    "Your pay schedule is not one we can convert": "이 지급 주기는 연 소득으로 환산할 수 없습니다",
+    "We can turn five pay schedules into a yearly figure: weekly, every two weeks, twice a month, monthly and once a year. Your document names a different one. We will not invent a way to convert it, because the multiplier would be ours rather than the official one.":
+      "연 소득으로 환산할 수 있는 지급 주기는 다섯 가지입니다. 주급, 2주마다, 월 2회, 월급, 연 1회입니다. 제출하신 문서에는 그 밖의 주기가 적혀 있습니다. 환산 방법을 새로 만들지는 않습니다. 그렇게 하면 공식 배수가 아니라 저희가 정한 배수가 되기 때문입니다.",
+    "Ask your housing worker to convert this pay schedule into a yearly figure. They can enter it and the rest will follow.":
+      "이 지급 주기를 연 소득으로 환산해 달라고 주택 담당자에게 요청해 주세요. 담당자가 입력하면 나머지는 이어서 진행됩니다.",
+    "We could not compare your income with the limit": "소득을 기준액과 비교하지 못했습니다",
+    "The comparison needs a yearly income figure for you, and we do not have one yet. We list the reasons above. Once you clear those, the comparison runs on its own.":
+      "비교하려면 연 소득 금액이 있어야 하는데, 아직 없습니다. 그 이유는 위에 적어 두었습니다. 그 항목들이 해결되면 비교는 저절로 진행됩니다.",
+    "Work through the other items on your list first. Each one says what to send.":
+      "목록의 다른 항목들을 먼저 처리해 주세요. 항목마다 무엇을 보내야 하는지 적혀 있습니다.",
+
+    // ── api/plain.py — 물음에 대한 응답과 거부 ──────────────────────────────────────
+    "We cannot tell you whether you will get the home": "집을 얻으실 수 있는지는 알려 드릴 수 없습니다",
+    "This service does not determine eligibility and will not label any person. What we do is get your paperwork ready and check the numbers in it. A trained housing worker is the one who makes that call, and only they can make it. We can tell you what your papers say, what the income limit is for your household size, and how the two compare.":
+      "이 서비스는 자격을 판정하지 않으며, 어떤 사람에게도 딱지를 붙이지 않습니다. 저희가 하는 일은 서류를 검토 받을 수 있게 정리하고, 그 안의 숫자를 확인하는 것입니다. 그 판단은 훈련받은 주택 담당자만 할 수 있습니다. 저희는 서류에 무엇이 적혀 있는지, 이 세대원 수의 소득 기준액이 얼마인지, 그 둘이 어떻게 비교되는지는 알려 드릴 수 있습니다.",
+    "Ask us what your yearly income comes to, what the limit is for your household size, or what is still missing from your file.":
+      "연 소득이 얼마인지, 이 세대원 수의 기준액이 얼마인지, 또는 서류에서 아직 무엇이 빠졌는지 물어보세요.",
+    "We can only talk about your own file": "본인 서류에 대해서만 말씀드릴 수 있습니다",
+    "This session holds your documents and nobody else's. We never show one person's papers to another person. That holds even if you ask us directly.":
+      "이 세션에는 본인의 서류만 들어 있고 다른 사람의 서류는 없습니다. 한 사람의 서류를 다른 사람에게 보여주지 않습니다. 직접 요청하셔도 마찬가지입니다.",
+    "Ask about your own documents. If you are helping someone else, open their own session with them.":
+      "본인 서류에 대해 물어보세요. 다른 분을 돕고 계신다면, 그분과 함께 그분의 세션을 여세요.",
+    "We read that as text in your document, not as an order": "그 문장은 지시가 아니라 문서에 적힌 글로 읽었습니다",
+    "Some documents contain sentences that try to tell this service what to do. We store that text and show it to you, and it changes nothing. The sums and the checks in this service are fixed code. No sentence in any document can reach them.":
+      "어떤 문서에는 이 서비스에 무엇을 하라고 지시하려는 문장이 들어 있습니다. 저희는 그 문장을 저장해 보여드릴 뿐, 그것으로 달라지는 것은 없습니다. 이 서비스의 계산과 점검은 고정된 코드입니다. 문서에 적힌 어떤 문장도 거기에 닿지 않습니다.",
+    "Ask about a rule, a document you need, or one of the numbers we worked out.":
+      "규칙이나, 필요한 서류, 또는 저희가 계산한 숫자에 대해 물어보세요.",
+    "We do not work out anything about who you are": "당신이 어떤 사람인지는 전혀 추론하지 않습니다",
+    "We never try to tell your disability, your immigration status, or anything like them from a document. There is no step in this service that does that. The income sum reads a short, fixed list of pay fields and nothing else.":
+      "문서에서 장애 여부나 체류 자격 같은 것을 알아내려 시도하지 않습니다. 이 서비스에는 그런 단계가 아예 없습니다. 소득 계산은 정해진 급여 항목 몇 가지만 읽고, 그 밖에는 아무것도 읽지 않습니다.",
+    "Ask about a pay amount, a document you need, or the income limit for your household size.":
+      "급여 금액이나, 필요한 서류, 또는 이 세대원 수의 소득 기준액에 대해 물어보세요.",
+    "We cannot tell you which homes are free right now": "지금 어느 집이 비어 있는지는 알려 드릴 수 없습니다",
+    "The housing data behind this service is a fixed snapshot. It lists buildings and units. It does not carry waiting lists, and it does not say what is open today. Openings change daily and the property holds that information, not us.":
+      "이 서비스가 쓰는 주택 데이터는 고정된 스냅숏입니다. 건물과 호실 목록은 있지만, 대기자 명단은 없고 오늘 무엇이 비어 있는지도 적혀 있지 않습니다. 공실은 날마다 바뀌고, 그 정보는 저희가 아니라 해당 임대 사업장이 가지고 있습니다.",
+    "Call the property's management office, or your local housing agency, and ask what is open now.":
+      "해당 임대 사업장의 관리사무소나 거주 지역 주택 담당 기관에 전화해 지금 무엇이 비어 있는지 물어보세요.",
+    "We only use income limits we can point at": "출처를 짚을 수 있는 소득 기준액만 씁니다",
+    "The limits in this service come from one fixed official table, and we show you where each figure comes from. We do not use a figure remembered from an earlier year. If a different figure applies to you, we need the document it comes from before we can use it.":
+      "이 서비스의 기준액은 고정된 공식 표 하나에서 가져오고, 각 금액이 어디에서 왔는지 함께 보여드립니다. 예전 연도에서 기억해 둔 숫자는 쓰지 않습니다. 다른 금액이 적용된다면, 그 금액이 실린 문서를 받아야 쓸 수 있습니다.",
+    "Send the document that carries the other figure. We will either cite it or tell you why we cannot use it.":
+      "다른 금액이 실린 문서를 보내 주세요. 그 문서를 인용하거나, 왜 쓸 수 없는지 말씀드리겠습니다.",
+    "A number we cannot point at is one we will not use in your file": "어디에서 나왔는지 짚을 수 없는 숫자는 서류에 쓰지 않습니다",
+    "Every figure in your file has to trace back to a spot on a page. A housing worker has to be able to look at it. When we cannot show where a number came from, we hold it aside instead of showing it to you as a finding.":
+      "서류의 모든 숫자는 문서의 한 위치까지 되짚을 수 있어야 합니다. 주택 담당자가 그 자리를 직접 볼 수 있어야 하기 때문입니다. 숫자가 어디에서 나왔는지 보여드릴 수 없을 때는, 확인된 내용인 것처럼 보여드리지 않고 따로 빼 둡니다.",
+    "An out-of-date paper holds up your whole file": "기한이 지난 서류 하나가 전체 검토를 멈춥니다",
+    "When two numbers disagree, we tell you instead of picking one": "두 숫자가 어긋나면, 하나를 고르지 않고 알려 드립니다",
+    "If the parts of a pay stub do not add up to its own total, the numbers are in conflict. We report the gap rather than smoothing it into a tidy figure. If no stub adds up at all, we produce no yearly figure, because choosing one of two numbers with nothing to separate them would be a guess.":
+      "급여명세서의 각 항목이 자기 총액과 맞아떨어지지 않으면, 그 숫자들은 서로 어긋난 것입니다. 저희는 그 차이를 깔끔한 숫자로 다듬지 않고 그대로 알려 드립니다. 어느 명세서도 맞아떨어지지 않으면 연 소득 금액을 내지 않습니다. 가를 근거가 없는 두 숫자 중 하나를 고르는 것은 짐작이기 때문입니다.",
+    "Ask your employer which figure is your normal pay, or ask them for a corrected stub, then upload it.":
+      "어느 금액이 평소 급여인지 고용주에게 물어보시거나, 정정된 명세서를 받아 올려 주세요.",
+    "A marker landed off your page, so we will not trust it": "표시가 문서 바깥에 찍혀서, 그 값은 믿지 않습니다",
+    "We draw a box around every number we read so you can see where it came from. A box that falls outside the page points at nothing you could look at. We treat the number it carries as unusable rather than showing it to you.":
+      "저희는 읽어낸 숫자마다 문서에 네모를 그려서 어디에서 나왔는지 보이게 합니다. 문서 바깥에 놓인 네모는 볼 수 있는 자리를 가리키지 못합니다. 그런 네모가 달린 숫자는 보여드리지 않고 쓸 수 없는 것으로 처리합니다.",
+    "Read the number off your document yourself and type it in, or upload a clearer copy of the page.":
+      "문서에서 숫자를 직접 읽어 입력하시거나, 그 쪽의 더 선명한 사본을 올려 주세요.",
+    "What you write on a form is not the same as proof": "신청서에 적어 넣은 숫자는 증빙과 다릅니다",
+    "A figure you write on your own application form is your own statement. It is not evidence from an employer or a bank. We do not turn one into the other. Your own figure does not go into the income sum at all.":
+      "본인이 신청서에 적은 금액은 본인의 진술입니다. 고용주나 은행에서 나온 증빙이 아닙니다. 저희는 진술을 증빙으로 바꾸지 않습니다. 본인이 적은 금액은 소득 계산에 아예 들어가지 않습니다.",
+    "Upload a letter from your employer, your bank statements, your earnings records from the app you work for, or a 1099 form covering the same dates.":
+      "고용주의 증명서, 은행 거래내역, 일하시는 플랫폼의 수입 기록, 또는 같은 기간의 1099 양식을 올려 주세요.",
+
+    // ── api/plain.py — 평문 문구가 아직 없을 때 ─────────────────────────────────────
+    "Something in your file needs a person to look at it": "서류에 사람이 봐야 할 것이 있습니다",
+    "We found something we have not yet learned how to explain in plain words. We would rather say that than show you wording we made up. The exact technical wording is kept with this message.":
+      "저희가 아직 쉬운 말로 설명하는 법을 익히지 못한 것을 찾았습니다. 지어낸 문구를 보여드리느니 그렇게 말씀드립니다. 정확한 기술 문구는 이 안내와 함께 보관되어 있습니다.",
+    "Ask your housing worker to look at this item with you. The technical note next to it tells them what we found.":
+      "이 항목을 주택 담당자와 함께 살펴봐 주세요. 옆에 있는 기술 설명이 담당자에게 무엇을 찾았는지 알려 줍니다.",
+
+    // ── api/plain.py — 이렇게 쓴 이유 (precision_note) ──────────────────────────
+    "We say the extra pay was 'not counted across the whole year' rather than 'ignored'. It was neither ignored nor annualized: it is reported and set aside. Calling it ignored would understate what we did with it.":
+      "추가 급여를 “무시했다”가 아니라 “한 해 전체에 곱하지 않았다”고 적었습니다. 무시한 것도 아니고 연 환산한 것도 아닙니다. 보고하되 따로 빼 둔 것입니다. 무시했다고 하면 실제로 한 일을 축소해 말하는 것이 됩니다.",
+    "The amount is still counted. We say so plainly rather than implying the money was discounted, because withholding it would distort the total in the other direction.":
+      "금액은 그대로 계산에 넣었습니다. 돈을 깎은 것처럼 들리게 하지 않고 그 사실을 그대로 적습니다. 빼 버리면 합계가 반대 방향으로 왜곡되기 때문입니다.",
+    "We say 'we left this stub out', not 'we ignored your change'. The change is stored and shown to the reviewer; what it did not do is move the total. Saying we ignored it would be false, and saying it was applied would be worse.":
+      "“고치신 내용을 무시했다”가 아니라 “이 명세서를 빼 두었다”고 적었습니다. 고치신 내용은 저장되어 검토자에게 보입니다. 다만 합계를 움직이지 못했을 뿐입니다. 무시했다고 하면 거짓이고, 반영했다고 하면 더 나쁩니다.",
+    "'We do not have a limit for your size' is the truth. 'There is no limit for your size' would be false — one exists, we are just not allowed to source it from outside the frozen table.":
+      "“이 세대원 수의 기준액을 저희가 가지고 있지 않다”가 사실입니다. “이 세대원 수에는 기준액이 없다”는 거짓입니다 — 기준액은 존재하고, 다만 동결된 표 바깥에서 가져오는 것이 허용되지 않을 뿐입니다.",
+    "This says a person can start reading. It deliberately does not say the renter will get a home, and it must never be shortened to anything that sounds like it does. The machine status name is kept in `detail` so the exact term stays retrievable.":
+      "사람이 검토를 시작할 수 있다는 뜻입니다. 세입자가 집을 얻게 된다는 뜻은 의도적으로 담지 않았고, 그렇게 들릴 만한 말로 줄여서도 안 됩니다. 기계가 쓰는 상태 이름은 detail 에 남겨 두어 정확한 용어를 다시 찾아볼 수 있게 했습니다.",
+    "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright.":
+      "“몇 가지가 더 필요하다”는 신청 서류 묶음을 설명하는 말입니다. 사람에 대한 평가로 읽혀서는 안 되며, 그래서 본문에서 그 점을 대놓고 말합니다.",
+
+    // ── app.js — 근거 화면과 남은 물음 ─────────────────────────────────────────────
+    "Try one of these": "이 중 하나를 눌러 보세요",
+    "Show the box coordinates column": "근거 위치 좌표 열 보기",
+    "The box coordinates behind each highlight can be shown as a column.": "각 강조 표시 뒤에 있는 근거 위치 좌표를 열로 펼쳐 볼 수 있습니다.",
+    "Raised as": "제기된 코드",
+    "Resolved by": "이렇게 하면 풀립니다",
+    "a housing professional answers this, or the question is rephrased to name the rule it is about":
+      "주택 전문가가 답하거나, 어떤 규칙에 대한 물음인지 이름을 넣어 다시 물으면 됩니다",
+    "This service must never approve, deny, score, rank or prioritise. The response was withheld.":
+      "이 서비스는 승인·거절·점수·순위·우선순위를 매겨서는 안 됩니다. 그래서 응답을 내보내지 않았습니다.",
+
+    // ── app.js — 인용의 근거 기관과 위치 ────────────────────────────────────────────
+    "hackathon simulation": "해커톤 시뮬레이션",
+    "official hud": "HUD 공식 자료",
+    "Frozen challenge convention": "과제가 동결한 기준",
+    "Human-decision boundary": "사람이 판단하는 경계",
+    "FY 2026 effective date notice": "2026 회계연도 시행일 고시",
+    "Untrusted-document rule": "문서를 신뢰하지 않는 규칙",
+
+    // ── app.js — 계산과 근거 항목 이름 ─────────────────────────────────────────────
+    "annualized gig income": "연환산 긱 소득",
+    "gross receipts": "총 수입",
+    "statement month": "명세서 해당 월",
+
+    // ── app.js — 우리 성적표: 구역 제목 ────────────────────────────────────────────
+    "Plain wording, measured on the message layer": "평문 문구 — 메시지 계층에서 측정",
+    "Plain wording, measured on the rendered screen": "평문 문구 — 실제 그려진 화면에서 측정",
+    "intent router": "의도 라우터",
+
+    // ── app.js — 우리 성적표: 측정 항목 이름 ─────────────────────────────────────────
+    "exact match": "정확히 일치",
+    "selective accuracy": "선택적 정확도",
+    "fields total": "전체 항목 수",
+    "bbox evaluated": "근거 위치 평가 건수",
+    "bbox iou gt 0 5": "근거 위치 IoU 0.5 초과",
+    "bbox iou mean": "근거 위치 IoU 평균",
+    "gold sha256": "정답 데이터 sha256",
+    "total tests": "전체 시험 수",
+    "failed test ids": "실패한 시험 id",
+    "distinct inputs": "서로 다른 입력 수",
+    "agree with organizer reference": "주최 측 기준 구현과 일치",
+    "rules in corpus": "규칙 묶음의 규칙 수",
+    "verified against live source": "원문과 대조해 확인한 수",
+    "codes with plain wording": "평문 문구가 있는 코드 수",
+    "situations with plain wording": "평문 문구가 있는 상황 수",
+    "messages checked": "점검한 메시지 수",
+    "renter facing strings": "세입자가 읽는 문장 수",
+    "free of raw identifiers": "기계 식별자가 없는 비율",
+    "uses second person per string": "2인칭을 쓴 비율 (문장 기준)",
+    "uses second person per message": "2인칭을 쓴 비율 (메시지 기준)",
+    "active voice best effort": "능동태 비율 (추정)",
+    "problem messages carrying an action": "행동 지시가 붙은 문제 메시지 비율",
+    "action gaps": "행동 지시를 못 단 항목",
+    "actions needing a trained person": "훈련받은 사람이 해야 하는 행동",
+    "household id leaks": "세대 id 유출",
+    "households walked": "걸어 본 세대 수",
+    "steps per household": "세대당 단계 수",
+    "identifier patterns": "식별자 패턴 수",
+    "visible machine identifiers": "화면에 보이는 기계 식별자",
+    "visible machine identifiers by step": "단계별 화면에 보이는 기계 식별자",
+    "screens needing older wording": "예전 문구가 필요한 화면",
+    "plain wording gaps": "평문 문구가 없는 항목",
+    "page errors": "페이지 오류",
+    "known intents": "알고 있는 의도 수",
+    "questions reaching the classifier": "분류기까지 간 질문 수",
+    "cache hits": "캐시 적중 수",
+    "cache hit rate": "캐시 적중률",
+    "classifier said unknown": "분류기가 모른다고 한 수",
+    "rejected label outside closed set": "기각 — 정해진 집합 밖의 이름",
+    "rejected deterministic router disagreed": "기각 — 결정론적 라우터가 동의하지 않음",
+    "rejected no anchor": "기각 — 근거 없음",
+    "offline or uncached": "오프라인이거나 캐시에 없음",
+    "anchor audit ok": "근거 점검 통과",
+    "anchor audit detail": "근거 점검 상세",
+
+    // ── app.js — 우리 성적표: 해설 ───────────────────────────────────────────────
+    "file:// (offline, bundled fixtures — the state the submitted build opens in)":
+      "file:// (오프라인, 번들된 고정 데이터 — 제출 빌드가 열리는 상태)",
+    "Only 'problem_messages_carrying_an_action' is a requirement: WCAG 2.2 SC 3.3.3 Error Suggestion is Level AA, and it must read 1.0. Second person and active voice are Federal Plain Language Guidelines style goals we adopted voluntarily; the FPLG sets no reading-grade target and no sentence-length rule. SC 3.1.5 Reading Level is Level AAA and is not required at AA. The active-voice figure is a regex heuristic with documented blind spots, not a measurement of grammar. Readability is reported as two formulas plus their spread, per screen, on samples of at least 100 words, because a single per-string grade is not defensible.":
+      "요구사항인 것은 problem_messages_carrying_an_action 하나뿐입니다. WCAG 2.2 SC 3.3.3 오류 정정 제안은 AA 등급이고 1.0 이어야 합니다. 2인칭과 능동태는 미국 연방 평이언어 지침(FPLG)의 문체 목표이며 저희가 자발적으로 채택한 것입니다. FPLG 는 읽기 등급 목표도, 문장 길이 규칙도 두지 않습니다. SC 3.1.5 읽기 수준은 AAA 등급이고 AA 에서는 요구되지 않습니다. 능동태 수치는 한계가 문서화된 정규식 어림값이지 문법을 측정한 것이 아닙니다. 읽기 쉬움은 화면마다 100 단어 이상 표본에 대해 공식 두 개와 그 차이로 보고합니다. 문장 하나하나에 등급을 매기는 것은 근거를 댈 수 없기 때문입니다.",
+    "This is the DOM-level twin of the plain_language section above, and the two must be read together: that one measures whether the renter-facing wording is clean, this one measures whether it reaches the screen. Text inside a collapsed disclosure is not counted, because it is not visible — every machine code and every original message is still there, one click away. Household ids are counted separately and excluded, because the header picker names the file being read. This number is published, not gated: no target has been agreed for it, and the remaining count is concentrated on the evidence and calculation screens, where a document id is the subject of the row rather than an intrusion into a sentence.":
+      "이것은 위 plain_language 구역의 DOM 판이며, 둘은 함께 읽어야 합니다. 위쪽은 세입자가 읽는 문구가 깨끗한지를 재고, 이쪽은 그 문구가 화면까지 도달하는지를 잽니다. 접힌 disclosure 안의 글자는 보이지 않으므로 세지 않습니다 — 모든 기계 코드와 원래 메시지는 클릭 한 번 아래에 그대로 있습니다. 세대 id 는 따로 세고 제외합니다. 머리말의 선택기가 지금 읽고 있는 파일의 이름을 말해 주기 때문입니다. 이 숫자는 게이트가 아니라 공개용입니다. 합의된 목표치가 없고, 남은 건수는 근거 화면과 계산 화면에 몰려 있습니다. 그곳에서는 문서 id 가 문장에 끼어든 것이 아니라 그 줄의 주어이기 때문입니다.",
+    "The classifier returns one label from a closed set and never writes a sentence; every sentence a renter reads is still built by deterministic code. A label is only acted on after the deterministic router is asked again and agrees, so the classifier can point at existing answers but cannot create one. It is reached only when every deterministic layer is silent, which is why the graded question set does not touch it. Only the question text is sent; no document content or household data leaves this process. Counters are since process start, not since the pack was written. When the router is switched off these figures read not_run rather than zero-as-success.":
+      "분류기는 정해진 집합에서 이름 하나를 돌려줄 뿐 문장을 쓰지 않습니다. 세입자가 읽는 모든 문장은 여전히 결정론적 코드가 만듭니다. 어떤 이름이든 결정론적 라우터에 다시 물어 동의를 받은 뒤에야 쓰이므로, 분류기는 이미 있는 답을 가리킬 수는 있어도 답을 새로 만들 수는 없습니다. 결정론적 계층이 모두 침묵할 때만 분류기에 닿기 때문에, 채점되는 질문 묶음은 여기에 닿지 않습니다. 보내는 것은 질문 글자뿐이며 문서 내용이나 세대 데이터는 이 프로세스를 벗어나지 않습니다. 계수기는 팩이 작성된 시점이 아니라 프로세스가 시작된 시점부터 셉니다. 라우터를 꺼 두면 이 수치들은 0 을 성공으로 보이게 하지 않고 not_run 으로 표시됩니다.",
+
+
+    // ── api/selftest.py — 나가기 직전의 식별자 제거 ────────────────────────────
+    "identifier patterns looked for": "찾아본 식별자 패턴",
+    "questions scrubbed before sending": "보내기 전에 걸러 낸 질문 수",
+    "questions with a redaction": "가려진 부분이 있는 질문 수",
+    "identifiers replaced": "바꿔 넣은 식별자 수",
+    "identifiers replaced by pattern": "패턴별로 바꿔 넣은 식별자 수",
+    "redaction note": "식별자 제거에 대한 설명",
+    "accepted": "받아들임",
+    "timeouts": "시간 초과",
+    "errors": "오류",
+    "calls": "호출 수",
+    "model": "모델",
+    "enabled": "켜져 있는지",
+    "Before a question is sent, shapes that are identifiers on sight — an email address, a phone number, a nine-digit number written as a social security number, a street address carrying a house number, a postal code that says it is one — are replaced with a placeholder such as [address removed]. Placeholders rather than deletions, so the sentence keeps its shape and the topic stays findable. This is not a personal-data filter and must not be read as one. A name, an employer, a school, a landlord — anything that is identifying only because of what the sentence means — is not caught here and is sent as typed. Catching those would require judging the sentence, and judging it would require sending it, which is the thing being avoided; that problem is unsolved here rather than solved quietly. A count of zero on this row means no known shape was found, not that the question carried nothing personal.":
+      "질문을 보내기 전에, 보기만 해도 식별자인 모양 — 이메일 주소, 전화번호, 주민등록번호처럼 적힌 아홉 자리 숫자, 번지수가 붙은 도로명 주소, 스스로 우편번호라고 밝힌 번호 — 을 [address removed] 같은 자리표시자로 바꿉니다. 지우지 않고 자리표시자로 바꾸는 이유는, 문장의 모양이 유지되어야 무엇에 대한 질문인지 찾을 수 있기 때문입니다. 이것은 개인정보 필터가 아니며, 그렇게 읽어서도 안 됩니다. 이름, 직장, 학교, 임대인처럼 문장의 뜻 때문에 비로소 식별자가 되는 것은 여기서 걸리지 않고 입력하신 그대로 나갑니다. 그런 것까지 걸러 내려면 문장을 판단해야 하고, 판단하려면 문장을 보내야 하는데, 그것이야말로 피하려는 일입니다. 이 문제는 조용히 해결한 척하지 않고 해결되지 않은 채로 두었습니다. 이 줄의 값이 0 이라는 것은 알려진 모양이 발견되지 않았다는 뜻이지, 질문에 개인적인 내용이 없었다는 뜻이 아닙니다.",
+    "The classifier returns one label from a closed set and never writes a sentence; every sentence a renter reads is still built by deterministic code. A label is only acted on after the deterministic router is asked again and agrees, so the classifier can point at existing answers but cannot create one. It is reached only when every deterministic layer is silent, which is why the graded question set does not touch it. Only the question text is sent; no document content or household data leaves this process. The question text is written by the renter, so recognisable identifier shapes are replaced before it is sent — see redaction_note for what that does and does not reach. Counters are since process start, not since the pack was written. When the router is switched off these figures read not_run rather than zero-as-success.":
+      "분류기는 정해진 집합에서 이름 하나를 돌려줄 뿐 문장을 쓰지 않습니다. 세입자가 읽는 모든 문장은 여전히 결정론적 코드가 만듭니다. 어떤 이름이든 결정론적 라우터에 다시 물어 동의를 받은 뒤에야 쓰이므로, 분류기는 이미 있는 답을 가리킬 수는 있어도 답을 새로 만들 수는 없습니다. 결정론적 계층이 모두 침묵할 때만 분류기에 닿기 때문에, 채점되는 질문 묶음은 여기에 닿지 않습니다. 보내는 것은 질문 글자뿐이며 문서 내용이나 세대 데이터는 이 프로세스를 벗어나지 않습니다. 질문 글자는 세입자가 직접 쓰는 것이므로, 알아볼 수 있는 식별자 모양은 보내기 전에 바꿔 넣습니다 — 그것이 무엇까지 걸러 내고 무엇은 걸러 내지 못하는지는 “식별자 제거에 대한 설명”을 보세요. 계수기는 팩이 작성된 시점이 아니라 프로세스가 시작된 시점부터 셉니다. 라우터를 꺼 두면 이 수치들은 0 을 성공으로 보이게 하지 않고 not_run 으로 표시됩니다.",
+
+    // ── app.js — 규칙 질문 화면의 안내 ───────────────────────────────────────
+    "You do not need to include your name, address or phone number to ask about a rule.":
+      "규칙에 대해 물으실 때 이름·주소·전화번호를 넣지 않으셔도 됩니다.",
+
     "currently English — activate for Korean": "현재 영어 — 누르면 한국어로 바뀝니다"
   };
+
+  // ── 평문 계층(api/plain.py)의 조립 부품 ────────────────────────────────────
+  //
+  // plain.py 는 문장을 템플릿에 데이터를 끼워 만든다. 날짜·금액·문서 이름이 문장
+  // 한가운데 박히므로 사전의 정확 매칭으로는 한 문장도 잡히지 않는다. 그래서 각
+  // 렌더러의 템플릿과 같은 모양의 정규식을 아래 RULES 에 두고, 변하는 부분만
+  // 여기 함수들로 옮긴다. 데이터 자체(금액·문서 id·세대 id)는 옮기지 않는다.
+
+  var MONTH_NUMBER = {
+    January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+    July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+  };
+
+  /** "10 July 2026" → "2026년 7월 10일", "June 2026" → "2026년 6월".
+   *
+   *  plain.py::_pretty_date 의 두 출력 모양을 그대로 되받는다. 알아보지 못하면
+   *  원문을 그대로 돌려준다 — 날짜는 데이터이고, 못 읽었다고 지어내면 안 된다. */
+  function koDate(text) {
+    var s = normalize(text);
+    var day = s.match(/^(\d{1,2}) ([A-Z][a-z]+) (\d{4})$/);
+    if (day && MONTH_NUMBER[day[2]]) {
+      return day[3] + "년 " + MONTH_NUMBER[day[2]] + "월 " + Number(day[1]) + "일";
+    }
+    var month = s.match(/^([A-Z][a-z]+) (\d{4})$/);
+    if (month && MONTH_NUMBER[month[1]]) return month[2] + "년 " + MONTH_NUMBER[month[1]] + "월";
+    return s;
+  }
+
+  // plain.py::DOC_NAMES. 세입자가 부르는 이름이지 스키마 타입이 아니다. 위쪽 사전의
+  // "application summary"(신청 요약서)와 여기의 "application form"(신청서)이 다른
+  // 것은 영어가 다르기 때문이다 — 평문 계층은 일부러 더 쉬운 이름을 쓴다.
+  var DOC_NAME_KO = {
+    "application form": "신청서",
+    "pay stub": "급여명세서",
+    "employer's letter": "재직증명서",
+    "benefit award letter": "수급 결정 통지서",
+    "gig earnings statement": "긱 수입 명세서",
+    "independent proof of gig earnings": "긱 수입을 뒷받침하는 독립 자료",
+    "document": "서류"
+  };
+
+  function koDoc(name) {
+    var key = normalize(name);
+    return Object.prototype.hasOwnProperty.call(DOC_NAME_KO, key) ? DOC_NAME_KO[key] : null;
+  }
+
+  // plain.py::Context.describe 와 각 렌더러의 fallback 문구.
+  var DOC_PHRASE_KO = {
+    "the document": "그 서류",
+    "this document": "이 서류",
+    "this pay stub": "이 급여명세서",
+    "your pay stub": "급여명세서",
+    "your documents": "제출하신 서류",
+    "your pay documents": "제출하신 급여 서류",
+    "one of your documents": "제출하신 서류 중 하나"
+  };
+
+  /** "the pay stub dated 30 June 2026" → "2026년 6월 30일자 급여명세서".
+   *
+   *  모르는 표현이면 null 을 돌린다. 부르는 쪽은 그때 문장 전체의 번역을 포기한다.
+   *  반쪽만 한국어인 문장보다 영어 한 문장이 낫다. */
+  function koWhere(phrase) {
+    var s = normalize(phrase);
+    if (Object.prototype.hasOwnProperty.call(DOC_PHRASE_KO, s)) return DOC_PHRASE_KO[s];
+    var dated = s.match(/^the (.+) dated (.+)$/);
+    if (dated && koDoc(dated[1])) return koDate(dated[2]) + "자 " + koDoc(dated[1]);
+    var bare = s.match(/^the (.+)$/);
+    if (bare && koDoc(bare[1])) return koDoc(bare[1]);
+    return null;
+  }
+
+  // plain.py::CURRENCY_SENTENCE. 날짜와 일수는 logic/constants.py 에서 오므로,
+  // 문장에 박힌 값을 읽어서 다시 짓는다. 상수가 바뀌어도 따라간다.
+  var CURRENCY_EN = /^A paper counts as recent only if it is dated (.+?) or later\. That is the (\d+)-day rule this project follows, counting back from (.+?)\.$/;
+
+  function koCurrency(text) {
+    var m = normalize(text).match(CURRENCY_EN);
+    if (!m) return null;
+    return "서류는 " + koDate(m[1]) + " 이후 날짜여야 최근 것으로 인정됩니다. 이 프로젝트가 따르는 " +
+           m[2] + "일 기준이며, " + koDate(m[3]) + "부터 거꾸로 셉니다.";
+  }
 
   // ── 규칙: 숫자나 식별자가 끼어들어 사전으로는 못 잡는 문장 ──────────────────
   // 각 항목은 [정규식, 한국어를 만드는 함수]. 함수는 잡힌 그룹을 받는다. 데이터
   // (금액·날짜·세대 id·항목 이름)는 절대 번역하지 않고 그대로 끼워 넣는다.
   var RULES = [
+    // ══ api/plain.py: 데이터가 박힌 본문 ═══════════════════════════════════════
+    // 각 규칙은 plain.py 의 렌더러 하나와 짝이다. 한 렌더러가 가지치기로 여러 문장을
+    // 만들면 여기도 그만큼 규칙이 있다. 문서 이름이나 표현을 알아보지 못하면 null 을
+    // 돌려 그 문장은 영어로 남긴다 — 절반만 한국어인 문장을 만들지 않기 위해서다.
+
+    // _r_item_present: 갖춰져 있고 기한도 남은 항목
+    [/^We have your (.+)$/, function (m) {
+      var name = koDoc(m[1]);
+      return name === null ? null : name + "를 확인했습니다";
+    }],
+    [/^It is in your file and it is recent enough to use\.(?: It is dated (.+?)\.)? (A paper counts.+)$/,
+      function (m) {
+        var currency = koCurrency(m[2]);
+        if (currency === null) return null;
+        return "제출하신 서류 안에 있고, 쓸 수 있을 만큼 최근 것입니다. " +
+               (m[1] ? "날짜는 " + koDate(m[1]) + "입니다. " : "") + currency;
+      }],
+
+    // _r_required_missing: 아직 없는 서류
+    [/^We still need your (.+)$/, function (m) {
+      var name = koDoc(m[1]);
+      return name === null ? null : name + "가 아직 필요합니다";
+    }],
+    [/^Your file does not have an? (.+) in it yet\. A housing worker needs it before they can start reading your file\.$/,
+      function (m) {
+        var name = koDoc(m[1]);
+        return name === null ? null
+          : "제출하신 서류에 아직 " + name + "가 없습니다. 주택 담당자가 검토를 시작하려면 이 서류가 있어야 합니다.";
+      }],
+    [/^Upload your (.+)\.$/, function (m) {
+      var name = koDoc(m[1]);
+      return name === null ? null : name + "를 올려 주세요.";
+    }],
+
+    // _r_not_current: 기한이 지난 서류
+    [/^Your (.+) is too old to use$/, function (m) {
+      var name = koDoc(m[1]);
+      return name === null ? null : name + "가 너무 오래되어 쓸 수 없습니다";
+    }],
+    [/^(?:It is dated (.+?)\. )?(A paper counts.+?\.) Nothing is wrong with the rest of your file\. One out-of-date paper is enough to hold the whole file until someone replaces it\.$/,
+      function (m) {
+        var currency = koCurrency(m[2]);
+        if (currency === null) return null;
+        return (m[1] ? "날짜는 " + koDate(m[1]) + "입니다. " : "") + currency +
+               " 나머지 서류에는 문제가 없습니다. 기한이 지난 서류가 하나만 있어도, " +
+               "새 서류로 바뀔 때까지 전체 검토가 멈춥니다.";
+      }],
+    [/^Ask your employer for a new letter dated (.+) or later, then upload it\.$/, function (m) {
+      return "고용주에게 " + koDate(m[1]) + " 이후 날짜의 새 증명서를 받아 올려 주세요.";
+    }],
+    [/^Upload your (.+), dated (.+) or later\.$/, function (m) {
+      var name = koDoc(m[1]);
+      return name === null ? null
+        : koDate(m[2]) + " 이후 날짜의 " + name + "를 올려 주세요.";
+    }],
+    [/^Ask whoever issued your paper for a new copy dated (.+) or later, then upload it\.$/, function (m) {
+      return "서류를 발급한 곳에 " + koDate(m[1]) + " 이후 날짜의 새 사본을 요청해 받아 올려 주세요.";
+    }],
+    // expired_evidence_flagged 의 본문은 통화 문장으로 시작한다.
+    [/^(A paper counts.+?\.) One paper past that line is enough to hold your file, however good the rest of it is\. That is a statement about the paper and not about you\. A fresh copy clears it and nothing else has to change\.$/,
+      function (m) {
+        var currency = koCurrency(m[1]);
+        if (currency === null) return null;
+        return currency + " 그 기준선을 넘은 서류가 하나만 있어도, 나머지가 아무리 잘 갖춰져 있어도 " +
+               "검토가 멈춥니다. 이것은 서류에 대한 이야기이지 당신에 대한 이야기가 아닙니다. " +
+               "새 사본 하나면 풀리고, 다른 것은 바꿀 필요가 없습니다.";
+      }],
+
+    // _r_undatable: 날짜를 알 수 없는 서류
+    [/^Your (.+) does not show a full date$/, function (m) {
+      var name = koDoc(m[1]);
+      return name === null ? null : name + "에 날짜가 다 적혀 있지 않습니다";
+    }],
+    [/^(?:It shows (.+?), but not which day of the month\. |It does not show which day of the month it covers\. )We need the day to work out whether the paper is recent enough\. (A paper counts.+?\.) We will not guess a day, because a guessed date could put your paper on the wrong side of that line\.$/,
+      function (m) {
+        var currency = koCurrency(m[2]);
+        if (currency === null) return null;
+        return (m[1] ? koDate(m[1]) + "까지만 적혀 있고, 며칠인지는 적혀 있지 않습니다. "
+                     : "며칠자인지가 적혀 있지 않습니다. ") +
+               "서류가 충분히 최근 것인지 따지려면 날짜가 필요합니다. " + currency +
+               " 날짜를 지어내지는 않습니다. 지어낸 날짜 때문에 서류가 기준선의 반대편에 놓일 수 있기 때문입니다.";
+      }],
+    [/^Ask for a (.+) that shows the full date, or tell us the exact date on the one you already sent\.$/,
+      function (m) {
+        var name = koDoc(m[1]);
+        return name === null ? null
+          : "날짜가 다 적힌 " + name + "를 새로 요청하시거나, 이미 보내신 서류의 정확한 날짜를 알려 주세요.";
+      }],
+
+    // _r_unreadable: 읽지 못한 서류
+    [/^We could not read your (.+)$/, function (m) {
+      var name = koDoc(m[1]);
+      return name === null ? null : name + "를 읽지 못했습니다";
+    }],
+    [/^Nothing on this (.+) came through clearly enough for us to use\. That is a problem with the file we received, not with you or with your paperwork\. We did not guess at what it says\.$/,
+      function (m) {
+        var name = koDoc(m[1]);
+        return name === null ? null
+          : "이 " + name + "에서 쓸 수 있을 만큼 또렷하게 읽힌 내용이 없습니다. 받은 파일의 문제이지, " +
+            "당신이나 당신의 서류 문제가 아닙니다. 무엇이 적혀 있는지 짐작하지 않았습니다.";
+      }],
+    [/^Send the (.+) again\. A clear photo in good light, or the original file from your employer or your bank, usually works\.$/,
+      function (m) {
+        var name = koDoc(m[1]);
+        return name === null ? null
+          : name + "를 다시 보내 주세요. 밝은 곳에서 또렷하게 찍은 사진이나, 고용주 또는 은행에서 받은 " +
+            "원본 파일이면 대개 됩니다.";
+      }],
+
+    // _r_gig_uncorroborated: 뒷받침 자료가 없는 긱 수입
+    [/^Your gig earnings statement (?:covers (.+?)|is in your file)\. It is the only paper you gave us that shows this money\. It comes from you, so on its own it does not confirm the amount\. We still counted this money in your yearly total, because leaving it out would be its own kind of wrong\. We are telling the housing worker that no other paper supports it\.$/,
+      function (m) {
+        return (m[1] ? "긱 수입 명세서는 " + koDate(m[1]) + "을 담고 있습니다. "
+                     : "긱 수입 명세서가 제출하신 서류에 있습니다. ") +
+               "이 돈을 보여주는 자료는 이것 하나뿐입니다. 본인이 만든 자료이므로, 이것만으로는 금액이 " +
+               "확인되지 않습니다. 그래도 이 돈을 연 소득 합계에 넣었습니다. 빼는 것 또한 사실과 " +
+               "달라지기 때문입니다. 이를 뒷받침하는 다른 자료가 없다는 사실은 주택 담당자에게 알립니다.";
+      }],
+
+    // _r_correction_not_used / _r_correction_in_use
+    [/^Check (.+)$/, function (m) {
+      var where = koWhere(m[1]);
+      return where === null ? null : where + "를 확인해 주세요";
+    }],
+    [/^(?:You changed the total pay on this stub to (.+?)\. |You changed a number on this stub\. )(?:The other numbers on the same stub add up to a different amount: (.+?) hours at (.+?) an hour comes to (.+?)\. |The other numbers on the same stub add up to a different amount\. )Because the two do not match, we could not tell which one is your regular pay\. We left this stub out when we worked out your yearly income\. We saved your change, and a housing worker can see it\.$/,
+      function (m) {
+        return (m[1] ? "이 명세서의 총 급여를 " + m[1] + " 으로 고치셨습니다. "
+                     : "이 명세서의 숫자를 고치셨습니다. ") +
+               (m[2] ? "같은 명세서의 다른 숫자들은 다른 금액이 됩니다. " + m[2] + "시간 × 시급 " +
+                       m[3] + " 은 " + m[4] + " 입니다. "
+                     : "같은 명세서의 다른 숫자들은 다른 금액이 됩니다. ") +
+               "둘이 맞지 않아서, 어느 쪽이 정기 급여인지 알 수 없었습니다. 연 소득을 계산할 때 이 " +
+               "명세서는 빼 두었습니다. 고치신 내용은 저장되어 있고, 주택 담당자가 볼 수 있습니다.";
+      }],
+    [/^You corrected a number on (.+)\. After your change, the hours, the hourly rate and the total on that stub agree with each other\. So we used your figure as your regular pay, and your yearly income reflects it\. We are telling the housing worker that this figure came from you rather than from the page, so they can check it against the document\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : where + "의 숫자를 고치셨습니다. 고치신 뒤로 그 명세서의 근무시간, 시급, 총액이 서로 맞습니다. " +
+            "그래서 고치신 금액을 정기 급여로 보고 계산했고, 연 소득에도 반영되어 있습니다. 이 숫자가 " +
+            "문서가 아니라 본인에게서 나왔다는 사실은 주택 담당자에게 알립니다. 담당자가 문서와 대조할 " +
+            "수 있도록 하기 위해서입니다.";
+      }],
+
+    // _r_pay_stub_conflict: 한 코드가 네 가지 문장을 만든다
+    [/^Your stubs show (.+?)\. On each stub we checked the hours and the hourly rate against the total\. No stub settled which figure is your regular pay\. We will not pick one for you, because picking one would be a guess\. So we did not produce a yearly income figure from your wages\.$/,
+      function (m) {
+        return "명세서에 적힌 금액은 " + m[1].replace(/ and /g, ", ") + " 입니다. 명세서마다 근무시간과 " +
+               "시급을 총액과 대조했습니다. 어느 명세서도 정기 급여가 얼마인지 확정해 주지 못했습니다. " +
+               "저희가 하나를 골라 드리지는 않습니다. 고르는 것은 짐작이기 때문입니다. 그래서 임금에서 " +
+               "연 소득 금액을 내지 않았습니다.";
+      }],
+    [/^Your stubs show different totals\. On each stub we checked the hours and the hourly rate against the total\. No stub settled which figure is your regular pay\. We will not pick one for you, because picking one would be a guess\. So we did not produce a yearly income figure from your wages\.$/,
+      function () {
+        return "명세서마다 총액이 다릅니다. 명세서마다 근무시간과 시급을 총액과 대조했습니다. 어느 " +
+               "명세서도 정기 급여가 얼마인지 확정해 주지 못했습니다. 저희가 하나를 골라 드리지는 " +
+               "않습니다. 고르는 것은 짐작이기 때문입니다. 그래서 임금에서 연 소득 금액을 내지 않았습니다.";
+      }],
+    [/^The letter points to (.+?) a year\. Your pay stubs point to (.+?) a year\. We used the figure from your pay stubs, because a stub shows what you were actually paid\. We are telling the housing worker about the gap so they can check it\.$/,
+      function (m) {
+        return "증명서는 연 " + m[1] + " 을 가리킵니다. 급여명세서는 연 " + m[2] + " 을 가리킵니다. " +
+               "명세서는 실제로 받은 금액을 보여주므로, 명세서 쪽 금액을 썼습니다. 두 금액의 차이는 " +
+               "주택 담당자에게 알려 확인할 수 있게 합니다.";
+      }],
+    [/^The numbers on (.+) do not add up$/, function (m) {
+      var where = koWhere(m[1]);
+      return where === null ? null : where + "의 숫자가 서로 맞지 않습니다";
+    }],
+    [/^The stub shows a total of (.+?)\. The hours and the hourly rate on the same stub come to a different amount\. We still used the total, because that is what the stub says\. We are telling the housing worker that the two figures do not match\.$/,
+      function (m) {
+        return "명세서에 적힌 총액은 " + (m[1] === "the total" ? "그 총액" : m[1]) + " 입니다. 같은 " +
+               "명세서의 근무시간과 시급으로 계산하면 다른 금액이 나옵니다. 그래도 명세서에 적힌 총액을 " +
+               "썼습니다. 명세서가 그렇게 말하고 있기 때문입니다. 두 금액이 맞지 않는다는 사실은 주택 " +
+               "담당자에게 알립니다.";
+      }],
+    [/^One stub shows (.+?)\. Another shows (.+?)\. We used (.+?) as your regular pay, because the hours and the hourly rate on that stub add up to it\. We treated the difference as extra pay for one period only, so we did not count it across the whole year\. If that extra pay comes every time, your yearly figure would be higher than the one we worked out\.$/,
+      function (m) {
+        return "한 명세서에는 " + m[1] + " 이 적혀 있습니다. 다른 명세서에는 " + m[2] + " 이 적혀 " +
+               "있습니다. " + m[3] + " 을 정기 급여로 썼습니다. 그 명세서의 근무시간과 시급을 곱하면 그 " +
+               "금액이 나오기 때문입니다. 차액은 한 회차에만 있었던 추가 급여로 보고, 한 해 전체에 " +
+               "곱하지 않았습니다. 그 추가 급여가 매번 나온다면, 연 소득은 저희가 계산한 금액보다 " +
+               "높아집니다.";
+      }],
+
+    // _r_value_not_traceable / _r_income_not_traceable / _r_amount_missing
+    [/^We read a number from (.+), but we could not point to the exact spot on the page\. A housing worker has to be able to check every number in your file against the page it came from\. Until they can, we hold this number aside\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : where + "에서 숫자를 읽었지만, 문서의 어느 위치인지 정확히 짚지 못했습니다. 주택 담당자는 " +
+            "서류의 모든 숫자를 그 숫자가 나온 문서와 대조할 수 있어야 합니다. 그렇게 되기 전까지 이 " +
+            "숫자는 따로 빼 둡니다.";
+      }],
+    [/^We read a pay amount from (.+), but we could not point a housing worker at the exact spot on the page\. A number nobody can check is a number we will not count, so this one is not in your yearly figure\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : where + "에서 급여 금액을 읽었지만, 문서의 어느 위치인지 주택 담당자에게 정확히 짚어 줄 수 " +
+            "없었습니다. 아무도 확인할 수 없는 숫자는 계산에 넣지 않습니다. 그래서 이 금액은 연 소득에 " +
+            "들어 있지 않습니다.";
+      }],
+    [/^We looked at (.+) for an amount before tax and did not find one we could use\. We did not guess at a figure\.$/,
+      function (m) {
+        var where = koWhere(m[1]);
+        return where === null ? null
+          : where + "에서 세전 금액을 찾아봤지만, 쓸 수 있는 금액을 찾지 못했습니다. 금액을 짐작하지 않았습니다.";
+      }],
+
+    // _r_frequency_not_stated: 앞의 문서 표현은 첫 글자가 대문자로 온다
+    [/^To work out a yearly figure we multiply your pay by how often you get it\. (.+) does not say whether you are paid weekly, every two weeks, twice a month, monthly or once a year\. We will not work it out from the dates, because two dates two weeks apart do not prove that every payment is two weeks apart\.$/,
+      function (m) {
+        var where = koWhere(m[1].charAt(0).toLowerCase() + m[1].slice(1));
+        if (where === null) return null;
+        return "연 소득을 내려면 급여에 지급 횟수를 곱해야 합니다. " + where + "에는 급여를 주급으로 " +
+               "받는지, 2주마다 받는지, 월 2회 받는지, 월급으로 받는지, 연 1회 받는지가 적혀 있지 " +
+               "않습니다. 날짜만 보고 추정하지는 않습니다. 2주 간격인 날짜 두 개가 모든 지급이 2주 " +
+               "간격이라는 증거는 아니기 때문입니다.";
+      }],
+
+    // app.js: "이렇게 쓴 이유" 와 차단된 키
+    [/^Why this wording: (.+)$/, function (m) {
+      var note = lookup(m[1]);
+      return note === null ? null : "이렇게 쓴 이유: " + note;
+    }],
+    [/^Blocked keys: (\[.*\])$/, function (m) { return "차단된 키: " + m[1]; }],
+    // 기준액 답변. 금액과 세대원 수는 데이터라 그대로 둔다.
+    [/^(\$[\d,]+) for household size (\d+)\.$/, function (m) {
+      return "세대원 " + m[2] + "인 기준 " + m[1] + " 입니다.";
+    }],
+    [/^PDF page (\d+)$/, function (m) { return "PDF " + m[1] + "쪽"; }],
+
     // 진행 안내와 이동
     [/^Step (\d+) of 6\.\s*(.*)$/, function (m) {
       return "6단계 중 " + m[1] + "단계. " + (lookup(m[2]) || m[2]);
@@ -544,18 +1149,18 @@
     [/^Counted above as (\d+) entries\. They are the same item, and each one is kept in full under Technical details\.$/,
       function (m) {
         return "위 개수에는 " + m[1] + "건으로 잡혀 있습니다. 같은 항목이며, 각 건은 " +
-               "기술 세부정보에 그대로 보관되어 있습니다.";
+               "기술 세부사항에 그대로 보관되어 있습니다.";
       }],
     [/^(\d+) separate checks raised this one item\. Each check is listed in full under Technical details\.$/,
       function (m) {
         return "서로 다른 검사 " + m[1] + "건이 이 한 항목을 제기했습니다. 각 검사는 " +
-               "기술 세부정보에 전부 나열되어 있습니다.";
+               "기술 세부사항에 전부 나열되어 있습니다.";
       }],
-    [/^Abstentions \((\d+)\)$/, function (m) { return "기권 (" + m[1] + ")"; }],
+    [/^Abstentions \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
     [/^Reasons this needs review \((\d+)\)$/, function (m) {
       return "검토가 필요한 이유 (" + m[1] + ")";
     }],
-    // 점검표 구역 제목: "Missing (2)" 처럼 상태어 + 개수
+    // 점검 목록 구역 제목: "Missing (2)" 처럼 상태어 + 개수
     [/^(Present|Missing|Expired|Undatable|Unreadable) \((\d+)\)$/, function (m) {
       return DICT[m[1]] + " (" + m[2] + ")";
     }],
@@ -570,7 +1175,7 @@
 
     // 표 캡션과 제목
     [/^Extracted values on (\S+)\. Choose a field name to highlight its box on the page\.$/, function (m) {
-      return m[1] + " 에서 추출한 값입니다. 항목 이름을 고르면 문서상의 영역이 강조됩니다.";
+      return m[1] + " 에서 추출한 값입니다. 항목 이름을 고르면 문서상의 근거 위치가 강조됩니다.";
     }],
     [/^Inputs to (.+)$/, function (m) { return (lookup(m[1]) || m[1]) + " 의 입력값"; }],
     [/^Measurements for (.+)$/, function (m) { return (lookup(m[1]) || m[1]) + " 측정값"; }],
@@ -578,10 +1183,14 @@
 
     // 데이터 출처 줄 (엔진 sha·ruleset 은 빌드 메타데이터라 손대지 않는다)
     [/^Data source: (.+)$/, function (m) { return "데이터 출처: " + (lookup(m[1]) || m[1]); }],
-    // 주소 부분은 데이터라 그대로 두되, apiBase 가 빈 문자열일 때 app.js 가 넣는
-    // "this origin" 은 주소가 아니라 문장이므로 옮긴다.
+    // 웹의 origin 은 "출처"가 아니라 "주소"다. 인용의 출처(Source)와 같은 말로 옮기면
+    // "데이터 출처: 이 출처 의 …" 처럼 같은 낱말이 겹쳐 읽는 사람을 멈추게 한다.
+    // apiBase 가 빈 문자열일 때 app.js 가 넣는 "this origin" 은 주소값이 아니라
+    // 문장이므로 옮기고, 실제 주소가 들어오면 데이터이므로 그대로 둔다.
     [/^Live API at (.+) \(same shapes as the fixtures\)$/, function (m) {
-      return (m[1] === "this origin" ? "이 출처" : m[1]) + " 의 실시간 API (고정 데이터와 같은 형태)";
+      return (m[1] === "this origin"
+        ? "이 페이지와 같은 주소의 실시간 API"
+        : m[1] + " 의 실시간 API") + " (고정 데이터와 같은 형태)";
     }],
 
     // 세대 선택과 확인 화면
@@ -591,7 +1200,7 @@
     }],
     [/^(HH-\d+) · (\d+) documents$/, function (m) { return m[1] + " · 서류 " + m[2] + "건"; }],
     [/^(\d+) values, each one traced to a box on a page$/, function (m) {
-      return "값 " + m[1] + "개. 각각이 문서상의 한 영역까지 추적됩니다";
+      return "값 " + m[1] + "개. 각각이 문서상의 한 위치까지 추적됩니다";
     }],
     [/^(\d+) item\(s\): (.+)$/, function (m) {
       return m[1] + "개 항목: " + m[2].split(", ").map(function (label) {
@@ -600,7 +1209,7 @@
     }],
     [/^(\d+) abstention\(s\) and (\d+) reason\(s\) this needs review\. All of them are listed in full under “What this system is unsure about”, and all of them travel with your packet\.$/,
       function (m) {
-        return "기권 " + m[1] + "건과 검토가 필요한 이유 " + m[2] + "건. 모두 “이 시스템이 확신하지 못하는 것”" +
+        return "말하지 않은 것 " + m[1] + "건과 검토가 필요한 이유 " + m[2] + "건. 모두 “이 시스템이 확신하지 못하는 것”" +
                "아래에 빠짐없이 나열되어 있으며, 모두 서류 묶음에 함께 실립니다.";
       }],
     [/^(.+) = (.+) on (\S+) — recorded, but not used in the calculation$/, function (m) {
@@ -667,7 +1276,7 @@
       return "의도적으로 거부했습니다. " + (lookup(m[1]) || m[1]);
     }],
     [/^Abstained — no answer given\. (.+)$/, function (m) {
-      return "기권했습니다 — 답을 내지 않았습니다. " + (lookup(m[1]) || m[1]);
+      return "답하지 않았습니다 — 답을 내지 않았습니다. " + (lookup(m[1]) || m[1]);
     }],
     [/^Answer\. (.+)$/, function (m) { return "답변. " + (lookup(m[1]) || m[1]); }],
     [/^(Someone demands an eligibility decision|Someone asks about a different applicant|A document tries to give the system instructions): (.+)$/,
@@ -730,28 +1339,88 @@
   //
   // 값은 조각의 배열이다. 문자열은 그냥 글자, ["em", "..."] 은 <em> 안의 글자.
   // 강조는 영어에서 강조된 것과 같은 의미 단위에 붙인다.
+  //  ⚠ 이 구역은 사전과 달리 **영어 원문이 키가 아니다.** data-i18n-block 속성이 키다.
+  //  그래서 영어가 바뀌어도 조회가 빗나가지 않고, 낡은 한국어가 그대로 렌더링된다.
+  //  실제로 그렇게 사고가 났다: 의도 분류기가 들어오면서 영어 푸터가 "이 페이지는
+  //  외부로 요청하지 않는다"에서 "그것은 이 페이지에 대한 약속이지 시스템 전체에 대한
+  //  약속이 아니다"로 고쳐졌는데, 한국어만 옛 주장을 계속 보여 주고 있었다. 검증 가능한
+  //  주장만 한다는 것이 이 제품의 논지이므로, 한국어 화면에만 낡은 주장이 남는 것은
+  //  그 논지를 스스로 깨는 일이다.
+  //
+  //  그래서 각 항목은 그때의 영어 원문(`en`)을 함께 들고 있고, 바꿔치기 전에 화면의
+  //  영어와 대조한다. 어긋나면 **번역하지 않고 영어를 그대로 둔다.** 틀린 한국어보다
+  //  영어가 낫다는 판단이며, 콘솔에 남겨 다음 사람이 알아채게 한다.
   var BLOCKS = {
-    "lede-correct": [
-      "시스템이 읽은 값을 바꾸고, 그 아래 숫자들이 따라 움직이는지 보세요. 또는 그 정정이 왜 쓰이지 ",
-      ["em", "않았는지"],
-      " 시스템이 설명하는 것을 보세요."
-    ],
-    "footer-privacy": [
-      "외부 폰트·스크립트·이미지·분석 도구가 없습니다. 이 화면이 보내는 모든 요청은 위 주소창의 " +
-      "주소로만 가고 다른 어디로도 가지 않습니다. 파일로 열면 요청을 아예 보내지 않습니다. " +
-      "데이터 출처는 화면 맨 위에 적혀 있고, URL 에 ",
-      ["code", "?fixtures"],
-      " 를 붙이면 오프라인 출처를 강제할 수 있습니다."
-    ]
+    "lede-correct": {
+      en: "Change a value the system read, and watch the numbers underneath it move — or " +
+          "watch the system explain why your correction was not used.",
+      ko: [
+        "시스템이 읽은 값을 바꾸고, 그 아래 숫자들이 따라 움직이는지 보세요. 또는 그 정정이 왜 쓰이지 ",
+        ["em", "않았는지"],
+        " 시스템이 설명하는 것을 보세요."
+      ]
+    },
+    "footer-privacy": {
+      en: "No external fonts, scripts, images, or analytics. Every request this page makes goes to the " +
+          "address in the bar above it and nowhere else; opened as a file, it makes none at all. That is a " +
+          "promise about this page, not about the whole system: when the question classifier is switched on, " +
+          "the server sends your question sentence to a model provider so it can pick a topic label. What we " +
+          "can promise structurally is narrower and harder: no document, no extracted field and no household " +
+          "record is ever part of that request. Before your sentence is sent we replace the identifier shapes " +
+          "we can recognise, such as an email address, a phone number or a street address. We cannot " +
+          "recognise all of them, so a name you type is sent as you typed it. The data " +
+          "source is named at the top of the page, and you can force the offline one by adding " +
+          "?fixtures to the URL.",
+      // 영어의 논지 순서를 그대로 지킨다: ① 페이지는 외부로 나가지 않는다 → ② 그러나 그것은
+      // 이 페이지에 대한 약속일 뿐이다 → ③ 대신 좁고 단단한 약속(문서·필드·세대 기록은 절대
+      // 나가지 않는다) → ④ 식별자 치환은 하되 완전하지 않다.
+      // "완전히"·"모든 개인정보" 같은 완전성 어휘를 쓰지 않는다. 이 문단의 일은 넓은 약속을
+      // 흐리는 것이 아니라 좁은 약속을 분명히 하는 것이다.
+      ko: [
+        "외부 폰트·스크립트·이미지·분석 도구가 없습니다. 이 화면이 보내는 모든 요청은 위 주소창의 " +
+        "주소로만 가고 다른 어디로도 가지 않습니다. 파일로 열면 요청을 아예 보내지 않습니다. " +
+        "다만 이것은 이 화면에 대한 약속이지 시스템 전체에 대한 약속이 아닙니다. 질문 분류기가 " +
+        "켜져 있으면, 서버가 주제 이름을 고르기 위해 질문 문장을 모델 제공자에게 보냅니다. " +
+        "구조로 약속할 수 있는 것은 그보다 좁고 그만큼 단단합니다. 어떤 문서도, 추출된 어떤 항목도, " +
+        "세대 기록도 그 요청에 결코 실리지 않습니다. 문장을 보내기 전에 저희가 알아볼 수 있는 " +
+        "식별자 형태 — 이메일 주소, 전화번호, 도로명 주소 같은 것 — 는 바꿔 넣습니다. 그러나 모두 " +
+        "알아볼 수는 없습니다. 직접 타이핑하신 이름은 적으신 그대로 나갑니다. 데이터 출처는 화면 맨 " +
+        "위에 적혀 있고, URL 에 ",
+        ["code", "?fixtures"],
+        " 를 붙이면 오프라인 출처를 강제할 수 있습니다."
+      ]
+    }
   };
 
   var blockOriginals = new WeakMap();   // 요소 → 떼어 둔 영어 자식 노드 배열
   var touchedBlock = [];
 
+  /** 영어가 우리가 번역한 그 영어일 때만 바꿔치기한다.
+   *
+   *  사전 항목은 영어가 바뀌면 조회가 빗나가 저절로 영어로 남는다. 이 구역은 키가
+   *  속성이라 그 안전장치가 없으므로, 대조를 손으로 한다. 문장부호나 줄바꿈이 아니라
+   *  글자만 본다 — <em>·<code> 가 끼어 있어 textContent 로는 태그가 사라지고, 원문의
+   *  줄바꿈과 들여쓰기는 의미가 없기 때문이다. */
+  function blockMatches(element, expected) {
+    return normalize(element.textContent) === normalize(expected);
+  }
+
   function applyBlock(element) {
     var key = element.getAttribute("data-i18n-block");
-    var parts = BLOCKS[key];
-    if (!parts || blockOriginals.has(element)) return;
+    var entry = BLOCKS[key];
+    if (!entry || blockOriginals.has(element)) return;
+    if (!blockMatches(element, entry.en)) {
+      // 영어가 우리가 아는 영어가 아니다. 낡은 한국어를 보여 주는 것은 틀린 주장을
+      // 보여 주는 것이므로, 번역을 포기하고 영어를 남긴다.
+      if (window.console && window.console.warn) {
+        window.console.warn(
+          "[i18n] data-i18n-block=\"" + key + "\" 의 영어 원문이 바뀌었습니다. " +
+          "낡은 한국어 대신 영어를 그대로 둡니다. i18n.js 의 BLOCKS 를 새 원문에 맞춰 " +
+          "다시 쓰고 en 값도 함께 갱신하세요.");
+      }
+      return;
+    }
+    var parts = entry.ko;
     var saved = Array.prototype.slice.call(element.childNodes);
     blockOriginals.set(element, saved);
     touchedBlock.push(element);
@@ -788,7 +1457,14 @@
     if (Object.prototype.hasOwnProperty.call(DICT, key)) return DICT[key];
     for (var i = 0; i < RULES.length; i += 1) {
       var m = key.match(RULES[i][0]);
-      if (m) return RULES[i][1](m);
+      if (!m) continue;
+      // 규칙이 걸렸어도 handler 가 null 을 돌리면 "나는 이 문장을 못 옮긴다"는 뜻이므로
+      // 다음 규칙에게 넘긴다. 여기서 곧장 null 을 돌려주면, 넓은 규칙 하나가 자기보다
+      // 뒤에 있는 좁은 규칙을 통째로 가려 버린다. 실제로 "We still need your
+      // employer's letter:" 가 그렇게 막혔다 — 문서 이름 규칙이 콜론까지 삼켜 포기하고,
+      // 뒤의 "<이름>:" 규칙이 시도조차 되지 않았다.
+      var ko = RULES[i][1](m);
+      if (ko !== null && ko !== undefined) return ko;
     }
     return null;
   }
