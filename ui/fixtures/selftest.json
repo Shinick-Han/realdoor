@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-19T01:56:40Z",
+ "generated_at": "2026-07-19T04:06:15Z",
  "sections": {
   "extraction": {
    "status": "measured",
@@ -64,7 +64,7 @@
    "free_of_raw_identifiers": 1.0,
    "uses_second_person_per_string": 0.9524,
    "uses_second_person_per_message": 1.0,
-   "active_voice_best_effort": 0.9526,
+   "active_voice_best_effort": 0.9483,
    "problem_messages_carrying_an_action": 1.0,
    "action_gaps": [],
    "actions_needing_a_trained_person": [
@@ -88,44 +88,44 @@
      },
      {
       "screen": "document_problem_screen",
-      "words": 458,
-      "sentences": 37,
-      "flesch_kincaid_grade": 4.59,
-      "smog_grade": 7.11,
-      "spread_between_the_two": 2.52,
-      "smog_is_extrapolated": false
+      "words": 381,
+      "sentences": 25,
+      "flesch_kincaid_grade": 5.59,
+      "smog_grade": 7.98,
+      "spread_between_the_two": 2.39,
+      "smog_is_extrapolated": true
      },
      {
       "screen": "income_problem_screen",
-      "words": 825,
-      "sentences": 60,
-      "flesch_kincaid_grade": 4.98,
-      "smog_grade": 7.46,
-      "spread_between_the_two": 2.48,
+      "words": 744,
+      "sentences": 47,
+      "flesch_kincaid_grade": 5.78,
+      "smog_grade": 7.65,
+      "spread_between_the_two": 1.87,
       "smog_is_extrapolated": false
      },
      {
       "screen": "limit_problem_screen",
-      "words": 330,
-      "sentences": 24,
-      "flesch_kincaid_grade": 5.68,
+      "words": 280,
+      "sentences": 18,
+      "flesch_kincaid_grade": 6.45,
       "smog_grade": 7.79,
-      "spread_between_the_two": 2.11,
+      "spread_between_the_two": 1.34,
       "smog_is_extrapolated": true
      },
      {
       "screen": "status_screens",
-      "words": 200,
-      "sentences": 20,
-      "flesch_kincaid_grade": 3.24,
-      "smog_grade": 6.51,
-      "spread_between_the_two": 3.27,
+      "words": 171,
+      "sentences": 14,
+      "flesch_kincaid_grade": 3.94,
+      "smog_grade": 7.17,
+      "spread_between_the_two": 3.23,
       "smog_is_extrapolated": true
      }
     ],
     "screens_too_short_to_measure": [],
     "minimum_sample_words": 100,
-    "widest_spread": 3.27,
+    "widest_spread": 3.23,
     "note": "Two formulas, reported together with the gap between them. A per-string grade is not defensible and is not produced. SMOG needs 30 sentences to be used as defined; screens below that are marked as extrapolated. WCAG 2.2 SC 3.1.5 Reading Level is Level AAA and is not required at AA -- we adopt it voluntarily and do not claim AA obliges it."
    },
    "note": "Only 'problem_messages_carrying_an_action' is a requirement: WCAG 2.2 SC 3.3.3 Error Suggestion is Level AA, and it must read 1.0. Second person and active voice are Federal Plain Language Guidelines style goals we adopted voluntarily; the FPLG sets no reading-grade target and no sentence-length rule. SC 3.1.5 Reading Level is Level AAA and is not required at AA. The active-voice figure is a regex heuristic with documented blind spots, not a measurement of grammar. Readability is reported as two formulas plus their spread, per screen, on samples of at least 100 words, because a single per-string grade is not defensible."
@@ -177,7 +177,13 @@
     "anchors_for_unknown_intents": [],
     "anchors_not_round_tripping": []
    },
-   "note": "The classifier returns one label from a closed set and never writes a sentence; every sentence a renter reads is still built by deterministic code. A label is only acted on after the deterministic router is asked again and agrees, so the classifier can point at existing answers but cannot create one. It is reached only when every deterministic layer is silent, which is why the graded question set does not touch it. Only the question text is sent; no document content or household data leaves this process. Counters are since process start, not since the pack was written. When the router is switched off these figures read not_run rather than zero-as-success."
+   "identifier_patterns_looked_for": "email, ssn_shaped, phone, street_address, postal_code",
+   "questions_scrubbed_before_sending": 0,
+   "questions_with_a_redaction": 0,
+   "identifiers_replaced": 0,
+   "identifiers_replaced_by_pattern": "none",
+   "redaction_note": "Before a question is sent, shapes that are identifiers on sight — an email address, a phone number, a nine-digit number written as a social security number, a street address carrying a house number, a postal code that says it is one — are replaced with a placeholder such as [address removed]. Placeholders rather than deletions, so the sentence keeps its shape and the topic stays findable. This is not a personal-data filter and must not be read as one. A name, an employer, a school, a landlord — anything that is identifying only because of what the sentence means — is not caught here and is sent as typed. Catching those would require judging the sentence, and judging it would require sending it, which is the thing being avoided; that problem is unsolved here rather than solved quietly. A count of zero on this row means no known shape was found, not that the question carried nothing personal.",
+   "note": "The classifier returns one label from a closed set and never writes a sentence; every sentence a renter reads is still built by deterministic code. A label is only acted on after the deterministic router is asked again and agrees, so the classifier can point at existing answers but cannot create one. It is reached only when every deterministic layer is silent, which is why the graded question set does not touch it. Only the question text is sent; no document content or household data leaves this process. The question text is written by the renter, so recognisable identifier shapes are replaced before it is sent — see redaction_note for what that does and does not reach. Counters are since process start, not since the pack was written. When the router is switched off these figures read not_run rather than zero-as-success."
   }
  },
  "honesty_note": "Every number here is produced by re-running the measurement, not copied from a previous run. Sections that cannot be measured are marked not_run rather than filled in."

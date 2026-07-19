@@ -1,6 +1,6 @@
 {
  "household_id": "HH-001",
- "generated_at": "2026-07-19T01:56:38Z",
+ "generated_at": "2026-07-19T04:06:11Z",
  "ruleset_version": "pack-v1/2026-05-01",
  "reference_date": "2026-07-18",
  "readiness_status": "NEEDS_REVIEW",
@@ -660,13 +660,13 @@
   }
  ],
  "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
- "engine_version": "sha:adae4d0d7f69",
- "session_id": "aa3a66b099bb",
+ "engine_version": "sha:55736e56e6a1",
+ "session_id": "976677eb42f7",
  "plain": {
   "messages": [
    {
     "headline": "Your pay stubs show different totals",
-    "body": "One stub shows $2,166. Another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it. We treated the difference as extra pay for one period only, so we did not count it across the whole year. If that extra pay comes every time, your yearly figure would be higher than the one we worked out.",
+    "body": "One stub shows $2,166 and another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it, and we treated the difference as extra pay for one period rather than counting it across the year. If that extra pay comes every time, your yearly figure would be higher.",
     "action": "Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say.",
     "code": "PAY_STUB_TOTAL_CONFLICT",
     "detail": "the pay stubs report different gross totals; the recurring base is taken from the stub that reconciles with its own hours and rate, and the excess is not annualized (stub totals ['2,166.00', '2,500.00']; using 2,166.00 from HH-001-D03, which reconciles with its own hours and rate; HH-001-D02 (2,500.00) was not used as the recurring base because its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00)",
@@ -675,7 +675,7 @@
    },
    {
     "headline": "Check the pay stub dated 27 June 2026",
-    "body": "You changed the total pay on this stub to $2,500. The other numbers on the same stub add up to a different amount: 76 hours at $28.50 an hour comes to $2,166. Because the two do not match, we could not tell which one is your regular pay. We left this stub out when we worked out your yearly income. We saved your change, and a housing worker can see it.",
+    "body": "You changed the total pay on this stub to $2,500, but its own hours and hourly rate, 76 hours at $28.50 an hour, come to $2,166. Because the two do not match, we left this stub out when we worked out your yearly income. Your change is saved, and a housing worker can see it.",
     "action": "Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too.",
     "code": "RENTER_CORRECTION_NOT_USED",
     "detail": "a value the renter corrected was NOT used as the recurring base, because after the correction that document no longer settles what the recurring pay is; the annualized amount does not reflect the correction (gross_pay on HH-001-D02 was corrected to 2,500.00, but its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00 on that same document; the recurring base was taken from HH-001-D03 instead, so the corrected figure does not change the annualized amount)",
@@ -686,7 +686,7 @@
   "abstentions": [
    {
     "headline": "Your pay stubs show different totals",
-    "body": "One stub shows $2,166. Another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it. We treated the difference as extra pay for one period only, so we did not count it across the whole year. If that extra pay comes every time, your yearly figure would be higher than the one we worked out.",
+    "body": "One stub shows $2,166 and another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it, and we treated the difference as extra pay for one period rather than counting it across the year. If that extra pay comes every time, your yearly figure would be higher.",
     "action": "Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say.",
     "code": "PAY_STUB_TOTAL_CONFLICT",
     "detail": "the pay stubs report different gross totals; the recurring base is taken from the stub that reconciles with its own hours and rate, and the excess is not annualized (stub totals ['2,166.00', '2,500.00']; using 2,166.00 from HH-001-D03, which reconciles with its own hours and rate; HH-001-D02 (2,500.00) was not used as the recurring base because its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00)",
@@ -697,7 +697,7 @@
    },
    {
     "headline": "Check the pay stub dated 27 June 2026",
-    "body": "You changed the total pay on this stub to $2,500. The other numbers on the same stub add up to a different amount: 76 hours at $28.50 an hour comes to $2,166. Because the two do not match, we could not tell which one is your regular pay. We left this stub out when we worked out your yearly income. We saved your change, and a housing worker can see it.",
+    "body": "You changed the total pay on this stub to $2,500, but its own hours and hourly rate, 76 hours at $28.50 an hour, come to $2,166. Because the two do not match, we left this stub out when we worked out your yearly income. Your change is saved, and a housing worker can see it.",
     "action": "Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too.",
     "code": "RENTER_CORRECTION_NOT_USED",
     "detail": "a value the renter corrected was NOT used as the recurring base, because after the correction that document no longer settles what the recurring pay is; the annualized amount does not reflect the correction (gross_pay on HH-001-D02 was corrected to 2,500.00, but its own regular_hours * hourly_rate is 76 * 28.5 = 2,166.00 on that same document; the recurring base was taken from HH-001-D03 instead, so the corrected figure does not change the annualized amount)",
@@ -710,39 +710,42 @@
   "checklist": {
    "CHK-APPLICATION-SUMMARY": {
     "headline": "We have your application form",
-    "body": "It is in your file and it is recent enough to use. It is dated 10 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "body": "It is in your file, dated 10 July 2026, and recent enough to use.",
     "action": "You do not need to do anything about this one.",
     "code": "DOCUMENT_PRESENT_AND_CURRENT",
     "detail": "HH-001-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
-    "kind": "status"
+    "kind": "status",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026."
    },
    "CHK-PAY-STUB": {
     "headline": "We have your pay stub",
-    "body": "It is in your file and it is recent enough to use. It is dated 27 June 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "body": "It is in your file, dated 27 June 2026, and recent enough to use.",
     "action": "You do not need to do anything about this one.",
     "code": "DOCUMENT_PRESENT_AND_CURRENT",
     "detail": "HH-001-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-001-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
-    "kind": "status"
+    "kind": "status",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026."
    },
    "CHK-EMPLOYMENT-LETTER": {
     "headline": "We have your employer's letter",
-    "body": "It is in your file and it is recent enough to use. It is dated 6 July 2026. A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "body": "It is in your file, dated 6 July 2026, and recent enough to use.",
     "action": "You do not need to do anything about this one.",
     "code": "DOCUMENT_PRESENT_AND_CURRENT",
     "detail": "HH-001-D04 is dated 2026-07-06, current with 48 day(s) of the window remaining",
-    "kind": "status"
+    "kind": "status",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026."
    }
   },
   "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
   "status": {
    "headline": "Your file needs a few things before a person can read it",
-   "body": "Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork.",
+   "body": "Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. None of this is a finding about you. It is about the paperwork, and paperwork you can fix.",
    "action": "Work through your list below. Each item says exactly what to send or who to ask.",
    "code": "NEEDS_REVIEW",
    "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
    "kind": "status",
    "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
   },
-  "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other. We list each one below, with what to do about it. None of this is a finding about you. It is about the paperwork. You can fix paperwork. Work through your list below. Each item says exactly what to send or who to ask. Your pay stubs show different totals. One stub shows $2,166. Another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it. We treated the difference as extra pay for one period only, so we did not count it across the whole year. If that extra pay comes every time, your yearly figure would be higher than the one we worked out. Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say. Check the pay stub dated 27 June 2026. You changed the total pay on this stub to $2,500. The other numbers on the same stub add up to a different amount: 76 hours at $28.50 an hour comes to $2,166. Because the two do not match, we could not tell which one is your regular pay. We left this stub out when we worked out your yearly income. We saved your change, and a housing worker can see it. Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too."
+  "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your pay stubs show different totals. One stub shows $2,166 and another shows $2,500. We used $2,166 as your regular pay, because the hours and the hourly rate on that stub add up to it, and we treated the difference as extra pay for one period rather than counting it across the year. If that extra pay comes every time, your yearly figure would be higher. Ask your employer whether the extra pay is a regular part of your wages, then tell us what they say. Check the pay stub dated 27 June 2026. You changed the total pay on this stub to $2,500, but its own hours and hourly rate, 76 hours at $28.50 an hour, come to $2,166. Because the two do not match, we left this stub out when we worked out your yearly income. Your change is saved, and a housing worker can see it. Tell us which amount is right, or add a stub that shows your usual pay. If the hours or the hourly rate are also wrong, correct those too."
  }
 }

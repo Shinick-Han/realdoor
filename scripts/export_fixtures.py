@@ -41,7 +41,13 @@ def main() -> int:
 
     print("리포트 (화면 1·4·5의 데이터)")
     write("households", {"households": STORE.households(s)})
-    for hid in ("HH-001", "HH-004", "HH-005"):
+
+    # **전 세대를 돈다.** 예전에는 데모에 쓰는 세 개만 손으로 적어두었는데, 세대 선택기는
+    # 여섯 개를 전부 내놓는다. 그래서 배포본(픽스처 모드)에서 나머지 셋을 고르면 화면이
+    # 비었다 — 심사위원이 링크를 열고 세대를 바꿔보는 것은 가장 자연스러운 첫 동작이다.
+    # 목록을 손으로 유지하는 대신 STORE 가 아는 세대를 그대로 따라간다.
+    for row in STORE.households(s):
+        hid = row["household_id"]
         write(f"report_{hid}", STORE.report(s, hid))
 
     print("정정 후 리포트 (화면 2 — 사용자가 고쳤을 때 무슨 일이 벌어지나)")

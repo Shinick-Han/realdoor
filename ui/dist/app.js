@@ -466,13 +466,35 @@
     var live = apiBase !== null;
     var fixtures = window.REALDOOR_FIXTURES || {};
     var sessionId = null;
+    var sessionDeleted = false;   // set by deleteSession; only startOver clears it
 
     function headers(extra) {
       var out = Object.assign({}, extra || {});
       if (sessionId) out["X-Session-Id"] = sessionId;
       return out;
     }
+
+    /* This function used to be the whole of defect 2.
+     *
+     * `if (sessionId) ... else POST /api/session` is exactly right on first use and
+     * exactly wrong after a deletion. Deleting the session set `sessionId` back to null,
+     * so the next request the page made -- opening a step, downloading the packet --
+     * fell into the else branch, minted a fresh session, and the server re-loaded the
+     * pack fixtures into it. The household came back on screen and the packet still
+     * downloaded, seconds after a screen that said there was nothing left to answer
+     * with. The page was not lying on purpose; it simply never noticed it had been
+     * handed a different session.
+     *
+     * A deleted session is now a terminal state for this page. Nothing re-creates one
+     * implicitly: the only way back is `startOver`, which the renter has to ask for and
+     * which says plainly that it begins again from the pack rather than restoring
+     * anything. */
     function ensureSession() {
+      if (sessionDeleted) {
+        return Promise.reject(new Error(
+          "This session was deleted, so there is nothing to answer with. " +
+          "Starting again loads the household from the pack as a new session."));
+      }
       if (sessionId) return Promise.resolve(sessionId);
       return fetch(apiBase + "/api/session", { method: "POST" })
         .then(function (r) { return r.json(); })
@@ -556,6 +578,28 @@
         }).then(function (report) { return { report: report, unsupported: false }; });
       },
 
+      /* Undoing a correction is a round trip, not a local rewind.
+       *
+       * The correction was applied to the session on the server: the field on that
+       * document was overwritten there. Restoring only the report object this page is
+       * holding leaves the server still carrying the corrected value, so the next
+       * correction -- on any field, on any document -- comes back with the "undone"
+       * value still in it. The button says the report is back to the extracted values,
+       * so the extracted values have to actually come back.
+       *
+       * Offline there is no session to talk to: the two corrections are recorded
+       * pipeline output and nothing on a server changed, so rewinding the page is the
+       * whole of the undo and is honest. `server:false` says which of the two happened.
+       */
+      undo: function (householdId, documentId, field) {
+        if (!live) return Promise.resolve({ report: null, server: false });
+        return json("/api/undo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ document_id: documentId, field: field })
+        }).then(function (report) { return { report: report, server: true }; });
+      },
+
       askExamples: function () {
         var examples = fixtures.ask_examples || {};
         return Object.keys(examples).map(function (key) {
@@ -624,15 +668,43 @@
         });
       },
 
-      deleteSession: function () {
+      /* Deleting, then proving it with the next request rather than asserting it.
+       *
+       * The screen claims that requests which follow return 404 because there is
+       * nothing left to answer with. So the call makes one: after the DELETE it asks
+       * the server for the report again, with the id it just destroyed, and reports the
+       * status that came back. If the claim were ever to stop being true, the number on
+       * screen would change and say so. */
+      deleteSession: function (householdId) {
+        /* Pressing delete twice must not report the offline outcome. The judge-facing
+         * control stays on screen after a deletion, and without this the second press
+         * would fall through the `!sessionId` guard and claim there was no server
+         * session to destroy -- in a live build, seconds after destroying one. */
+        if (live && sessionDeleted) return Promise.resolve({ live: true, alreadyGone: true });
         if (!live || !sessionId) return Promise.resolve({ live: false });
         var id = sessionId;
         return fetch(apiBase + "/api/session/" + encodeURIComponent(id), { method: "DELETE" })
           .then(function (r) { return r.json(); })
           .then(function (body) {
             sessionId = null;
-            return { live: true, body: body, session_id: id };
+            sessionDeleted = true;
+            var probePath = "/api/report/" + encodeURIComponent(householdId || "HH-001");
+            return fetch(apiBase + probePath, { headers: { "X-Session-Id": id } })
+              .then(function (r) { return { status: r.status, path: probePath }; })
+              .catch(function () { return null; })
+              .then(function (probe) {
+                return { live: true, body: body, session_id: id, probe: probe };
+              });
           });
+      },
+
+      sessionWasDeleted: function () { return sessionDeleted; },
+
+      /** Begin again. Not a restore -- the deleted session is gone and this loads the
+       *  household from the pack into a new one. */
+      startOver: function () {
+        sessionDeleted = false;
+        sessionId = null;
       }
     };
 
@@ -684,7 +756,8 @@
     selftest: null,
     lastQuestion: null,     // for the step 6 check-answers row
     screen: "screen-start", // the one screen currently on show
-    returnTo: null          // set by a "Change" link so the step returns straight to step 6
+    returnTo: null,         // set by a "Change" link so the step returns straight to step 6
+    sessionDeleted: false   // the renter deleted the session; the page holds nothing
   };
 
   // Read-only window on the report currently rendered, for the checking harnesses in
@@ -1207,15 +1280,8 @@
       h("div", { class: "button-row" }, [
         h("button", { type: "submit", id: "correct-apply", class: "action", text: "Apply correction" }),
         h("button", {
-          type: "button", class: "action secondary", text: "Undo correction",
-          onclick: function () {
-            if (!state.baselineReport) { announce("There is no correction to undo."); return; }
-            state.report = state.baselineReport;
-            state.baselineReport = null;
-            state.correction = null;
-            renderAll();
-            announce("Correction undone. The report is back to the extracted values.");
-          }
+          type: "button", id: "correct-undo", class: "action secondary", text: "Undo correction",
+          onclick: function () { undoCorrection(); }
         })
       ])
     ]);
@@ -1283,6 +1349,35 @@
       var outcome = byId("correct-outcome");
       clear(outcome);
       outcome.appendChild(errorCard("The correction could not be applied", error));
+    });
+  }
+
+  /* Undo the one correction that is on show, and nothing else.
+   *
+   * `state.correction` names the document and field, so the request undoes that pair
+   * and leaves any earlier correction on another field standing. The report that comes
+   * back is the server's, recomputed from the session as it now stands -- it is not the
+   * cached `baselineReport`, because that snapshot predates corrections the renter may
+   * have made since and would silently roll those back too. */
+  function undoCorrection() {
+    if (!state.correction) { announce("There is no correction to undo."); return; }
+    var undone = state.correction;
+    Source.undo(state.householdId, undone.document_id, undone.field).then(function (result) {
+      if (result.server && result.report) {
+        state.report = result.report;
+      } else if (state.baselineReport) {
+        state.report = state.baselineReport;
+      }
+      state.baselineReport = null;
+      state.correction = null;
+      renderAll();
+      announce("Correction undone. " + undone.field + " on " + undone.document_id +
+               " is back to the extracted value, and any other correction is still in place.");
+    }).catch(function (error) {
+      var outcome = byId("correct-outcome");
+      clear(outcome);
+      outcome.appendChild(errorCard("The correction could not be undone", error));
+      announce("The correction could not be undone. The report still shows the corrected value.");
     });
   }
 
@@ -1933,9 +2028,163 @@
   }
 
   // ── step 6b: the packet ─────────────────────────────────────────────────────────
+  /* ── deleting the session, in one place ────────────────────────────────────────
+   *
+   * Both the step 6 control and the judge-facing one on "How this works" call this, so
+   * there is a single description of what deletion does and no chance of the two screens
+   * describing the same action differently.
+   *
+   * The page empties itself first and re-renders before the outcome card is written, so
+   * at no point is there a screen showing household data next to a message saying the
+   * household data is gone. */
+  function clearPageAfterDeletion() {
+    state.sessionDeleted = true;
+    state.report = null;
+    state.baselineReport = null;
+    state.correction = null;
+    state.documentId = null;
+    state.activeField = null;
+    state.lastQuestion = null;
+    /* The picker would otherwise still be live, and choosing a household would fire a
+     * request that cannot be answered. Switching household is not a way around a
+     * deletion, so the control is closed until the renter starts again. */
+    var picker = byId("household-select");
+    if (picker) picker.disabled = true;
+    renderAll();
+  }
+
+  /** "Start again" — a new session loaded from the pack. Deliberately not called
+   *  "restore": the deleted session is not coming back and the wording must not suggest
+   *  it might. */
+  function startOver() {
+    Source.startOver();
+    state.sessionDeleted = false;
+    var picker = byId("household-select");
+    if (picker) picker.disabled = false;
+    var householdId = state.householdId ||
+      (state.households[0] && state.households[0].household_id);
+    return loadHousehold(householdId).then(function () {
+      goToStep(1);
+      announce("Started again. " + householdId + " has been loaded from the pack as a new session. " +
+               "The deleted session was not restored.");
+    }).catch(function (error) {
+      var root = byId("documents-body");
+      clear(root);
+      root.appendChild(errorCard("The household could not be loaded again", error));
+    });
+  }
+
+  function startOverRow() {
+    return h("div", { class: "button-row" }, [
+      h("button", {
+        type: "button", class: "action", onclick: function () { startOver(); }
+      }, ["Start again with a new session"])
+    ]);
+  }
+
+  /** What the page says once the session is gone. Same words wherever a panel would
+   *  otherwise have shown household data. */
+  /* The way forward travels with the notice.
+   *
+   * Deletion empties every step, not just the one the renter was standing on, so the
+   * notice can surface on any of the six. If the only "start again" button lived on
+   * step 6, a renter who deleted and then went back a step would be looking at a screen
+   * that explains there is nothing here and offers no way to do anything about it. */
+  function deletedNotice(heading) {
+    return h("div", { class: "callout callout--warn" }, [
+      h("h3", { style: { marginTop: "0" }, text: heading || "You deleted this session" }),
+      h("p", {
+        text: "The documents, the values read from them, and every correction were removed from the " +
+              "server process, and this page is holding nothing. There is no packet to download and " +
+              "nothing here to show, because there is nothing left to answer with."
+      }),
+      h("p", {
+        text: "Starting again does not bring any of it back. It loads the household from the pack " +
+              "into a new session, and any correction you made is gone with the old one."
+      }),
+      startOverRow()
+    ]);
+  }
+
+  /* Run the deletion and write the outcome into the element with id `hostId`.
+   *
+   * The host is looked up *after* the page has emptied itself, not captured before:
+   * clearing re-renders the panels, so a node held from before the deletion is detached
+   * by the time the outcome would be written into it and the outcome goes nowhere.
+   *
+   * `withStartOver` is for hosts that are not inside a panel which already offers the
+   * way forward -- the judge-facing page is one, step 6 renders its own. */
+  function runDeletion(hostId, withStartOver) {
+    var host = byId(hostId);
+    if (host) clear(host);
+    Source.deleteSession(state.householdId).then(function (result) {
+      clearPageAfterDeletion();
+      host = byId(hostId);
+      if (!host) return;
+      if (result.alreadyGone) {
+        host.appendChild(h("div", { class: "callout callout--warn" }, [
+          h("h4", { style: { marginTop: "0" }, text: "There is nothing left to delete" }),
+          h("p", { style: { marginBottom: "0" },
+            text: "This session was already deleted. Nothing was sent to the server this time, " +
+                  "because there is no longer an id to send." })
+        ]));
+        if (withStartOver) host.appendChild(startOverRow());
+        announce("This session was already deleted.");
+        return;
+      }
+      if (!result.live) {
+        host.appendChild(h("div", { class: "callout callout--ok" }, [
+          h("h4", { style: { marginTop: "0" }, text: "Session data cleared from this page" }),
+          h("p", {
+            text: "Offline there is no server session to destroy, so this clears everything the page " +
+                  "was holding: the report, the correction, and the selected document."
+          }),
+          h("p", {
+            style: { marginBottom: "0" },
+            text: "With the API connected, this same button deletes the session inside the server process."
+          })
+        ]));
+        if (withStartOver) host.appendChild(startOverRow());
+        announce("Session data cleared from this page.");
+        return;
+      }
+      var probe = result.probe;
+      var gone = Boolean(probe) && probe.status === 404;
+      host.appendChild(h("div", { class: "callout " + (gone ? "callout--ok" : "callout--stop") }, [
+        h("h4", { style: { marginTop: "0" },
+          text: gone ? "Deleted, and checked" : "Deleted, but the check did not come back as expected" }),
+        h("p", {
+          text: "Session " + result.session_id + " no longer exists in the API process. Rather than " +
+                "tell you that and stop, the page then asked the server for this household again " +
+                "using the id it had just destroyed."
+        }),
+        h("p", { class: "status-line", text: probe
+          ? "GET " + probe.path + " with the deleted id answered HTTP " + probe.status +
+            (gone ? " — nothing left to answer with." : " — expected 404.")
+          : "The follow-up request could not be made." }),
+        h("p", { style: { marginBottom: "0" }, class: "mono", text: JSON.stringify(result.body) })
+      ]));
+      if (withStartOver) host.appendChild(startOverRow());
+      announce(gone
+        ? "Session deleted. The follow-up request returned 404. There is nothing left on this page."
+        : "Session deleted, but the follow-up request did not return 404.");
+    }).catch(function (error) {
+      var fallback = byId(hostId);
+      if (fallback) fallback.appendChild(errorCard("The session could not be deleted", error));
+    });
+  }
+
   function renderPacket() {
     var root = byId("packet-body");
     clear(root);
+    if (state.sessionDeleted) {
+      /* Only the outcome of the deletion goes here. The check-answers panel directly
+       * above on this same screen already carries the notice and the way forward, and
+       * saying it twice on one screen would read as two different things having
+       * happened. */
+      root.appendChild(h("div", { id: "packet-delete-note" }));
+      return;
+    }
     if (!state.report) return;
 
     root.appendChild(h("h2", { text: "Take your packet" }));
@@ -1977,6 +2226,35 @@
       }, ["Download my readiness packet"])
     ]));
     root.appendChild(h("div", { id: "packet-download-note" }));
+
+    /* Delete belongs here, at the end of the renter's own six steps.
+     *
+     * The brief asks that the renter can preview, edit, download and delete. The first
+     * three were in the walkthrough and the fourth was only on the judge-facing page,
+     * which means the person whose documents these are was never shown the control for
+     * getting rid of them. Taking the packet and then clearing the service is one
+     * continuous thought, so the button sits directly under the download. */
+    root.appendChild(h("h2", { text: "Delete what this service is holding" }));
+    root.appendChild(h("div", { class: "callout" }, [
+      h("p", {
+        text: "Everything this service holds about the household lives in one session. Deleting it " +
+              "removes the documents, the values read from them, and every correction from the server " +
+              "process. Requests that follow return 404 because there is nothing left to answer with."
+      }),
+      h("p", {
+        style: { marginBottom: "0" },
+        text: "This cannot be undone, and it does not restore: to carry on afterwards you start again " +
+              "with a new session, without the corrections you made. Download your packet first if you " +
+              "want to keep it. The pack these documents came from is untouched either way."
+      })
+    ]));
+    root.appendChild(h("div", { class: "button-row" }, [
+      h("button", {
+        type: "button", class: "action secondary", id: "packet-delete-session",
+        onclick: function () { runDeletion("packet-delete-note", false); }
+      }, ["Delete this session now"])
+    ]));
+    root.appendChild(h("div", { id: "packet-delete-note" }));
   }
 
   // ── panel 6: the controls, demonstrated ─────────────────────────────────────────
@@ -2103,43 +2381,7 @@
       h("div", { class: "button-row" }, [
         h("button", {
           type: "button", class: "action",
-          onclick: function () {
-            var host = byId("session-output");
-            clear(host);
-            Source.deleteSession().then(function (result) {
-              if (!result.live) {
-                state.report = null;
-                state.baselineReport = null;
-                state.correction = null;
-                state.documentId = null;
-                state.activeField = null;
-                renderAll();
-                host.appendChild(h("div", { class: "callout callout--ok" }, [
-                  h("h4", { style: { marginTop: "0" }, text: "In-page session data cleared" }),
-                  h("p", {
-                    style: { marginBottom: "0" },
-                    text: "Offline there is no server session to destroy, so this clears everything the page " +
-                          "was holding: the report, the correction, and the selected document. Reload the page " +
-                          "to start again. With the API connected, this same button deletes the server session."
-                  })
-                ]));
-                announce("Session data cleared from this page.");
-                return;
-              }
-              host.appendChild(h("div", { class: "callout callout--ok" }, [
-                h("h4", { style: { marginTop: "0" }, text: "Server session deleted" }),
-                h("p", { class: "mono", text: JSON.stringify(result.body) }),
-                h("p", {
-                  style: { marginBottom: "0" },
-                  text: "Session " + result.session_id + " no longer exists in the API process. Any further " +
-                        "request with that id returns 404."
-                })
-              ]));
-              announce("Server session deleted.");
-            }).catch(function (error) {
-              host.appendChild(errorCard("The session could not be deleted", error));
-            });
-          }
+          onclick: function () { runDeletion("session-output", true); }
         }, ["Delete session data now"])
       ]),
       h("div", { id: "session-output" })
@@ -2370,7 +2612,9 @@
     var root = byId("open-questions-body");
     clear(root);
     if (!state.report) {
-      root.appendChild(h("p", { class: "q-empty", text: "No report is loaded." }));
+      root.appendChild(h("p", { class: "q-empty", text: state.sessionDeleted
+        ? "You deleted this session, so there is nothing here to be unsure about."
+        : "No report is loaded." }));
       return;
     }
 
@@ -2478,6 +2722,10 @@
 
   // ── shared bits ─────────────────────────────────────────────────────────────────
   function noReportNotice() {
+    /* After a deletion there is no report for a reason the renter chose, and saying
+     * "no report is loaded for this household" would read as a fault in the app rather
+     * than as the thing they just asked for. */
+    if (state.sessionDeleted) return deletedNotice();
     return h("div", { class: "callout callout--warn" }, [
       h("h3", { style: { marginTop: "0" }, text: "No report is loaded for this household" }),
       h("p", {

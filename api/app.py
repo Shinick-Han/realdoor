@@ -149,6 +149,28 @@ def confirm(payload: dict, x_session_id: str | None = Header(default=None)) -> d
     return rep
 
 
+@app.post("/api/undo")
+def undo(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
+    """한 정정을 취소한다. 취소는 **세션 상태에서** 일어나야 한다.
+
+    화면이 "back to the extracted values" 라고 말하는데 클라이언트만 되돌리면,
+    서버 세션에는 정정값이 남아 다음 정정 때 되살아난다. 그래서 취소도 왕복한다.
+    지정한 (문서, 필드) 하나만 되돌리고 다른 정정은 그대로 둔다.
+    """
+    s = _session(x_session_id)
+    for key in ("document_id", "field"):
+        if key not in payload:
+            raise HTTPException(400, f"missing `{key}`")
+    ok = STORE.undo_correction(s, payload["document_id"], payload["field"])
+    if not ok:
+        raise HTTPException(404, "no correction on that field to undo")
+    hid = payload["document_id"].rsplit("-", 1)[0]
+    rep = STORE.report(s, hid)
+    if rep is None:
+        raise HTTPException(404, f"unknown household {hid}")
+    return rep
+
+
 # ── 페이지 이미지 (UI가 근거 상자를 그리는 바탕) ────────────────────────
 @app.get("/api/document/{document_id}/page/{page}.png")
 def page_png(document_id: str, page: int,

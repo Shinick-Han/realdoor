@@ -86,6 +86,10 @@ class Session:
     session_id: str
     views: dict[str, dict[str, Any]]                       # document_id -> DocumentView
     corrections: dict[tuple[str, str], Any] = field(default_factory=dict)
+    # 정정 **직전**의 필드 스냅샷. 정정을 되돌리려면 추출된 원값이 필요한데,
+    # apply_correction 은 필드를 제자리에서 덮어쓰므로 여기 남겨두지 않으면 원값이 사라진다.
+    # 키가 (document_id, field) 단위이므로 한 정정의 취소가 다른 정정을 건드리지 않는다.
+    originals: dict[tuple[str, str], dict[str, Any]] = field(default_factory=dict)
     events: list[dict[str, Any]] = field(default_factory=list)
 
     def log(self, action: str, **detail: Any) -> None:
@@ -188,11 +192,46 @@ class Store:
             return False
         for f in view.get("fields", []):
             if f.get("field") == field_name:
+                key = (document_id, field_name)
+                # 추출된 원값은 **첫 정정 때 한 번만** 보관한다. 같은 필드를 두 번 고쳐도
+                # 취소는 기계가 읽은 값까지 돌아가야지, 직전 정정값에서 멈추면 안 된다.
+                if key not in s.originals:
+                    s.originals[key] = {
+                        "value": f.get("value"),
+                        "certainty": f.get("certainty"),
+                        "evidence_kind": f.get("evidence_kind"),
+                    }
                 f["value"] = value
                 f["certainty"] = "high"
                 f["evidence_kind"] = "corrected_by_renter"
-                s.corrections[(document_id, field_name)] = value
+                s.corrections[key] = value
                 s.log("field_corrected", document_id=document_id, field=field_name)
+                return True
+        return False
+
+    def undo_correction(self, s: Session, document_id: str, field_name: str) -> bool:
+        """한 정정만 되돌린다 — 그 필드를 추출된 값으로, 다른 정정은 건드리지 않고.
+
+        화면은 취소 버튼 옆에서 "the report is back to the extracted values" 라고 말한다.
+        그 문장이 사실이 되려면 되돌리기가 **서버 세션에서** 일어나야 한다. 정정은 세션의
+        DocumentView 를 제자리에서 덮어쓰므로, 클라이언트가 자기 화면의 리포트만 되돌리면
+        서버는 여전히 정정된 값을 들고 있고 다음 정정 때 그 값이 되살아난다.
+        """
+        key = (document_id, field_name)
+        snapshot = s.originals.get(key)
+        if snapshot is None:
+            return False
+        view = s.views.get(document_id)
+        if view is None:
+            return False
+        for f in view.get("fields", []):
+            if f.get("field") == field_name:
+                f["value"] = snapshot["value"]
+                f["certainty"] = snapshot["certainty"]
+                f["evidence_kind"] = snapshot["evidence_kind"]
+                s.originals.pop(key, None)
+                s.corrections.pop(key, None)
+                s.log("correction_undone", document_id=document_id, field=field_name)
                 return True
         return False
 
