@@ -534,9 +534,13 @@
       offlineCorrections: OFFLINE_CORRECTIONS,
       sessionId: function () { return sessionId; },
       describe: function () {
+        // Offline, this is said the way a person would say it. Naming the household as an
+        // example is the honest part and stays on the renter's screen; "captured output of the
+        // same pipeline, no server, no network" is the technical claim behind it and lives on
+        // the "How this works" screen instead of here.
         return live
           ? "Live API at " + (apiBase || "this origin") + " (same shapes as the fixtures)"
-          : "Bundled fixtures — real pipeline output, no server, no network";
+          : "Example household — sample documents, none of them yours";
       },
 
       households: function () {
@@ -2968,8 +2972,11 @@
     if (!abstentions.length) {
       root.appendChild(h("p", {
         class: "q-empty",
+        // The meta-sentence that used to close this line ("an empty list means nothing was
+        // withheld, not that nothing was checked") is about how we measure, not about this
+        // household. It now lives on the "How this works" screen.
         text: "None for this household: every value needed was read from a document and every required " +
-              "item is accounted for. An empty list means nothing was withheld, not that nothing was checked."
+              "item is accounted for."
       }));
     }
     // Pair each abstention with its plain twin first -- that pairing is positional and
@@ -3095,7 +3102,10 @@
       parts.push("report generated " + state.report.generated_at);
     }
     byId("footer-meta").textContent = parts.join(" · ");
-    byId("mode-line").textContent = "Data source: " + Source.describe();
+    // No "Data source:" label here. Under the picker this line is read as a description of
+    // the household on show, and the phrase it now carries is a sentence, not a field value.
+    // The footer keeps the labelled, technical form.
+    byId("mode-line").textContent = Source.describe();
   }
 
   function renderAll() {

@@ -20,9 +20,10 @@
   </div>
 
   <p class="notice notice--standing" id="standing-notice">
-    This service reports document readiness only. It does not decide eligibility, and nothing
-    on this screen means approved, denied, or ineligible. A qualified housing professional
-    makes that determination.
+    We get your file to the person who decides, complete the first time you hand it over.
+    What we cannot tell you is the outcome — and no software can, because that decision
+    needs checks that are not in these documents. Nothing on this screen means approved,
+    denied, or ineligible; a qualified housing professional decides that.
   </p>
 
   <div class="header-controls">
@@ -55,9 +56,12 @@
     <!-- ── landing ──────────────────────────────────────────────────────────────── -->
     <section class="screen" id="screen-start" aria-labelledby="h-start">
       <h1 id="h-start" tabindex="-1">Get your housing documents ready for a person to review</h1>
-      <p class="lede">RealDoor reads the documents for one household, shows you where on the page
-      every value came from, and tells you what is still missing or out of date. It does not decide
-      whether anyone qualifies for anything — a housing professional does that.</p>
+      <p class="lede">Hand your file over once, with nothing missing. RealDoor reads the documents
+      for one household, shows you where on the page every value came from, and tells you what is
+      still missing or out of date — so the person who reads it is not sending it back to you for a
+      paper you could have brought the first time. What we cannot tell you is the outcome, and no
+      software can: that decision needs income, household and status checks that are not in these
+      documents. A housing professional makes it.</p>
 
       <!-- The household picker and the data-source line start here, under the H1, rather than
            in the header: a judge landing on the page should read the heading first, not a
@@ -182,6 +186,41 @@
         </ul>
       </div>
 
+      <!-- Sentences that used to sit on the renter's screens. They explain why the product is
+           built the way it is, which is a question a judge asks and a renter never does; on the
+           six steps they were noise. Moved here, not deleted: every claim below was on the
+           renter's screen before and is still on record. -->
+      <div class="summary-box" role="region" aria-labelledby="design-heading">
+        <h2 id="design-heading">Why the screens are worded the way they are</h2>
+        <p><strong>The open-questions rail is always visible and never folded away.</strong> A
+        system that knows something and does not say it is the failure this product exists to
+        prevent, so the things we are unsure about get a permanent rail rather than a disclosure
+        the renter has to think to open.</p>
+        <p><strong>An empty list means nothing was withheld, not that nothing was checked.</strong>
+        When a household's abstentions list comes back empty, that is a measured result — every
+        value needed was read from a document and every required item is accounted for — and not
+        the absence of a measurement.</p>
+        <p><strong>We say what we cannot do, and why we cannot do it.</strong> The service reports
+        readiness and never eligibility. That is not a decision we are holding back: an eligibility
+        determination needs third-party income verification, household-composition proof and status
+        checks that do not exist in a document set, so no software can produce one from this input.
+        What we can do is make the handoff to the person who does decide complete the first time.
+        Getting a file there sooner is not the same as getting a better answer out of it, and we do
+        not claim the second.</p>
+      </div>
+
+      <div class="summary-box" role="region" aria-labelledby="data-heading">
+        <h2 id="data-heading">The data behind this demo</h2>
+        <p>The households in the picker are synthetic. The renter's screens call this an example
+        household with sample documents, which is what it is; the technical version is that this
+        build ships <code>ui/dist/fixtures.js</code>, captured from a real run of the same pipeline
+        that serves the live API, so the offline page shows genuine extraction output with no
+        server and no network behind it.</p>
+        <p>The data source in use is named under the household picker on every screen. If a server
+        is running and you want the offline fixtures instead, add <code>?fixtures</code> to the
+        URL.</p>
+      </div>
+
       <h2 id="controls-heading">The controls, demonstrated live</h2>
       <div id="controls-body"></div>
 
@@ -197,8 +236,8 @@
 
   <aside class="open-questions" aria-labelledby="open-questions-heading">
     <h2 id="open-questions-heading">What this system is unsure about</h2>
-    <p class="aside-note">Always visible, never folded away. A system that knows something and does
-    not say it is the failure this product exists to prevent.</p>
+    <p class="aside-note">Anything we could not read, or could not be sure of, is listed here — on
+    every screen, whichever step you are on.</p>
     <div id="open-questions-body"></div>
   </aside>
 </div>
@@ -215,9 +254,7 @@
   can promise structurally is narrower and harder: no document, no extracted field and no household
   record is ever part of that request. Before your sentence is sent we replace the identifier shapes
   we can recognise, such as an email address, a phone number or a street address. We cannot
-  recognise all of them, so a name you type is sent as you typed it. The data
-  source is named at the top of the page, and you can force the offline one by adding
-  <code>?fixtures</code> to the URL.</p>
+  recognise all of them, so a name you type is sent as you typed it.</p>
 </footer>
 
 <!-- Loaded before app.js so its observer is watching before the first render. A plain
