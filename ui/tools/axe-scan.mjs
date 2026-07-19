@@ -123,6 +123,10 @@ for (const origin of ORIGINS) {
   });
 
   await page.goto(origin.url);
+
+  // Step 1 opens with nothing loaded now; one click opens the prepared example.
+  await page.locator("#example-open button").waitFor({ timeout: 30000 });
+  await page.locator("#example-open button").click();
   await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);
 
   const results = [];

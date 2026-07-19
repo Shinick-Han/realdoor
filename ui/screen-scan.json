@@ -10,7 +10,7 @@
  },
  "page": "ui/dist/index.html",
  "origin": "file:// (offline, bundled fixtures — the state the submitted build opens in)",
- "generated_at": "2026-07-19T10:34:17.549Z",
+ "generated_at": "2026-07-19T11:49:16.712Z",
  "households_walked": [
   "HH-001",
   "HH-004",
@@ -35,7 +35,7 @@
     {
      "step": "step1-documents",
      "visible_identifiers": 1,
-     "household_ids_named": 2,
+     "household_ids_named": 3,
      "offenders": [
       {
        "pattern": "rule_id",
@@ -47,19 +47,19 @@
     {
      "step": "step2-correct",
      "visible_identifiers": 0,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": []
     },
     {
      "step": "step3-ask",
      "visible_identifiers": 0,
-     "household_ids_named": 3,
+     "household_ids_named": 4,
      "offenders": []
     },
     {
      "step": "step4-calculation",
      "visible_identifiers": 5,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": [
       {
        "pattern": "rule_id",
@@ -91,13 +91,13 @@
     {
      "step": "step5-checklist",
      "visible_identifiers": 0,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": []
     },
     {
      "step": "step6-check-and-packet",
      "visible_identifiers": 1,
-     "household_ids_named": 1,
+     "household_ids_named": 2,
      "offenders": [
       {
        "pattern": "document_id",
@@ -128,19 +128,19 @@
     {
      "step": "step2-correct",
      "visible_identifiers": 0,
-     "household_ids_named": 3,
+     "household_ids_named": 4,
      "offenders": []
     },
     {
      "step": "step3-ask",
      "visible_identifiers": 0,
-     "household_ids_named": 8,
+     "household_ids_named": 9,
      "offenders": []
     },
     {
      "step": "step4-calculation",
      "visible_identifiers": 7,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": [
       {
        "pattern": "rule_id",
@@ -182,13 +182,13 @@
     {
      "step": "step5-checklist",
      "visible_identifiers": 0,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": []
     },
     {
      "step": "step6-check-and-packet",
      "visible_identifiers": 0,
-     "household_ids_named": 1,
+     "household_ids_named": 2,
      "offenders": []
     }
    ]
@@ -213,19 +213,19 @@
     {
      "step": "step2-correct",
      "visible_identifiers": 0,
-     "household_ids_named": 3,
+     "household_ids_named": 4,
      "offenders": []
     },
     {
      "step": "step3-ask",
      "visible_identifiers": 0,
-     "household_ids_named": 8,
+     "household_ids_named": 9,
      "offenders": []
     },
     {
      "step": "step4-calculation",
      "visible_identifiers": 5,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": [
       {
        "pattern": "rule_id",
@@ -257,13 +257,13 @@
     {
      "step": "step5-checklist",
      "visible_identifiers": 0,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": []
     },
     {
      "step": "step6-check-and-packet",
      "visible_identifiers": 0,
-     "household_ids_named": 1,
+     "household_ids_named": 2,
      "offenders": []
     }
    ]

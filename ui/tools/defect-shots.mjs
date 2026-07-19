@@ -32,6 +32,12 @@ const next = async () => { await page.locator("#step-next").click(); await page.
 const say = (msg) => console.log("   " + msg);
 
 await page.goto(`${base}/?live`);
+
+/* Step 1 now opens with nothing loaded: upload is the front door and the six prepared
+ * households are a secondary offer on the same screen. This walk is about the prepared
+ * pack, so it takes the one click a judge takes to open it. */
+await page.locator("#example-open button").waitFor({ timeout: 30000 });
+await page.locator("#example-open button").click();
 await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0, { timeout: 20000 });
 await page.selectOption("#household-select", "HH-004");
 await page.waitForFunction(() => window.REALDOOR_LAST_REPORT &&
