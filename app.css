@@ -197,6 +197,23 @@ main:focus { outline: none; }
   max-width: 24ch;
   margin-bottom: .5rem;
 }
+/* ── the question box, under every screen ─────────────────────────────
+   Same panel as a .screen — paper, 1px line, same radius and padding — because it is a
+   sibling of the step, not a new kind of thing. The one difference is a 4px accent rule
+   along the top, which is the page's existing way of saying "this belongs to the whole
+   walkthrough rather than to the step above it" (the open-questions rail does the same
+   with a warn-coloured border). No new colour, no new shape, no new component. */
+.ask-anywhere {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1.2rem clamp(.8rem, 2vw, 1.6rem) 1.4rem;
+  margin-top: 1rem;
+}
+.ask-anywhere h2 { font-size: 1.3rem; margin-top: 0; }
+.ask-anywhere > .aside-note { max-width: 72ch; }
+
 .screen h1:focus { outline: none; }
 .screen h1:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .screen h2 { font-size: 1.3rem; margin-top: 1.8rem; }
