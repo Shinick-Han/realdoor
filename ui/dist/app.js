@@ -1081,10 +1081,31 @@
       })
     ));
 
+    /* The native file control draws its own button text, and it draws it in the browser's
+     * UI language -- so a judge running a Korean Chrome saw "파일 선택" sitting inside our
+     * English screen, and no stylesheet or translation layer of ours could reach it. So the
+     * input is moved off-screen with .visually-hidden (which keeps it focusable and in tab
+     * order -- display:none would take the keyboard route away) and a <label for> is drawn
+     * as the button instead. The label needs no click handler: activating a label natively
+     * opens the input's file dialog, from mouse and from keyboard alike.
+     *
+     * Two things the native control was doing for us now have to be done by hand: the focus
+     * ring (moved onto the label in CSS, since the input itself is invisible) and the name
+     * of the chosen file, which is written below. */
+    var fileName = h("span", {
+      class: "file-name", id: "upload-file-name", text: "No file chosen"
+    });
+
     var fileInput = h("input", {
       type: "file", id: "upload-file", accept: "application/pdf",
+      class: "visually-hidden file-input",
       disabled: Source.live ? null : true,
-      "aria-describedby": "upload-file-hint"
+      "aria-describedby": "upload-file-hint",
+      onchange: function (event) {
+        var picked = event.target.files && event.target.files[0];
+        fileName.textContent = picked ? picked.name : "No file chosen";
+        announce(picked ? "Chosen file: " + picked.name : "No file chosen");
+      }
     });
 
     var submit = h("button", {
@@ -1111,8 +1132,12 @@
         })
       ]),
       h("p", { class: "upload-field" }, [
-        h("label", { for: "upload-file", text: "PDF file" }),
+        /* Exactly one <label for="upload-file">, and it is the visible button: a second one
+         * would give the input two labels, which reads as a run-on name and is a defect axe
+         * names outright (form-field-multiple-labels). */
         fileInput,
+        h("label", { for: "upload-file", class: "file-button", text: "Choose a PDF" }),
+        fileName,
         h("span", {
           class: "hint", id: "upload-file-hint",
           text: "PDF only, up to 10 MB. A scanned page is fine — if there is no text in the " +
