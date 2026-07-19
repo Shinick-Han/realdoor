@@ -26,14 +26,17 @@
   </p>
 
   <div class="header-controls">
-    <div class="household-picker">
-      <label for="household-select">Household</label>
-      <select id="household-select"></select>
-      <p class="mode-line" id="mode-line">Data source: loading…</p>
-    </div>
     <nav class="meta-nav" aria-label="About this service">
       <button type="button" class="meta-link" id="go-how">How this works, and how we tested it</button>
     </nav>
+
+    <!-- Temporary reading aid for the product owner, off by default. English is the canonical
+         text and the thing being measured; Korean is only ever added on top of it, never in
+         place of it. The visible label stays bilingual so it is readable in either state, and
+         the hidden span carries the current state in whichever language is on show. -->
+    <p class="lang-switch">
+      <button type="button" class="meta-link" id="lang-toggle" aria-pressed="false"><span lang="ko">한국어</span> / <span lang="en">English</span><span class="visually-hidden" id="lang-toggle-state" lang="en"> — currently English, activate for Korean</span></button>
+    </p>
   </div>
 </header>
 
@@ -55,6 +58,16 @@
       <p class="lede">RealDoor reads the documents for one household, shows you where on the page
       every value came from, and tells you what is still missing or out of date. It does not decide
       whether anyone qualifies for anything — a housing professional does that.</p>
+
+      <!-- The household picker and the data-source line start here, under the H1, rather than
+           in the header: a judge landing on the page should read the heading first, not a
+           control. app.js moves this same element into whichever screen is on show, so it
+           stays reachable from every step without ever sitting above the heading. -->
+      <div class="household-picker">
+        <label for="household-select">Household</label>
+        <select id="household-select"></select>
+        <p class="mode-line" id="mode-line">Data source: loading…</p>
+      </div>
 
       <div class="summary-box" role="region" aria-labelledby="trust-heading">
         <h2 id="trust-heading">Before you start</h2>
@@ -83,7 +96,7 @@
     <section class="screen" id="screen-2" aria-labelledby="h-2" hidden>
       <p class="step-caption" id="cap-2">Step 2 of 6</p>
       <h1 id="h-2" tabindex="-1">Correct a value we read wrong</h1>
-      <p class="lede">Change a value the system read, and watch the numbers underneath it move — or
+      <p class="lede" data-i18n-block="lede-correct">Change a value the system read, and watch the numbers underneath it move — or
       watch the system explain why your correction was <em>not</em> used.</p>
       <div id="correct-body"></div>
       <div class="step-nav" id="nav-2"></div>
@@ -189,12 +202,16 @@
 <footer class="site-footer">
   <h2 class="visually-hidden">About this build</h2>
   <p id="footer-meta"></p>
-  <p>No external fonts, scripts, images, or analytics. Every request this page makes goes to the
+  <p data-i18n-block="footer-privacy">No external fonts, scripts, images, or analytics. Every request this page makes goes to the
   address in the bar above it and nowhere else; opened as a file, it makes none at all. The data
   source is named at the top of the page, and you can force the offline one by adding
   <code>?fixtures</code> to the URL.</p>
 </footer>
 
+<!-- Loaded before app.js so its observer is watching before the first render. A plain
+     <script>, not a fetch of a JSON file: fetch is blocked over file://, and this page
+     must keep working when a judge opens it straight off disk. -->
+<script src="i18n.js"></script>
 <script src="fixtures.js"></script>
 <script src="app.js"></script>
 </body>

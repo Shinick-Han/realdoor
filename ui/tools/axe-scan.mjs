@@ -45,15 +45,30 @@ const staticServer = createServer((request, response) => {
 await new Promise((done) => staticServer.listen(0, "127.0.0.1", done));
 const httpBase = `http://127.0.0.1:${staticServer.address().port}/index.html`;
 
+/* The Korean origins exist because the language layer changes two things axe can judge:
+ * <html lang>, which SC 3.1.1 requires to follow the language actually on screen, and the
+ * rendered text itself, which changes every contrast and name-from-content calculation.
+ * Scanning only the English build would leave the Korean build unmeasured while it was
+ * still switchable in the UI. English remains the default and the canonical text; ?lang=ko
+ * is the explicit opt-in, which is exactly how a user reaches it. */
 const ORIGINS = [
   { id: "file", url: pathToFileURL(resolve(distDir, "index.html")).href },
-  { id: "http", url: httpBase }
+  { id: "http", url: httpBase },
+  { id: "file-ko", url: pathToFileURL(resolve(distDir, "index.html")).href + "?lang=ko" },
+  { id: "http-ko", url: httpBase + "?lang=ko" }
 ];
 
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 /** Each screen in flow order: how the user arrives, plus any interaction that must
- *  happen before scanning. `enter` uses only controls that exist on the previous screen. */
+ *  happen before scanning. `enter` uses only controls that exist on the previous screen.
+ *
+ *  Controls are addressed structurally (id, landmark, position) rather than by their
+ *  visible English text wherever the language layer can translate that text. A selector
+ *  that only matches in one language would silently skip the setup on the other origin
+ *  and scan a screen in the wrong state -- which reads as a pass. The one exception is the
+ *  recorded question below: those strings come from the challenge pack and are deliberately
+ *  never translated, so matching them by name stays correct in both languages. */
 const SCREENS = [
   { id: "landing", enter: async () => {} },
 
@@ -66,7 +81,7 @@ const SCREENS = [
     setUp: async (page) => {
       // load the rejected-correction scenario: the case that must be prominent, and the
       // one that puts an error summary above the H1 with an inline item to match it
-      await page.getByRole("button", { name: /Gross pay on the newer stub/ }).click();
+      await page.locator("#correct-body .button-row").first().locator("button").nth(1).click();
       await page.locator("#correct-apply").click();
       await page.locator("#correction-outcome-heading").waitFor();
     } },
@@ -85,10 +100,10 @@ const SCREENS = [
   // the secondary route, reached in one click from wherever the user happens to be
   { id: "how-this-works", enter: async (page) => page.locator("#go-how").click(),
     setUp: async (page) => {
-      for (const button of await page.getByRole("button", { name: "Run this probe" }).all()) {
-        await button.click();
+      for (const index of [0, 1, 2]) {
+        await page.locator("#controls-body .card").nth(index).locator("button").first().click();
       }
-      await page.getByRole("button", { name: /Try to make the server return a decision/ }).click();
+      await page.locator("section[aria-labelledby='gate-h'] button").click();
       await page.locator("#gate-output .callout").waitFor();
     } }
 ];
@@ -151,7 +166,10 @@ for (const origin of ORIGINS) {
   axeVersion = await page.evaluate(() => window.axe.version);
   runs.push({
     origin: origin.id,
-    url: origin.id === "file" ? "file:// (offline, bundled fixtures)" : "http:// (as FastAPI serves ui/dist)",
+    url: (origin.id.startsWith("file")
+      ? "file:// (offline, bundled fixtures)"
+      : "http:// (as FastAPI serves ui/dist)") +
+      (origin.id.endsWith("-ko") ? ", ?lang=ko (Korean reading layer on, html lang=ko)" : ""),
     total_violations: results.reduce((sum, r) => sum + r.violations.length, 0),
     total_incomplete: results.reduce((sum, r) => sum + r.incomplete.length, 0),
     results
