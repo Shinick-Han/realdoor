@@ -14,7 +14,10 @@ Hack-Nation #6 — Challenge 3 (RealPage).
 
 ## Try it
 
-**Live:** https://shinick-han.github.io/realdoor/
+**Live:** https://shinick-realdoor.hf.space
+
+Uploading a document, asking a question in your own words, the output gate returning
+its own 500 — all of that needs the server, and that link is the server.
 
 Three things to do once it loads, **in this order** — step 2 is on the default household,
 so change the picker after it, not before:
