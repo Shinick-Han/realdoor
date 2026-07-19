@@ -1,0 +1,530 @@
+{
+ "tool": "screen-scan",
+ "by_step": {
+  "step1-documents": 21,
+  "step2-correct": 13,
+  "step3-ask": 0,
+  "step4-calculation": 37,
+  "step5-checklist": 0,
+  "step6-check-and-packet": 1
+ },
+ "page": "ui/dist/index.html",
+ "origin": "file:// (offline, bundled fixtures — the state the submitted build opens in)",
+ "generated_at": "2026-07-19T09:07:46.982Z",
+ "households_walked": [
+  "HH-001",
+  "HH-004",
+  "HH-005"
+ ],
+ "steps_per_household": 6,
+ "patterns": [
+  "HH-\\d{3}-D\\d{2}",
+  "CHK-[A-Z][A-Z-]+",
+  "CH-[A-Z]+-\\d+"
+ ],
+ "total_visible_identifiers": 72,
+ "plain_wording_gaps": [],
+ "page_errors": [],
+ "method_note": "Counts machine identifiers in text that is painted on the six renter steps, plus the always-visible open-questions rail, the error summary and the header. Text inside a collapsed <details> is not counted: it is one disclosure away by design, and every code and original message is still there. Household ids are counted separately and excluded from the total, because the header picker names the file being read.",
+ "results": [
+  {
+   "household_id": "HH-001",
+   "visible_identifiers": 24,
+   "plain_wording_gaps": [],
+   "screens": [
+    {
+     "step": "step1-documents",
+     "visible_identifiers": 7,
+     "household_ids_named": 6,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D01",
+       "context": "HH-001-D01 · 2026-07-10 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D02",
+       "context": "HH-001-D02 · 2026-06-27 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D03",
+       "context": "HH-001-D03 · 2026-06-20 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D04",
+       "context": "HH-001-D04 · 2026-07-06 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D01",
+       "context": "application summary — HH-001-D01"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-READINESS-001",
+       "context": "CH-READINESS-001"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D01",
+       "context": "Extracted values on HH-001-D01. Choose a field name to highlight its box on the"
+      }
+     ]
+    },
+    {
+     "step": "step2-correct",
+     "visible_identifiers": 5,
+     "household_ids_named": 6,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D01",
+       "context": "HH-001-D01 — application summary"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D02",
+       "context": "HH-001-D02 — pay stub"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D03",
+       "context": "HH-001-D03 — pay stub"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D04",
+       "context": "HH-001-D04 — employment letter"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D02",
+       "context": "gross_pay = 2,500 on HH-001-D02"
+      }
+     ]
+    },
+    {
+     "step": "step3-ask",
+     "visible_identifiers": 0,
+     "household_ids_named": 10,
+     "offenders": []
+    },
+    {
+     "step": "step4-calculation",
+     "visible_identifiers": 11,
+     "household_ids_named": 6,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D03",
+       "context": "HH-001-D03"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D03",
+       "context": "HH-001-D03"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D04",
+       "context": "HH-001-D04"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D03",
+       "context": "HH-001-D03"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D03",
+       "context": "HH-001-D03"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D04",
+       "context": "HH-001-D04"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-READINESS-001",
+       "context": "CH-READINESS-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-DECISION-001",
+       "context": "CH-DECISION-001"
+      }
+     ]
+    },
+    {
+     "step": "step5-checklist",
+     "visible_identifiers": 0,
+     "household_ids_named": 6,
+     "offenders": []
+    },
+    {
+     "step": "step6-check-and-packet",
+     "visible_identifiers": 1,
+     "household_ids_named": 7,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-001-D02",
+       "context": "gross_pay = 2,500 on HH-001-D02 — recorded, but not used in the calculation"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "household_id": "HH-004",
+   "visible_identifiers": 26,
+   "plain_wording_gaps": [],
+   "screens": [
+    {
+     "step": "step1-documents",
+     "visible_identifiers": 7,
+     "household_ids_named": 6,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D01",
+       "context": "HH-004-D01 · 2026-07-10 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D02",
+       "context": "HH-004-D02 · 2026-06-27 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D03",
+       "context": "HH-004-D03 · 2026-06-20 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D04",
+       "context": "HH-004-D04 · 2026-06 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D01",
+       "context": "application summary — HH-004-D01"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-READINESS-001",
+       "context": "CH-READINESS-001"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D01",
+       "context": "Extracted values on HH-004-D01. Choose a field name to highlight its box on the"
+      }
+     ]
+    },
+    {
+     "step": "step2-correct",
+     "visible_identifiers": 4,
+     "household_ids_named": 9,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D01",
+       "context": "HH-004-D01 — application summary"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D02",
+       "context": "HH-004-D02 — pay stub"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D03",
+       "context": "HH-004-D03 — pay stub"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D04",
+       "context": "HH-004-D04 — gig statement"
+      }
+     ]
+    },
+    {
+     "step": "step3-ask",
+     "visible_identifiers": 0,
+     "household_ids_named": 14,
+     "offenders": []
+    },
+    {
+     "step": "step4-calculation",
+     "visible_identifiers": 15,
+     "household_ids_named": 6,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D02",
+       "context": "HH-004-D02"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D02",
+       "context": "HH-004-D02"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D04",
+       "context": "HH-004-D04"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D04",
+       "context": "HH-004-D04"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D02",
+       "context": "HH-004-D02"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D02",
+       "context": "HH-004-D02"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D04",
+       "context": "HH-004-D04"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-004-D04",
+       "context": "HH-004-D04"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-READINESS-001",
+       "context": "CH-READINESS-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-DECISION-001",
+       "context": "CH-DECISION-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-SAFETY-001",
+       "context": "CH-SAFETY-001"
+      }
+     ]
+    },
+    {
+     "step": "step5-checklist",
+     "visible_identifiers": 0,
+     "household_ids_named": 6,
+     "offenders": []
+    },
+    {
+     "step": "step6-check-and-packet",
+     "visible_identifiers": 0,
+     "household_ids_named": 7,
+     "offenders": []
+    }
+   ]
+  },
+  {
+   "household_id": "HH-005",
+   "visible_identifiers": 22,
+   "plain_wording_gaps": [],
+   "screens": [
+    {
+     "step": "step1-documents",
+     "visible_identifiers": 7,
+     "household_ids_named": 6,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D01",
+       "context": "HH-005-D01 · 2026-07-10 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D02",
+       "context": "HH-005-D02 · 2026-06-27 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D03",
+       "context": "HH-005-D03 · 2026-06-20 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D04",
+       "context": "HH-005-D04 · 2026-04-14 ·"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D01",
+       "context": "application summary — HH-005-D01"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-READINESS-001",
+       "context": "CH-READINESS-001"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D01",
+       "context": "Extracted values on HH-005-D01. Choose a field name to highlight its box on the"
+      }
+     ]
+    },
+    {
+     "step": "step2-correct",
+     "visible_identifiers": 4,
+     "household_ids_named": 9,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D01",
+       "context": "HH-005-D01 — application summary"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D02",
+       "context": "HH-005-D02 — pay stub"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D03",
+       "context": "HH-005-D03 — pay stub"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D04",
+       "context": "HH-005-D04 — employment letter"
+      }
+     ]
+    },
+    {
+     "step": "step3-ask",
+     "visible_identifiers": 0,
+     "household_ids_named": 14,
+     "offenders": []
+    },
+    {
+     "step": "step4-calculation",
+     "visible_identifiers": 11,
+     "household_ids_named": 6,
+     "offenders": [
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D02",
+       "context": "HH-005-D02"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D02",
+       "context": "HH-005-D02"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D04",
+       "context": "HH-005-D04"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D02",
+       "context": "HH-005-D02"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D02",
+       "context": "HH-005-D02"
+      },
+      {
+       "pattern": "document_id",
+       "identifier": "HH-005-D04",
+       "context": "HH-005-D04"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-READINESS-001",
+       "context": "CH-READINESS-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-INCOME-001",
+       "context": "CH-INCOME-001"
+      },
+      {
+       "pattern": "rule_id",
+       "identifier": "CH-DECISION-001",
+       "context": "CH-DECISION-001"
+      }
+     ]
+    },
+    {
+     "step": "step5-checklist",
+     "visible_identifiers": 0,
+     "household_ids_named": 6,
+     "offenders": []
+    },
+    {
+     "step": "step6-check-and-packet",
+     "visible_identifiers": 0,
+     "household_ids_named": 7,
+     "offenders": []
+    }
+   ]
+  }
+ ]
+}

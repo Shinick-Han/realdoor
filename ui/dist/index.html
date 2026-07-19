@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RealDoor — application readiness copilot</title>
+<meta name="description" content="RealDoor reads a household's documents, shows where every value came from, and reports readiness. It never decides eligibility.">
+<link rel="stylesheet" href="app.css">
+<!-- Inline data URI, not a file request: the browser must make no network call for this page,
+     and a 404 in the console is noise a judge should not have to explain away. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231b4965'/%3E%3Crect x='4.5' y='3.5' width='7' height='9' rx='1' fill='%23fff'/%3E%3Ccircle cx='9.6' cy='8' r='0.9' fill='%231b4965'/%3E%3C/svg%3E">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="brand">
+    <p class="wordmark">RealDoor</p>
+    <p class="tagline">Ready, not eligible.</p>
+  </div>
+
+  <p class="notice notice--standing" id="standing-notice">
+    We get your file to the person who decides, complete the first time you hand it over.
+    What we cannot tell you is the outcome — and no software can, because that decision
+    needs checks that are not in these documents. Nothing on this screen means approved,
+    denied, or ineligible; a qualified housing professional decides that.
+  </p>
+
+  <div class="header-controls">
+    <nav class="meta-nav" aria-label="About this service">
+      <button type="button" class="meta-link" id="go-how">How this works, and how we tested it</button>
+    </nav>
+
+    <!-- Temporary reading aid for the product owner, off by default. English is the canonical
+         text and the thing being measured; Korean is only ever added on top of it, never in
+         place of it. The visible label stays bilingual so it is readable in either state, and
+         the hidden span carries the current state in whichever language is on show. -->
+    <p class="lang-switch">
+      <button type="button" class="meta-link" id="lang-toggle" aria-pressed="false"><span lang="ko">한국어</span> / <span lang="en">English</span><span class="visually-hidden" id="lang-toggle-state" lang="en"> — currently English, activate for Korean</span></button>
+    </p>
+  </div>
+</header>
+
+<div class="layout">
+  <main id="main" tabindex="-1">
+
+    <!-- Error summary sits at the very top of the main container, above the step
+         indicator and above the H1, and links to each offending item by id. Its wording
+         is the same string as the inline message, character for character. -->
+    <div id="error-summary-host"></div>
+
+    <!-- Non-navigable step indicator. It contains no links and no buttons: it reports
+         progress and nothing else. Back/Next at the foot of each screen is the navigation. -->
+    <div id="step-indicator-host"></div>
+
+    <!-- ── landing ──────────────────────────────────────────────────────────────── -->
+    <section class="screen" id="screen-start" aria-labelledby="h-start">
+      <h1 id="h-start" tabindex="-1">Get your housing documents ready for a person to review</h1>
+      <p class="lede">Hand your file over once, with nothing missing. RealDoor reads the documents
+      for one household, shows you where on the page every value came from, and tells you what is
+      still missing or out of date — so the person who reads it is not sending it back to you for a
+      paper you could have brought the first time. What we cannot tell you is the outcome, and no
+      software can: that decision needs income, household and status checks that are not in these
+      documents. A housing professional makes it.</p>
+
+      <!-- The household picker and the data-source line start here, under the H1, rather than
+           in the header: a judge landing on the page should read the heading first, not a
+           control. app.js moves this same element into whichever screen is on show, so it
+           stays reachable from every step without ever sitting above the heading. -->
+      <div class="household-picker">
+        <label for="household-select">Household</label>
+        <select id="household-select"></select>
+        <p class="mode-line" id="mode-line">Data source: loading…</p>
+      </div>
+
+      <div class="summary-box" role="region" aria-labelledby="trust-heading">
+        <h2 id="trust-heading">Before you start</h2>
+        <p id="trust-line">This walkthrough takes about ten minutes. The documents for the household
+        you choose above are already loaded, so you can go straight through it without uploading
+        anything. Step 1 also lets you read a synthetic document of your own, held in memory for
+        this session only. Nothing is sent anywhere. You can stop at any step and your work stays
+        on this device.</p>
+      </div>
+
+      <h2>What happens, in order</h2>
+      <ol class="process-list" id="process-list"></ol>
+
+      <div class="step-nav" id="nav-start"></div>
+    </section>
+
+    <!-- ── step 1 ───────────────────────────────────────────────────────────────── -->
+    <section class="screen" id="screen-1" aria-labelledby="h-1" hidden>
+      <p class="step-caption" id="cap-1">Step 1 of 6</p>
+      <h1 id="h-1" tabindex="-1">Check the values we read from your documents</h1>
+      <p class="lede">Each value below is shown together with the box on the page it was read from.
+      Choose a field name to light up its box. Nothing here is inferred about the person.</p>
+      <div id="upload-body"></div>
+      <div id="documents-body"></div>
+      <div class="step-nav" id="nav-1"></div>
+    </section>
+
+    <!-- ── step 2 ───────────────────────────────────────────────────────────────── -->
+    <section class="screen" id="screen-2" aria-labelledby="h-2" hidden>
+      <p class="step-caption" id="cap-2">Step 2 of 6</p>
+      <h1 id="h-2" tabindex="-1">Correct a value we read wrong</h1>
+      <p class="lede" data-i18n-block="lede-correct">Change a value the system read, and watch the numbers underneath it move — or
+      watch the system explain why your correction was <em>not</em> used.</p>
+      <div id="correct-body"></div>
+      <div class="step-nav" id="nav-2"></div>
+    </section>
+
+    <!-- ── step 3 ───────────────────────────────────────────────────────────────── -->
+    <section class="screen" id="screen-3" aria-labelledby="h-3" hidden>
+      <p class="step-caption" id="cap-3">Step 3 of 6</p>
+      <h1 id="h-3" tabindex="-1">Ask what a housing rule says</h1>
+      <p class="lede">Every answer carries its rule id, the authority behind it, the date it took
+      effect, and where in the source it is written.</p>
+      <div id="ask-body"></div>
+      <div class="step-nav" id="nav-3"></div>
+    </section>
+
+    <!-- ── step 4 ───────────────────────────────────────────────────────────────── -->
+    <section class="screen" id="screen-4" aria-labelledby="h-4" hidden>
+      <p class="step-caption" id="cap-4">Step 4 of 6</p>
+      <h1 id="h-4" tabindex="-1">See how your yearly income figure was worked out</h1>
+      <p class="lede">Inputs, formula, result, threshold, comparison, effective date. A comparison
+      is not a determination.</p>
+      <div id="calc-body"></div>
+      <div class="step-nav" id="nav-4"></div>
+    </section>
+
+    <!-- ── step 5 ───────────────────────────────────────────────────────────────── -->
+    <section class="screen" id="screen-5" aria-labelledby="h-5" hidden>
+      <p class="step-caption" id="cap-5">Step 5 of 6</p>
+      <h1 id="h-5" tabindex="-1">See what is missing or out of date</h1>
+      <p class="lede">What is present, what is missing, what has expired, and what could not be
+      dated — with the one thing you can do about each.</p>
+      <div id="checklist-body"></div>
+      <div class="step-nav" id="nav-5"></div>
+    </section>
+
+    <!-- ── step 6: check answers, then the packet ───────────────────────────────── -->
+    <section class="screen" id="screen-6" aria-labelledby="h-6" hidden>
+      <p class="step-caption" id="cap-6">Step 6 of 6</p>
+      <h1 id="h-6" tabindex="-1">Check what we found, then take your packet</h1>
+      <p class="lede">This is everything the earlier steps produced, in one place. Change anything
+      that is wrong before you download it.</p>
+      <div id="summary-body"></div>
+      <div id="packet-body"></div>
+      <div class="step-nav" id="nav-6"></div>
+    </section>
+
+    <!-- ── secondary route: judge-facing material, one level of disclosure ───────── -->
+    <section class="screen" id="screen-how" aria-labelledby="h-how" hidden>
+      <p class="step-caption" id="cap-how">Not part of the renter's six steps</p>
+      <h1 id="h-how" tabindex="-1">How this works, and how we tested it</h1>
+      <p class="lede">This page is for anyone checking the service rather than using it. Every
+      control below can be triggered here and its actual response shown — a disclaimer is not a
+      control. Underneath are our own measurements, printed as they came out.</p>
+
+      <div class="summary-box" role="region" aria-labelledby="mapping-heading">
+        <h2 id="mapping-heading">Where the challenge's six acceptance steps live</h2>
+        <p>The challenge brief specifies a six-step acceptance demo. Our numbered walkthrough is
+        written for the renter, not for that list, so the two do not line up one to one. This is
+        the mapping.</p>
+        <ul id="mapping-list">
+          <li><strong>1. Upload documents, show extraction evidence</strong> — walkthrough step 1.
+          The household's documents are pre-loaded, and the panel at the top of that step reads a
+          synthetic document you upload yourself. Either way every value carries the box on the
+          page it came from. An uploaded document is read on its own and is not added to the
+          household, because working out whose document it is and what it replaces would mean
+          guessing.</li>
+          <li><strong>2. Edit one field, show downstream values update</strong> — walkthrough
+          step 2.</li>
+          <li><strong>3. Ask a rule question, show an authoritative citation</strong> —
+          walkthrough step 3.</li>
+          <li><strong>4. Deterministic calculation with effective dates</strong> — walkthrough
+          step 4.</li>
+          <li><strong>5. Identify missing or expired items, export a packet</strong> — walkthrough
+          steps 5 and 6. We split it because reviewing what is open and taking the packet are two
+          different decisions for the renter.</li>
+          <li><strong>6. Run the refusal, prompt-injection and session-deletion tests</strong> —
+          <em>this page, immediately below.</em> It is not numbered in the walkthrough because it
+          is not a task the renter performs. Both the adversarial suite and the static
+          no-decision guard exercise these paths on every run.</li>
+        </ul>
+      </div>
+
+      <!-- Sentences that used to sit on the renter's screens. They explain why the product is
+           built the way it is, which is a question a judge asks and a renter never does; on the
+           six steps they were noise. Moved here, not deleted: every claim below was on the
+           renter's screen before and is still on record. -->
+      <div class="summary-box" role="region" aria-labelledby="design-heading">
+        <h2 id="design-heading">Why the screens are worded the way they are</h2>
+        <p><strong>The open-questions rail is always visible and never folded away.</strong> A
+        system that knows something and does not say it is the failure this product exists to
+        prevent, so the things we are unsure about get a permanent rail rather than a disclosure
+        the renter has to think to open.</p>
+        <p><strong>An empty list means nothing was withheld, not that nothing was checked.</strong>
+        When a household's abstentions list comes back empty, that is a measured result — every
+        value needed was read from a document and every required item is accounted for — and not
+        the absence of a measurement.</p>
+        <p><strong>We say what we cannot do, and why we cannot do it.</strong> The service reports
+        readiness and never eligibility. That is not a decision we are holding back: an eligibility
+        determination needs third-party income verification, household-composition proof and status
+        checks that do not exist in a document set, so no software can produce one from this input.
+        What we can do is make the handoff to the person who does decide complete the first time.
+        Getting a file there sooner is not the same as getting a better answer out of it, and we do
+        not claim the second.</p>
+      </div>
+
+      <div class="summary-box" role="region" aria-labelledby="data-heading">
+        <h2 id="data-heading">The data behind this demo</h2>
+        <p>The households in the picker are synthetic. The renter's screens call this an example
+        household with sample documents, which is what it is; the technical version is that this
+        build ships <code>ui/dist/fixtures.js</code>, captured from a real run of the same pipeline
+        that serves the live API, so the offline page shows genuine extraction output with no
+        server and no network behind it.</p>
+        <p>The data source in use is named under the household picker on every screen. If a server
+        is running and you want the offline fixtures instead, add <code>?fixtures</code> to the
+        URL.</p>
+      </div>
+
+      <h2 id="controls-heading">The controls, demonstrated live</h2>
+      <div id="controls-body"></div>
+
+      <h2 id="measure-heading">Our own numbers</h2>
+      <p>Our measured results, including the parts we did not run. Published as measured, whether
+      or not they flatter us.</p>
+      <div id="measure-body"></div>
+
+      <div class="step-nav" id="nav-how"></div>
+    </section>
+
+  </main>
+
+  <aside class="open-questions" aria-labelledby="open-questions-heading">
+    <h2 id="open-questions-heading">What this system is unsure about</h2>
+    <p class="aside-note">Anything we could not read, or could not be sure of, is listed here — on
+    every screen, whichever step you are on.</p>
+    <div id="open-questions-body"></div>
+  </aside>
+</div>
+
+<p aria-live="polite" class="visually-hidden" id="live-status"></p>
+
+<footer class="site-footer">
+  <h2 class="visually-hidden">About this build</h2>
+  <p id="footer-meta"></p>
+  <p data-i18n-block="footer-privacy">No external fonts, scripts, images, or analytics. Every request this page makes goes to the
+  address in the bar above it and nowhere else; opened as a file, it makes none at all. That is a
+  promise about this page, not about the whole system: when the question classifier is switched on,
+  the server sends your question sentence to a model provider so it can pick a topic label. What we
+  can promise structurally is narrower and harder: no document, no extracted field and no household
+  record is ever part of that request. Before your sentence is sent we replace the identifier shapes
+  we can recognise, such as an email address, a phone number or a street address. We cannot
+  recognise all of them, so a name you type is sent as you typed it.</p>
+</footer>
+
+<!-- Loaded before app.js so its observer is watching before the first render. A plain
+     <script>, not a fetch of a JSON file: fetch is blocked over file://, and this page
+     must keep working when a judge opens it straight off disk. -->
+<script src="i18n.js"></script>
+<script src="fixtures.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

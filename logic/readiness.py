@@ -1,0 +1,377 @@
+"""READY_TO_REVIEW vs NEEDS_REVIEW under CH-READINESS-001. Pure functions.
+
+    "Return READY_TO_REVIEW only when required evidence is present, current under the
+     challenge's 60-day convention, internally consistent, and traceable to page-level
+     source boxes. Otherwise return NEEDS_REVIEW with reasons."
+
+That is four conditions, so this module runs four checks, each in its own function, each
+producing its own reason string when it fails. They are not collapsed into one boolean,
+because "NEEDS_REVIEW" with no reason is the same as no answer at all -- the renter
+cannot act on it and the reviewer cannot check it.
+
+    present   -> _check_presence
+    current   -> _check_currency
+    consistent-> _check_consistency
+    traceable -> _check_traceability
+
+What this module never does: emit an eligibility judgement. ``NEEDS_REVIEW`` means our
+packet is incomplete, not that anything is wrong with the renter. ``READY_TO_REVIEW``
+means a human can now start, not that they will say yes. The distinction is the entire
+product.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Sequence
+
+from logic import abstain, checklist as checklist_mod
+from logic.abstain import Abstention
+from logic.checklist import ChecklistItem
+from logic.constants import (
+    HUMAN_DECISION_NOTICE,
+    READINESS_STATUSES,
+    REFERENCE_DATE,
+    RULE_IDS,
+)
+from logic.household import Household, load_rule_corpus, read_document_date
+from logic.income import AnnualizedIncome, annualize_household
+from logic.threshold import ComparisonResult, compare
+
+READY = "READY_TO_REVIEW"
+NEEDS_REVIEW = "NEEDS_REVIEW"
+RULE_ID = "CH-READINESS-001"
+
+#: The four CH-READINESS-001 conditions, in the rule's own order.
+CHECKS = ("present", "current", "consistent", "traceable")
+
+#: Our reason codes, mapped onto the pack's own vocabulary where the pack has one
+#: (pack/evaluation/application_checklists.json `expected_review_reasons`). Codes are
+#: carried as VALUES only, never as JSON keys.
+PACK_CODE_BY_TRIGGER = {
+    "pay_stub_totals_conflict": "PAY_STUB_TOTAL_CONFLICT",
+    "pay_stub_totals_irreconcilable": "PAY_STUB_TOTAL_CONFLICT",
+    "self_reported_income_uncorroborated": "GIG_INCOME_UNCORROBORATED",
+}
+
+GENERIC_CODE_BY_TRIGGER = {
+    "corrected_value_not_used": "RENTER_CORRECTION_NOT_USED",
+    "corrected_value_is_the_recurring_base": "RENTER_CORRECTION_IN_USE",
+    "required_document_missing": "REQUIRED_DOCUMENT_MISSING",
+    "document_not_current": "DOCUMENT_NOT_CURRENT",
+    "document_date_month_precision": "DOCUMENT_UNDATABLE",
+    "document_unreadable": "DOCUMENT_UNREADABLE",
+    "value_not_traceable": "VALUE_NOT_TRACEABLE",
+}
+
+
+@dataclass(frozen=True)
+class ReadinessReason:
+    """One named gap. Always about the packet, never about the person."""
+
+    check: str
+    code: str
+    message: str
+    rule_id: str = RULE_ID
+
+    def __post_init__(self) -> None:
+        if self.check not in CHECKS:
+            raise ValueError(f"{self.check!r} is not one of the four CH-READINESS-001 checks")
+        if self.rule_id not in RULE_IDS:
+            raise ValueError(f"{self.rule_id!r} is not a pack rule id")
+
+    def to_dict(self) -> dict[str, str]:
+        return {"check": self.check, "code": self.code, "message": self.message,
+                "rule_id": self.rule_id}
+
+
+@dataclass(frozen=True)
+class ReadinessAssessment:
+    readiness_status: str
+    reasons: tuple[ReadinessReason, ...]
+    checklist: tuple[ChecklistItem, ...]
+    income: AnnualizedIncome
+    comparison: ComparisonResult
+    abstentions: tuple[Abstention, ...]
+
+    @property
+    def codes(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(r.code for r in self.reasons))
+
+    def reasons_for(self, check: str) -> tuple[ReadinessReason, ...]:
+        return tuple(r for r in self.reasons if r.check == check)
+
+
+def _code_for(item: Abstention, subject: str = "") -> str:
+    if item.trigger in PACK_CODE_BY_TRIGGER:
+        return PACK_CODE_BY_TRIGGER[item.trigger]
+    # The pack names one specific expired document; use its vocabulary when it applies.
+    if item.trigger == "document_not_current" and "EMPLOYMENT-LETTER" in item.about:
+        return "EMPLOYMENT_LETTER_EXPIRED"
+    if item.trigger == "required_document_missing" and "GIG-INCOME-CORROBORATION" in item.about:
+        return "GIG_INCOME_UNCORROBORATED"
+    return GENERIC_CODE_BY_TRIGGER.get(item.trigger, item.trigger.upper())
+
+
+# =====================================================================================
+# the four checks
+# =====================================================================================
+
+
+def _check_presence(items: Sequence[ChecklistItem]) -> list[ReadinessReason]:
+    """Condition 1: required evidence is PRESENT.
+
+    A required document that is missing but whose evidentiary job is already done by
+    other present documents is reported on the checklist and does not raise a reason
+    here -- see constants.CONVENTIONS['REDUNDANT_REQUIRED_DOCUMENT_DOES_NOT_BLOCK_READINESS'],
+    which exists because the pack's own checklist demands it.
+    """
+    reasons: list[ReadinessReason] = []
+    for item in items:
+        if not item.required:
+            continue
+        # A document we cannot read at all presents no evidence, whatever the file
+        # listing says. It fails presence, not currency: there is nothing on the page we
+        # could date, reconcile, or point a reviewer at.
+        if item.state == "unreadable":
+            for problem in item.abstentions:
+                if problem.trigger == "document_unreadable":
+                    reasons.append(ReadinessReason(
+                        "present", _code_for(problem, item.item_id),
+                        f"{item.label}: {item.detail}",
+                    ))
+            continue
+        if item.state != "missing" or item.substituted:
+            continue
+        for problem in item.abstentions:
+            if problem.trigger == "required_document_missing":
+                reasons.append(ReadinessReason(
+                    "present", _code_for(problem, item.item_id),
+                    f"{item.label}: {item.detail}",
+                ))
+    return reasons
+
+
+def _check_currency(items: Sequence[ChecklistItem]) -> list[ReadinessReason]:
+    """Condition 2: evidence is CURRENT under the 60-day convention.
+
+    'undatable' fails this check too: a document whose date lacks day precision cannot
+    be shown to be current, and we will not invent the day that would settle it.
+    """
+    reasons: list[ReadinessReason] = []
+    for item in items:
+        if item.state not in ("expired", "undatable"):
+            continue
+        for problem in item.abstentions:
+            if problem.trigger in ("document_not_current", "document_date_month_precision"):
+                reasons.append(ReadinessReason(
+                    "current", _code_for(problem, item.item_id),
+                    f"{item.label}: {item.detail}",
+                ))
+    return reasons
+
+
+def _check_consistency(house: Household, income: AnnualizedIncome) -> list[ReadinessReason]:
+    """Condition 3: evidence is INTERNALLY CONSISTENT.
+
+    Two families of inconsistency are checked: numbers that disagree across documents
+    (pay stub totals, and an employment letter that contradicts the stubs), and the
+    documents not agreeing on whose file this is.
+    """
+    reasons: list[ReadinessReason] = []
+
+    # A correction the engine declined to use is an inconsistency between what the renter
+    # asserts and what their own document says -- and, unlike the machine-vs-machine
+    # case, a person is waiting on it. It becomes a review reason so a human resolves it.
+    #
+    # Its symmetric twin, `corrected_value_is_the_recurring_base`, is deliberately NOT
+    # here. A correction that makes a stub reconcile is supposed to move the number;
+    # holding the packet open for it would penalise the renter for correcting the record.
+    # It still reaches the report as an abstentions[] entry, which is where a reviewer
+    # looks to see that a human, not a page, is behind the base amount.
+    for problem in income.abstentions:
+        if problem.trigger in ("pay_stub_totals_conflict", "pay_stub_totals_irreconcilable",
+                               "corrected_value_not_used"):
+            reasons.append(ReadinessReason("consistent", _code_for(problem), problem.reason))
+
+    names = {str(doc.value("person_name")).strip()
+             for doc in house.documents if doc.get("person_name")}
+    if len(names) > 1:
+        reasons.append(ReadinessReason(
+            "consistent", "PERSON_NAME_MISMATCH",
+            f"documents in this file name different people: {sorted(names)}",
+        ))
+
+    # Uncorroborated self-reported income is an evidence-quality gap, and the pack files
+    # it under review reasons rather than under presence.
+    for problem in income.abstentions:
+        if problem.trigger == "self_reported_income_uncorroborated":
+            reasons.append(ReadinessReason("consistent", _code_for(problem), problem.reason))
+
+    return reasons
+
+
+def _check_traceability(house: Household, items: Sequence[ChecklistItem]) -> list[ReadinessReason]:
+    """Condition 4: every value is TRACEABLE to a page-level source box."""
+    reasons: list[ReadinessReason] = []
+    for item in items:
+        for problem in item.abstentions:
+            if problem.trigger == "value_not_traceable":
+                reasons.append(ReadinessReason(
+                    "traceable", _code_for(problem, item.item_id),
+                    f"{item.label}: {problem.reason}",
+                ))
+    return reasons
+
+
+# =====================================================================================
+# assessment
+# =====================================================================================
+
+
+def assess_readiness(
+    house: Household,
+    required_types: Sequence[str],
+    income: AnnualizedIncome | None = None,
+) -> ReadinessAssessment:
+    """Run all four CH-READINESS-001 checks and return a status with its reasons."""
+    income = income if income is not None else annualize_household(house)
+    items = checklist_mod.evaluate_checklist(house, required_types)
+    result = compare(income.total, house.size)
+
+    reasons: list[ReadinessReason] = []
+    reasons += _check_presence(items)
+    reasons += _check_currency(items)
+    reasons += _check_consistency(house, income)
+    reasons += _check_traceability(house, items)
+
+    # An income we could not compute is a review reason in its own right: the packet is
+    # not ready for a human if the central number is absent.
+    if income.total is None:
+        reasons.append(ReadinessReason(
+            "present", "INCOME_NOT_COMPUTABLE",
+            "no recurring income could be annualized from the documents in this file",
+            rule_id="CH-INCOME-001",
+        ))
+    if result.comparison == "no_frozen_threshold" and income.total is not None:
+        reasons.append(ReadinessReason(
+            "present", "NO_FROZEN_THRESHOLD",
+            result.threshold.abstention.reason if result.threshold.abstention
+            else "no frozen threshold applies to this household size",
+            rule_id="HUD-MTSP-002",
+        ))
+
+    deduped: list[ReadinessReason] = []
+    seen: set[tuple[str, str, str]] = set()
+    for reason in reasons:
+        key = (reason.check, reason.code, reason.message)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(reason)
+
+    problems: list[Abstention] = list(income.abstentions)
+    problems += checklist_mod.checklist_abstentions(items)
+    problems += list(result.abstentions)
+
+    status = READY if not deduped else NEEDS_REVIEW
+    assert status in READINESS_STATUSES
+    return ReadinessAssessment(
+        readiness_status=status,
+        reasons=tuple(deduped),
+        checklist=tuple(items),
+        income=income,
+        comparison=result,
+        abstentions=tuple(problems),
+    )
+
+
+# =====================================================================================
+# report assembly (CONTRACTS section 7)
+# =====================================================================================
+
+
+def build_report(
+    house: Household,
+    required_types: Sequence[str],
+    generated_at: str | None = None,
+    engine_version: str = "sha:unversioned",
+    ruleset_version: str = "pack-v1/2026-05-01",
+) -> dict[str, Any]:
+    """A ``ReadinessReport``. Contains no eligibility judgement, by construction."""
+    assessment = assess_readiness(house, required_types)
+    rules = load_rule_corpus()
+
+    cited: list[str] = ["CH-READINESS-001", "CH-INCOME-001", "CH-DECISION-001"]
+    if assessment.comparison.threshold.rule_id:
+        cited.append(assessment.comparison.threshold.rule_id)
+    cited.append("HUD-MTSP-001")
+    if any(doc.get("untrusted_instruction_text") for doc in house.documents):
+        cited.append("CH-SAFETY-001")
+
+    calculations = [s.to_calculation(house.household_id) for s in assessment.income.sources]
+    total = assessment.income.to_calculation()
+    calculations.append(assessment.comparison.to_calculation(
+        house.household_id, total["inputs"], total["formula"]))
+
+    return {
+        "household_id": house.household_id,
+        "generated_at": generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "ruleset_version": ruleset_version,
+        "reference_date": REFERENCE_DATE.isoformat(),
+        "readiness_status": assessment.readiness_status,
+
+        # ── 팩 스키마(`starter/schemas/submission.schema.json`)가 최상위에 요구하는 두 필드.
+        #    참가자 가이드: "Produce output conforming to starter/schemas/submission.schema.json."
+        #    값은 여기서 다시 계산하지 않고 위에서 만든 비교 결과를 **그대로** 싣는다. 같은
+        #    숫자가 두 경로로 계산되면 언젠가 갈라지고, 갈라진 순간 어느 쪽이 참인지 말할 수
+        #    없게 된다.
+        #
+        #    ⚠️ `annualized_income` 은 스키마상 **기권할 수 없는 필드**다(bare number, minimum 0).
+        #    소득을 계산할 수 없으면 여기엔 null 이 실리고 그 레코드는 스키마를 만족하지 않는다.
+        #    그 상황을 숨기지 않는다 — `scripts/export_submission.py` 가 검증에서 걸러내고
+        #    무엇이 왜 빠졌는지 출력한다. eval/CONTRACT_CONFLICTS.md §6 에 기록된 충돌이다.
+        "annualized_income": assessment.comparison.annual_income,
+        "comparison": assessment.comparison.comparison,
+        "review_reasons": [r.to_dict() for r in assessment.reasons],
+        "documents": [
+            {
+                "document_id": doc.document_id,
+                "document_type": doc.document_type,
+                "file_name": doc.file_name,
+                "document_date": read_document_date(doc).raw,
+                "days_until_stale": read_document_date(doc).days_until_stale,
+                "stale_rule_id": RULE_ID,
+            }
+            for doc in house.documents
+        ],
+        "calculations": calculations,
+        "checklist": [item.to_dict() for item in assessment.checklist],
+        "citations": [
+            {
+                "rule_id": rid,
+                "authority": rules[rid]["authority"],
+                "effective_date": rules[rid]["effective_date"],
+                "text": rules[rid]["text"],
+                "source_url": rules[rid]["source_url"],
+                "source_locator": rules[rid]["source_locator"],
+                "verified_against_source": None,
+            }
+            for rid in dict.fromkeys(cited)
+            if rid in rules
+        ],
+        "abstentions": abstain.to_entries(assessment.abstentions),
+        "human_decision_notice": HUMAN_DECISION_NOTICE,
+        "engine_version": engine_version,
+    }
+
+
+__all__ = [
+    "CHECKS",
+    "NEEDS_REVIEW",
+    "READY",
+    "ReadinessAssessment",
+    "ReadinessReason",
+    "assess_readiness",
+    "build_report",
+]

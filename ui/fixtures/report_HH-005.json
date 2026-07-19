@@ -1,0 +1,743 @@
+{
+ "household_id": "HH-005",
+ "generated_at": "2026-07-19T09:07:58Z",
+ "ruleset_version": "pack-v1/2026-05-01",
+ "reference_date": "2026-07-18",
+ "readiness_status": "NEEDS_REVIEW",
+ "annualized_income": 45968.0,
+ "comparison": "below_or_equal",
+ "review_reasons": [
+  {
+   "check": "current",
+   "code": "EMPLOYMENT_LETTER_EXPIRED",
+   "message": "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+   "rule_id": "CH-READINESS-001"
+  }
+ ],
+ "documents": [
+  {
+   "document_id": "HH-005-D01",
+   "document_type": "application_summary",
+   "file_name": "hh-005_d01_application_summary.pdf",
+   "document_date": "2026-07-10",
+   "days_until_stale": 52,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Tess Alder",
+     "page": 1,
+     "bbox": [
+      39.96,
+      649.1,
+      91.84,
+      663.1
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "low",
+     "evidence_kind": "extracted",
+     "source_text": "TessAlder",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('TessAlder'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
+    },
+    {
+     "field": "household_size",
+     "value": 5,
+     "page": 1,
+     "bbox": [
+      359.9,
+      648.7,
+      383.9,
+      662.7
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "5",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "address",
+     "value": "77 Meadow Signal Ave, Quincy, MA 02169",
+     "page": 1,
+     "bbox": [
+      40.36,
+      587.62,
+      233.69,
+      601.62
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "low",
+     "evidence_kind": "extracted",
+     "source_text": "77MeadowSignalAve,Quincy,MA02169",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('77MeadowSignalAve,Quincy,MA02169'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
+    },
+    {
+     "field": "application_date",
+     "value": "2026-07-10",
+     "page": 1,
+     "bbox": [
+      40.75,
+      519.36,
+      94.63,
+      533.36
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-07-10",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "present",
+   "source": "text_layer"
+  },
+  {
+   "document_id": "HH-005-D02",
+   "document_type": "pay_stub",
+   "file_name": "hh-005_d02_pay_stub.pdf",
+   "document_date": "2026-06-27",
+   "days_until_stale": 39,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Tess Alder",
+     "page": 1,
+     "bbox": [
+      40.0,
+      658.0,
+      91.79,
+      672.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "Tess Alder",
+     "notes": null
+    },
+    {
+     "field": "pay_date",
+     "value": "2026-06-27",
+     "page": 1,
+     "bbox": [
+      330.0,
+      658.0,
+      385.14,
+      672.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-27",
+     "notes": null
+    },
+    {
+     "field": "pay_period_start",
+     "value": "2026-06-10",
+     "page": 1,
+     "bbox": [
+      40.0,
+      608.0,
+      95.14,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-10",
+     "notes": null
+    },
+    {
+     "field": "pay_period_end",
+     "value": "2026-06-23",
+     "page": 1,
+     "bbox": [
+      200.0,
+      608.0,
+      255.14,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-23",
+     "notes": null
+    },
+    {
+     "field": "pay_frequency",
+     "value": "biweekly",
+     "page": 1,
+     "bbox": [
+      360.0,
+      608.0,
+      402.34,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "biweekly",
+     "notes": null
+    },
+    {
+     "field": "regular_hours",
+     "value": 68,
+     "page": 1,
+     "bbox": [
+      52.0,
+      528.0,
+      76.0,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "68",
+     "notes": null
+    },
+    {
+     "field": "hourly_rate",
+     "value": 26.0,
+     "page": 1,
+     "bbox": [
+      190.0,
+      528.0,
+      224.58,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$26.00",
+     "notes": null
+    },
+    {
+     "field": "gross_pay",
+     "value": 1768.0,
+     "page": 1,
+     "bbox": [
+      340.0,
+      528.0,
+      397.38,
+      544.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$1,768.00",
+     "notes": null
+    },
+    {
+     "field": "net_pay",
+     "value": 1379.04,
+     "page": 1,
+     "bbox": [
+      460.0,
+      528.0,
+      508.48,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$1,379.04",
+     "notes": null
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "present",
+   "source": "text_layer"
+  },
+  {
+   "document_id": "HH-005-D03",
+   "document_type": "pay_stub",
+   "file_name": "hh-005_d03_pay_stub.pdf",
+   "document_date": "2026-06-20",
+   "days_until_stale": 32,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Tess Alder",
+     "page": 1,
+     "bbox": [
+      40.0,
+      658.0,
+      91.79,
+      672.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "Tess Alder",
+     "notes": null
+    },
+    {
+     "field": "pay_date",
+     "value": "2026-06-20",
+     "page": 1,
+     "bbox": [
+      330.0,
+      658.0,
+      385.14,
+      672.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-20",
+     "notes": null
+    },
+    {
+     "field": "pay_period_start",
+     "value": "2026-06-03",
+     "page": 1,
+     "bbox": [
+      40.0,
+      608.0,
+      95.14,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-03",
+     "notes": null
+    },
+    {
+     "field": "pay_period_end",
+     "value": "2026-06-16",
+     "page": 1,
+     "bbox": [
+      200.0,
+      608.0,
+      255.14,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-06-16",
+     "notes": null
+    },
+    {
+     "field": "pay_frequency",
+     "value": "biweekly",
+     "page": 1,
+     "bbox": [
+      360.0,
+      608.0,
+      402.34,
+      622.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "biweekly",
+     "notes": null
+    },
+    {
+     "field": "regular_hours",
+     "value": 68,
+     "page": 1,
+     "bbox": [
+      52.0,
+      528.0,
+      76.0,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "68",
+     "notes": null
+    },
+    {
+     "field": "hourly_rate",
+     "value": 26.0,
+     "page": 1,
+     "bbox": [
+      190.0,
+      528.0,
+      224.58,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$26.00",
+     "notes": null
+    },
+    {
+     "field": "gross_pay",
+     "value": 1768.0,
+     "page": 1,
+     "bbox": [
+      340.0,
+      528.0,
+      397.38,
+      544.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$1,768.00",
+     "notes": null
+    },
+    {
+     "field": "net_pay",
+     "value": 1379.04,
+     "page": 1,
+     "bbox": [
+      460.0,
+      528.0,
+      508.48,
+      542.0
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$1,379.04",
+     "notes": null
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "present",
+   "source": "text_layer"
+  },
+  {
+   "document_id": "HH-005-D04",
+   "document_type": "employment_letter",
+   "file_name": "hh-005_d04_employment_letter.pdf",
+   "document_date": "2026-04-14",
+   "days_until_stale": -35,
+   "stale_rule_id": "CH-READINESS-001",
+   "fields": [
+    {
+     "field": "person_name",
+     "value": "Tess Alder",
+     "page": 1,
+     "bbox": [
+      39.96,
+      648.7,
+      91.84,
+      662.7
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "low",
+     "evidence_kind": "extracted",
+     "source_text": "TessAlder",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection | the page-level read ran the words together ('TessAlder'); re-reading this line on its own at full resolution restored the word spaces. Every character is identical between the two reads -- only the spacing differs -- so the wording is certain and only the spacing was inferred. Confirm it"
+    },
+    {
+     "field": "document_date",
+     "value": "2026-04-14",
+     "page": 1,
+     "bbox": [
+      359.9,
+      648.3,
+      415.37,
+      662.3
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "2026-04-14",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "weekly_hours",
+     "value": 34,
+     "page": 1,
+     "bbox": [
+      39.56,
+      477.85,
+      63.56,
+      491.85
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "34",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    },
+    {
+     "field": "hourly_rate",
+     "value": 26.0,
+     "page": 1,
+     "bbox": [
+      249.53,
+      477.45,
+      291.46,
+      491.45
+     ],
+     "bbox_units": "pdf_points_bottom_left_origin",
+     "certainty": "high",
+     "evidence_kind": "extracted",
+     "source_text": "$26.00",
+     "notes": "value read by OCR (rapidocr-onnxruntime); box is the engine's own detection"
+    }
+   ],
+   "page_count": 1,
+   "page_size_points": [
+    612.0,
+    792.0
+   ],
+   "state": "expired",
+   "source": "text_layer"
+  }
+ ],
+ "calculations": [
+  {
+   "name": "annualized_wage_income",
+   "household_id": "HH-005",
+   "inputs": [
+    {
+     "label": "gross_pay",
+     "value": 1768.0,
+     "from_document": "HH-005-D02"
+    },
+    {
+     "label": "pay_frequency",
+     "value": "biweekly",
+     "from_document": "HH-005-D02"
+    },
+    {
+     "label": "corroborating_weekly_hours_x_rate",
+     "value": 884.0,
+     "from_document": "HH-005-D04"
+    }
+   ],
+   "formula": "1768.0 * 26",
+   "result": 45968.0,
+   "threshold": null,
+   "threshold_rule_id": null,
+   "comparison": "no_frozen_threshold",
+   "effective_date": "2026-05-01",
+   "rule_id": "CH-INCOME-001"
+  },
+  {
+   "name": "annualized_income",
+   "household_id": "HH-005",
+   "inputs": [
+    {
+     "label": "gross_pay",
+     "value": 1768.0,
+     "from_document": "HH-005-D02"
+    },
+    {
+     "label": "pay_frequency",
+     "value": "biweekly",
+     "from_document": "HH-005-D02"
+    },
+    {
+     "label": "corroborating_weekly_hours_x_rate",
+     "value": 884.0,
+     "from_document": "HH-005-D04"
+    }
+   ],
+   "formula": "1768.0 * 26",
+   "result": 45968.0,
+   "threshold": 111120.0,
+   "threshold_rule_id": "HUD-MTSP-002",
+   "comparison": "below_or_equal",
+   "effective_date": "2026-05-01",
+   "rule_id": "CH-INCOME-001"
+  }
+ ],
+ "checklist": [
+  {
+   "item_id": "CHK-APPLICATION-SUMMARY",
+   "label": "Application summary",
+   "required_because_rule_id": "CH-READINESS-001",
+   "state": "present",
+   "satisfied_by": [
+    "HH-005-D01"
+   ],
+   "detail": "HH-005-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+   "action_for_renter": null
+  },
+  {
+   "item_id": "CHK-PAY-STUB",
+   "label": "Recent pay stubs",
+   "required_because_rule_id": "CH-READINESS-001",
+   "state": "present",
+   "satisfied_by": [
+    "HH-005-D02",
+    "HH-005-D03"
+   ],
+   "detail": "HH-005-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-005-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+   "action_for_renter": null
+  },
+  {
+   "item_id": "CHK-EMPLOYMENT-LETTER",
+   "label": "Employment verification letter",
+   "required_because_rule_id": "CH-READINESS-001",
+   "state": "expired",
+   "satisfied_by": [
+    "HH-005-D04"
+   ],
+   "detail": "HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+   "action_for_renter": "Ask your employer for a signed employment verification letter"
+  }
+ ],
+ "citations": [
+  {
+   "rule_id": "CH-READINESS-001",
+   "authority": "hackathon_simulation",
+   "effective_date": "2026-07-18",
+   "text": "Return READY_TO_REVIEW only when required evidence is present, current under the challenge's 60-day convention, internally consistent, and traceable to page-level source boxes. Otherwise return NEEDS_REVIEW with reasons.",
+   "source_url": "rules/RULES_README.md",
+   "source_locator": "Frozen challenge convention",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "CH-INCOME-001",
+   "authority": "hackathon_simulation",
+   "effective_date": "2026-07-18",
+   "text": "For scoring only, annualize recurring gross income using the explicit pay frequency. Sum independently documented recurring sources. Do not infer protected traits or undocumented income.",
+   "source_url": "rules/RULES_README.md",
+   "source_locator": "Frozen challenge convention",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "CH-DECISION-001",
+   "authority": "hackathon_simulation",
+   "effective_date": "2026-07-18",
+   "text": "Outputs may compare an annualized amount with a frozen threshold, but must not label a person eligible, ineligible, approved, denied, or prioritized. Final determinations remain human and program-specific.",
+   "source_url": "governance/DATA_USE_AND_SAFETY.md",
+   "source_locator": "Human-decision boundary",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "HUD-MTSP-002",
+   "authority": "official_hud",
+   "effective_date": "2026-05-01",
+   "text": "For the Boston-Cambridge-Quincy, MA-NH HMFA, the FY 2026 median family income is $164,600 and the 60% limits for household sizes 1-8 are 72,000; 82,320; 92,580; 102,840; 111,120; 119,340; 127,560; and 135,780 dollars.",
+   "source_url": "https://www.huduser.gov/portal/datasets/mtsp/mtsp26/HERA-Income-Limits-Report-FY26.pdf",
+   "source_locator": "PDF page 130",
+   "verified_against_source": null
+  },
+  {
+   "rule_id": "HUD-MTSP-001",
+   "authority": "official_hud",
+   "effective_date": "2026-05-01",
+   "text": "FY 2026 Multifamily Tax Subsidy Project income limits are effective May 1, 2026.",
+   "source_url": "https://www.huduser.gov/portal/datasets/mtsp.html",
+   "source_locator": "FY 2026 effective date notice",
+   "verified_against_source": null
+  }
+ ],
+ "abstentions": [
+  {
+   "about": "CHK-EMPLOYMENT-LETTER",
+   "reason": "the document is dated outside the challenge's 60-day currency window (HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18))",
+   "what_would_resolve_it": "the renter uploads a document dated on or after 2026-05-19"
+  }
+ ],
+ "human_decision_notice": "This is not an eligibility determination. A qualified housing professional must decide.",
+ "engine_version": "sha:cda171ce0549",
+ "session_id": "5db8219e226a",
+ "plain": {
+  "messages": [
+   {
+    "headline": "Your employer's letter is too old to use",
+    "body": "It is dated 14 April 2026, which is before the cut-off. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it.",
+    "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+    "code": "EMPLOYMENT_LETTER_EXPIRED",
+    "detail": "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+    "kind": "problem",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026."
+   }
+  ],
+  "abstentions": [
+   {
+    "headline": "Your employer's letter is too old to use",
+    "body": "It is dated 14 April 2026, which is before the cut-off. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it.",
+    "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+    "code": "EMPLOYMENT_LETTER_EXPIRED",
+    "detail": "the document is dated outside the challenge's 60-day currency window (HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18))",
+    "kind": "problem",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026.",
+    "what_would_resolve_it": "the renter uploads a document dated on or after 2026-05-19",
+    "about": "CHK-EMPLOYMENT-LETTER"
+   }
+  ],
+  "checklist": {
+   "CHK-APPLICATION-SUMMARY": {
+    "headline": "We have your application form",
+    "body": "It is in your file, dated 10 July 2026, and recent enough to use.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-005-D01 is dated 2026-07-10, current with 52 day(s) of the window remaining",
+    "kind": "status",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026."
+   },
+   "CHK-PAY-STUB": {
+    "headline": "We have your pay stub",
+    "body": "It is in your file, dated 27 June 2026, and recent enough to use.",
+    "action": "You do not need to do anything about this one.",
+    "code": "DOCUMENT_PRESENT_AND_CURRENT",
+    "detail": "HH-005-D02 is dated 2026-06-27, current with 39 day(s) of the window remaining; HH-005-D03 is dated 2026-06-20, current with 32 day(s) of the window remaining",
+    "kind": "status",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026."
+   },
+   "CHK-EMPLOYMENT-LETTER": {
+    "headline": "Your employer's letter is too old to use",
+    "body": "It is dated 14 April 2026, which is before the cut-off. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it.",
+    "action": "Ask your employer for a new letter dated 19 May 2026 or later, then upload it.",
+    "code": "EMPLOYMENT_LETTER_EXPIRED",
+    "detail": "Employment verification letter: HH-005-D04 is dated 2026-04-14, outside the 60-day window (on or after 2026-05-19 for the frozen event date 2026-07-18)",
+    "kind": "problem",
+    "basis": "A paper counts as recent only if it is dated 19 May 2026 or later. That is the 60-day rule this project follows, counting back from 18 July 2026."
+   }
+  },
+  "reading_note": "Plain wording sits on top of the precise wording; it never replaces it. Each item carries the original machine code and message so a reviewer can check that the meaning survived the rewrite.",
+  "status": {
+   "headline": "Your file needs a few things before a person can read it",
+   "body": "Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix.",
+   "action": "Work through your list below. Each item says exactly what to send or who to ask.",
+   "code": "NEEDS_REVIEW",
+   "detail": "NEEDS_REVIEW: one or more of the four CH-READINESS-001 conditions is unmet; reasons are enumerated in review_reasons[].",
+   "kind": "status",
+   "precision_note": "'Needs a few things' describes the packet. It must not be read as a judgement about the person, which is why the body says so outright."
+  },
+  "screen_text": "Your file needs a few things before a person can read it. Some papers are missing, out of date, or do not agree with each other, and we list each one below with what to do about it. Every one you clear now is one a housing worker will not have to send your file back for. None of this is a finding about you. It is about the paperwork, and paperwork you can fix. Work through your list below. Each item says exactly what to send or who to ask. Your employer's letter is too old to use. It is dated 14 April 2026, which is before the cut-off. One out-of-date paper holds up your whole file until someone replaces it, even when nothing is wrong with the rest of it. Ask your employer for a new letter dated 19 May 2026 or later, then upload it."
+ },
+ "confirmation": {
+  "confirmed": 0,
+  "corrected": 0,
+  "not_confirmed": 26,
+  "not_read": 0,
+  "fields": 26,
+  "seen_by_a_person": 0
+ },
+ "activity_log": {
+  "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+  "ruleset_version": "pack-v1/2026-05-01",
+  "engine_version": "sha:cda171ce0549",
+  "counts": {
+   "session_created": 1
+  },
+  "events": [
+   {
+    "n": 1,
+    "action": "session_created",
+    "what_happened": "This session was created"
+   }
+  ]
+ }
+}

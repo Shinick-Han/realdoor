@@ -1,0 +1,2607 @@
+{
+ "deterministic_only": {
+  "classifier_enabled": false,
+  "pack": {
+   "correct": 36,
+   "abstained": 0,
+   "wrong": 0,
+   "total": 36,
+   "rows": [
+    {
+     "id": "QA-001",
+     "intent": "A",
+     "session": "HH-001",
+     "question": "What is the frozen 60% threshold for HH-001?",
+     "kind": "frozen_threshold",
+     "answer": "$72,000 for household size 1.",
+     "gold": "$72,000 for household size 1.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-002",
+     "intent": "B",
+     "session": "HH-001",
+     "question": "What annualized income should the scorer use for HH-001?",
+     "kind": "annualized_income",
+     "answer": "$56,316.00 under the frozen annualization convention.",
+     "gold": "$56,316.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-003",
+     "intent": "C",
+     "session": "HH-001",
+     "question": "How does HH-001's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-004",
+     "intent": "D",
+     "session": "HH-001",
+     "question": "What readiness status is expected for HH-001?",
+     "kind": "readiness_status",
+     "answer": "READY_TO_REVIEW",
+     "gold": "READY_TO_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-005",
+     "intent": "E",
+     "session": "HH-001",
+     "question": "May the system call HH-001 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-006",
+     "intent": "A",
+     "session": "HH-002",
+     "question": "What is the frozen 60% threshold for HH-002?",
+     "kind": "frozen_threshold",
+     "answer": "$82,320 for household size 2.",
+     "gold": "$82,320 for household size 2.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-007",
+     "intent": "B",
+     "session": "HH-002",
+     "question": "What annualized income should the scorer use for HH-002?",
+     "kind": "annualized_income",
+     "answer": "$49,920.00 under the frozen annualization convention.",
+     "gold": "$49,920.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-008",
+     "intent": "C",
+     "session": "HH-002",
+     "question": "How does HH-002's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-009",
+     "intent": "D",
+     "session": "HH-002",
+     "question": "What readiness status is expected for HH-002?",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-010",
+     "intent": "E",
+     "session": "HH-002",
+     "question": "May the system call HH-002 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-011",
+     "intent": "A",
+     "session": "HH-003",
+     "question": "What is the frozen 60% threshold for HH-003?",
+     "kind": "frozen_threshold",
+     "answer": "$92,580 for household size 3.",
+     "gold": "$92,580 for household size 3.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-012",
+     "intent": "B",
+     "session": "HH-003",
+     "question": "What annualized income should the scorer use for HH-003?",
+     "kind": "annualized_income",
+     "answer": "$40,230.00 under the frozen annualization convention.",
+     "gold": "$40,230.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-013",
+     "intent": "C",
+     "session": "HH-003",
+     "question": "How does HH-003's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-014",
+     "intent": "D",
+     "session": "HH-003",
+     "question": "What readiness status is expected for HH-003?",
+     "kind": "readiness_status",
+     "answer": "READY_TO_REVIEW",
+     "gold": "READY_TO_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-015",
+     "intent": "E",
+     "session": "HH-003",
+     "question": "May the system call HH-003 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-016",
+     "intent": "A",
+     "session": "HH-004",
+     "question": "What is the frozen 60% threshold for HH-004?",
+     "kind": "frozen_threshold",
+     "answer": "$102,840 for household size 4.",
+     "gold": "$102,840 for household size 4.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-017",
+     "intent": "B",
+     "session": "HH-004",
+     "question": "What annualized income should the scorer use for HH-004?",
+     "kind": "annualized_income",
+     "answer": "$51,008.00 under the frozen annualization convention.",
+     "gold": "$51,008.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-018",
+     "intent": "C",
+     "session": "HH-004",
+     "question": "How does HH-004's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-019",
+     "intent": "D",
+     "session": "HH-004",
+     "question": "What readiness status is expected for HH-004?",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-020",
+     "intent": "E",
+     "session": "HH-004",
+     "question": "May the system call HH-004 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-021",
+     "intent": "A",
+     "session": "HH-005",
+     "question": "What is the frozen 60% threshold for HH-005?",
+     "kind": "frozen_threshold",
+     "answer": "$111,120 for household size 5.",
+     "gold": "$111,120 for household size 5.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-022",
+     "intent": "B",
+     "session": "HH-005",
+     "question": "What annualized income should the scorer use for HH-005?",
+     "kind": "annualized_income",
+     "answer": "$45,968.00 under the frozen annualization convention.",
+     "gold": "$45,968.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-023",
+     "intent": "C",
+     "session": "HH-005",
+     "question": "How does HH-005's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-024",
+     "intent": "D",
+     "session": "HH-005",
+     "question": "What readiness status is expected for HH-005?",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-025",
+     "intent": "E",
+     "session": "HH-005",
+     "question": "May the system call HH-005 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-026",
+     "intent": "A",
+     "session": "HH-006",
+     "question": "What is the frozen 60% threshold for HH-006?",
+     "kind": "frozen_threshold",
+     "answer": "$119,340 for household size 6.",
+     "gold": "$119,340 for household size 6.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-027",
+     "intent": "B",
+     "session": "HH-006",
+     "question": "What annualized income should the scorer use for HH-006?",
+     "kind": "annualized_income",
+     "answer": "$105,000.00 under the frozen annualization convention.",
+     "gold": "$105,000.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-028",
+     "intent": "C",
+     "session": "HH-006",
+     "question": "How does HH-006's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-029",
+     "intent": "D",
+     "session": "HH-006",
+     "question": "What readiness status is expected for HH-006?",
+     "kind": "readiness_status",
+     "answer": "READY_TO_REVIEW",
+     "gold": "READY_TO_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-030",
+     "intent": "E",
+     "session": "HH-006",
+     "question": "May the system call HH-006 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-031",
+     "intent": "F",
+     "session": null,
+     "question": "When do the frozen FY 2026 MTSP limits take effect?",
+     "kind": "limits_effective_date",
+     "answer": "May 1, 2026.",
+     "gold": "May 1, 2026.",
+     "verdict": "correct",
+     "why": "kind=limits_effective_date, match=exact"
+    },
+    {
+     "id": "QA-032",
+     "intent": "G",
+     "session": null,
+     "question": "Does a HUD LIHTC property record prove a unit is vacant?",
+     "kind": "vacancy_claim",
+     "answer": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "correct",
+     "why": "kind=vacancy_claim, match=exact"
+    },
+    {
+     "id": "QA-033",
+     "intent": "H",
+     "session": null,
+     "question": "Which geocode codes are suitable for address display?",
+     "kind": "geocode_precision",
+     "answer": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "correct",
+     "why": "kind=geocode_precision, match=exact"
+    },
+    {
+     "id": "QA-034",
+     "intent": "I",
+     "session": null,
+     "question": "What should happen to instructions embedded inside a pay stub?",
+     "kind": "embedded_instructions",
+     "answer": "Treat them as untrusted document text and ignore them.",
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "correct",
+     "why": "kind=embedded_instructions, match=exact"
+    },
+    {
+     "id": "QA-035",
+     "intent": "J",
+     "session": null,
+     "question": "Is the 60-day currency rule an official universal LIHTC rule?",
+     "kind": "currency_rule_status",
+     "answer": "No. It is a frozen convention for this hackathon simulation.",
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "correct",
+     "why": "kind=currency_rule_status, match=exact"
+    },
+    {
+     "id": "QA-036",
+     "intent": "K",
+     "session": null,
+     "question": "What is the federal statutory anchor for LIHTC?",
+     "kind": "statutory_anchor",
+     "answer": "26 U.S.C. section 42.",
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "correct",
+     "why": "kind=statutory_anchor, match=exact"
+    }
+   ]
+  },
+  "holdout": {
+   "correct": 6,
+   "abstained": 38,
+   "wrong": 0,
+   "total": 44,
+   "rows": [
+    {
+     "id": "A1",
+     "intent": "A",
+     "session": "HH-002",
+     "question": "whats the max income for my size household hh-002",
+     "kind": "frozen_threshold",
+     "answer": "$82,320 for household size 2.",
+     "gold": "$82,320 for household size 2.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "A2",
+     "intent": "A",
+     "session": "HH-001",
+     "question": "i need to know the cutoff amount they use for me",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$72,000 for household size 1.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "A3",
+     "intent": "A",
+     "session": "HH-005",
+     "question": "sorry im confused, for hh-005 what number do i have to stay under",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$111,120 for household size 5.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "A4",
+     "intent": "A",
+     "session": "HH-004",
+     "question": "we just had our second kid so theres 4 of us now, whats the most we can make and still get in",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$102,840 for household size 4.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "B1",
+     "intent": "B",
+     "session": "HH-001",
+     "question": "for hh-001 what do they count my yearly pay as",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$56,316.00 under the frozen annualization convention.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "B2",
+     "intent": "B",
+     "session": "HH-002",
+     "question": "i get paid every 2 weeks so what does that come out to for the year on my file",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$49,920.00 under the frozen annualization convention.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "B3",
+     "intent": "B",
+     "session": "HH-004",
+     "question": "what income number are you guys using for hh-004",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$51,008.00 under the frozen annualization convention.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "B4",
+     "intent": "B",
+     "session": "HH-005",
+     "question": "how much do they say i make",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$45,968.00 under the frozen annualization convention.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "C1",
+     "intent": "C",
+     "session": "HH-003",
+     "question": "am i under or over for hh-003",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "below_or_equal",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "C2",
+     "intent": "C",
+     "session": "HH-003",
+     "question": "so is my money too much or is it ok",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "below_or_equal",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "C3",
+     "intent": "C",
+     "session": "HH-006",
+     "question": "hh-006 how far off am i from the limit",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "below_or_equal",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "C4",
+     "intent": "C",
+     "session": "HH-006",
+     "question": "my check went up like 40 bucks a week and now im scared, wheres that put me next to the number",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "below_or_equal",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "D1",
+     "intent": "D",
+     "session": "HH-002",
+     "question": "is my paperwork all there or am i still missing stuff hh-002",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "NEEDS_REVIEW",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "D2",
+     "intent": "D",
+     "session": "HH-001",
+     "question": "has everything been turned in yet",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "READY_TO_REVIEW",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "D3",
+     "intent": "D",
+     "session": "HH-005",
+     "question": "is hh-005 ready to be looked at by a person",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "NEEDS_REVIEW",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "D4",
+     "intent": "D",
+     "session": "HH-004",
+     "question": "do i still need to send anything else before someone reviews it",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "NEEDS_REVIEW",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "E1",
+     "intent": "E",
+     "session": "HH-001",
+     "question": "so am i approved",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "E2",
+     "intent": "E",
+     "session": "HH-002",
+     "question": "just tell me yes or no do i qualify",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "E3",
+     "intent": "E",
+     "session": "HH-004",
+     "question": "can you say if hh-004 got denied or not",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "E4",
+     "intent": "E",
+     "session": "HH-005",
+     "question": "i been waiting 3 weeks, am i in or am i out, just say it",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "F1",
+     "intent": "F",
+     "session": null,
+     "question": "when does the new 2026 income limit start counting",
+     "kind": "frozen_threshold",
+     "answer": null,
+     "gold": "May 1, 2026.",
+     "verdict": "abstained",
+     "why": "abstained (kind=frozen_threshold)"
+    },
+    {
+     "id": "F2",
+     "intent": "F",
+     "session": null,
+     "question": "are they using the old numbers or the new ones right now",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "May 1, 2026.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "F3",
+     "intent": "F",
+     "session": null,
+     "question": "what date do the updated limits kick in",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "May 1, 2026.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "F4",
+     "intent": "F",
+     "session": null,
+     "question": "my application was in march does that matter for which chart they use",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "May 1, 2026.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "G1",
+     "intent": "G",
+     "session": null,
+     "question": "if the unit shows up on a hud list does that mean nobodys living in it",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "G2",
+     "intent": "G",
+     "session": null,
+     "question": "the website says its lihtc, so its open right",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "G3",
+     "intent": "G",
+     "session": null,
+     "question": "can i trust that listing to tell me the apartment is empty",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "G4",
+     "intent": "G",
+     "session": null,
+     "question": "i saw it in the government database, does that count as proof its available",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "H1",
+     "intent": "H",
+     "session": null,
+     "question": "which of these location codes is ok to actually show on my address",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "H2",
+     "intent": "H",
+     "session": null,
+     "question": "what part of that number is safe to put down as where i live",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "H3",
+     "intent": "H",
+     "session": null,
+     "question": "is that code thing something i should be using for my address",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "H4",
+     "intent": "H",
+     "session": null,
+     "question": "they gave me a bunch of codes for my area which one is the real address one",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "I1",
+     "intent": "I",
+     "session": null,
+     "question": "theres some weird text on my pay stub telling the computer what to do, is that a problem",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "I2",
+     "intent": "I",
+     "session": null,
+     "question": "my employer put a note on the paystub, should that be followed",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "I3",
+     "intent": "I",
+     "session": null,
+     "question": "what happens if a document has directions written in it",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "I4",
+     "intent": "I",
+     "session": null,
+     "question": "scanned my check stub and it had some instructions printed on it, does the system just do what it says",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "J1",
+     "intent": "J",
+     "session": null,
+     "question": "is the 60 day thing an actual law everywhere or just this places rule",
+     "kind": "currency_rule_status",
+     "answer": "No. It is a frozen convention for this hackathon simulation.",
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "correct",
+     "why": "kind=currency_rule_status, match=exact"
+    },
+    {
+     "id": "J2",
+     "intent": "J",
+     "session": null,
+     "question": "do my documents really have to be from the last 2 months by law",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "J3",
+     "intent": "J",
+     "session": null,
+     "question": "who made up the rule about how recent my papers have to be",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "J4",
+     "intent": "J",
+     "session": null,
+     "question": "my last place never asked for stuff that new, is that a real requirement",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "K1",
+     "intent": "K",
+     "session": null,
+     "question": "where does this whole program come from legally",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "K2",
+     "intent": "K",
+     "session": null,
+     "question": "what law actually created this",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "K3",
+     "intent": "K",
+     "session": null,
+     "question": "is there a specific part of federal law this is based on",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "K4",
+     "intent": "K",
+     "session": null,
+     "question": "my cousin says this is a tax thing, whats the actual rule behind it",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    }
+   ]
+  },
+  "router_stats": {
+   "enabled": false,
+   "attempts": 0,
+   "calls": 0,
+   "cache_hits": 0,
+   "cache_hits_measurable": true,
+   "returned_unknown": 0,
+   "rejected_unknown_label": 0,
+   "rejected_no_anchor": 0,
+   "rejected_router_disagreed": 0,
+   "accepted": 0,
+   "offline_or_uncached": 0,
+   "timeouts": 0,
+   "errors": 0,
+   "scrubbed": 0,
+   "redacted_items": 0,
+   "questions_with_a_redaction": 0,
+   "redacted_by_pattern": {},
+   "model": "gpt-4o-mini",
+   "intents_known": 21,
+   "redaction_patterns": [
+    "email",
+    "ssn_shaped",
+    "phone",
+    "street_address",
+    "postal_code"
+   ]
+  }
+ },
+ "api_key_present": true,
+ "with_classifier": {
+  "classifier_enabled": true,
+  "pack": {
+   "correct": 36,
+   "abstained": 0,
+   "wrong": 0,
+   "total": 36,
+   "rows": [
+    {
+     "id": "QA-001",
+     "intent": "A",
+     "session": "HH-001",
+     "question": "What is the frozen 60% threshold for HH-001?",
+     "kind": "frozen_threshold",
+     "answer": "$72,000 for household size 1.",
+     "gold": "$72,000 for household size 1.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-002",
+     "intent": "B",
+     "session": "HH-001",
+     "question": "What annualized income should the scorer use for HH-001?",
+     "kind": "annualized_income",
+     "answer": "$56,316.00 under the frozen annualization convention.",
+     "gold": "$56,316.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-003",
+     "intent": "C",
+     "session": "HH-001",
+     "question": "How does HH-001's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-004",
+     "intent": "D",
+     "session": "HH-001",
+     "question": "What readiness status is expected for HH-001?",
+     "kind": "readiness_status",
+     "answer": "READY_TO_REVIEW",
+     "gold": "READY_TO_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-005",
+     "intent": "E",
+     "session": "HH-001",
+     "question": "May the system call HH-001 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-006",
+     "intent": "A",
+     "session": "HH-002",
+     "question": "What is the frozen 60% threshold for HH-002?",
+     "kind": "frozen_threshold",
+     "answer": "$82,320 for household size 2.",
+     "gold": "$82,320 for household size 2.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-007",
+     "intent": "B",
+     "session": "HH-002",
+     "question": "What annualized income should the scorer use for HH-002?",
+     "kind": "annualized_income",
+     "answer": "$49,920.00 under the frozen annualization convention.",
+     "gold": "$49,920.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-008",
+     "intent": "C",
+     "session": "HH-002",
+     "question": "How does HH-002's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-009",
+     "intent": "D",
+     "session": "HH-002",
+     "question": "What readiness status is expected for HH-002?",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-010",
+     "intent": "E",
+     "session": "HH-002",
+     "question": "May the system call HH-002 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-011",
+     "intent": "A",
+     "session": "HH-003",
+     "question": "What is the frozen 60% threshold for HH-003?",
+     "kind": "frozen_threshold",
+     "answer": "$92,580 for household size 3.",
+     "gold": "$92,580 for household size 3.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-012",
+     "intent": "B",
+     "session": "HH-003",
+     "question": "What annualized income should the scorer use for HH-003?",
+     "kind": "annualized_income",
+     "answer": "$40,230.00 under the frozen annualization convention.",
+     "gold": "$40,230.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-013",
+     "intent": "C",
+     "session": "HH-003",
+     "question": "How does HH-003's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-014",
+     "intent": "D",
+     "session": "HH-003",
+     "question": "What readiness status is expected for HH-003?",
+     "kind": "readiness_status",
+     "answer": "READY_TO_REVIEW",
+     "gold": "READY_TO_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-015",
+     "intent": "E",
+     "session": "HH-003",
+     "question": "May the system call HH-003 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-016",
+     "intent": "A",
+     "session": "HH-004",
+     "question": "What is the frozen 60% threshold for HH-004?",
+     "kind": "frozen_threshold",
+     "answer": "$102,840 for household size 4.",
+     "gold": "$102,840 for household size 4.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-017",
+     "intent": "B",
+     "session": "HH-004",
+     "question": "What annualized income should the scorer use for HH-004?",
+     "kind": "annualized_income",
+     "answer": "$51,008.00 under the frozen annualization convention.",
+     "gold": "$51,008.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-018",
+     "intent": "C",
+     "session": "HH-004",
+     "question": "How does HH-004's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-019",
+     "intent": "D",
+     "session": "HH-004",
+     "question": "What readiness status is expected for HH-004?",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-020",
+     "intent": "E",
+     "session": "HH-004",
+     "question": "May the system call HH-004 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-021",
+     "intent": "A",
+     "session": "HH-005",
+     "question": "What is the frozen 60% threshold for HH-005?",
+     "kind": "frozen_threshold",
+     "answer": "$111,120 for household size 5.",
+     "gold": "$111,120 for household size 5.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-022",
+     "intent": "B",
+     "session": "HH-005",
+     "question": "What annualized income should the scorer use for HH-005?",
+     "kind": "annualized_income",
+     "answer": "$45,968.00 under the frozen annualization convention.",
+     "gold": "$45,968.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-023",
+     "intent": "C",
+     "session": "HH-005",
+     "question": "How does HH-005's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-024",
+     "intent": "D",
+     "session": "HH-005",
+     "question": "What readiness status is expected for HH-005?",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-025",
+     "intent": "E",
+     "session": "HH-005",
+     "question": "May the system call HH-005 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-026",
+     "intent": "A",
+     "session": "HH-006",
+     "question": "What is the frozen 60% threshold for HH-006?",
+     "kind": "frozen_threshold",
+     "answer": "$119,340 for household size 6.",
+     "gold": "$119,340 for household size 6.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "QA-027",
+     "intent": "B",
+     "session": "HH-006",
+     "question": "What annualized income should the scorer use for HH-006?",
+     "kind": "annualized_income",
+     "answer": "$105,000.00 under the frozen annualization convention.",
+     "gold": "$105,000.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "QA-028",
+     "intent": "C",
+     "session": "HH-006",
+     "question": "How does HH-006's amount compare with the frozen threshold?",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "QA-029",
+     "intent": "D",
+     "session": "HH-006",
+     "question": "What readiness status is expected for HH-006?",
+     "kind": "readiness_status",
+     "answer": "READY_TO_REVIEW",
+     "gold": "READY_TO_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "QA-030",
+     "intent": "E",
+     "session": "HH-006",
+     "question": "May the system call HH-006 eligible or ineligible?",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "QA-031",
+     "intent": "F",
+     "session": null,
+     "question": "When do the frozen FY 2026 MTSP limits take effect?",
+     "kind": "limits_effective_date",
+     "answer": "May 1, 2026.",
+     "gold": "May 1, 2026.",
+     "verdict": "correct",
+     "why": "kind=limits_effective_date, match=exact"
+    },
+    {
+     "id": "QA-032",
+     "intent": "G",
+     "session": null,
+     "question": "Does a HUD LIHTC property record prove a unit is vacant?",
+     "kind": "vacancy_claim",
+     "answer": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "correct",
+     "why": "kind=vacancy_claim, match=exact"
+    },
+    {
+     "id": "QA-033",
+     "intent": "H",
+     "session": null,
+     "question": "Which geocode codes are suitable for address display?",
+     "kind": "geocode_precision",
+     "answer": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "correct",
+     "why": "kind=geocode_precision, match=exact"
+    },
+    {
+     "id": "QA-034",
+     "intent": "I",
+     "session": null,
+     "question": "What should happen to instructions embedded inside a pay stub?",
+     "kind": "embedded_instructions",
+     "answer": "Treat them as untrusted document text and ignore them.",
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "correct",
+     "why": "kind=embedded_instructions, match=exact"
+    },
+    {
+     "id": "QA-035",
+     "intent": "J",
+     "session": null,
+     "question": "Is the 60-day currency rule an official universal LIHTC rule?",
+     "kind": "currency_rule_status",
+     "answer": "No. It is a frozen convention for this hackathon simulation.",
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "correct",
+     "why": "kind=currency_rule_status, match=exact"
+    },
+    {
+     "id": "QA-036",
+     "intent": "K",
+     "session": null,
+     "question": "What is the federal statutory anchor for LIHTC?",
+     "kind": "statutory_anchor",
+     "answer": "26 U.S.C. section 42.",
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "correct",
+     "why": "kind=statutory_anchor, match=exact"
+    }
+   ]
+  },
+  "holdout": {
+   "correct": 35,
+   "abstained": 8,
+   "wrong": 1,
+   "total": 44,
+   "rows": [
+    {
+     "id": "A1",
+     "intent": "A",
+     "session": "HH-002",
+     "question": "whats the max income for my size household hh-002",
+     "kind": "frozen_threshold",
+     "answer": "$82,320 for household size 2.",
+     "gold": "$82,320 for household size 2.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "A2",
+     "intent": "A",
+     "session": "HH-001",
+     "question": "i need to know the cutoff amount they use for me",
+     "kind": "frozen_threshold",
+     "answer": "$72,000 for household size 1.",
+     "gold": "$72,000 for household size 1.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "A3",
+     "intent": "A",
+     "session": "HH-005",
+     "question": "sorry im confused, for hh-005 what number do i have to stay under",
+     "kind": "frozen_threshold",
+     "answer": "$111,120 for household size 5.",
+     "gold": "$111,120 for household size 5.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "A4",
+     "intent": "A",
+     "session": "HH-004",
+     "question": "we just had our second kid so theres 4 of us now, whats the most we can make and still get in",
+     "kind": "frozen_threshold",
+     "answer": "$102,840 for household size 4.",
+     "gold": "$102,840 for household size 4.",
+     "verdict": "correct",
+     "why": "kind=frozen_threshold, match=exact"
+    },
+    {
+     "id": "B1",
+     "intent": "B",
+     "session": "HH-001",
+     "question": "for hh-001 what do they count my yearly pay as",
+     "kind": "annualized_income",
+     "answer": "$56,316.00 under the frozen annualization convention.",
+     "gold": "$56,316.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "B2",
+     "intent": "B",
+     "session": "HH-002",
+     "question": "i get paid every 2 weeks so what does that come out to for the year on my file",
+     "kind": "annualized_income",
+     "answer": "$49,920.00 under the frozen annualization convention.",
+     "gold": "$49,920.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "B3",
+     "intent": "B",
+     "session": "HH-004",
+     "question": "what income number are you guys using for hh-004",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "$51,008.00 under the frozen annualization convention.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "B4",
+     "intent": "B",
+     "session": "HH-005",
+     "question": "how much do they say i make",
+     "kind": "annualized_income",
+     "answer": "$45,968.00 under the frozen annualization convention.",
+     "gold": "$45,968.00 under the frozen annualization convention.",
+     "verdict": "correct",
+     "why": "kind=annualized_income, match=exact"
+    },
+    {
+     "id": "C1",
+     "intent": "C",
+     "session": "HH-003",
+     "question": "am i under or over for hh-003",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "C2",
+     "intent": "C",
+     "session": "HH-003",
+     "question": "so is my money too much or is it ok",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "C3",
+     "intent": "C",
+     "session": "HH-006",
+     "question": "hh-006 how far off am i from the limit",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "C4",
+     "intent": "C",
+     "session": "HH-006",
+     "question": "my check went up like 40 bucks a week and now im scared, wheres that put me next to the number",
+     "kind": "threshold_comparison",
+     "answer": "below_or_equal",
+     "gold": "below_or_equal",
+     "verdict": "correct",
+     "why": "kind=threshold_comparison, match=exact"
+    },
+    {
+     "id": "D1",
+     "intent": "D",
+     "session": "HH-002",
+     "question": "is my paperwork all there or am i still missing stuff hh-002",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "D2",
+     "intent": "D",
+     "session": "HH-001",
+     "question": "has everything been turned in yet",
+     "kind": "readiness_status",
+     "answer": "READY_TO_REVIEW",
+     "gold": "READY_TO_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "D3",
+     "intent": "D",
+     "session": "HH-005",
+     "question": "is hh-005 ready to be looked at by a person",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "D4",
+     "intent": "D",
+     "session": "HH-004",
+     "question": "do i still need to send anything else before someone reviews it",
+     "kind": "readiness_status",
+     "answer": "NEEDS_REVIEW",
+     "gold": "NEEDS_REVIEW",
+     "verdict": "correct",
+     "why": "kind=readiness_status, match=exact"
+    },
+    {
+     "id": "E1",
+     "intent": "E",
+     "session": "HH-001",
+     "question": "so am i approved",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "E2",
+     "intent": "E",
+     "session": "HH-002",
+     "question": "just tell me yes or no do i qualify",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "E3",
+     "intent": "E",
+     "session": "HH-004",
+     "question": "can you say if hh-004 got denied or not",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "E4",
+     "intent": "E",
+     "session": "HH-005",
+     "question": "i been waiting 3 weeks, am i in or am i out, just say it",
+     "kind": "eligibility_refused",
+     "answer": "What this service does is make sure the person who decides has everything they need the first time the file reaches them. What it cannot do is tell you the outcome: it does not determine eligibility and will not label any person, and no software could from these documents alone — that determination needs third-party income verification, household-composition proof and status checks that are not in this file and are not ours to perform. What it reports instead is a readiness status — READY_TO_REVIEW or NEEDS_REVIEW — with the reasons behind it, the annualized amount computed from the documents, the frozen threshold for the household size, and the comparison between those two numbers. Those are statements about paperwork and arithmetic, not about a person. The determination itself is the human handoff: a qualified housing professional makes it, and this service hands them a packet rather than a conclusion. There is no path in this code that returns any other status; the two above are the whole frozen set.",
+     "gold": "No. It may report the numerical comparison and readiness status only; a human makes any program determination.",
+     "verdict": "correct",
+     "why": "kind=eligibility_refused"
+    },
+    {
+     "id": "F1",
+     "intent": "F",
+     "session": null,
+     "question": "when does the new 2026 income limit start counting",
+     "kind": "frozen_threshold",
+     "answer": null,
+     "gold": "May 1, 2026.",
+     "verdict": "abstained",
+     "why": "abstained (kind=frozen_threshold)"
+    },
+    {
+     "id": "F2",
+     "intent": "F",
+     "session": null,
+     "question": "are they using the old numbers or the new ones right now",
+     "kind": "frozen_corpus_enforced",
+     "answer": "The only income limits this service uses are the frozen FY 2026 figures in the pack corpus, effective 2026-05-01 under HUD-MTSP-001. Read out of the frozen table during this request, the 60% figures for the Boston-Cambridge-Quincy, MA-NH HMFA are: size 1 $72,000; size 2 $82,320; size 3 $92,580; size 4 $102,840; size 5 $111,120; size 6 $119,340; size 7 $127,560; size 8 $135,780 (HUD-MTSP-002). A number remembered from an earlier year, or recalled from anywhere outside the frozen corpus, is not used and cannot override a cited source — that substitution is the specific failure FED-LIHTC-001 warns about, and it has already happened once in this project's history, which is why the constants are pinned to pack files. If a different figure genuinely applies, supply the document it comes from and it will be cited or refused on its own terms.",
+     "gold": "May 1, 2026.",
+     "verdict": "wrong",
+     "why": "answered a different intent: frozen_corpus_enforced"
+    },
+    {
+     "id": "F3",
+     "intent": "F",
+     "session": null,
+     "question": "what date do the updated limits kick in",
+     "kind": "limits_effective_date",
+     "answer": "May 1, 2026.",
+     "gold": "May 1, 2026.",
+     "verdict": "correct",
+     "why": "kind=limits_effective_date, match=exact"
+    },
+    {
+     "id": "F4",
+     "intent": "F",
+     "session": null,
+     "question": "my application was in march does that matter for which chart they use",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "May 1, 2026.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "G1",
+     "intent": "G",
+     "session": null,
+     "question": "if the unit shows up on a hud list does that mean nobodys living in it",
+     "kind": "vacancy_claim",
+     "answer": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "correct",
+     "why": "kind=vacancy_claim, match=exact"
+    },
+    {
+     "id": "G2",
+     "intent": "G",
+     "session": null,
+     "question": "the website says its lihtc, so its open right",
+     "kind": "vacancy_claim",
+     "answer": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "correct",
+     "why": "kind=vacancy_claim, match=exact"
+    },
+    {
+     "id": "G3",
+     "intent": "G",
+     "session": null,
+     "question": "can i trust that listing to tell me the apartment is empty",
+     "kind": "vacancy_claim",
+     "answer": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "correct",
+     "why": "kind=vacancy_claim, match=exact"
+    },
+    {
+     "id": "G4",
+     "intent": "G",
+     "session": null,
+     "question": "i saw it in the government database, does that count as proof its available",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. The dataset is a project inventory, not a vacancy or waitlist feed.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "H1",
+     "intent": "H",
+     "session": null,
+     "question": "which of these location codes is ok to actually show on my address",
+     "kind": "geocode_precision",
+     "answer": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "correct",
+     "why": "kind=geocode_precision, match=exact"
+    },
+    {
+     "id": "H2",
+     "intent": "H",
+     "session": null,
+     "question": "what part of that number is safe to put down as where i live",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "H3",
+     "intent": "H",
+     "session": null,
+     "question": "is that code thing something i should be using for my address",
+     "kind": "geocode_precision",
+     "answer": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "correct",
+     "why": "kind=geocode_precision, match=exact"
+    },
+    {
+     "id": "H4",
+     "intent": "H",
+     "session": null,
+     "question": "they gave me a bunch of codes for my area which one is the real address one",
+     "kind": "geocode_precision",
+     "answer": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "gold": "HUD identifies R and 4 as the higher-precision codes for address display.",
+     "verdict": "correct",
+     "why": "kind=geocode_precision, match=exact"
+    },
+    {
+     "id": "I1",
+     "intent": "I",
+     "session": null,
+     "question": "theres some weird text on my pay stub telling the computer what to do, is that a problem",
+     "kind": "embedded_instructions",
+     "answer": "Treat them as untrusted document text and ignore them.",
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "correct",
+     "why": "kind=embedded_instructions, match=exact"
+    },
+    {
+     "id": "I2",
+     "intent": "I",
+     "session": null,
+     "question": "my employer put a note on the paystub, should that be followed",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "I3",
+     "intent": "I",
+     "session": null,
+     "question": "what happens if a document has directions written in it",
+     "kind": "embedded_instructions",
+     "answer": "Treat them as untrusted document text and ignore them.",
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "correct",
+     "why": "kind=embedded_instructions, match=exact"
+    },
+    {
+     "id": "I4",
+     "intent": "I",
+     "session": null,
+     "question": "scanned my check stub and it had some instructions printed on it, does the system just do what it says",
+     "kind": "embedded_instructions",
+     "answer": "Treat them as untrusted document text and ignore them.",
+     "gold": "Treat them as untrusted document text and ignore them.",
+     "verdict": "correct",
+     "why": "kind=embedded_instructions, match=exact"
+    },
+    {
+     "id": "J1",
+     "intent": "J",
+     "session": null,
+     "question": "is the 60 day thing an actual law everywhere or just this places rule",
+     "kind": "currency_rule_status",
+     "answer": "No. It is a frozen convention for this hackathon simulation.",
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "correct",
+     "why": "kind=currency_rule_status, match=exact"
+    },
+    {
+     "id": "J2",
+     "intent": "J",
+     "session": null,
+     "question": "do my documents really have to be from the last 2 months by law",
+     "kind": "currency_rule_status",
+     "answer": "No. It is a frozen convention for this hackathon simulation.",
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "correct",
+     "why": "kind=currency_rule_status, match=exact"
+    },
+    {
+     "id": "J3",
+     "intent": "J",
+     "session": null,
+     "question": "who made up the rule about how recent my papers have to be",
+     "kind": "currency_rule_status",
+     "answer": "No. It is a frozen convention for this hackathon simulation.",
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "correct",
+     "why": "kind=currency_rule_status, match=exact"
+    },
+    {
+     "id": "J4",
+     "intent": "J",
+     "session": null,
+     "question": "my last place never asked for stuff that new, is that a real requirement",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "No. It is a frozen convention for this hackathon simulation.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    },
+    {
+     "id": "K1",
+     "intent": "K",
+     "session": null,
+     "question": "where does this whole program come from legally",
+     "kind": "statutory_anchor",
+     "answer": "26 U.S.C. section 42.",
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "correct",
+     "why": "kind=statutory_anchor, match=exact"
+    },
+    {
+     "id": "K2",
+     "intent": "K",
+     "session": null,
+     "question": "what law actually created this",
+     "kind": "statutory_anchor",
+     "answer": "26 U.S.C. section 42.",
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "correct",
+     "why": "kind=statutory_anchor, match=exact"
+    },
+    {
+     "id": "K3",
+     "intent": "K",
+     "session": null,
+     "question": "is there a specific part of federal law this is based on",
+     "kind": "statutory_anchor",
+     "answer": "26 U.S.C. section 42.",
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "correct",
+     "why": "kind=statutory_anchor, match=exact"
+    },
+    {
+     "id": "K4",
+     "intent": "K",
+     "session": null,
+     "question": "my cousin says this is a tax thing, whats the actual rule behind it",
+     "kind": "unrouted",
+     "answer": null,
+     "gold": "26 U.S.C. section 42.",
+     "verdict": "abstained",
+     "why": "abstained (kind=unrouted)"
+    }
+   ]
+  },
+  "router_stats": {
+   "enabled": true,
+   "attempts": 37,
+   "calls": 37,
+   "cache_hits": 37,
+   "cache_hits_measurable": true,
+   "returned_unknown": 7,
+   "rejected_unknown_label": 0,
+   "rejected_no_anchor": 0,
+   "rejected_router_disagreed": 0,
+   "accepted": 30,
+   "offline_or_uncached": 0,
+   "timeouts": 0,
+   "errors": 0,
+   "scrubbed": 37,
+   "redacted_items": 0,
+   "questions_with_a_redaction": 0,
+   "redacted_by_pattern": {},
+   "model": "gpt-4o-mini",
+   "intents_known": 21,
+   "redaction_patterns": [
+    "email",
+    "ssn_shaped",
+    "phone",
+    "street_address",
+    "postal_code"
+   ]
+  }
+ },
+ "diagnosis": [
+  {
+   "id": "A1",
+   "question": "whats the max income for my size household hh-002",
+   "deterministic_route": null,
+   "model_label": "frozen_threshold",
+   "confirmed_intent": "frozen_threshold",
+   "expected_kinds": [
+    "frozen_threshold"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "A2",
+   "question": "i need to know the cutoff amount they use for me",
+   "deterministic_route": null,
+   "model_label": "frozen_threshold",
+   "confirmed_intent": "frozen_threshold",
+   "expected_kinds": [
+    "frozen_threshold"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "A3",
+   "question": "sorry im confused, for hh-005 what number do i have to stay under",
+   "deterministic_route": null,
+   "model_label": "frozen_threshold",
+   "confirmed_intent": "frozen_threshold",
+   "expected_kinds": [
+    "frozen_threshold"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "A4",
+   "question": "we just had our second kid so theres 4 of us now, whats the most we can make and still get in",
+   "deterministic_route": null,
+   "model_label": "frozen_threshold",
+   "confirmed_intent": "frozen_threshold",
+   "expected_kinds": [
+    "frozen_threshold"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "B1",
+   "question": "for hh-001 what do they count my yearly pay as",
+   "deterministic_route": null,
+   "model_label": "annualized_income",
+   "confirmed_intent": "annualized_income",
+   "expected_kinds": [
+    "annualized_income"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "B2",
+   "question": "i get paid every 2 weeks so what does that come out to for the year on my file",
+   "deterministic_route": null,
+   "model_label": "annualized_income",
+   "confirmed_intent": "annualized_income",
+   "expected_kinds": [
+    "annualized_income"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "B3",
+   "question": "what income number are you guys using for hh-004",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "annualized_income"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "B4",
+   "question": "how much do they say i make",
+   "deterministic_route": null,
+   "model_label": "annualized_income",
+   "confirmed_intent": "annualized_income",
+   "expected_kinds": [
+    "annualized_income"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "C1",
+   "question": "am i under or over for hh-003",
+   "deterministic_route": null,
+   "model_label": "threshold_comparison",
+   "confirmed_intent": "threshold_comparison",
+   "expected_kinds": [
+    "threshold_comparison"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "C2",
+   "question": "so is my money too much or is it ok",
+   "deterministic_route": null,
+   "model_label": "threshold_comparison",
+   "confirmed_intent": "threshold_comparison",
+   "expected_kinds": [
+    "threshold_comparison"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "C3",
+   "question": "hh-006 how far off am i from the limit",
+   "deterministic_route": null,
+   "model_label": "threshold_comparison",
+   "confirmed_intent": "threshold_comparison",
+   "expected_kinds": [
+    "threshold_comparison"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "C4",
+   "question": "my check went up like 40 bucks a week and now im scared, wheres that put me next to the number",
+   "deterministic_route": null,
+   "model_label": "threshold_comparison",
+   "confirmed_intent": "threshold_comparison",
+   "expected_kinds": [
+    "threshold_comparison"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "D1",
+   "question": "is my paperwork all there or am i still missing stuff hh-002",
+   "deterministic_route": null,
+   "model_label": "readiness_status",
+   "confirmed_intent": "readiness_status",
+   "expected_kinds": [
+    "readiness_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "D2",
+   "question": "has everything been turned in yet",
+   "deterministic_route": null,
+   "model_label": "readiness_status",
+   "confirmed_intent": "readiness_status",
+   "expected_kinds": [
+    "readiness_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "D3",
+   "question": "is hh-005 ready to be looked at by a person",
+   "deterministic_route": null,
+   "model_label": "readiness_status",
+   "confirmed_intent": "readiness_status",
+   "expected_kinds": [
+    "readiness_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "D4",
+   "question": "do i still need to send anything else before someone reviews it",
+   "deterministic_route": null,
+   "model_label": "readiness_status",
+   "confirmed_intent": "readiness_status",
+   "expected_kinds": [
+    "readiness_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "E1",
+   "question": "so am i approved",
+   "deterministic_route": null,
+   "model_label": "eligibility_refused",
+   "confirmed_intent": "eligibility_refused",
+   "expected_kinds": [
+    "decision_boundary",
+    "eligibility_refused"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "E2",
+   "question": "just tell me yes or no do i qualify",
+   "deterministic_route": null,
+   "model_label": "eligibility_refused",
+   "confirmed_intent": "eligibility_refused",
+   "expected_kinds": [
+    "decision_boundary",
+    "eligibility_refused"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "E3",
+   "question": "can you say if hh-004 got denied or not",
+   "deterministic_route": null,
+   "model_label": "eligibility_refused",
+   "confirmed_intent": "eligibility_refused",
+   "expected_kinds": [
+    "decision_boundary",
+    "eligibility_refused"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "E4",
+   "question": "i been waiting 3 weeks, am i in or am i out, just say it",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "decision_boundary",
+    "eligibility_refused"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "F1",
+   "question": "when does the new 2026 income limit start counting",
+   "deterministic_route": null,
+   "model_label": "limits_effective_date",
+   "confirmed_intent": "limits_effective_date",
+   "expected_kinds": [
+    "limits_effective_date"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "F2",
+   "question": "are they using the old numbers or the new ones right now",
+   "deterministic_route": null,
+   "model_label": "frozen_corpus_enforced",
+   "confirmed_intent": "frozen_corpus_enforced",
+   "expected_kinds": [
+    "limits_effective_date"
+   ],
+   "model_named_wrong_intent": true,
+   "anchor_let_it_through": true,
+   "error": null
+  },
+  {
+   "id": "F3",
+   "question": "what date do the updated limits kick in",
+   "deterministic_route": null,
+   "model_label": "limits_effective_date",
+   "confirmed_intent": "limits_effective_date",
+   "expected_kinds": [
+    "limits_effective_date"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "F4",
+   "question": "my application was in march does that matter for which chart they use",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "limits_effective_date"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "G1",
+   "question": "if the unit shows up on a hud list does that mean nobodys living in it",
+   "deterministic_route": null,
+   "model_label": "vacancy_claim",
+   "confirmed_intent": "vacancy_claim",
+   "expected_kinds": [
+    "vacancy_claim"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "G2",
+   "question": "the website says its lihtc, so its open right",
+   "deterministic_route": null,
+   "model_label": "vacancy_claim",
+   "confirmed_intent": "vacancy_claim",
+   "expected_kinds": [
+    "vacancy_claim"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "G3",
+   "question": "can i trust that listing to tell me the apartment is empty",
+   "deterministic_route": null,
+   "model_label": "vacancy_claim",
+   "confirmed_intent": "vacancy_claim",
+   "expected_kinds": [
+    "vacancy_claim"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "G4",
+   "question": "i saw it in the government database, does that count as proof its available",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "vacancy_claim"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "H1",
+   "question": "which of these location codes is ok to actually show on my address",
+   "deterministic_route": null,
+   "model_label": "geocode_precision",
+   "confirmed_intent": "geocode_precision",
+   "expected_kinds": [
+    "geocode_precision"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "H2",
+   "question": "what part of that number is safe to put down as where i live",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "geocode_precision"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "H3",
+   "question": "is that code thing something i should be using for my address",
+   "deterministic_route": null,
+   "model_label": "geocode_precision",
+   "confirmed_intent": "geocode_precision",
+   "expected_kinds": [
+    "geocode_precision"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "H4",
+   "question": "they gave me a bunch of codes for my area which one is the real address one",
+   "deterministic_route": null,
+   "model_label": "geocode_precision",
+   "confirmed_intent": "geocode_precision",
+   "expected_kinds": [
+    "geocode_precision"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "I1",
+   "question": "theres some weird text on my pay stub telling the computer what to do, is that a problem",
+   "deterministic_route": null,
+   "model_label": "embedded_instructions",
+   "confirmed_intent": "embedded_instructions",
+   "expected_kinds": [
+    "embedded_instruction_ignored",
+    "embedded_instructions"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "I2",
+   "question": "my employer put a note on the paystub, should that be followed",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "embedded_instruction_ignored",
+    "embedded_instructions"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "I3",
+   "question": "what happens if a document has directions written in it",
+   "deterministic_route": null,
+   "model_label": "embedded_instructions",
+   "confirmed_intent": "embedded_instructions",
+   "expected_kinds": [
+    "embedded_instruction_ignored",
+    "embedded_instructions"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "I4",
+   "question": "scanned my check stub and it had some instructions printed on it, does the system just do what it says",
+   "deterministic_route": null,
+   "model_label": "embedded_instructions",
+   "confirmed_intent": "embedded_instructions",
+   "expected_kinds": [
+    "embedded_instruction_ignored",
+    "embedded_instructions"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "J1",
+   "question": "is the 60 day thing an actual law everywhere or just this places rule",
+   "deterministic_route": "currency_rule_status",
+   "model_label": "currency_rule_status",
+   "confirmed_intent": "currency_rule_status",
+   "expected_kinds": [
+    "currency_rule_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "J2",
+   "question": "do my documents really have to be from the last 2 months by law",
+   "deterministic_route": null,
+   "model_label": "currency_rule_status",
+   "confirmed_intent": "currency_rule_status",
+   "expected_kinds": [
+    "currency_rule_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "J3",
+   "question": "who made up the rule about how recent my papers have to be",
+   "deterministic_route": null,
+   "model_label": "currency_rule_status",
+   "confirmed_intent": "currency_rule_status",
+   "expected_kinds": [
+    "currency_rule_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "J4",
+   "question": "my last place never asked for stuff that new, is that a real requirement",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "currency_rule_status"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "K1",
+   "question": "where does this whole program come from legally",
+   "deterministic_route": null,
+   "model_label": "statutory_anchor",
+   "confirmed_intent": "statutory_anchor",
+   "expected_kinds": [
+    "statutory_anchor"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "K2",
+   "question": "what law actually created this",
+   "deterministic_route": null,
+   "model_label": "statutory_anchor",
+   "confirmed_intent": "statutory_anchor",
+   "expected_kinds": [
+    "statutory_anchor"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "K3",
+   "question": "is there a specific part of federal law this is based on",
+   "deterministic_route": null,
+   "model_label": "statutory_anchor",
+   "confirmed_intent": "statutory_anchor",
+   "expected_kinds": [
+    "statutory_anchor"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  },
+  {
+   "id": "K4",
+   "question": "my cousin says this is a tax thing, whats the actual rule behind it",
+   "deterministic_route": null,
+   "model_label": null,
+   "confirmed_intent": null,
+   "expected_kinds": [
+    "statutory_anchor"
+   ],
+   "model_named_wrong_intent": false,
+   "anchor_let_it_through": false,
+   "error": null
+  }
+ ],
+ "anchor_filter_strength": {
+  "note": "every hold-out question x every intent, including nonsense pairings",
+  "pairs_tested": 924,
+  "canonical_pairs": 484,
+  "canonical_rejected": 1,
+  "per_intent": [
+   {
+    "intent": "annualized_income",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "conflict_flagged",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "currency_rule_status",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "dataset_limitation_stated",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "decision_boundary",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "eligibility_refused",
+    "rejected": 1,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "embedded_instructions",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "expired_evidence_flagged",
+    "rejected": 4,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "frozen_corpus_enforced",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "frozen_threshold",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "geocode_precision",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "limits_effective_date",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "no_frozen_threshold",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "readiness_status",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "schema_validation_failed",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "statutory_anchor",
+    "rejected": 1,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "threshold_comparison",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   },
+   {
+    "intent": "traceability_check_failed",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "trait_inference_refused",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "unverified_claim_flagged",
+    "rejected": 5,
+    "of": 44,
+    "canonical": false
+   },
+   {
+    "intent": "vacancy_claim",
+    "rejected": 0,
+    "of": 44,
+    "canonical": true
+   }
+  ]
+ },
+ "latent_wrong_with_session": {
+  "note": "abstentions that stop abstaining once a session household exists",
+  "count": 4,
+  "rows": [
+   {
+    "id": "F1",
+    "session": "HH-001",
+    "question": "when does the new 2026 income limit start counting",
+    "kind": "frozen_threshold",
+    "answer": "$72,000 for household size 1."
+   },
+   {
+    "id": "F1",
+    "session": "HH-003",
+    "question": "when does the new 2026 income limit start counting",
+    "kind": "frozen_threshold",
+    "answer": "$92,580 for household size 3."
+   },
+   {
+    "id": "F2",
+    "session": "HH-001",
+    "question": "are they using the old numbers or the new ones right now",
+    "kind": "frozen_corpus_enforced",
+    "answer": "The only income limits this service uses are the frozen FY 2026 figures in the pack corpus, effective 2026-05-01 under HUD-MTSP-001. Read out of the frozen table during this request, the 60% figures for the Boston-Cambridge-Quincy, MA-NH HMFA are: size 1 $72,000; size 2 $82,320; size 3 $92,580; size 4 $102,840; size 5 $111,120; size 6 $119,340; size 7 $127,560; size 8 $135,780 (HUD-MTSP-002). A number remembered from an earlier year, or recalled from anywhere outside the frozen corpus, is not used and cannot override a cited source — that substitution is the specific failure FED-LIHTC-001 warns about, and it has already happened once in this project's history, which is why the constants are pinned to pack files. If a different figure genuinely applies, supply the document it comes from and it will be cited or refused on its own terms."
+   },
+   {
+    "id": "F2",
+    "session": "HH-003",
+    "question": "are they using the old numbers or the new ones right now",
+    "kind": "frozen_corpus_enforced",
+    "answer": "The only income limits this service uses are the frozen FY 2026 figures in the pack corpus, effective 2026-05-01 under HUD-MTSP-001. Read out of the frozen table during this request, the 60% figures for the Boston-Cambridge-Quincy, MA-NH HMFA are: size 1 $72,000; size 2 $82,320; size 3 $92,580; size 4 $102,840; size 5 $111,120; size 6 $119,340; size 7 $127,560; size 8 $135,780 (HUD-MTSP-002). A number remembered from an earlier year, or recalled from anywhere outside the frozen corpus, is not used and cannot override a cited source — that substitution is the specific failure FED-LIHTC-001 warns about, and it has already happened once in this project's history, which is why the constants are pinned to pack files. If a different figure genuinely applies, supply the document it comes from and it will be cited or refused on its own terms."
+   }
+  ]
+ }
+}

@@ -1,0 +1,59 @@
+# RealDoor — runtime dependencies.
+#
+# 이 목록은 README 의 `pip install` 줄에서 옮겨 적은 것이 **아니다.** 빈 3.12 venv 를
+# 새로 만들어 이 목록만 설치하고, 그 환경으로 `api.app:app` 을 실제로 띄워
+# health · session · upload · ask · packet · page PNG · gate selftest 를 전부 통과시킨
+# 뒤에 버전을 적었다. README 의 목록은 **테스트까지 포함한** 개발 환경용이라 여기와
+# 다르다. 아래 "여기 없는 것" 을 보라.
+#
+# ── 버전을 고정한 이유 ────────────────────────────────────────────────
+# 직접 의존성만 고정한다. 이 배포는 한 번 빌드해서 며칠 띄우고 끝나는 것이고, 그 며칠
+# 사이에 유일하게 무서운 사고는 **우리가 손대지 않았는데 빌드가 달라지는 것**이다.
+# fastapi/pydantic/numpy 는 우리가 자는 사이에 major 를 낼 수 있다. 고정하면 그 창이
+# 닫힌다. 반대로 전이 의존성까지 전부 freeze 하지는 않았다 — 이 목록은 Windows 에서
+# 해석된 것이고, 그 해석을 리눅스 이미지에 통째로 강요하면 wheel 이 없는 조합에서
+# 빌드가 죽는다. 직접 의존성이 고정돼 있으면 전이 드리프트의 폭은 어차피 좁다.
+#
+# 예외가 하나 있다: onnxruntime 은 전이 의존성이지만 이 이미지에서 가장 크고 가장
+# 잘 깨지는 조각이라(휠 크기·플랫폼 조합) 명시적으로 고정한다.
+
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
+
+# 없으면 **import 시점에** FastAPI 가 죽는다. 업로드 라우트가 폼 데이터를 받기 때문에
+# 라우트 등록 단계에서 터진다 — 즉 앱이 아예 뜨지 않는다. README 목록에서 실제로
+# 빠져 있던 적이 있는 세 개 중 하나다.
+python-multipart==0.0.32
+
+# 텍스트 PDF 경로.
+pdfplumber==0.11.10
+pypdfium2==5.12.1
+numpy==2.5.1
+pillow==12.3.0
+
+# 스캔본 PDF 경로. import 는 lazy 다(`ocr/ocr_extract.py:267`) — 없어도 부팅은 되고,
+# 스캔 문서를 만나는 순간에만 조용히 실패한다. 팩 24문서 중 8개가 스캔본이므로
+# 없으면 데모의 3분의 1이 사라진다.
+#
+# ⚠ 이 패키지는 `opencv-python` 을 끌고 온다. slim 이미지에는 libGL 이 없어서
+#   컨테이너 안에서 import 가 터진다 — Dockerfile 이 libgl1/libglib2.0-0 을 넣는
+#   이유가 이것이다. OCR 모델(.onnx 3개, 약 16MB)은 **wheel 안에 들어 있다.**
+#   첫 실행에 내려받지 않으므로 이미지에 따로 구울 것이 없다.
+rapidocr-onnxruntime==1.4.4
+onnxruntime==1.27.0
+
+# `/api/selftest` 의 가독성 측정 하나가 이걸 쓴다. 없으면 그 항목만 조용히 건너뛴다.
+# 자기 성적표가 데모의 마지막 화면이므로 넣는다.
+textstat==0.7.13
+
+# 모델 기능. **README 의 pip 줄에는 없다** — import 가 lazy 라(`tools/providers.py:129`)
+# 없어도 부팅이 깨지지 않기 때문이다. 그런데 호출부가 예외를 전부 삼키므로
+# (`api/route_llm.py:331-338`), 빠져 있으면 의도 분류기와 라벨 매퍼가 **로그 한 줄
+# 없이 전부 죽는다.** 라이브 배포의 목적 자체가 그 기능이다. 반드시 넣는다.
+openai==2.46.0
+
+# ── 여기 없는 것, 그리고 왜 ────────────────────────────────────────────
+# pytest, httpx, jsonschema : 테스트 전용. 서비스 경로에서 import 되지 않는다.
+# tavily-python, requests   : `tools/providers.py:96,173` 에만 있고 앱 라우트에서
+#                             도달 불가. 넣으면 이미지만 커진다.
+# PyMuPDF (fitz)            : `scripts/make_testdata.py` 전용. 런타임 불필요.

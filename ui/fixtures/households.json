@@ -1,0 +1,64 @@
+{
+ "households": [
+  {
+   "household_id": "HH-001",
+   "document_count": 4,
+   "document_ids": [
+    null,
+    null,
+    null,
+    null
+   ]
+  },
+  {
+   "household_id": "HH-002",
+   "document_count": 4,
+   "document_ids": [
+    null,
+    null,
+    null,
+    null
+   ]
+  },
+  {
+   "household_id": "HH-003",
+   "document_count": 4,
+   "document_ids": [
+    null,
+    null,
+    null,
+    null
+   ]
+  },
+  {
+   "household_id": "HH-004",
+   "document_count": 4,
+   "document_ids": [
+    null,
+    null,
+    null,
+    null
+   ]
+  },
+  {
+   "household_id": "HH-005",
+   "document_count": 4,
+   "document_ids": [
+    null,
+    null,
+    null,
+    null
+   ]
+  },
+  {
+   "household_id": "HH-006",
+   "document_count": 4,
+   "document_ids": [
+    null,
+    null,
+    null,
+    null
+   ]
+  }
+ ]
+}
