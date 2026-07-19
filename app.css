@@ -30,6 +30,15 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+/* The pinned question box occupies the bottom ~112px of the viewport. Anything the page
+   scrolls to — a focused control, an anchor, `scrollIntoView` — would otherwise be allowed
+   to land underneath it. This reserves that strip for every scroll the browser performs on
+   the page's behalf, which is what stops the step navigation and the last row of a table
+   coming to rest behind the dock. Nothing is ever permanently obscured either way: the
+   dock is the last element in the document, so at maximum scroll it sits in the flow with
+   the whole page above it. */
+html { scroll-padding-bottom: 8rem; }
+
 body {
   margin: 0;
   font-family: var(--sans);
@@ -213,6 +222,68 @@ main:focus { outline: none; }
 }
 .ask-anywhere h2 { font-size: 1.3rem; margin-top: 0; }
 .ask-anywhere > .aside-note { max-width: 72ch; }
+
+/* ── the docked question box ──────────────────────────────────────────
+   `sticky`, not `fixed`, and this is the whole reason the dock works on a phone. A fixed
+   bar is taken out of flow and positioned against the layout viewport, which a virtual
+   keyboard does not resize — the bar ends up behind the keyboard. A sticky element stays
+   in the flow of `main` and is offset against the *visual* viewport, so the keyboard
+   pushes it rather than covering it. It also means the dock cannot outlive its own
+   container: at the end of the step it settles back into the page like an ordinary block.
+
+   No `overflow` anywhere in here. An internal scroll area inside a pinned panel is bad at
+   320px, bad with a keyboard, and is what axe flags as scrollable-region-focusable. The
+   panel is kept short by holding less, not by scrolling. */
+#ask-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  /* A child of <body>, so it inherits none of main's padding. The gutter matches
+     .layout's so the strip lines up with the column above it at every width. */
+  margin: 1rem clamp(.5rem, 2vw, 1.5rem) 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  /* The same 4px accent rule .ask-anywhere carries: this belongs to the whole
+     walkthrough rather than to the step above it. No new colour, no new shape. */
+  border-top: 4px solid var(--accent);
+  border-radius: var(--radius) var(--radius) 0 0;
+  /* Enough separation to read as "in front of the page" without inventing a surface.
+     --ink at 14% on --paper; it is a shadow, never a carrier of meaning. */
+  box-shadow: 0 -2px 8px rgba(20, 24, 29, .14);
+}
+/* Above 1100px the open-questions rail is a second column, and a full-width dock reaches
+   across it. That is not a cosmetic complaint: axe measured the rail's Change link and its
+   Technical details summary losing their target-size clearance (21.8px of safe space
+   instead of 24px) to the strip lying over them, and the rail is the one part of this page
+   that is meant to be readable at all times. So on the widths where the rail is beside the
+   main column, the dock stops at the main column. Same track arithmetic as .layout: the
+   aside settles at its 24rem maximum at every width past this breakpoint, plus the 1rem
+   grid gap, plus the layout's own right padding. */
+@media (min-width: 1101px) {
+  #ask-dock { margin-right: calc(24rem + 1rem + clamp(.5rem, 2vw, 1.5rem)); }
+}
+
+#ask-dock #ask-box-body { padding: .55rem clamp(.6rem, 2vw, 1rem) .7rem; }
+#ask-dock .ask-input-row { margin-bottom: 0; }
+#ask-dock .ask-label { font-size: .85rem; }
+/* Below 640px the loose box stacks the button under a 5rem textarea, so a chip-filled
+   question stays wholly readable. In the dock that arithmetic runs the other way: stacked,
+   the strip measured 184px of an 800px viewport at 320px wide, and 158 of 480 — a third of
+   the screen given to a control that holds one sentence. Pinned, it has to be paid for in
+   height every moment it is on show, so here the two sit on one row and the textarea keeps
+   its two rows. The chip case still works: the chips submit on press, and the question is
+   echoed in full on the answer card's "Question asked" line either way. */
+@media (max-width: 640px) {
+  #ask-dock .ask-control { flex-wrap: nowrap; }
+  #ask-dock .ask-control textarea { min-height: 0; flex: 1 1 auto; flex-basis: auto; }
+  #ask-dock .ask-control .action { width: auto; }
+}
+/* The label is the last thing to go, and only when the viewport is too short to afford it.
+   The textarea keeps its accessible name either way — this costs sighted density and
+   nothing else. Measured at 320x800: 111px with the label, 86px without. */
+@media (max-height: 520px) {
+  #ask-dock .ask-label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 
 .screen h1:focus { outline: none; }
 .screen h1:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -486,6 +557,44 @@ details.tech > * { margin-top: .4rem; }
 .callout--ok   { border-left-color: var(--ok);   background: var(--ok-bg); }
 .callout h3 { margin-top: 0; }
 .callout > :last-child { margin-bottom: 0; }
+
+/* ── 중간 계층: 우리가 질문을 **해석해서** 고른 답 ──────────────────────────────
+   초록(--ok)이면 안 된다. 정확한 라우터가 짚은 답과 같은 권위로 읽히기 때문이다.
+   그렇다고 경고(--stop)도 아니다. 답이 틀렸다는 게 아니라 **덜 확실하다**는 것이고,
+   빨강은 "이건 문제다"를 뜻하는 자리를 이미 갖고 있다.
+
+   그래서 새 색을 만들지 않는다. 기본 .callout 이 이미 쓰는 --accent 를 그대로 쓰고,
+   차이는 **형태**가 나른다 — 왼쪽 띠가 실선이 아니라 점선이고, 나머지 세 면에 테두리가
+   생겨 카드가 닫힌 상자가 된다. 확신 계층 셋은 전부 왼쪽 한 면만 있는 열린 형태다.
+   색을 못 보는 사람에게도 이 둘은 다른 모양이고, 그 위에 제목 문구가 또 한 번 말한다. */
+.callout--read {
+  border-left-color: var(--accent);
+  border-left-style: dashed;
+  border-top: 1px solid var(--line-strong);
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  background: #f2f7fb;
+}
+
+/* 그 안에서 "우리가 이렇게 읽었습니다"를 담는 상자. 답 본문과 섞이면 안 된다 —
+   이건 답이 아니라 답이 **어디서 왔는지**이고, 세입자가 여기서 할 일(다시 묻기)이
+   붙는 자리다. 기계 이름은 한 글자도 들어오지 않는다. 그건 Technical details 몫이다. */
+.read-note {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  padding: .65rem .8rem;
+  margin: 0 0 .8rem;
+}
+.read-note > :last-child { margin-bottom: 0; }
+.read-note__label { font-weight: 700; }
+/* 되비친 해석 그 자체. 굵기로만 들어 올린다 — 이탤릭은 긴 문장에서 읽기 어렵고
+   이건 세입자가 "내가 물은 게 저거 맞나"를 확인하려고 멈춰 서는 한 조각이다. */
+.read-note__gloss { font-weight: 700; }
+.read-note__action { margin-bottom: .5rem; }
+/* 다시 묻기 버튼은 문장 **아래** 자기 줄에 선다. 문장 안에 인라인으로 끼우면 320px
+   에서 버튼이 문장을 두 동강 내고, 버튼의 상하 여백이 줄간격을 들쭉날쭉하게 만든다. */
+.read-note__buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
 /* api/plain.py 의 세입자용 한 문장. 정밀한 원문 위에 서되 제목을 대신하지는 않으므로,
    굵기만 올리고 크기는 본문과 같게 둔다. */
 .answer-lead { font-weight: 600; margin-bottom: .5rem; }
