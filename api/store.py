@@ -316,16 +316,49 @@ class Store:
         return len(self._sessions)
 
     # ── 조회 ────────────────────────────────────────────────────────────
+    def _applicant(self, house: Any) -> dict[str, Any]:
+        """신청인 이름과 **그 이름의 확실성**. 없으면 `None` 이다 — 짓지 않는다.
+
+        `person_name` 은 신청 요약서에서 이미 뽑아 놓은 필드다. 여기서 다시 읽지도,
+        다른 문서에서 유추하지도 않는다. 급여명세서에도 같은 이름 필드가 있지만 그걸
+        섞으면 "고용주가 적은 이름"과 "본인이 적은 이름"이 한 칸에서 뭉개진다.
+        세대를 대표하는 이름은 신청서의 것 하나뿐이고, 그 문서가 없으면 이름도 없다.
+
+        `Document.get()` 은 `certainty == "abstain"` 이나 값 없음을 `None` 으로 접는데,
+        여기서는 그 접힘을 쓰지 않는다. **얼마나 확실한 이름인지가 화면에 실려야**
+        하기 때문이다. 낮게 읽힌 이름을 확실한 이름과 같은 모양으로 내보내면, 이
+        프로젝트가 문서 필드마다 지켜 온 구분이 이름 한 칸에서만 사라진다.
+        """
+        for doc in house.documents:
+            if doc.document_type != "application_summary":
+                continue
+            ref = doc.fields.get("person_name")
+            if ref is None or ref.value is None or ref.certainty == "abstain":
+                return {"applicant_name": None, "applicant_name_certainty": None,
+                        "applicant_name_evidence": None}
+            return {
+                "applicant_name": str(ref.value),
+                "applicant_name_certainty": ref.certainty,
+                "applicant_name_evidence": ref.evidence_kind,
+            }
+        return {"applicant_name": None, "applicant_name_certainty": None,
+                "applicant_name_evidence": None}
+
     def households(self, s: Session) -> list[dict[str, Any]]:
         houses = households_from_views(list(s.views.values()))
         out = []
         for hid in sorted(houses):
             docs = houses[hid].documents
-            out.append({
+            row = {
                 "household_id": hid,
                 "document_count": len(docs),
-                "document_ids": [d.get("document_id") for d in docs],
-            })
+                # `Document` 는 데이터클래스이고 `.get(name)` 은 **추출 필드**를 찾는
+                # 메서드다. 그래서 `d.get("document_id")` 는 언제나 None 이었고, 이
+                # 배열은 지금까지 [null, null, null, null] 로 나갔다. 속성으로 읽는다.
+                "document_ids": [d.document_id for d in docs],
+            }
+            row.update(self._applicant(houses[hid]))
+            out.append(row)
         return out
 
     def report(self, s: Session, household_id: str) -> dict[str, Any] | None:

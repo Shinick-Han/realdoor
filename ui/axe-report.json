@@ -10,7 +10,7 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-19T09:50:28.627Z",
+ "generated_at": "2026-07-19T10:34:32.443Z",
  "screens_per_origin": 7,
  "total_violations": 0,
  "violations_by_impact": {},
@@ -107,7 +107,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+          "tr:nth-child(2) > .mono"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -131,7 +131,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+          "tr:nth-child(3) > .mono"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
@@ -168,7 +168,7 @@
        ]
       }
      ],
-     "rules_passed": 34
+     "rules_passed": 35
     },
     {
      "screen": "step2-correct",
@@ -355,7 +355,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+          "tr:nth-child(2) > .mono"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -379,7 +379,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+          "tr:nth-child(3) > .mono"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
@@ -416,7 +416,7 @@
        ]
       }
      ],
-     "rules_passed": 34
+     "rules_passed": 35
     },
     {
      "screen": "step2-correct",
@@ -597,7 +597,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+          "tr:nth-child(2) > .mono"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -615,7 +615,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+          "tr:nth-child(3) > .mono"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
@@ -646,7 +646,7 @@
        ]
       }
      ],
-     "rules_passed": 34
+     "rules_passed": 35
     },
     {
      "screen": "step2-correct",
@@ -827,7 +827,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > .mono"
+          "tr:nth-child(2) > .mono"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -845,7 +845,7 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > .mono"
+          "tr:nth-child(3) > .mono"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
@@ -876,7 +876,7 @@
        ]
       }
      ],
-     "rules_passed": 34
+     "rules_passed": 35
     },
     {
      "screen": "step2-correct",
