@@ -69,3 +69,19 @@ New copy measures FK grade 0.6–6.6 per string, combined FK 4.0 / SMOG 6.7 (tex
    item under step 5 while the wound shows on step 4. The step-4 callouts now carry the
    action in place, so nothing is cold — but if the owner would rather move the open item
    to step 4, that is a one-line routing change with error-summary implications.
+
+
+## Owner decisions on the NEEDS_OWNER items (2026-07-21)
+
+1. **Situation evidence paragraphs under 한국어 — stays English, deliberately.** The Korean
+   layer is kept (it is part of the product's story: the reviewer's persona names
+   non-native speakers, and the English for "Abstentions" was improved by following our own
+   Korean), but further Korean investment is frozen. What is translated today — every
+   headline, every next step, every renter-facing screen — is the commitment; the evidence
+   paragraphs join the existing carve-out alongside verbatim HUD quotes.
+2. **`state=unreadable` for month-only upload dates** — queued for a gated loop iteration
+   after the OCR iterations finish (core/ is owned by that loop while it runs). The frozen
+   enum already holds the right word (`undatable`); the fix is vocabulary consistency, not
+   new behaviour.
+3. **Open-item step routing** — left as is. The step-4 callouts carry the action in place;
+   moving the open item would touch the error summary for no coverage gain.
