@@ -1226,6 +1226,30 @@ def extract_fields_from_page(
                 model_named |= set(found) - before_stage
         if tracker is not None:
             _retag_model_provenance(found, model_named, tracker.from_model)
+
+    # ----------------------------------------------------------------------------------
+    # Two-axis table cells (part of the column path: `REALDOOR_COLUMNS=0` disables it)
+    # ----------------------------------------------------------------------------------
+    # Last of all, and only for fields every label pass left with **no value** -- absent,
+    # or recorded as an abstention. This is the same abstention-only gate the header-column
+    # branch in `_scan_page` uses, applied at the page level because the fields this rule
+    # reads have no label anywhere on the page to anchor a `_scan_page` visit: an earnings
+    # matrix names `regular_hours` by crossing a `Regular` row with an `Hours` header
+    # rather than by printing a label. Placing it after every mapper pass is structural
+    # safety, not politeness -- a field any label (canonical, synonym or model-named) can
+    # reach is decided by that label before this rule is allowed to look, so there is no
+    # path by which a table cell can replace, move or re-box a label-anchored value.
+    # See `core.columns.table_cell_value` for the rule and its refusals.
+    if _columns_enabled():
+        from core import columns
+
+        for name in EXPECTED_FIELDS.get(document_type, ()):
+            existing = found.get(name)
+            if existing is not None and existing.get("certainty") != "abstain":
+                continue
+            recovered = columns.table_cell_value(lines, name, convention)
+            if recovered is not None:
+                found[name] = recovered
     return found, unmapped
 
 
