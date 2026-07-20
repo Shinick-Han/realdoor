@@ -75,6 +75,16 @@
 
     "Correct a value we read wrong": "잘못 읽은 값을 바로잡으세요",
 
+    // U4: 문서가 소프트웨어에 명령을 심으려 한 경우의 안내. 공격 문구는 신청자의 값이
+    // 아니므로 값 표에서 빼고, 대신 여기서 "당신에 대한 것이 아니라 문서에 대한 사실"이라고
+    // 설명한다. 원문(격리된 텍스트)은 기술 세부정보에 그대로 남는다.
+    "Something in this document tried to give the software an instruction":
+      "이 문서 안의 무언가가 소프트웨어에 명령을 주려 했습니다",
+    "We filed it as text and never ran it. It changed none of your values and none of the figures on this file. There is nothing for you to do about it, and it is not held against you — it is a fact about the document, not about you.":
+      "저희는 그것을 글자로만 보관하고 실행하지 않았습니다. 당신의 어떤 값도, 이 파일의 어떤 수치도 바꾸지 않았습니다. 당신이 하실 일은 없고, 불리하게 작용하지도 않습니다 — 이것은 당신이 아니라 문서에 대한 사실입니다.",
+    "Captured as quarantined data under rule CH-SAFETY-001, which is cited on this report because of it. The text is stored and carried into the packet so a reviewer can see it; it never reaches the calculation.":
+      "규칙 CH-SAFETY-001 에 따라 격리된 데이터로 포착했으며, 그 때문에 이 리포트에 해당 규칙이 인용됩니다. 이 글자는 검토자가 볼 수 있도록 보관되어 패킷에 실리지만, 계산에는 결코 도달하지 않습니다.",
+
     "Ask what a housing rule says": "주택 규칙이 뭐라고 하는지 물어보세요",
     "Every answer carries its rule id, the authority behind it, the date it took effect, and where in the source it is written.":
       "모든 답변에는 규칙 id, 그 근거가 되는 기관, 시행일, 그리고 원문의 어디에 적혀 있는지가 함께 붙습니다.",
