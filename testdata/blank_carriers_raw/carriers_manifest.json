@@ -1,0 +1,184 @@
+{
+  "collected": "2026-07-21",
+  "purpose": "Real published blank form PDFs collected as layout carriers for a test corpus. Selected on their own merits without reference to the extractor vocabulary (blindness rule).",
+  "publishers_skipped_by_instruction": ["Seattle Housing", "MN Housing", "WA DSHS", "Orange USD", "KCHA"],
+  "total_bytes": 3445723,
+  "files": [
+    {
+      "file_name": "reno_rental_application.pdf",
+      "source_url": "https://www.renoha.org/wp-content/uploads/2024/09/RHA-Unaided-Rental-Application-1.pdf",
+      "publisher": "Reno Housing Authority (Nevada)",
+      "retrieved": "2026-07-21",
+      "sha256": "1a64076659d1407330c71451855d70b3d1b67c2d0f0957db76818c90ef60e1c4",
+      "bytes": 792361,
+      "pages": 9,
+      "kind": "housing application / applicant intake",
+      "text_layer": {"words_extractable": 2693},
+      "acroform": {"field_count": 500},
+      "fillability_verdict": "acroform",
+      "notes": "Public housing authority rental application; household members and income sections. Rich AcroForm."
+    },
+    {
+      "file_name": "atlanta_community_housing_application.pdf",
+      "source_url": "https://www.atlantahousing.org/wp-content/uploads/2020/03/Community-Application-for-Housing.pdf",
+      "publisher": "Atlanta Housing (Georgia)",
+      "retrieved": "2026-07-21",
+      "sha256": "e1ebd4a192ce55d5ee07f31115e29056040ad8fd48e86a01075a2b83fd8c6fcd",
+      "bytes": 265473,
+      "pages": 4,
+      "kind": "housing application / applicant intake",
+      "text_layer": {"words_extractable": 1785},
+      "acroform": {"field_count": 0},
+      "fillability_verdict": "overlay",
+      "notes": "Public housing authority 'Application for Housing'; blank, no form fields, flat text layer for overlay."
+    },
+    {
+      "file_name": "edd_de429z_ui_award_notice.pdf",
+      "source_url": "https://edd.ca.gov/siteassets/files/pdf_pub_ctr/de429z.pdf",
+      "publisher": "California Employment Development Department (EDD)",
+      "retrieved": "2026-07-21",
+      "sha256": "d95687df03be09ce6c83abf0ea2bdf159d39c047a5294e41f7c2c281bc218c2d",
+      "bytes": 293562,
+      "pages": 2,
+      "kind": "benefit award statement (unemployment insurance)",
+      "text_layer": {"words_extractable": 1228},
+      "acroform": {"field_count": 0},
+      "fillability_verdict": "overlay",
+      "notes": "State-published Notice of Unemployment Insurance Award blank template; text layer present, no form fields."
+    },
+    {
+      "file_name": "nycha_059293.pdf",
+      "source_url": "https://selfserve.nycha.info/nycha/images/HELP/059293.pdf",
+      "publisher": "New York City Housing Authority (NYCHA)",
+      "retrieved": "2026-07-21",
+      "sha256": "6d3e02157f85978bb471152cf17009971d02677f8e09e919cb085a4fdcd3c48b",
+      "bytes": 222305,
+      "pages": 2,
+      "kind": "income verification consent (third-party release of information)",
+      "text_layer": {"words_extractable": 1699},
+      "acroform": {"field_count": 9},
+      "fillability_verdict": "acroform",
+      "notes": "Housing authority third-party verification / consent-to-release blank tied to income reexamination. Text layer plus small AcroForm."
+    },
+    {
+      "file_name": "dha_verification_self_employment.pdf",
+      "source_url": "https://dhantx.com/wp-content/uploads/2019/12/Verification-of-Self-Employment-DHA05.19fillable.pdf",
+      "publisher": "Dallas Housing (DHA, Texas)",
+      "retrieved": "2026-07-21",
+      "sha256": "00ee041bd538455b41a3ce507cc787c26a573cc71caafc14faa5d38b0f443f3d",
+      "bytes": 124590,
+      "pages": 1,
+      "kind": "self-employment income verification worksheet",
+      "text_layer": {"words_extractable": 161},
+      "acroform": {"field_count": 28},
+      "fillability_verdict": "acroform",
+      "notes": "Housing authority 'Verification of Self-Employment' fillable blank. Sparse static text, fields carry the layout."
+    },
+    {
+      "file_name": "nevada_dwss_self_employment_worksheet.pdf",
+      "source_url": "https://www.dss.nv.gov/siteassets/dwss.nv.gov/content/home/features/forms/2011_-_EG_fillable.pdf",
+      "publisher": "Nevada Division of Welfare and Supportive Services (DWSS)",
+      "retrieved": "2026-07-21",
+      "sha256": "20d14fd4d9215252cfab0b07dca13efa1a7a93826b00bd8c83e550cc53fcbaa2",
+      "bytes": 344965,
+      "pages": 2,
+      "kind": "self-employment income worksheet",
+      "text_layer": {"words_extractable": 387},
+      "acroform": {"field_count": 50},
+      "fillability_verdict": "acroform",
+      "notes": "State welfare agency self-employment income worksheet, fillable blank."
+    },
+    {
+      "file_name": "wshfc_self_employment_income_worksheet.pdf",
+      "source_url": "https://wshfc.org/managers/Forms/120_SelfEmploymentIncomeWorksheet.pdf",
+      "publisher": "Washington State Housing Finance Commission (WSHFC)",
+      "retrieved": "2026-07-21",
+      "sha256": "f36d60a7e256d91955d491eee7e8e5d24f715c23dc3b085f25b56fae2702348e",
+      "bytes": 69989,
+      "pages": 1,
+      "kind": "self-employment income worksheet",
+      "text_layer": {"words_extractable": 382},
+      "acroform": {"field_count": 8},
+      "fillability_verdict": "acroform",
+      "notes": "State housing finance commission self-employment income worksheet, small fillable blank."
+    },
+    {
+      "file_name": "texas_h1049_self_employment_statement.pdf",
+      "source_url": "https://yourtexasbenefits.com/GeneratePDF/StaticPdfs/en_US/H1049_Nov2014.pdf",
+      "publisher": "Texas Health and Human Services Commission",
+      "retrieved": "2026-07-21",
+      "sha256": "c36e071028b7c7c00fb8d62ea5d0ce3b6c4daa95161b3df4552fdef980370752",
+      "bytes": 32909,
+      "pages": 2,
+      "kind": "self-employment income statement",
+      "text_layer": {"words_extractable": 1608},
+      "acroform": {"field_count": 0},
+      "fillability_verdict": "overlay",
+      "notes": "State form H1049 'Client's Statement of Self-Employment Income', bilingual English/Spanish blank; text layer, no fields."
+    },
+    {
+      "file_name": "hud_home_self_certification_income.pdf",
+      "source_url": "https://files.hudexchange.info/resources/documents/HOME-Sample-Self-Certification-of-Annual-Income-Form-June-2020.pdf",
+      "publisher": "U.S. HUD Exchange (HOME Program)",
+      "retrieved": "2026-07-21",
+      "sha256": "9f76e7cac0eb4075328898049b9acea189c9afa92d936ffa85ea7b55c942d6e4",
+      "bytes": 200314,
+      "pages": 6,
+      "kind": "self-certification of annual income",
+      "text_layer": {"words_extractable": 1793},
+      "acroform": {"field_count": 0},
+      "fillability_verdict": "overlay",
+      "notes": "Federal HOME program sample self-certification of annual income blank; text layer, no form fields."
+    },
+    {
+      "file_name": "irs_f1099nec.pdf",
+      "source_url": "https://www.irs.gov/pub/irs-pdf/f1099nec.pdf",
+      "publisher": "U.S. Internal Revenue Service (IRS)",
+      "retrieved": "2026-07-21",
+      "sha256": "68a8f00078be6dd6a4912cc4209df317b31840d5fe19560222d39df9f2f7ff49",
+      "bytes": 537467,
+      "pages": 6,
+      "kind": "gig / non-employee income statement (1099-NEC)",
+      "text_layer": {"words_extractable": 1974},
+      "acroform": {"field_count": 173},
+      "fillability_verdict": "acroform",
+      "notes": "IRS 1099-NEC blank; AcroForm carrier for the AcroForm test stratum."
+    },
+    {
+      "file_name": "irs_f1099msc.pdf",
+      "source_url": "https://www.irs.gov/pub/irs-pdf/f1099msc.pdf",
+      "publisher": "U.S. Internal Revenue Service (IRS)",
+      "retrieved": "2026-07-21",
+      "sha256": "38051fe1cdce8fac5183a7e7b182b1a0de590dcfec3e4f66a156eba3f98943fa",
+      "bytes": 561788,
+      "pages": 6,
+      "kind": "miscellaneous income statement (1099-MISC)",
+      "text_layer": {"words_extractable": 2441},
+      "acroform": {"field_count": 236},
+      "fillability_verdict": "acroform",
+      "notes": "IRS 1099-MISC blank; AcroForm carrier for the AcroForm test stratum."
+    }
+  ],
+  "not_obtained": [
+    {
+      "searched_for": "SSA benefit award letter blank template",
+      "reason": "Known trap from prior round confirmed: SSA award-letter specimens on the open web circulate as image-only scans with no text layer, and the rest are filled samples. No genuine blank with a text layer surfaced, so none was taken."
+    },
+    {
+      "searched_for": "Texas HHS form H1009 TANF or SNAP benefits notice",
+      "reason": "State form landing page returned HTTP 403 to automated fetch and no stable direct PDF URL could be resolved this session. Benefit-side coverage is instead carried by the EDD award notice."
+    },
+    {
+      "searched_for": "state SNAP / TANF benefit verification request blank",
+      "reason": "Top hits were third-party template hosts (pdfFiller and similar) behind fill/download paywalls, not genuine agency publications. Excluded on license-safety and 'genuine published blank' grounds."
+    },
+    {
+      "searched_for": "unemployment award letter template",
+      "reason": "Leading result (template.net) is a paywalled online editor, not a published blank PDF. Excluded."
+    },
+    {
+      "searched_for": "LIHTC tenant income certification blank",
+      "reason": "Available copies came from a private compliance vendor (spectrumlihtc.com) rather than a government publisher; skipped in favor of the housing-authority and federal specimens already collected for license safety."
+    }
+  ]
+}
