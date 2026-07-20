@@ -1014,6 +1014,24 @@ def _columns_enabled() -> bool:
     return os.environ.get("REALDOOR_COLUMNS", "").strip() != "0"
 
 
+def _header_cell_enabled() -> bool:
+    """Is the header-cell column reader switched on? ON by default; `0` switches it off.
+
+    Guards exactly one branch in `_scan_page` -- the call to
+    `columns.header_cell_value`, which reads the single run beneath a vocabulary label
+    that is itself a cell of one of the page's own column-header rows. The branch also
+    sits inside `_columns_enabled()`, so `REALDOOR_COLUMNS=0` keeps its standing promise
+    that `core.columns` is never imported. With `REALDOOR_HEADER_CELL=0` the branch never
+    runs and this module's output is bit-identical to what it was before the rule
+    existed (loop iteration it-002; falsified over all 77 corpus documents first --
+    loop/falsification/it-002.json). Read through a function rather than captured at
+    import so a test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_HEADER_CELL", "").strip() != "0"
+
+
 def infer_document_type(pdf_path: str | Path) -> str:
     """Derive the document type from the pack's file naming convention."""
     stem = Path(pdf_path).stem
@@ -1199,6 +1217,28 @@ def _scan_page(
 
                 recovered = columns.column_value(
                     lines, run, column_right, field_name, convention, is_exact, label_words,
+                    header_words,
+                )
+                if recovered is not None:
+                    resolved = recovered
+            # ------------------------------------------------------------------------
+            # A label that is itself a printed header-row cell licenses its column
+            # (`REALDOOR_HEADER_CELL=0` to disable) -- see `core.columns.header_cell_value`
+            # ------------------------------------------------------------------------
+            # Same abstention-only gate, placed directly after the row reader above so
+            # it is consulted exactly when that reader found nothing -- the ordering the
+            # falsification sweep measured (loop/falsification/it-002.json: fired on
+            # 2 of 77 documents, zero conflicts). Like every branch in this chain, it
+            # converts abstentions or does nothing.
+            if (
+                _columns_enabled()
+                and _header_cell_enabled()
+                and (resolved is None or resolved.get("certainty") == "abstain")
+            ):
+                from core import columns
+
+                recovered = columns.header_cell_value(
+                    lines, run, field_name, convention, is_exact, label_words,
                     header_words,
                 )
                 if recovered is not None:

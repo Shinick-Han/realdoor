@@ -1,22 +1,23 @@
 {
-  "accepted_commit": "c45064647e2f3f496b5f0492b534d232677f5982",
-  "updated": "2026-07-20T00:00:00Z",
+  "accepted_commit": "6fcc001f852e4c3488abab002d96cadab14e1955",
+  "accepted_commit_note": "KNOWN LIMIT of build_field_state.py: it stamps head_sha() at build time, and the baseline is committed WITH the iteration, so this pointer names the PREVIOUS accepted commit, not the commit that contains this file. G5 must compare against the LAST ACCEPTED commit -- the it-002 commit itself. it-002's first gate run failed G5 on exactly this (it-001's baseline pointed at c450646, a tree without the accepted it-001 rule). The next iteration's first mechanical step: set accepted_commit to the it-002 commit sha (git log --oneline, the 'it-002:' commit) before running its gate.",
+  "updated": "2026-07-20T07:59:55+00:00",
   "generated_by": "loop/tools/build_field_state.py",
   "pack": {
     "correct": 159,
     "wrong": 0,
     "of": 159,
-    "iou_mean": 0.967727,
+    "iou_mean": 0.9677,
     "iou_over_05": 159,
     "iou_evaluated": 159,
     "abstained": 0,
     "missed": 0
   },
   "uploads": {
-    "correct": 134,
+    "correct": 136,
     "wrong": 0,
     "of": 144,
-    "abstained": 10,
+    "abstained": 8,
     "documents_measured": 22,
     "harness_set_name": "existing 26"
   },
@@ -35,20 +36,24 @@
     "abstained": 21
   },
   "confirm": {
-    "correct": 15,
+    "correct": 17,
     "wrong": 0,
     "of": 126,
-    "abstained": 111,
+    "abstained": 109,
     "unreachable_expected": 8,
     "unreachable_absent": 20
   },
   "pytest": {
-    "passed": 1253,
+    "passed": 1276,
     "failed": 0,
     "exit_code": 0
   },
   "preexisting_dirty": [
     "README.md",
+    "api/test_upload.py",
+    "core/columns.py",
+    "core/extract.py",
+    "core/test_columns.py",
     "testdata/confirm_raw/bonita_certificated_check_sample.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_hourly.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_piecerate.pdf",
@@ -64,7 +69,6 @@
     "testdata/confirm_raw/seattle_housing_employment_verification_blank.pdf",
     "testdata/confirm_raw/wa_dshs_14252_employment_verification.pdf",
     "ui/axe-report.json",
-    "ui/dist/app.css",
     "ui/screen-scan.json",
     "ui/shots-variant/screen-1-1280.png",
     "ui/shots-variant/screen-1-390.png",
@@ -112,9 +116,8 @@
   ],
   "field_state_census": {
     "confirm": {
-      "abstain": 2,
       "blocked_contract": 2,
-      "correct": 15,
+      "correct": 17,
       "image_only": 22,
       "masked": 5
     },
@@ -130,8 +133,8 @@
       "correct": 159
     },
     "uploads": {
-      "abstain": 10,
-      "correct": 134,
+      "abstain": 8,
+      "correct": 136,
       "image_only": 31
     }
   },
@@ -142,11 +145,11 @@
     "confirm::bonita_certificated_check_sample.pdf::pay_period_end": "correct",
     "confirm::bonita_certificated_check_sample.pdf::person_name": "correct",
     "confirm::ca_dlse_paystub_hourly.pdf::gross_pay": "correct",
-    "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate": "abstain",
+    "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate": "correct",
     "confirm::ca_dlse_paystub_hourly.pdf::net_pay": "correct",
     "confirm::ca_dlse_paystub_hourly.pdf::pay_period_end": "masked",
     "confirm::ca_dlse_paystub_hourly.pdf::pay_period_start": "masked",
-    "confirm::ca_dlse_paystub_hourly.pdf::person_name": "abstain",
+    "confirm::ca_dlse_paystub_hourly.pdf::person_name": "correct",
     "confirm::ca_dlse_paystub_hourly.pdf::regular_hours": "correct",
     "confirm::ca_dlse_paystub_piecerate.pdf::gross_pay": "correct",
     "confirm::ca_dlse_paystub_piecerate.pdf::net_pay": "correct",
@@ -562,8 +565,8 @@
     "uploads::up_023_pay_stub_side_by_side.pdf::regular_hours": "correct",
     "uploads::up_024_pay_stub_table.pdf::gross_pay": "abstain",
     "uploads::up_024_pay_stub_table.pdf::hourly_rate": "abstain",
-    "uploads::up_024_pay_stub_table.pdf::pay_date": "abstain",
-    "uploads::up_024_pay_stub_table.pdf::person_name": "abstain",
+    "uploads::up_024_pay_stub_table.pdf::pay_date": "correct",
+    "uploads::up_024_pay_stub_table.pdf::person_name": "correct",
     "uploads::up_024_pay_stub_table.pdf::regular_hours": "abstain",
     "uploads::up_025_benefit_letter_caption_layout.pdf::benefit_frequency": "correct",
     "uploads::up_025_benefit_letter_caption_layout.pdf::document_date": "correct",

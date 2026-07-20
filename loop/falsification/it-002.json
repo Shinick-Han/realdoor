@@ -1,0 +1,57 @@
+{
+  "predicate": "loop/falsify/it-002.py",
+  "run_at": "2026-07-20T07:32:12+00:00",
+  "documents_swept": 77,
+  "docs_fired": [
+    "confirm::ca_dlse_paystub_hourly.pdf",
+    "uploads::up_024_pay_stub_table.pdf"
+  ],
+  "firing_count": 2,
+  "firings": [
+    {
+      "corpus": "uploads",
+      "doc": "up_024_pay_stub_table.pdf",
+      "field": "pay_date, person_name",
+      "value": {
+        "pay_date": {
+          "without_rule": null,
+          "with_rule": "2026-07-07"
+        },
+        "person_name": {
+          "without_rule": null,
+          "with_rule": "Jane Roe"
+        }
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "pay_date": "2026-07-07",
+        "person_name": "Jane Roe"
+      }
+    },
+    {
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf",
+      "field": "hourly_rate, person_name",
+      "value": {
+        "hourly_rate": {
+          "without_rule": null,
+          "with_rule": 18.0
+        },
+        "person_name": {
+          "without_rule": null,
+          "with_rule": "Johnson, Bob"
+        }
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "hourly_rate": 18.0,
+        "person_name": "Johnson, Bob"
+      }
+    }
+  ],
+  "conflicts": [],
+  "target_fired": true,
+  "verdict": "pass"
+}

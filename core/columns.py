@@ -85,14 +85,18 @@ from __future__ import annotations
 from typing import Any, Sequence
 
 from core.extract import (
+    FREE_TEXT_FIELDS,
     SIDE_BY_SIDE_MIN_GAP,
     VALUE_Y_WINDOW,
     Word,
     LineBoxConvention,
+    ParseError,
     _build_value_field,
+    _caption_refusal,
     _join_run,
     _split_runs,
     normalize_label,
+    parse_value,
 )
 
 # --------------------------------------------------------------------------------------
@@ -354,6 +358,127 @@ def column_value(
         f"row names {header!r}",
         header_words=header_words,
     )
+
+
+# --------------------------------------------------------------------------------------
+# A label that is itself a header-row cell licenses the column beneath it
+# --------------------------------------------------------------------------------------
+# Everything above reads ACROSS a row. The CA DLSE hourly stub prints the transposed
+# layout -- a row of column names with the data row beneath it::
+#
+#     EMPLOYEE[228-397]  SOCIAL SECURITY NO.[569-910]  PAY RATE[988-1140]  PAY PERIOD[1239-1426]
+#     Johnson, Bob[227-414]  XXX-XX-6789[570-759]  18.00[989-1065] regular  1/7/XXto 1/13/XX
+#
+# The vocabulary recognises EMPLOYEE and PAY RATE (typography-independent, so the 29pt
+# non-bold cells are found), but the data row sits 39pt below the header and
+# `VALUE_Y_WINDOW` -- fitted to the pack's 14.5-15.3pt label-to-value pitch -- tops out
+# at 22. Nothing else in the chain looks below a label at all, so both fields abstained
+# on a page a human reads instantly (loop backlog T8).
+#
+# Two printed facts license the read, and neither is proximity:
+#
+#   (a) the page declares the line a row of column NAMES -- it is a row of three or more
+#       short digit-free caption cells, the exact structure `_header_row_words` already
+#       recognises, until now only to REFUSE those cells as values;
+#   (b) the page states which column a data run belongs to -- the run's x-span shares
+#       extent with exactly one header cell, the same span-attribution `_attribute_axis`
+#       already carries.
+#
+# Every test is a refusal, each pinned to a document that exhibits the hazard:
+#
+#   * the label run must BE one whole cell of such a row -- an ordinary side-by-side
+#     label (two-cell line) never engages this rule;
+#   * candidates live within `HEADER_SEARCH_BAND` below the label, are never label runs
+#     ("a label is never a value") and never runs `_caption_refusal` refuses -- on
+#     orangeusd, `Employee ID` sits attributed beneath the `Employee Name` cell at
+#     20.8pt and dies here, the exact refusal built after this document family shipped
+#     wrong names;
+#   * a run attributed to zero or two cells is nobody's value -- on osu p2 the
+#     deduction amounts under the `Employee` header cell are decimal-aligned past the
+#     cell's span and match zero cells, so the document that once produced
+#     person_name="Employer" yields no candidate at all;
+#   * for a typed field, a run that does not parse as the field's type is not a
+#     candidate and does not trigger refusals (the `_is_numeric_run` precedent) -- the
+#     masked `1/7/XXto 1/13/XX` under PAY PERIOD is nobody's date. A free-text field
+#     gets NO such filter: its shape test is too weak to eliminate rivals, so every
+#     surviving run counts toward the ambiguity refusal and the shape test may only
+#     refuse the sole survivor, never pick between two;
+#   * more than one candidate -> refuse. up_024's earnings table prints two data rows,
+#     and its hours/rate/gross columns abstain on count while the singleton name and
+#     date columns read -- exactly the split its author predicted when writing the
+#     fixture.
+#
+# Falsified before implementation (loop/falsification/it-002.json): across all 77
+# corpus documents the rule changes exactly two -- the CA DLSE hourly stub and up_024
+# -- and every changed field agrees with that document's truth. Certainty is capped at
+# "low": the pack's gold was never measured against this geometry.
+
+
+def header_cell_value(
+    lines: Sequence[Sequence[Word]],
+    label_run: Sequence[Word],
+    field_name: str,
+    convention: LineBoxConvention,
+    is_exact: bool,
+    label_words: frozenset[int],
+    header_words: frozenset[int] = frozenset(),
+) -> dict[str, Any] | None:
+    """The single value beneath a label that is a printed header-row cell, or None.
+
+    Called only for fields every earlier rule left without a value -- see the gate in
+    `core.extract._scan_page` (`REALDOOR_HEADER_CELL=0` disables the branch). Like
+    every rule in this module, it converts abstentions or does nothing.
+    """
+    # The label must be one WHOLE cell of one of the page's own column-header rows.
+    if not label_run or not all(id(w) in header_words for w in label_run):
+        return None
+    header_line = next((l for l in lines if any(w is label_run[0] for w in l)), None)
+    if header_line is None:
+        return None
+    cells = _split_runs(header_line)
+    label_ids = {id(w) for w in label_run}
+    ours = next((c for c in cells if {id(w) for w in c} & label_ids), None)
+    if ours is None or {id(w) for w in ours} != label_ids:
+        return None
+
+    baseline = label_run[0].baseline
+    page = label_run[0].page
+    candidates: list[list[Word]] = []
+    for line in lines:
+        if not line or line[0].page != page:
+            continue
+        delta = baseline - line[0].baseline
+        if not (0 < delta <= HEADER_SEARCH_BAND):
+            continue
+        for run in _split_runs(line):
+            if all(id(w) in label_words for w in run):
+                continue  # a label is never a value
+            if _caption_refusal(field_name, run, header_words) is not None:
+                continue  # a caption is never a value
+            hits = [c for c in cells if _x_overlap(_span(run), _span(c))]
+            if len(hits) != 1 or hits[0] is not ours:
+                continue  # the page has not attributed this run to our column
+            if field_name not in FREE_TEXT_FIELDS:
+                try:
+                    parse_value(field_name, _join_run(run))
+                except ParseError:
+                    continue  # not a reading this rule could emit; triggers no refusal
+            candidates.append(run)
+    if len(candidates) != 1:
+        return None  # zero: nothing printed there. Two or more: ambiguous. Abstain.
+
+    field = _build_value_field(
+        candidates[0], field_name, convention, is_exact,
+        f"value read from the single row beneath the header cell "
+        f"{_join_run(label_run)!r} in one of the page's own column-header rows",
+        header_words=header_words,
+    )
+    if field is None:
+        return None
+    # No label geometry the gold was measured against names this value -- cap it like
+    # every other rule in this module.
+    field["certainty"] = "low"
+    return field
 
 
 # --------------------------------------------------------------------------------------

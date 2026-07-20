@@ -153,14 +153,15 @@
       "corpus": "confirm",
       "doc": "ca_dlse_paystub_hourly.pdf",
       "fields": [
-        "person_name",
-        "hourly_rate"
+        "confirm::ca_dlse_paystub_hourly.pdf::person_name",
+        "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate"
       ],
       "category": "label_typography",
-      "status": "OPEN",
-      "attempts": 0,
+      "status": "DONE",
+      "attempts": 1,
       "prior_attempts": [],
-      "root_cause_note": "With the page now readable, both fields still abstain. Printed header row 'EMPLOYEE  SOCIAL SECURITY NO.  PAY RATE  PAY PERIOD' is 29pt non-bold; the header path does not recognise its cells at that typography."
+      "root_cause_note": "CORRECTED during it-002 diagnosis -- the it-001 note blamed typography, and that is the wrong mechanism. Measured: _label_runs DOES recognise the 29pt non-bold cells (EMPLOYEE via LABEL_MAP, PAY RATE via LABEL_SYNONYMS -- the vocabulary path is typography-independent). What failed was every value rule downstream: the data row sits 39.0pt below the header baseline (781.0 -> 742.0) and VALUE_Y_WINDOW=(6,22) -- fitted to the pack's 14.5-15.3pt pitch -- cannot reach it; the side-by-side and column_value rules read across the row; table_cell_value's REGULAR row sits under a header with no RATE cell; the arithmetic path found 18.00 by label adjacency only and correctly refused it.",
+      "closed_note": "Both fields recovered by columns.header_cell_value (flag REALDOOR_HEADER_CELL, license: printed header row): a vocabulary label that is one whole cell of a printed column-header row (>=3 caption cells, _header_row_words) licenses the single run beneath it within HEADER_SEARCH_BAND that shares x-extent with exactly that cell and no other. Falsified first over all 77 (loop/falsification/it-002.json): fired on 2 docs, zero conflicts. Flips: target person_name='Johnson, Bob' + hourly_rate=18.00, plus uploads::up_024_pay_stub_table.pdf person_name + pay_date -- the fixture authored to probe exactly this layout; its two-data-row columns (regular_hours/hourly_rate/gross_pay) still abstain on the two-candidate refusal, which is the safety property, not a residue: up_024's own manifest says no rule may pick between the two numbers. No successor items."
     }
   ]
 }
