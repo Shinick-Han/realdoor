@@ -334,6 +334,24 @@
       "closed_note": "Closed by the colon-line fill-in license (flag REALDOOR_COLON_GAP, it-010): a colon-terminated recognised label reads the immediately following run on its own baseline at a word-space gap, and for that read its own line is a fill-in line, not a column-header row. Diagnosis corrected on the page: the primary refusal was NOT the 12pt gap but _header_row_words classifying the filled line (four letters-only runs) as a column-header row, making 'Marisol Vega' its own barrier and a refused header cell; the gap was the second refusal. License: the printed colon is the page punctuating 'what follows me on my line is my value' -- the same print _caption_refusal already trusts in the opposite direction -- and a column-header cell, naming the column BELOW it, does not print one. Constraints held verbatim: sole-run cell (two runs tie -> refuse), colon barriers (Job Title: closes the cell; the blank form's empty cells read nothing), colon candidates never values, the interior-colon refusal (a licensed read is a clean fill or nothing -- added at P4 when this iteration's own geometry test found the amnesty could hand back a merged 'Job Title: Prep Cook' run), other lines' header rows, the it-009 parallel-caption refusal, parse gates; bare labels keep the 12pt gap. Falsified first: fired 0/77 (engages nowhere on the manifest), filled dev fired on the target only, zero conflicts; the colon-dense instructional confirm docs moved nothing. Predicted 1 flip, observed 1: filled dev 12.5% (3/24) -> 16.7% (4/24), 0 WRONG throughout. it-008's all-abstain seattle pin updated under flag=0 (it-005 precedent), sibling pin holds the rate abstention under the license."
     },
     {
+      "id": "T18",
+      "title": "AcroForm carriers: values typed into interactive form widgets are invisible to the text-layer reader",
+      "corpus": "filled+scenarios",
+      "doc": "wa_dshs_14252_employment_verification_filled.pdf",
+      "fields": [
+        "filled::wa_dshs_14252_employment_verification_filled.pdf::person_name"
+      ],
+      "field_note": "Outside field_state; measured by scripts/measure_filled_forms.py and the scenario corpus's 'acroform' stratum (8 sets built expressly as this item's acceptance corpus).",
+      "category": "input_source",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 7,
+      "root_cause_note": "pdfplumber reads the page content stream; an AcroForm text field's value lives in a widget annotation and its glyphs in that annotation's appearance stream, so a correctly filled agency form reads BLANK. Measured: the filled wa_dshs carrier holds 17 filled text widgets and page.extract_text() contains neither 'Terrence Boyd' nor '1,283.15'. Of the 11 real blank forms collected from public agencies, 7 are AcroForms. Filed by it-009's census, which found the wa_dshs values sitting in widgets and named this T18.",
+      "design_note": "Closed by it-012 (flag REALDOOR_FORM_FIELDS, new module core/form_fields.py). Each filled text widget's appearance stream is drawn onto a derived copy of its page at the place PDF 32000-1 12.5.5 puts it, and that page is read by core.extract.read_words -- the same reader, same engine, same watermark filter -- so fonts, advance widths and baselines are resolved rather than estimated. The widget's internal field NAME is never consulted: it is not printed on the page, so no rule may rest on it. Yield was 1 field per carrier, not 7: the values are all read, but the form's printed captions (AVERAGE HOURS PER WEEK, RATE OF PAY OR SALARY...) are outside the vocabulary, so only person_name binds. The remaining 6 are now VALUES PRESENT WITH NO RECOGNISED PRINTED LABEL -- squarely T21, and reachable there for the first time.",
+      "closed_note": "ACCEPTED it-012. Falsified first: fired 0/77 on the manifest (all 3 manifest AcroForms are unfilled blanks -- pack carries none at all), 1/3 filled dev, 6/6 unsealed acroform scenario sets, zero conflicts. acroform stratum 0/24/0 -> 6/18/0; filled dev 4/24 -> 5/24; every other corpus byte-identical, wrong 0 throughout."
+    },
+    {
       "id": "T19",
       "title": "gig_income_corroboration has no field table and no date field: a gig household cannot reach READY end to end",
       "corpus": "scenarios",

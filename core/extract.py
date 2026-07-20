@@ -1199,6 +1199,33 @@ def _ocr_words_enabled() -> bool:
     return os.environ.get("REALDOOR_OCR_WORDS", "").strip() != "0"
 
 
+def _form_fields_enabled() -> bool:
+    """Is interactive-form (AcroForm) widget reading on? ON by default; `0` switches it off.
+
+    Guards `core.form_fields.widget_words_by_page` -- the values typed into a PDF's
+    interactive form fields, which live in widget annotations and so are invisible to
+    the page-content reader. Unlike `core.ocr_words`, these words are handed to EVERY
+    path, because a widget value is what the page prints: put the filled form on paper
+    and the value is on the paper. The ordinary printed-label rules bind it exactly as
+    they bind drawn text, and the widget's internal field name is never read (the
+    licensing argument in full -- see `core/form_fields.py`'s docstring; loop iteration
+    it-012, falsified over all 77 corpus documents first --
+    loop/falsification/it-012.json). With `REALDOOR_FORM_FIELDS=0` `core.form_fields` is
+    never imported and this module's output is bit-identical to what it was before the
+    module existed.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_FORM_FIELDS", "").strip() != "0"
+
+
+def _form_fields():
+    """`core.form_fields`, imported only when the flag is on (gate G5's contract)."""
+    from core import form_fields
+
+    return form_fields
+
+
 def _ocr_skip_satisfied_enabled() -> bool:
     """Is the satisfied-skip for the OCR-words pass on? ON by default; `0` switches it off.
 
@@ -2610,8 +2637,20 @@ def extract_document(
         found: dict[str, dict[str, Any]] = {}
         collect_ocr = _ocr_words_enabled() and _arithmetic_enabled()
         defer_ocr = collect_ocr and _ocr_skip_satisfied_enabled()
+        # Values typed into interactive form widgets, which the content-stream reader
+        # above cannot see (it-012, `REALDOOR_FORM_FIELDS`). Empty for every document
+        # with no AcroForm and every blank form, so nothing below changes on them. These
+        # words join `words` outright rather than riding a separate list like the OCR
+        # ones: a widget value is printed text, licensed for every path -- see
+        # `core/form_fields.py`. The document is derived and read once, here.
+        widget_words = (_form_fields().widget_words_by_page(render_source)
+                        if _form_fields_enabled() else [])
         for page_number, page in enumerate(pdf.pages, start=1):
             words = read_words(page, page_number)
+            if page_number <= len(widget_words) and widget_words[page_number - 1]:
+                words = _form_fields().merged_with_printed(
+                    words, widget_words[page_number - 1]
+                )
             all_words.extend(words)
             words_by_page.append(words)
             # Collected only when something can consume them: the identity paths below
