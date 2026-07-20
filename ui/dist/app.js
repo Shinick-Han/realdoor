@@ -1728,6 +1728,40 @@
       });
   }
 
+  /* The upload's date line, when no usable date was read.
+   *
+   * It used to stop at the confession — "✕ Unreadable · no date we could read on this
+   * document" — which is a verdict with no way forward, and for a statement dated to the
+   * month it also named the wrong problem: the document was read fine (up_011 reads 4 of
+   * 4 fields), what cannot be worked out is the 60-day window, because that needs a day.
+   * This is the same honesty split step 1's "Still current?" row already makes for pack
+   * documents; the machine `state` on the view is untouched, and each sentence is its
+   * own text node so the i18n layer can carry it. */
+  function uploadDateNotice(view) {
+    var monthOnly = (view.fields || []).some(function (f) {
+      return /^\d{4}-\d{2}$/.test(String(f.value === null || f.value === undefined ? "" : f.value));
+    });
+    if (monthOnly) {
+      return [
+        h("span", { class: "chip chip--undatable" }, [
+          h("span", { "aria-hidden": "true", text: "? " }), "No day in the date"
+        ]),
+        " ",
+        "The date shows a month but no day, so we cannot count the 60-day window from it.",
+        " ",
+        "Ask " + issuerWords(view.document_type) + " for a copy dated to the day, or tell " +
+        "the person who reviews it the exact date."
+      ];
+    }
+    return [
+      stateChip(view.state), " ",
+      "no date we could read on this document.",
+      " ",
+      "Ask " + issuerWords(view.document_type) + " for a copy that shows the date, or " +
+      "hand this one to a person to read."
+    ];
+  }
+
   function renderUploadResult() {
     var host = byId("upload-result-host");
     if (!host) return;
@@ -1763,10 +1797,9 @@
         h("dt", { text: "Fields we could read" }),
         h("dd", { text: view.located_count + " of " + view.field_count }),
         h("dt", { text: "Document date" }),
-        h("dd", null, [
-          stateChip(view.state), " ",
-          view.document_date || "no date we could read on this document"
-        ])
+        h("dd", null, view.document_date
+          ? [stateChip(view.state), " ", view.document_date]
+          : uploadDateNotice(view))
       ])
     ]);
 
@@ -2585,10 +2618,18 @@
        * words, next to the name, and told what to do — because their name is the first
        * thing worth fixing. This says it where the name is; the "Low" cell still stands, and
        * nothing is hidden. */
+      /* The tail names the way to act on the doubt, and the way differs by table. The
+       * confirmable (household) table has the fix control on this very row. The upload
+       * table has no such control — an upload joins no household — so telling its reader
+       * to "fix it here" pointed at a control that does not exist. There the honest next
+       * step is the page image beside the row and the person who will read it. */
       var nameNote = (field.field === "person_name" && field.certainty === "low")
         ? h("p", { class: "hint value-uncertain-note" }, [
             "We may not have read your name correctly. It reads “" + plain(field.value) +
-            "”, but we are not sure. Check this row first, and fix it here if it is wrong."
+            "”, but we are not sure. " + (opts.confirmable
+              ? "Check this row first, and fix it here if it is wrong."
+              : "Check it against the page shown here. If it is wrong, the person who " +
+                "reviews this document goes by the page, not by our reading.")
           ])
         : null;
       var valueCell;

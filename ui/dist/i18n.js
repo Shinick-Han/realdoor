@@ -546,6 +546,11 @@
     "If you know the exact date, enter it on step 2. Or ask for a copy that shows the full date. Step 5 lists this as an open item.":
       "정확한 날짜를 아시면 2단계에서 입력해 주세요. 아니면 날짜가 다 적힌 사본을 요청하세요. 5단계에 남은 항목으로 올라 있습니다.",
 
+    // R26: 업로드 패널의 날짜 기권.
+    "The date shows a month but no day, so we cannot count the 60-day window from it.":
+      "날짜에 월까지만 있고 일(日)이 없어서, 거기서부터 60일 기간을 셀 수 없습니다.",
+    "no date we could read on this document.": "이 문서에서 읽어낼 수 있는 날짜가 없습니다.",
+
     // 체크리스트 항목 이름과 세입자가 할 일 (서버 데이터이지만 고정 문자열이다)
     "Application summary": "신청 요약서",
     "Recent pay stubs": "최근 급여명세서",
@@ -1639,6 +1644,24 @@
       function (m) {
         return "성함을 정확히 읽지 못했을 수 있습니다. “" + m[1] + "”로 읽었지만 확신하지 못합니다. " +
                "이 행을 먼저 확인하시고, 틀렸으면 여기서 바로잡아 주세요.";
+      }],
+    // R26: U8 문장의 업로드 변형 — 업로드 표에는 고칠 컨트롤이 없어서 꼬리가 다르다.
+    [/^We may not have read your name correctly\. It reads “(.+?)”, but we are not sure\. Check it against the page shown here\. If it is wrong, the person who reviews this document goes by the page, not by our reading\.$/,
+      function (m) {
+        return "성함을 정확히 읽지 못했을 수 있습니다. “" + m[1] + "”로 읽었지만 확신하지 못합니다. " +
+               "여기 보이는 페이지와 대조해 확인해 주세요. 틀렸더라도, 이 문서를 검토하는 사람은 " +
+               "저희의 판독이 아니라 페이지를 기준으로 봅니다.";
+      }],
+    // R26: 업로드 패널의 날짜 기권 다음 걸음 — 발급처가 문장 안에 끼워진다.
+    [/^Ask (.+?) for a copy dated to the day, or tell the person who reviews it the exact date\.$/,
+      function (m) {
+        return (lookup(m[1]) || m[1]) + "에 일(日)까지 적힌 사본을 요청하시거나, 검토하는 사람에게 " +
+               "정확한 날짜를 알려 주세요.";
+      }],
+    [/^Ask (.+?) for a copy that shows the date, or hand this one to a person to read\.$/,
+      function (m) {
+        return (lookup(m[1]) || m[1]) + "에 날짜가 보이는 사본을 요청하시거나, 이 문서를 사람에게 " +
+               "건네 읽게 해 주세요.";
       }],
     [/^Reasons this needs review \((\d+)\)$/, function (m) {
       return "검토가 필요한 이유 (" + m[1] + ")";
