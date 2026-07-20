@@ -1,439 +1,442 @@
 {
- "seeded_from": "extraction-loop-design.md section 7, in the priority order it gives",
- "seeded_at_commit": "60edef4958254178cb433254b6c92ed7b527d65c",
- "selection_rule": "highest expected field yield first, ties broken by lowest attempt count (design section C). With this seed that means T1 first.",
- "status_values": [
-  "OPEN",
-  "IN_PROGRESS",
-  "DONE",
-  "NO_SAFE_RULE",
-  "BLOCKED_CONTRACT",
-  "MASKED_OUT",
-  "IMAGE_ONLY_OUT_OF_SCOPE"
- ],
- "note": "Every `fields` list below was re-derived from loop/baseline.json's field_state on day 0, not copied from the design. All seven agree with design section 0.1 exactly: 5 ca_dlse abstains, 5 external abstains, 2 il_dol blocked, 5 masked, 22 image-only (hi_ags 6, ou 7, osu 3, lcc 6).",
- "items": [
-  {
-   "id": "T1",
-   "title": "ca_dlse_hourly: the watermark filter deletes the whole page (malformed FontBBox sizes)",
-   "corpus": "confirm",
-   "doc": "ca_dlse_paystub_hourly.pdf",
-   "fields": [
-    "confirm::ca_dlse_paystub_hourly.pdf::person_name",
-    "confirm::ca_dlse_paystub_hourly.pdf::regular_hours",
-    "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate",
-    "confirm::ca_dlse_paystub_hourly.pdf::gross_pay",
-    "confirm::ca_dlse_paystub_hourly.pdf::net_pay"
-   ],
-   "category": "reader_loss",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 5,
-   "root_cause_note": "read_words returns 0 words for a page on which raw pdfplumber sees 96 words / 630 chars. The PDF's font descriptor has a malformed FontBBox, so every char on the page reports a bogus size of 27.3-48.6pt, and read_words filters size >= WATERMARK_MIN_SIZE (20.0) as watermark. The extractor is blind to the entire page; nothing downstream ever runs.",
-   "design_note": "Design section 8.1: ONE unit of work, not five. Five partial fixes around a blind reader are exactly the page-specific patching constraint 2 forbids. Candidate licenses for P2 to weigh: a physical bound (a 'watermark' classification that removes EVERY char on a page is self-refuting -- a watermark is by definition distinguishable from the body it overlays) or measured glyph-box height in place of declared font size. The falsification sweep must additionally prove real >=20pt content elsewhere in the corpus (pack headings, actual watermarks) is still handled -- that is the named hazard. The proposal must still predict all five flips individually; G7 holds it to that. It must also predict that this document's two masked-year fields (pay_period_start/end) stay abstained -- a flip there would mean the change invented a century, and is a G7 anomaly.",
-   "design_risk": "Design section 9.2: T1 changes how every page is read, so predicting zero incidental flips across 77 documents is a strong claim. Expect one REVIEW round-trip here; it is the likeliest place the loop burns its second expensive call.",
-   "closed_note": "3 of 5 fields recovered (regular_hours, gross_pay, net_pay). person_name and hourly_rate were measured to stay abstain with the page readable: they sit under a 29pt non-bold header row the header path does not recognise. That is a label/geometry cause, not reader loss, so it is a separate target rather than a patch inside this one."
-  },
-  {
-   "id": "T2",
-   "title": "ext_les pay_period_start: printed compound label `Pay Begin Date`",
-   "corpus": "external",
-   "doc": "ext_les.pdf",
-   "fields": [
-    "external::ext_les.pdf::pay_period_start"
-   ],
-   "category": "label_vocabulary",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 1,
-   "root_cause_note": "Printed verbatim in the text layer as `Pay Begin Date 7/22/2010`. A printed label is license class 1 and the label is not in the vocabulary.",
-   "design_note": "Likely a label-vocabulary addition. Falsify the string against all 77 before implementing."
-  },
-  {
-   "id": "T3",
-   "title": "ext_unc regular_hours: row word plus header columns",
-   "corpus": "external",
-   "doc": "ext_unc.pdf",
-   "fields": [
-    "external::ext_unc.pdf::regular_hours"
-   ],
-   "category": "column_geometry",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 1,
-   "root_cause_note": "Printed as `Regular 20.346846 74.50 1,515.84 855.00 17,446.65 ...` -- a row word under printed header columns.",
-   "design_note": "Column-path diagnosis; may already be near the committed core/columns.py capability."
-  },
-  {
-   "id": "T4",
-   "title": "external person_name x3: names printed with no adjacent label",
-   "corpus": "external",
-   "doc": "ext_adp.pdf | ext_utep.pdf | ext_les.pdf",
-   "fields": [
-    "external::ext_adp.pdf::person_name",
-    "external::ext_utep.pdf::person_name",
-    "external::ext_les.pdf::person_name"
-   ],
-   "category": "unlabelled_value",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 1,
-   "root_cause_note": "ADP: `Taxable Marital Status: Single AMIS SMITH`, the name floats over the address block with no name label adjacent. UTEP: `Mary Doe 55555 ABC Company 09-30-2014 ...`, a dense unlabelled row. LES: `STALLONE, SYLVESTER GS 07 05 $44,616.00 ...`.",
-   "design_note": "LES may have a printed NAME header cell; the other two are probable NO_SAFE_RULE. Say so early rather than burn attempts -- one P2 look each, closed on the first NO_SAFE_RULE. Design section 9.3: the loop is expected to spend most of its life writing NO_SAFE_RULE records, and closing items is progress."
-  },
-  {
-   "id": "T5",
-   "title": "il_dol two date fields: two-digit years OUR scorer could not read (scorer fixed; extraction half open)",
-   "corpus": "confirm",
-   "doc": "il_dol_day_labor_wage_notice_sample.pdf",
-   "fields": [
-    "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_period_end",
-    "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_date"
-   ],
-   "category": "date_century",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 1,
-   "root_cause_note": "REOPENED. The day-0 note recorded block (b) as an external constraint. It was not: eval/score_extraction.py is OURS -- we wrote the comparison layer between the organizer's gold and our output -- and its _as_date simply had no two-digit-year pattern. Truth `8/27/05` normalized to ('date', UNPARSABLE, '8/27/05'), so a correct emission of `2005-08-27` would have been scored WRONG. That is the instrument failing to read its own scale, not the organizer forbidding anything. Fixed: _as_date now reads M/D/YY and resolves the century against the frozen REFERENCE_DATE era (2026-07-18), so 05 -> 2005. A wildcard year was rejected because `05` IS printed on the page and wildcarding would accept any year as agreement; see _resolve_two_digit_year. The masked `1/7/XX` forms are untouched and still handled only by measure_confirm_set._masked_date. Proof the fix moved nothing that is measured: all six harnesses (verify, confirm_set, external_holdout, filled_forms, scenario_sets, label_mapping) produced BYTE-IDENTICAL output before and after, and no pre-existing test changed status. Block (a) -- the ISO output contract -- was never the real obstacle either: the contract asks for ISO, and ISO is exactly what a correct extraction emits; it is now scoreable.",
-   "design_note": "Scorer half DONE. Extraction half is now unblocked work for a later core iteration and is NOT implemented here (core/ was held by a concurrent workstream when the scorer was fixed). The available rule is the span-borrow license of design section 8.2: `Pay Period: 8/21/2005 to 8/27/05` prints the century on the same line inside the same span construct, so borrowing A's century for B when B's two digits equal A's last two invents no digit and is refusal-biased. That reaches pay_period_end (1 field). pay_date (`Paydate: 9/2/05`) has no printed century relation on the page and stays out of reach -- it must keep abstaining; resolving it by the reference era in the EXTRACTOR would be inventing a digit the page does not print, which is a different act from the SCORER resolving a truth string it must read.",
-   "reopened_note": "Reopened when the scorer defect was fixed. Prior closure was based on our own instrument's limitation misrecorded as an external contract."
-  },
-  {
-   "id": "T6",
-   "title": "five masked-year fields: no century or decade digit is printed anywhere",
-   "corpus": "confirm",
-   "doc": "ca_dlse_paystub_hourly.pdf | ca_dlse_paystub_piecerate.pdf",
-   "fields": [
-    "confirm::ca_dlse_paystub_hourly.pdf::pay_period_start",
-    "confirm::ca_dlse_paystub_hourly.pdf::pay_period_end",
-    "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_start",
-    "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_end",
-    "confirm::ca_dlse_paystub_piecerate.pdf::pay_date"
-   ],
-   "category": "masked",
-   "status": "MASKED_OUT",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 0,
-   "closed_on": "day 0, zero iterations spent",
-   "root_cause_note": "Printed `1/7/XX`, `1/13/XX`, `1/20/XX`. Any emitted ISO date invents at least two digits -- constraint 3, no argument available.",
-   "design_note": "Design section 8.2: the only conceivable honest treatment is an output-contract extension for partial dates, which measure_confirm_set._masked_date could then score. Changing the contract is not this loop's decision. STOP.md records the option; the loop does not act on it."
-  },
-  {
-   "id": "T7",
-   "title": "22 image-only fields in four hybrid documents",
-   "corpus": "confirm",
-   "doc": "hi_ags_pay_statement_example_2021.pdf | ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf | lcc_understanding_your_paycheck.pdf",
-   "fields": [
-    "see loop/baseline.json field_state, the 22 confirm entries valued image_only"
-   ],
-   "field_counts": {
-    "hi_ags_pay_statement_example_2021.pdf": 6,
-    "ou_sample_check_stub.pdf": 7,
-    "osu_sample_earnings_statement.pdf": 3,
-    "lcc_understanding_your_paycheck.pdf": 6
-   },
-   "category": "image_only",
-   "status": "IMAGE_ONLY_OUT_OF_SCOPE",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 0,
-   "closed_on": "day 0, zero iterations spent",
-   "root_cause_note": "The four documents are hybrid, not scans: they carry large text layers (2.3k-10.3k chars of explanatory prose) with the actual pay stub embedded as a raster image. The 22 values exist only in those pixels. Measured image resolutions: hi_ags/ou/osu ~150-200 dpi (OCR-viable), lcc ~96-116 dpi (marginal).",
-   "design_note": "Design section 8.3 gives the five go/no-go inputs a future OCR effort must obtain before starting -- root cause of the existing 0/7, the recoverability upper bound measured offline, a verification story compatible with zero-wrong (do the embedded stubs print closable identities?), the bbox mapping from image pixels to PDF points at IoU>0.5, and the determinism cost of a nondeterministic dependency. Decision rule: start only if (1) is understood, (2) is >= ~two-thirds clean and (3) closes identities on at least the ou/osu-class documents. Otherwise IMAGE_ONLY is the honest boundary of a text-layer extractor.",
-   "superseded_note": "2026-07-20: ocr-extension-design.md obtained all five inputs and its decision rule said GO, so this closure is superseded by T9-T14. Corrected accounting: of the nominal image-only population, these 22 are loop-visible; 10 carry a closable printed identity (licensable), the other 12 (10 dates, 2 names) have none and are recorded NO_SAFE_RULE at T13. The uploads-31 harness block is recorded at T14."
-  },
-  {
-   "id": "T8",
-   "title": "ca_dlse_hourly: header row at 29pt non-bold is not recognised",
-   "corpus": "confirm",
-   "doc": "ca_dlse_paystub_hourly.pdf",
-   "fields": [
-    "confirm::ca_dlse_paystub_hourly.pdf::person_name",
-    "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate"
-   ],
-   "category": "label_typography",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "root_cause_note": "CORRECTED during it-002 diagnosis -- the it-001 note blamed typography, and that is the wrong mechanism. Measured: _label_runs DOES recognise the 29pt non-bold cells (EMPLOYEE via LABEL_MAP, PAY RATE via LABEL_SYNONYMS -- the vocabulary path is typography-independent). What failed was every value rule downstream: the data row sits 39.0pt below the header baseline (781.0 -> 742.0) and VALUE_Y_WINDOW=(6,22) -- fitted to the pack's 14.5-15.3pt pitch -- cannot reach it; the side-by-side and column_value rules read across the row; table_cell_value's REGULAR row sits under a header with no RATE cell; the arithmetic path found 18.00 by label adjacency only and correctly refused it.",
-   "closed_note": "Both fields recovered by columns.header_cell_value (flag REALDOOR_HEADER_CELL, license: printed header row): a vocabulary label that is one whole cell of a printed column-header row (>=3 caption cells, _header_row_words) licenses the single run beneath it within HEADER_SEARCH_BAND that shares x-extent with exactly that cell and no other. Falsified first over all 77 (loop/falsification/it-002.json): fired on 2 docs, zero conflicts. Flips: target person_name='Johnson, Bob' + hourly_rate=18.00, plus uploads::up_024_pay_stub_table.pdf person_name + pay_date -- the fixture authored to probe exactly this layout; its two-data-row columns (regular_hours/hourly_rate/gross_pay) still abstain on the two-candidate refusal, which is the safety property, not a residue: up_024's own manifest says no rule may pick between the two numbers. No successor items."
-  },
-  {
-   "id": "T9",
-   "title": "OCR injection/reuse (design it-A): embedded-image regions OCR'd into Words for the identity paths only",
-   "corpus": "confirm",
-   "doc": "ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf",
-   "fields": [
-    "confirm::ou_sample_check_stub.pdf::hourly_rate",
-    "confirm::ou_sample_check_stub.pdf::gross_pay",
-    "confirm::ou_sample_check_stub.pdf::net_pay",
-    "confirm::osu_sample_earnings_statement.pdf::gross_pay"
-   ],
-   "category": "image_only",
-   "status": "DONE",
-   "attempts": 2,
-   "prior_attempts": [],
-   "expected_yield": 2,
-   "root_cause_note": "ocr-extension-design.md section 1: the confirm hybrids never reach OCR at all (text-layer prose routes them down the text path, and the confirm harness only calls core.extract.extract_document), and the existing ocr/ocr_extract.py is page-1-only, LABEL_MAP-only, pack-geometry-fitted. The stub pixels print closable identities (section A: ou four independent closures, osu summary band).",
-   "design_note": "Design section F it-A: region discovery from page.images, crop OCR at the region's own native scale, engine-geometry Words, injection into extract_document behind REALDOOR_OCR_WORDS -- handed ONLY to verified/shredded (the identity-closing paths), never to the label/column value paths. The design's measured floor was +2 (ou hourly_rate, osu gross_pay); the P2 grounding sweep at native scale measured +4 (ou gross/net land in it-A already). Zero wrong under the identity gate everywhere.",
-   "closed_note": "4 image-only fields read via OCR word injection + the existing identity chain (predicted 4, observed 4). Remaining OCR iterations per the design stay OPEN with their own expected yields."
-  },
-  {
-   "id": "T10",
-   "title": "OCR band-role completion (design it-B): L4 quantization products, band-role members, L5 hours header",
-   "corpus": "confirm",
-   "doc": "ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf",
-   "fields": [
-    "confirm::ou_sample_check_stub.pdf::regular_hours",
-    "confirm::osu_sample_earnings_statement.pdf::net_pay"
-   ],
-   "category": "image_only",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 2,
-   "root_cause_note": "Design sections A.2/A.3: ou regular_hours refuses on S3 two-survivors {68.43, 8.00} (needs the REGULAR row word + hours-column-sums-to-printed-80.00 + L5 unqualified-HOURS header); osu net_pay refuses on band-role assignment (the remaining member of an already-closed band, named by printed row position). Note: it-A's native-scale measurement already landed ou gross/net, which the design had listed here -- this item shrank from 4 to 2 predicted fields.",
-   "design_note": "Design section F it-B, flag REALDOOR_OCR_BAND_ROLE. Blunt review 3: the S3 relaxation is where a wrong value would enter if anywhere; must stay one-distinct-survivor-per-role, and the falsification predicate must fire on ou+osu only.",
-   "closed_note": "Both fields recovered by the band-role completions (flag REALDOOR_OCR_BAND_ROLE, OCR-injected pages only; license: printed total closed by an arithmetic identity). Diagnosis corrections recorded: ou regular_hours refused on THREE hours survivors {3.57, 8.00, 68.43} (backlog said two), resolved by the printed word REGULAR naming the anchored row under a printed header that is exactly HOURS; osu net_pay was hidden by a degenerate product (1666.94 x 1 with a stray form-field '1') putting the band's own line into the earnings exclusion -- the multiplicative identity now testifies to nothing, and the EXISTING band-tail rule emits. L4 from the design's it-B list was subsumed: the frozen product_tolerance had already closed ou's truncated row in it-003, so no tolerance was touched. Falsified over all 77 first: fired on exactly ou+osu, zero conflicts. Predicted 2, observed 2 (loop/measurements/it-004.json)."
-  },
-  {
-   "id": "T11",
-   "title": "OCR labeled total band + instance-conflict guard (design it-C): hi_ags",
-   "corpus": "confirm",
-   "doc": "hi_ags_pay_statement_example_2021.pdf",
-   "fields": [
-    "confirm::hi_ags_pay_statement_example_2021.pdf::gross_pay",
-    "confirm::hi_ags_pay_statement_example_2021.pdf::net_pay"
-   ],
-   "category": "image_only",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 2,
-   "root_cause_note": "Design section A.1: the earnings-column total misreads as '2.328.01' (comma->period) so no anchored run forms; the summary band 444.00+372.63+1,511.38=2,328.01 is a labeled ROW (TOTAL GROSS / TOTAL DEDUCTIONS / NET PAY), a form verified.py has no rule for. Three stub instances on the document disagree (p1 truth vs p2 before/after pair); nothing printed selects an instance.",
-   "design_note": "Design section F it-C, flag REALDOOR_OCR_TOTAL_BAND: labeled band via anchor-only strings (shredded _ROW_LABELS precedent) + instance-conflict guard (hazard 5: same-field candidates from different regions that disagree => withdraw all). Best-case only; FED TAXABLE adjacency; one attempt, NO_SAFE_RULE acceptable.",
-   "closed_note": "Both fields recovered by the labeled total band (new module core/total_band.py, flag REALDOOR_OCR_TOTAL_BAND, OCR-injected pages only; license: printed total closed by an arithmetic identity -- 444.00 + 372.63 + 1,511.38 = 2,328.01 exact under the four printed header cells, anchor-only strings per the shredded._ROW_LABELS precedent). The deliverable guard shipped and is exercised: p2's merged dual-instance stream prints TOTAL TAXES / TOTAL DEDUCTIONS / NET PAY twice each and refuses the page (within-page half, measured live); cross-page disagreement withdraws everything (reconcile, pinned by test). Recorded honestly: p1 emits because p2 refuses -- nothing printed selects the truth instance (design blunt-review 5's residual). Falsified over all 77 first: fired on the target only, zero conflicts. Predicted 2, observed 2 (loop/measurements/it-005.json). One G4 stumble: the it-003 pin asserting hi_ags emits nothing was updated (flag pinned off), not removed -- see reports/it-005.md operator note."
-  },
-  {
-   "id": "T12",
-   "title": "OCR single-earnings-row band (design it-D): lcc",
-   "corpus": "confirm",
-   "doc": "lcc_understanding_your_paycheck.pdf",
-   "fields": [
-    "confirm::lcc_understanding_your_paycheck.pdf::gross_pay",
-    "confirm::lcc_understanding_your_paycheck.pdf::net_pay"
-   ],
-   "category": "image_only",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 0,
-   "root_cause_note": "Design section A.4: identities close on paper (31.00 x 10.51 = 325.81 exact; 325.81 - 61.36 = 264.45; deduction column sums to 61.36) but the earnings table has ONE current-period row, so the >=2-member column-sum guard refuses the anchor. The document's own traps: truth lists regular_hours AND hourly_rate in expect_absent (emitting 31.00/10.51 is a scored WRONG), misread labels at 96 dpi ('TotalPersonalDeductlons'), Total Employer Contributions 113.20 adjacent to the band.",
-   "design_note": "Design section F it-D, flag REALDOOR_OCR_SINGLE_ROW. Highest risk; honest expectation is 'attempt once, accept NO_SAFE_RULE readily'. Expected yield recorded as 0 for that reason; best case 2.",
-   "closed_note": "gross_pay recovered (+1) by the single-row anchor (flag REALDOOR_OCR_SINGLE_ROW, OCR-injected pages only; license: printed total closed by an arithmetic identity -- 31.00 x $10.510000 = $325.81 exact on lcc p3's crops, with the column's own printed total `Total: $325.81` x-aligned beneath: two independent cent-exact printings plus a closing product). net_pay stays image_only, measured, not assumed: at the injection layer's NATIVE 96-116 dpi the evidence fragments -- p1 (where the 61.36 + 264.45 = 325.81 band lives) loses the hours token and the current gross, p3 has the anchor but no band member; no page co-locates the two, and cross-page evidence joining was weighed and refused (an identity is licensed by one page's own printing). The document's misread family is pinned as must-stay-abstained tests: '5113.20' ($ read as digit, parses as money), '$4,209.35' vs '$4,209.38' across renderings, 'Sap 15, 2017', Banner ID X00123458; expect_absent rate/hours refused structurally (one row cannot resolve factor columns). Falsified over all 77 first: fired on the target only, zero conflicts. Predicted 1, observed 1 (loop/measurements/it-006.json)."
-  },
-  {
-   "id": "T13",
-   "title": "OCR dates and names: 12 fields with no closable printed identity",
-   "corpus": "confirm",
-   "doc": "hi_ags_pay_statement_example_2021.pdf | ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf | lcc_understanding_your_paycheck.pdf",
-   "fields": [
-    "confirm::ou_sample_check_stub.pdf::pay_date",
-    "confirm::ou_sample_check_stub.pdf::pay_period_start",
-    "confirm::ou_sample_check_stub.pdf::pay_period_end",
-    "confirm::osu_sample_earnings_statement.pdf::pay_date",
-    "confirm::hi_ags_pay_statement_example_2021.pdf::pay_date",
-    "confirm::hi_ags_pay_statement_example_2021.pdf::pay_period_start",
-    "confirm::hi_ags_pay_statement_example_2021.pdf::pay_period_end",
-    "confirm::hi_ags_pay_statement_example_2021.pdf::person_name",
-    "confirm::lcc_understanding_your_paycheck.pdf::pay_date",
-    "confirm::lcc_understanding_your_paycheck.pdf::pay_period_start",
-    "confirm::lcc_understanding_your_paycheck.pdf::pay_period_end",
-    "confirm::lcc_understanding_your_paycheck.pdf::person_name"
-   ],
-   "category": "image_only",
-   "status": "NO_SAFE_RULE",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 0,
-   "closed_on": "2026-07-20, zero iterations spent -- recorded from the design dossier (ocr-extension-design.md section C.3), not from a burned attempt",
-   "root_cause_note": "No printed identity closes over free text or a lone date. Candidate licenses weighed and refused in the dossier: label adjacency is the evidence class that shipped person_name='Employer' and the gross_pay=567.00 shape; multi-instance agreement cannot refuse systematic font-level confusion (measured on lcc: the motto and 'Deductlons' misread identically in independent renderings, and Banner ID digit-flips at 96 dpi); shape checks refuse garbage but not plausible wrong names. Dates: the only candidate identity (frequency x period-span) has no printed frequency on any of the four documents, and up_014 proves the corpus itself violates the span convention. A single substituted character is a scored WRONG under G1.",
-   "design_note": "These surface as PROPOSAL-carrying abstentions through verified.py's existing proposal mechanism riding it-A -- renter-confirmation material, zero movement in field_state, zero wrong possible."
-  },
-  {
-   "id": "T14",
-   "title": "uploads 31 image fields: unmeasurable by the loop's protected instruments",
-   "corpus": "uploads",
-   "doc": "up_006_pay_stub_sam_poe_scan.pdf | up_010_benefit_letter_sam_poe_scan.pdf | up_014_pay_stub_jane_roe_unreadable.pdf | up_026_pay_stub_sam_poe_illegible.pdf",
-   "fields": [
-    "see loop/baseline.json field_state, the 31 uploads entries valued image_only"
-   ],
-   "category": "contract",
-   "status": "BLOCKED_CONTRACT",
-   "attempts": 0,
-   "prior_attempts": [],
-   "expected_yield": 0,
-   "closed_on": "2026-07-20, zero iterations spent",
-   "root_cause_note": "scripts/measure_label_mapping._tally skips rasterized documents outright, and loop/tools/build_field_state.py reconciles against it by construction, so no change to core/ or ocr/ can ever flip these 31 in field_state. The measuring script is a protected instrument (G6); acting on this requires the instrument owner, not the loop -- the T5 precedent. The PRODUCT path is not blocked: api/upload.py already routes empty-text-layer uploads to ocr/ocr_extract.py and the uploads manifest records its measured behaviour, including the conf-based certainty='high' (design section 1g) that the owner should cap to 'low' as an ordinary reviewed change.",
-   "design_note": "Design section 2 and C.4. Belongs in STOP.md alongside T5 at loop end."
-  },
-  {
-   "id": "T15",
-   "title": "filled orangeusd: RATE OF PAY on a salaried stub read a monthly salary as hourly_rate -- the corpus's first measured WRONG value",
-   "corpus": "filled",
-   "doc": "orangeusd_sample_paystub_filled.pdf",
-   "fields": [
-    "filled::orangeusd_sample_paystub_filled.pdf::hourly_rate"
-   ],
-   "field_note": "The filled corpus is outside loop/baseline.json.field_state (the manifest is the 77); this field's state is measured by scripts/measure_filled_forms.py, where it sat in wrong_detail as 'value invented for a field that is not on the page'.",
-   "category": "label_vocabulary",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 0,
-   "root_cause_note": "LABEL_SYNONYMS['pay_stub'] maps RATE OF PAY -> hourly_rate unconditionally. The table's own comment refuses bare RATE as context-dependent; RATE OF PAY is exactly as context-dependent (on salaried stubs it names a salary) and was admitted anyway. On the filled orangeusd stub `Rate of Pay` heads a MONTHLY certificated 4,812.00 (equal to the printed gross; Hours/Units 21.00 is working DAYS) and _resolve_value emitted it at certainty low.",
-   "closed_note": "Closed by the period license (flag REALDOOR_RATE_PERIOD_LICENSE, it-008): RATE OF PAY may bind hourly_rate only when the page settles the period by an arithmetic identity -- the bound value closes v x h = g cent-exact against a printed hours-shaped token (0 < h <= 744, h != 1) and a printed cents-form amount on the same page, neither the value's own run. up_016 (19.25 x 72 = 1386.00, all printed) stays licensed and byte-identical; orangeusd closes nothing (measured: zero closing pairs among its 45 numeric tokens) and becomes an abstention. The marker-adjacency license (an 'hourly' word on the label's line) was weighed and REFUSED: the seattle fill measured the only wage-adjacent 'hourly' in the corpus as a circle-one MENU whose text layer prints every period word equally (the circling is ink), so the marker's firing shape is the menu's false-fire shape. Scope pay_stub only: the employment_letter twin entry stays (up_018/ho_006 measured correct through it, no closable identity on their pages -- a G3 boundary, recorded as a residual hazard, not patched). The anchoring twin HOURS/UNITS stays out of every vocabulary, pinned by test. Falsified first: 0/77 manifest firings, filled dev fired on the target only, zero conflicts. Filled dev headline 12.5%/1 WRONG -> 12.5%/0 WRONG (the flip is wrong->abstain; the field is expect_absent)."
-  },
-  {
-   "id": "T16",
-   "title": "curly-quote fold: vocabulary apostrophes are ASCII, real forms print U+2019",
-   "corpus": "filled",
-   "doc": "wa_dshs_14252_employment_verification_filled.pdf | seattle_housing_employment_verification_filled.pdf",
-   "fields": [],
-   "category": "label_vocabulary",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 0,
-   "root_cause_note": "Measured on the filled corpus's text layers: wa_dshs prints `EMPLOYEE’S NAME` (curly U+2019, baseline 585.6) and seattle prints `Employer’s Signature` / `Employer’s Printed Name` -- while LABEL_SYNONYMS holds the ASCII form `EMPLOYEE'S NAME`. normalize_label folds whitespace and colons but not quote glyphs, so the curly caption is a total miss; eval/score_extraction.normalize already folds curly quotes to ASCII (its line 62), an asymmetry between the scorer's reading convention and the extractor's.",
-   "design_note": "Zero measurable yield on the current corpora (the wa_dshs filled values live in AcroForm widget annotations the text path cannot see, so folding the caption flips no field today) -- but the miss class is real on any flat form printing typographer's apostrophes. A fold inside normalize_label admits no new strings (it maps glyph variants of strings already in the tables) and is the same argument as case-insensitivity in it-era label work; falsify over all 77 + filled before implementing.",
-   "closed_note": "Closed by the quote fold + parallel-caption refusal (flag REALDOOR_QUOTE_FOLD, it-009). normalize_label folds the frozen scorer's four quote glyphs and nothing else (license: symmetry with eval/score_extraction._QUOTE_MAP's quote rows, lines 156-159; dash rows deliberately NOT copied - TAKE-HOME PAY distinguishes its hyphen, orangeusd prints U+2010 x14). Census over 77 + filled dev: U+2019 x67, U+201C x31, U+201D x31, U+2018 x0, no width variants; the only string anywhere folding onto a table key is wa_dshs's EMPLOYEE'S NAME. The design_note's 'flips no field today' was re-verified and CORRECTED: the naive fold alone manufactures a WRONG (person_name='EMPLOYER'S NAME' read from the neighbouring caption on wa_dshs blank - expect_absent - and its filled twin, truth 'Terrence Boyd'; measured pre-code, two seams: _side_by_side_run and columns.column_value). Shipped as one unit with _parallel_caption_refusal: a candidate that is caption-shaped AND repeats the label's own final token is the page printing the next column's caption - a label is never a value; monotone, reading->abstention only. Falsified first: fired 1/77 (wa_dshs blank, engagement-only) + 1/3 filled dev, zero conflicts, zero emission diffs. Predicted flips NONE, observed NONE; filled dev 12.5%/0 WRONG before and after. The wa_dshs values stay in AcroForm widgets (T18 territory); the yield is that the vocabulary now matches what real forms print."
-  },
-  {
-   "id": "T17",
-   "title": "colon-line geometry: a filled-in value sits a word-space after its colon caption, inside SIDE_BY_SIDE_MIN_GAP",
-   "corpus": "filled",
-   "doc": "seattle_housing_employment_verification_filled.pdf",
-   "fields": [
-    "filled::seattle_housing_employment_verification_filled.pdf::person_name"
-   ],
-   "field_note": "Outside field_state; measured by scripts/measure_filled_forms.py (currently an abstention; truth 'Marisol Vega').",
-   "category": "column_geometry",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 1,
-   "root_cause_note": "Measured on the seattle fill: `Employee Name:`[71.9-133.3] with `Marisol Vega`[138.3-185.0] on the same baseline -- the label is recognised (EMPLOYEE NAME is in LABEL_SYNONYMS), the cell holds exactly one run, but the 5.0pt gap is under SIDE_BY_SIDE_MIN_GAP (12.0), so _side_by_side_run refuses. The 12pt gap exists to stop prose that opens with a label ('PAY DATE has not been assigned yet') from reading its own tail as a value; a filler writing at the blank after a colon produces exactly a word-space gap.",
-   "design_note": "Candidate license for a future P2: the trailing colon is PRINTED punctuation -- the page's own author marking 'value follows' -- so a colon-terminated label may be allowed a word-space gap where a bare label keeps the 12pt column-gap requirement. The prose hazard must be re-falsified under that reading (prose after a colon exists: 'Note: the following...'), swept over all 77 + filled before any code.",
-   "closed_note": "Closed by the colon-line fill-in license (flag REALDOOR_COLON_GAP, it-010): a colon-terminated recognised label reads the immediately following run on its own baseline at a word-space gap, and for that read its own line is a fill-in line, not a column-header row. Diagnosis corrected on the page: the primary refusal was NOT the 12pt gap but _header_row_words classifying the filled line (four letters-only runs) as a column-header row, making 'Marisol Vega' its own barrier and a refused header cell; the gap was the second refusal. License: the printed colon is the page punctuating 'what follows me on my line is my value' -- the same print _caption_refusal already trusts in the opposite direction -- and a column-header cell, naming the column BELOW it, does not print one. Constraints held verbatim: sole-run cell (two runs tie -> refuse), colon barriers (Job Title: closes the cell; the blank form's empty cells read nothing), colon candidates never values, the interior-colon refusal (a licensed read is a clean fill or nothing -- added at P4 when this iteration's own geometry test found the amnesty could hand back a merged 'Job Title: Prep Cook' run), other lines' header rows, the it-009 parallel-caption refusal, parse gates; bare labels keep the 12pt gap. Falsified first: fired 0/77 (engages nowhere on the manifest), filled dev fired on the target only, zero conflicts; the colon-dense instructional confirm docs moved nothing. Predicted 1 flip, observed 1: filled dev 12.5% (3/24) -> 16.7% (4/24), 0 WRONG throughout. it-008's all-abstain seattle pin updated under flag=0 (it-005 precedent), sibling pin holds the rate abstention under the license."
-  },
-  {
-   "id": "T18",
-   "title": "AcroForm carriers: values typed into interactive form widgets are invisible to the text-layer reader",
-   "corpus": "filled+scenarios",
-   "doc": "wa_dshs_14252_employment_verification_filled.pdf",
-   "fields": [
-    "filled::wa_dshs_14252_employment_verification_filled.pdf::person_name"
-   ],
-   "field_note": "Outside field_state; measured by scripts/measure_filled_forms.py and the scenario corpus's 'acroform' stratum (8 sets built expressly as this item's acceptance corpus).",
-   "category": "input_source",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "expected_yield": 7,
-   "root_cause_note": "pdfplumber reads the page content stream; an AcroForm text field's value lives in a widget annotation and its glyphs in that annotation's appearance stream, so a correctly filled agency form reads BLANK. Measured: the filled wa_dshs carrier holds 17 filled text widgets and page.extract_text() contains neither 'Terrence Boyd' nor '1,283.15'. Of the 11 real blank forms collected from public agencies, 7 are AcroForms. Filed by it-009's census, which found the wa_dshs values sitting in widgets and named this T18.",
-   "design_note": "Closed by it-012 (flag REALDOOR_FORM_FIELDS, new module core/form_fields.py). Each filled text widget's appearance stream is drawn onto a derived copy of its page at the place PDF 32000-1 12.5.5 puts it, and that page is read by core.extract.read_words -- the same reader, same engine, same watermark filter -- so fonts, advance widths and baselines are resolved rather than estimated. The widget's internal field NAME is never consulted: it is not printed on the page, so no rule may rest on it. Yield was 1 field per carrier, not 7: the values are all read, but the form's printed captions (AVERAGE HOURS PER WEEK, RATE OF PAY OR SALARY...) are outside the vocabulary, so only person_name binds. The remaining 6 are now VALUES PRESENT WITH NO RECOGNISED PRINTED LABEL -- squarely T21, and reachable there for the first time.",
-   "closed_note": "ACCEPTED it-012. Falsified first: fired 0/77 on the manifest (all 3 manifest AcroForms are unfilled blanks -- pack carries none at all), 1/3 filled dev, 6/6 unsealed acroform scenario sets, zero conflicts. acroform stratum 0/24/0 -> 6/18/0; filled dev 4/24 -> 5/24; every other corpus byte-identical, wrong 0 throughout."
-  },
-  {
-   "id": "T19",
-   "title": "gig_income_corroboration has no field table and no date field: a gig household cannot reach READY end to end",
-   "corpus": "scenarios",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "root_cause_note": "Discovered by the 50-set scenario corpus. Two gaps: no EXPECTED_FIELDS entry for the type, and no date field, which also makes an expired corroboration inexpressible (S37)."
-  },
-  {
-   "id": "T20",
-   "title": "thousands-space money (1 100.00) falls outside the money pattern",
-   "corpus": "scenarios",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "root_cause_note": "_MONEY_RE does not admit a space as a thousands separator; European-convention fills abstain."
-  },
-  {
-   "id": "T21",
-   "title": "label-invisible carriers: real employment-verification layouts and colon-inline stubs read nothing",
-   "corpus": "scenarios",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "root_cause_note": "The dominant cause of 5/42 end-to-end agreement. Style-Y ledger stubs partially read while style-X reads nothing; T17 colon-line geometry is one arm of this."
-  },
-  {
-   "id": "T23",
-   "title": "one product, one reading path: make the layered label ladder extract_document's default",
-   "corpus": "all",
-   "status": "NO_SAFE_RULE",
-   "attempts": 1,
-   "prior_attempts": [
-    "it-011"
-   ],
-   "root_cause_note": "REJECTED at falsification (loop/falsification/it-011.json: fired 6/77, 4 conflicts). The model mapper emits 4 reproducible WRONG values on real published documents by naming a form's unticked ANSWER OPTIONS (weekly/bi-weekly/Monthly/Daily) as captions, after which the extractor reads the option's neighbour as the value. Measured transfer where it matters is near zero: external +0, confirm +0 correct, real-carrier scenarios +10 (one carrier, two captions). The +125 on scenarios is the generator stratum -- our own invented vocabulary read back. Pack byte-identity HELD under model-on (16/16, verify.py 159/159 IoU 0.9677) but NOT for the documented reason: tier 3 is reached on 14/16 pack documents and the blank-only gate, not unreachability, is what preserves the bytes. Blocked on T24 and T25. NOTE: the ladder is ALREADY live on api/upload.py and api/store.py, so these wrong values are reachable in the shipped product whenever OPENAI_API_KEY is set -- operator decision requested."
-  },
-  {
-   "id": "T24",
-   "title": "looks_like_a_label admits a form's answer-options as captions, so tier 3 cannot tell an option from a label",
-   "corpus": "confirm",
-   "status": "DONE",
-   "attempts": 1,
-   "prior_attempts": [],
-   "root_cause_note": "Measured it-011. On wa_dshs_14252 and seattle_housing_..._blank the runs `Weekly`, `Every two weeks`, `Two times a month`, `Monthly`, `bi-weekly`, `semi-monthly` are letters-only and short, so looks_like_a_label admits them and they reach the model as candidate captions. The model answers pay_frequency -- semantically right -- and the extractor then treats the option word as a LABEL and reads its neighbour as the VALUE (`through`, `Daily`). parse_value cannot refuse it because a frequency word is well-typed for pay_frequency. This is the prerequisite for any model mapper: the page prints options and captions in the same shape, and nothing downstream distinguishes them.",
-   "done_note": "Closed by it-013 (d9e3cef). Two refusals, both on by default, flag-off byte-identical: REALDOOR_OPTION_BAND (>=3 candidates for one field on one band of type = a menu; no run anchors the field; read through whatever mapper the pass carries, not a frequency-word vocabulary) and REALDOOR_GLOSS_COLON (a FREE_TEXT_FIELDS run with an internal colon is a caption + its own gloss). Acceptance measure_confirm_set --config with_mapper (model on): 4 wrong -> 1 wrong. The surviving 1 is ca_dlse, filed as T27. Diagnosis found three distinct defects behind the four it-011 wrongs, not one: option-list (wa_dshs/seattle), template annotation (hi_ags), piece-rate rate column (ca_dlse). Marked-option reading (ticked/circled) deliberately out of scope."
-  },
-  {
-   "id": "T25",
-   "title": "assert_no_values does not stop a person's name leaving the process",
-   "corpus": "scenarios",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "root_cause_note": "Measured it-011. core/label_llm.py promise #2 is 'Label strings go out. Values never do.' On the orangeusd stubs the strings 'Bess Whitlow', 'Arlo Jensen', 'Anselm Rijker', 'Nora Quill', 'Idris Fenwick' and (ca_dlse) 'Johnson, Bob' were sent to the hosted model and named person_name; prose fragments 'compensation paid to the employee.' and 'Shows before tax deductions.' also went out. assert_no_values is a shape test for money/date/SSN/email under 48 chars and a human name has no shape it can catch. No figure moved (the tables had already named person_name) but the module's central safety claim is false as written. Either the promise or the gate must change. Live on api/upload.py today."
-  },
-  {
-   "id": "T26",
-   "title": "model_mapper caches a timeout as `unknown`, making measurement irreproducible",
-   "corpus": "all",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "root_cause_note": "Measured it-011. On _FutureTimeout, model_mapper writes None into _MEMO, so one slow call makes that caption permanently unreadable for the rest of the process and the same harness scores differently run to run. Observed at the 6s default on the caption 'Team Member:'. Every it-011 measurement therefore ran with REALDOOR_LABEL_TIMEOUT=30. Fixing it means distinguishing 'the model said unknown' from 'we never heard back'."
-  },
-  {
-   "id": "T27",
-   "title": "ca_dlse piece-rate: a Rate/Hour header over a multi-row rate table reads the closest row as hourly_rate",
-   "corpus": "confirm",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "root_cause_note": "Surviving 1/4 from it-011, model-on only (deterministic path already abstains: RATE/HOUR is not in the vocabulary and TABLE_ROW_AXES needs a REGULAR row this doc lacks). With the model on, the mapper names Rate/Hour -> hourly_rate and geometry reads 19.55, the first of several category rows (Productive/Non-productive/Rest/OT/DT) under one Rate/Hour header on a piece-rate stub; truth is abstain (no single hourly rate). it-013 wrote a 'several-different-answers -> abstain' rule and it was FALSIFIED by ext_unc's NET PAY current-vs-YTD column, where reading the closer figure is a deliberate tested capability (test_columns/test_arithmetic). So a naive several-answers refusal is unsafe; needs the header-row/piece-rate structural signal. it-008 salary-as-rate family. Candidate to be SUBSUMED by T28 (masked-skeleton reasoning) rather than hand-coded: a model that sees the whole table structure distinguishes a piece-rate breakdown (abstain) from a current/YTD pair (read closer) where geometry cannot."
-  },
-  {
-   "id": "T28",
-   "title": "masked-skeleton reasoning: widen model_mapper input from one caption to a position-redacted page skeleton",
-   "corpus": "all",
-   "status": "OPEN",
-   "attempts": 0,
-   "prior_attempts": [],
-   "root_cause_note": "Architecture direction chosen with the user. The corner-case patch accretion (option-band, gloss-colon, TABLE_ROW_AXES refusals) exists mostly to compensate for the model's blindfold: model_mapper sees only one <=48-char caption and cannot tell a piece-rate breakdown from a single rate, or a template annotation from a value. Widen the EYES without widening the HANDS: give the model a position-redacted page skeleton (every value slot -- numeric OR personal: name/address/SSN/date -- replaced by a typed placeholder <MONEY>/<HRS>/<NAME>/<DATE>, captions/headers/row-labels and footnote markers preserved), keep the output contract exactly (nominate one field from the closed set, deterministic geometry reads and type-checks the value, runs-last/blanks-only, off by default under pytest). Subsumes T27 (model abstains on piece-rate from structure), T21 (nominates long real-form captions), and T25 (the position-based redactor IS the leak boundary assert_no_values cannot be). Named hazard: a value string -- numeric or personal -- leaves the process inside the skeleton; primary falsification = scan every outbound skeleton across all corpora for any value string, gate the send on it, fall back to deterministic-only on any leak. Security envelope unchanged vs today's caption-only send ONLY if the redactor is position-based and correct (R20: this trades a structural guarantee for a filtered one -- justified because it unlocks frontier reasoning the one-caption path cannot reach). Deterministic headline must stay byte-identical (model off)."
-  }
- ]
+  "seeded_from": "extraction-loop-design.md section 7, in the priority order it gives",
+  "seeded_at_commit": "60edef4958254178cb433254b6c92ed7b527d65c",
+  "selection_rule": "highest expected field yield first, ties broken by lowest attempt count (design section C). With this seed that means T1 first.",
+  "status_values": [
+    "OPEN",
+    "IN_PROGRESS",
+    "DONE",
+    "NO_SAFE_RULE",
+    "BLOCKED_CONTRACT",
+    "MASKED_OUT",
+    "IMAGE_ONLY_OUT_OF_SCOPE"
+  ],
+  "note": "Every `fields` list below was re-derived from loop/baseline.json's field_state on day 0, not copied from the design. All seven agree with design section 0.1 exactly: 5 ca_dlse abstains, 5 external abstains, 2 il_dol blocked, 5 masked, 22 image-only (hi_ags 6, ou 7, osu 3, lcc 6).",
+  "items": [
+    {
+      "id": "T1",
+      "title": "ca_dlse_hourly: the watermark filter deletes the whole page (malformed FontBBox sizes)",
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf",
+      "fields": [
+        "confirm::ca_dlse_paystub_hourly.pdf::person_name",
+        "confirm::ca_dlse_paystub_hourly.pdf::regular_hours",
+        "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate",
+        "confirm::ca_dlse_paystub_hourly.pdf::gross_pay",
+        "confirm::ca_dlse_paystub_hourly.pdf::net_pay"
+      ],
+      "category": "reader_loss",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 5,
+      "root_cause_note": "read_words returns 0 words for a page on which raw pdfplumber sees 96 words / 630 chars. The PDF's font descriptor has a malformed FontBBox, so every char on the page reports a bogus size of 27.3-48.6pt, and read_words filters size >= WATERMARK_MIN_SIZE (20.0) as watermark. The extractor is blind to the entire page; nothing downstream ever runs.",
+      "design_note": "Design section 8.1: ONE unit of work, not five. Five partial fixes around a blind reader are exactly the page-specific patching constraint 2 forbids. Candidate licenses for P2 to weigh: a physical bound (a 'watermark' classification that removes EVERY char on a page is self-refuting -- a watermark is by definition distinguishable from the body it overlays) or measured glyph-box height in place of declared font size. The falsification sweep must additionally prove real >=20pt content elsewhere in the corpus (pack headings, actual watermarks) is still handled -- that is the named hazard. The proposal must still predict all five flips individually; G7 holds it to that. It must also predict that this document's two masked-year fields (pay_period_start/end) stay abstained -- a flip there would mean the change invented a century, and is a G7 anomaly.",
+      "design_risk": "Design section 9.2: T1 changes how every page is read, so predicting zero incidental flips across 77 documents is a strong claim. Expect one REVIEW round-trip here; it is the likeliest place the loop burns its second expensive call.",
+      "closed_note": "3 of 5 fields recovered (regular_hours, gross_pay, net_pay). person_name and hourly_rate were measured to stay abstain with the page readable: they sit under a 29pt non-bold header row the header path does not recognise. That is a label/geometry cause, not reader loss, so it is a separate target rather than a patch inside this one."
+    },
+    {
+      "id": "T2",
+      "title": "ext_les pay_period_start: printed compound label `Pay Begin Date`",
+      "corpus": "external",
+      "doc": "ext_les.pdf",
+      "fields": [
+        "external::ext_les.pdf::pay_period_start"
+      ],
+      "category": "label_vocabulary",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "Printed verbatim in the text layer as `Pay Begin Date 7/22/2010`. A printed label is license class 1 and the label is not in the vocabulary.",
+      "design_note": "Likely a label-vocabulary addition. Falsify the string against all 77 before implementing."
+    },
+    {
+      "id": "T3",
+      "title": "ext_unc regular_hours: row word plus header columns",
+      "corpus": "external",
+      "doc": "ext_unc.pdf",
+      "fields": [
+        "external::ext_unc.pdf::regular_hours"
+      ],
+      "category": "column_geometry",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "Printed as `Regular 20.346846 74.50 1,515.84 855.00 17,446.65 ...` -- a row word under printed header columns.",
+      "design_note": "Column-path diagnosis; may already be near the committed core/columns.py capability."
+    },
+    {
+      "id": "T4",
+      "title": "external person_name x3: names printed with no adjacent label",
+      "corpus": "external",
+      "doc": "ext_adp.pdf | ext_utep.pdf | ext_les.pdf",
+      "fields": [
+        "external::ext_adp.pdf::person_name",
+        "external::ext_utep.pdf::person_name",
+        "external::ext_les.pdf::person_name"
+      ],
+      "category": "unlabelled_value",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "ADP: `Taxable Marital Status: Single AMIS SMITH`, the name floats over the address block with no name label adjacent. UTEP: `Mary Doe 55555 ABC Company 09-30-2014 ...`, a dense unlabelled row. LES: `STALLONE, SYLVESTER GS 07 05 $44,616.00 ...`.",
+      "design_note": "LES may have a printed NAME header cell; the other two are probable NO_SAFE_RULE. Say so early rather than burn attempts -- one P2 look each, closed on the first NO_SAFE_RULE. Design section 9.3: the loop is expected to spend most of its life writing NO_SAFE_RULE records, and closing items is progress."
+    },
+    {
+      "id": "T5",
+      "title": "il_dol two date fields: two-digit years OUR scorer could not read (scorer fixed; extraction half open)",
+      "corpus": "confirm",
+      "doc": "il_dol_day_labor_wage_notice_sample.pdf",
+      "fields": [
+        "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_period_end",
+        "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_date"
+      ],
+      "category": "date_century",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "REOPENED. The day-0 note recorded block (b) as an external constraint. It was not: eval/score_extraction.py is OURS -- we wrote the comparison layer between the organizer's gold and our output -- and its _as_date simply had no two-digit-year pattern. Truth `8/27/05` normalized to ('date', UNPARSABLE, '8/27/05'), so a correct emission of `2005-08-27` would have been scored WRONG. That is the instrument failing to read its own scale, not the organizer forbidding anything. Fixed: _as_date now reads M/D/YY and resolves the century against the frozen REFERENCE_DATE era (2026-07-18), so 05 -> 2005. A wildcard year was rejected because `05` IS printed on the page and wildcarding would accept any year as agreement; see _resolve_two_digit_year. The masked `1/7/XX` forms are untouched and still handled only by measure_confirm_set._masked_date. Proof the fix moved nothing that is measured: all six harnesses (verify, confirm_set, external_holdout, filled_forms, scenario_sets, label_mapping) produced BYTE-IDENTICAL output before and after, and no pre-existing test changed status. Block (a) -- the ISO output contract -- was never the real obstacle either: the contract asks for ISO, and ISO is exactly what a correct extraction emits; it is now scoreable.",
+      "design_note": "Scorer half DONE. Extraction half is now unblocked work for a later core iteration and is NOT implemented here (core/ was held by a concurrent workstream when the scorer was fixed). The available rule is the span-borrow license of design section 8.2: `Pay Period: 8/21/2005 to 8/27/05` prints the century on the same line inside the same span construct, so borrowing A's century for B when B's two digits equal A's last two invents no digit and is refusal-biased. That reaches pay_period_end (1 field). pay_date (`Paydate: 9/2/05`) has no printed century relation on the page and stays out of reach -- it must keep abstaining; resolving it by the reference era in the EXTRACTOR would be inventing a digit the page does not print, which is a different act from the SCORER resolving a truth string it must read.",
+      "reopened_note": "Reopened when the scorer defect was fixed. Prior closure was based on our own instrument's limitation misrecorded as an external contract."
+    },
+    {
+      "id": "T6",
+      "title": "five masked-year fields: no century or decade digit is printed anywhere",
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf | ca_dlse_paystub_piecerate.pdf",
+      "fields": [
+        "confirm::ca_dlse_paystub_hourly.pdf::pay_period_start",
+        "confirm::ca_dlse_paystub_hourly.pdf::pay_period_end",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_start",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_end",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_date"
+      ],
+      "category": "masked",
+      "status": "MASKED_OUT",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "day 0, zero iterations spent",
+      "root_cause_note": "Printed `1/7/XX`, `1/13/XX`, `1/20/XX`. Any emitted ISO date invents at least two digits -- constraint 3, no argument available.",
+      "design_note": "Design section 8.2: the only conceivable honest treatment is an output-contract extension for partial dates, which measure_confirm_set._masked_date could then score. Changing the contract is not this loop's decision. STOP.md records the option; the loop does not act on it."
+    },
+    {
+      "id": "T7",
+      "title": "22 image-only fields in four hybrid documents",
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf | ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf | lcc_understanding_your_paycheck.pdf",
+      "fields": [
+        "see loop/baseline.json field_state, the 22 confirm entries valued image_only"
+      ],
+      "field_counts": {
+        "hi_ags_pay_statement_example_2021.pdf": 6,
+        "ou_sample_check_stub.pdf": 7,
+        "osu_sample_earnings_statement.pdf": 3,
+        "lcc_understanding_your_paycheck.pdf": 6
+      },
+      "category": "image_only",
+      "status": "IMAGE_ONLY_OUT_OF_SCOPE",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "day 0, zero iterations spent",
+      "root_cause_note": "The four documents are hybrid, not scans: they carry large text layers (2.3k-10.3k chars of explanatory prose) with the actual pay stub embedded as a raster image. The 22 values exist only in those pixels. Measured image resolutions: hi_ags/ou/osu ~150-200 dpi (OCR-viable), lcc ~96-116 dpi (marginal).",
+      "design_note": "Design section 8.3 gives the five go/no-go inputs a future OCR effort must obtain before starting -- root cause of the existing 0/7, the recoverability upper bound measured offline, a verification story compatible with zero-wrong (do the embedded stubs print closable identities?), the bbox mapping from image pixels to PDF points at IoU>0.5, and the determinism cost of a nondeterministic dependency. Decision rule: start only if (1) is understood, (2) is >= ~two-thirds clean and (3) closes identities on at least the ou/osu-class documents. Otherwise IMAGE_ONLY is the honest boundary of a text-layer extractor.",
+      "superseded_note": "2026-07-20: ocr-extension-design.md obtained all five inputs and its decision rule said GO, so this closure is superseded by T9-T14. Corrected accounting: of the nominal image-only population, these 22 are loop-visible; 10 carry a closable printed identity (licensable), the other 12 (10 dates, 2 names) have none and are recorded NO_SAFE_RULE at T13. The uploads-31 harness block is recorded at T14."
+    },
+    {
+      "id": "T8",
+      "title": "ca_dlse_hourly: header row at 29pt non-bold is not recognised",
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf",
+      "fields": [
+        "confirm::ca_dlse_paystub_hourly.pdf::person_name",
+        "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate"
+      ],
+      "category": "label_typography",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "root_cause_note": "CORRECTED during it-002 diagnosis -- the it-001 note blamed typography, and that is the wrong mechanism. Measured: _label_runs DOES recognise the 29pt non-bold cells (EMPLOYEE via LABEL_MAP, PAY RATE via LABEL_SYNONYMS -- the vocabulary path is typography-independent). What failed was every value rule downstream: the data row sits 39.0pt below the header baseline (781.0 -> 742.0) and VALUE_Y_WINDOW=(6,22) -- fitted to the pack's 14.5-15.3pt pitch -- cannot reach it; the side-by-side and column_value rules read across the row; table_cell_value's REGULAR row sits under a header with no RATE cell; the arithmetic path found 18.00 by label adjacency only and correctly refused it.",
+      "closed_note": "Both fields recovered by columns.header_cell_value (flag REALDOOR_HEADER_CELL, license: printed header row): a vocabulary label that is one whole cell of a printed column-header row (>=3 caption cells, _header_row_words) licenses the single run beneath it within HEADER_SEARCH_BAND that shares x-extent with exactly that cell and no other. Falsified first over all 77 (loop/falsification/it-002.json): fired on 2 docs, zero conflicts. Flips: target person_name='Johnson, Bob' + hourly_rate=18.00, plus uploads::up_024_pay_stub_table.pdf person_name + pay_date -- the fixture authored to probe exactly this layout; its two-data-row columns (regular_hours/hourly_rate/gross_pay) still abstain on the two-candidate refusal, which is the safety property, not a residue: up_024's own manifest says no rule may pick between the two numbers. No successor items."
+    },
+    {
+      "id": "T9",
+      "title": "OCR injection/reuse (design it-A): embedded-image regions OCR'd into Words for the identity paths only",
+      "corpus": "confirm",
+      "doc": "ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf",
+      "fields": [
+        "confirm::ou_sample_check_stub.pdf::hourly_rate",
+        "confirm::ou_sample_check_stub.pdf::gross_pay",
+        "confirm::ou_sample_check_stub.pdf::net_pay",
+        "confirm::osu_sample_earnings_statement.pdf::gross_pay"
+      ],
+      "category": "image_only",
+      "status": "DONE",
+      "attempts": 2,
+      "prior_attempts": [],
+      "expected_yield": 2,
+      "root_cause_note": "ocr-extension-design.md section 1: the confirm hybrids never reach OCR at all (text-layer prose routes them down the text path, and the confirm harness only calls core.extract.extract_document), and the existing ocr/ocr_extract.py is page-1-only, LABEL_MAP-only, pack-geometry-fitted. The stub pixels print closable identities (section A: ou four independent closures, osu summary band).",
+      "design_note": "Design section F it-A: region discovery from page.images, crop OCR at the region's own native scale, engine-geometry Words, injection into extract_document behind REALDOOR_OCR_WORDS -- handed ONLY to verified/shredded (the identity-closing paths), never to the label/column value paths. The design's measured floor was +2 (ou hourly_rate, osu gross_pay); the P2 grounding sweep at native scale measured +4 (ou gross/net land in it-A already). Zero wrong under the identity gate everywhere.",
+      "closed_note": "4 image-only fields read via OCR word injection + the existing identity chain (predicted 4, observed 4). Remaining OCR iterations per the design stay OPEN with their own expected yields."
+    },
+    {
+      "id": "T10",
+      "title": "OCR band-role completion (design it-B): L4 quantization products, band-role members, L5 hours header",
+      "corpus": "confirm",
+      "doc": "ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf",
+      "fields": [
+        "confirm::ou_sample_check_stub.pdf::regular_hours",
+        "confirm::osu_sample_earnings_statement.pdf::net_pay"
+      ],
+      "category": "image_only",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 2,
+      "root_cause_note": "Design sections A.2/A.3: ou regular_hours refuses on S3 two-survivors {68.43, 8.00} (needs the REGULAR row word + hours-column-sums-to-printed-80.00 + L5 unqualified-HOURS header); osu net_pay refuses on band-role assignment (the remaining member of an already-closed band, named by printed row position). Note: it-A's native-scale measurement already landed ou gross/net, which the design had listed here -- this item shrank from 4 to 2 predicted fields.",
+      "design_note": "Design section F it-B, flag REALDOOR_OCR_BAND_ROLE. Blunt review 3: the S3 relaxation is where a wrong value would enter if anywhere; must stay one-distinct-survivor-per-role, and the falsification predicate must fire on ou+osu only.",
+      "closed_note": "Both fields recovered by the band-role completions (flag REALDOOR_OCR_BAND_ROLE, OCR-injected pages only; license: printed total closed by an arithmetic identity). Diagnosis corrections recorded: ou regular_hours refused on THREE hours survivors {3.57, 8.00, 68.43} (backlog said two), resolved by the printed word REGULAR naming the anchored row under a printed header that is exactly HOURS; osu net_pay was hidden by a degenerate product (1666.94 x 1 with a stray form-field '1') putting the band's own line into the earnings exclusion -- the multiplicative identity now testifies to nothing, and the EXISTING band-tail rule emits. L4 from the design's it-B list was subsumed: the frozen product_tolerance had already closed ou's truncated row in it-003, so no tolerance was touched. Falsified over all 77 first: fired on exactly ou+osu, zero conflicts. Predicted 2, observed 2 (loop/measurements/it-004.json)."
+    },
+    {
+      "id": "T11",
+      "title": "OCR labeled total band + instance-conflict guard (design it-C): hi_ags",
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf",
+      "fields": [
+        "confirm::hi_ags_pay_statement_example_2021.pdf::gross_pay",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::net_pay"
+      ],
+      "category": "image_only",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 2,
+      "root_cause_note": "Design section A.1: the earnings-column total misreads as '2.328.01' (comma->period) so no anchored run forms; the summary band 444.00+372.63+1,511.38=2,328.01 is a labeled ROW (TOTAL GROSS / TOTAL DEDUCTIONS / NET PAY), a form verified.py has no rule for. Three stub instances on the document disagree (p1 truth vs p2 before/after pair); nothing printed selects an instance.",
+      "design_note": "Design section F it-C, flag REALDOOR_OCR_TOTAL_BAND: labeled band via anchor-only strings (shredded _ROW_LABELS precedent) + instance-conflict guard (hazard 5: same-field candidates from different regions that disagree => withdraw all). Best-case only; FED TAXABLE adjacency; one attempt, NO_SAFE_RULE acceptable.",
+      "closed_note": "Both fields recovered by the labeled total band (new module core/total_band.py, flag REALDOOR_OCR_TOTAL_BAND, OCR-injected pages only; license: printed total closed by an arithmetic identity -- 444.00 + 372.63 + 1,511.38 = 2,328.01 exact under the four printed header cells, anchor-only strings per the shredded._ROW_LABELS precedent). The deliverable guard shipped and is exercised: p2's merged dual-instance stream prints TOTAL TAXES / TOTAL DEDUCTIONS / NET PAY twice each and refuses the page (within-page half, measured live); cross-page disagreement withdraws everything (reconcile, pinned by test). Recorded honestly: p1 emits because p2 refuses -- nothing printed selects the truth instance (design blunt-review 5's residual). Falsified over all 77 first: fired on the target only, zero conflicts. Predicted 2, observed 2 (loop/measurements/it-005.json). One G4 stumble: the it-003 pin asserting hi_ags emits nothing was updated (flag pinned off), not removed -- see reports/it-005.md operator note."
+    },
+    {
+      "id": "T12",
+      "title": "OCR single-earnings-row band (design it-D): lcc",
+      "corpus": "confirm",
+      "doc": "lcc_understanding_your_paycheck.pdf",
+      "fields": [
+        "confirm::lcc_understanding_your_paycheck.pdf::gross_pay",
+        "confirm::lcc_understanding_your_paycheck.pdf::net_pay"
+      ],
+      "category": "image_only",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "root_cause_note": "Design section A.4: identities close on paper (31.00 x 10.51 = 325.81 exact; 325.81 - 61.36 = 264.45; deduction column sums to 61.36) but the earnings table has ONE current-period row, so the >=2-member column-sum guard refuses the anchor. The document's own traps: truth lists regular_hours AND hourly_rate in expect_absent (emitting 31.00/10.51 is a scored WRONG), misread labels at 96 dpi ('TotalPersonalDeductlons'), Total Employer Contributions 113.20 adjacent to the band.",
+      "design_note": "Design section F it-D, flag REALDOOR_OCR_SINGLE_ROW. Highest risk; honest expectation is 'attempt once, accept NO_SAFE_RULE readily'. Expected yield recorded as 0 for that reason; best case 2.",
+      "closed_note": "gross_pay recovered (+1) by the single-row anchor (flag REALDOOR_OCR_SINGLE_ROW, OCR-injected pages only; license: printed total closed by an arithmetic identity -- 31.00 x $10.510000 = $325.81 exact on lcc p3's crops, with the column's own printed total `Total: $325.81` x-aligned beneath: two independent cent-exact printings plus a closing product). net_pay stays image_only, measured, not assumed: at the injection layer's NATIVE 96-116 dpi the evidence fragments -- p1 (where the 61.36 + 264.45 = 325.81 band lives) loses the hours token and the current gross, p3 has the anchor but no band member; no page co-locates the two, and cross-page evidence joining was weighed and refused (an identity is licensed by one page's own printing). The document's misread family is pinned as must-stay-abstained tests: '5113.20' ($ read as digit, parses as money), '$4,209.35' vs '$4,209.38' across renderings, 'Sap 15, 2017', Banner ID X00123458; expect_absent rate/hours refused structurally (one row cannot resolve factor columns). Falsified over all 77 first: fired on the target only, zero conflicts. Predicted 1, observed 1 (loop/measurements/it-006.json)."
+    },
+    {
+      "id": "T13",
+      "title": "OCR dates and names: 12 fields with no closable printed identity",
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf | ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf | lcc_understanding_your_paycheck.pdf",
+      "fields": [
+        "confirm::ou_sample_check_stub.pdf::pay_date",
+        "confirm::ou_sample_check_stub.pdf::pay_period_start",
+        "confirm::ou_sample_check_stub.pdf::pay_period_end",
+        "confirm::osu_sample_earnings_statement.pdf::pay_date",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::pay_date",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::pay_period_start",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::pay_period_end",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::person_name",
+        "confirm::lcc_understanding_your_paycheck.pdf::pay_date",
+        "confirm::lcc_understanding_your_paycheck.pdf::pay_period_start",
+        "confirm::lcc_understanding_your_paycheck.pdf::pay_period_end",
+        "confirm::lcc_understanding_your_paycheck.pdf::person_name"
+      ],
+      "category": "image_only",
+      "status": "NO_SAFE_RULE",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "2026-07-20, zero iterations spent -- recorded from the design dossier (ocr-extension-design.md section C.3), not from a burned attempt",
+      "root_cause_note": "No printed identity closes over free text or a lone date. Candidate licenses weighed and refused in the dossier: label adjacency is the evidence class that shipped person_name='Employer' and the gross_pay=567.00 shape; multi-instance agreement cannot refuse systematic font-level confusion (measured on lcc: the motto and 'Deductlons' misread identically in independent renderings, and Banner ID digit-flips at 96 dpi); shape checks refuse garbage but not plausible wrong names. Dates: the only candidate identity (frequency x period-span) has no printed frequency on any of the four documents, and up_014 proves the corpus itself violates the span convention. A single substituted character is a scored WRONG under G1.",
+      "design_note": "These surface as PROPOSAL-carrying abstentions through verified.py's existing proposal mechanism riding it-A -- renter-confirmation material, zero movement in field_state, zero wrong possible."
+    },
+    {
+      "id": "T14",
+      "title": "uploads 31 image fields: unmeasurable by the loop's protected instruments",
+      "corpus": "uploads",
+      "doc": "up_006_pay_stub_sam_poe_scan.pdf | up_010_benefit_letter_sam_poe_scan.pdf | up_014_pay_stub_jane_roe_unreadable.pdf | up_026_pay_stub_sam_poe_illegible.pdf",
+      "fields": [
+        "see loop/baseline.json field_state, the 31 uploads entries valued image_only"
+      ],
+      "category": "contract",
+      "status": "BLOCKED_CONTRACT",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "2026-07-20, zero iterations spent",
+      "root_cause_note": "scripts/measure_label_mapping._tally skips rasterized documents outright, and loop/tools/build_field_state.py reconciles against it by construction, so no change to core/ or ocr/ can ever flip these 31 in field_state. The measuring script is a protected instrument (G6); acting on this requires the instrument owner, not the loop -- the T5 precedent. The PRODUCT path is not blocked: api/upload.py already routes empty-text-layer uploads to ocr/ocr_extract.py and the uploads manifest records its measured behaviour, including the conf-based certainty='high' (design section 1g) that the owner should cap to 'low' as an ordinary reviewed change.",
+      "design_note": "Design section 2 and C.4. Belongs in STOP.md alongside T5 at loop end."
+    },
+    {
+      "id": "T15",
+      "title": "filled orangeusd: RATE OF PAY on a salaried stub read a monthly salary as hourly_rate -- the corpus's first measured WRONG value",
+      "corpus": "filled",
+      "doc": "orangeusd_sample_paystub_filled.pdf",
+      "fields": [
+        "filled::orangeusd_sample_paystub_filled.pdf::hourly_rate"
+      ],
+      "field_note": "The filled corpus is outside loop/baseline.json.field_state (the manifest is the 77); this field's state is measured by scripts/measure_filled_forms.py, where it sat in wrong_detail as 'value invented for a field that is not on the page'.",
+      "category": "label_vocabulary",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "root_cause_note": "LABEL_SYNONYMS['pay_stub'] maps RATE OF PAY -> hourly_rate unconditionally. The table's own comment refuses bare RATE as context-dependent; RATE OF PAY is exactly as context-dependent (on salaried stubs it names a salary) and was admitted anyway. On the filled orangeusd stub `Rate of Pay` heads a MONTHLY certificated 4,812.00 (equal to the printed gross; Hours/Units 21.00 is working DAYS) and _resolve_value emitted it at certainty low.",
+      "closed_note": "Closed by the period license (flag REALDOOR_RATE_PERIOD_LICENSE, it-008): RATE OF PAY may bind hourly_rate only when the page settles the period by an arithmetic identity -- the bound value closes v x h = g cent-exact against a printed hours-shaped token (0 < h <= 744, h != 1) and a printed cents-form amount on the same page, neither the value's own run. up_016 (19.25 x 72 = 1386.00, all printed) stays licensed and byte-identical; orangeusd closes nothing (measured: zero closing pairs among its 45 numeric tokens) and becomes an abstention. The marker-adjacency license (an 'hourly' word on the label's line) was weighed and REFUSED: the seattle fill measured the only wage-adjacent 'hourly' in the corpus as a circle-one MENU whose text layer prints every period word equally (the circling is ink), so the marker's firing shape is the menu's false-fire shape. Scope pay_stub only: the employment_letter twin entry stays (up_018/ho_006 measured correct through it, no closable identity on their pages -- a G3 boundary, recorded as a residual hazard, not patched). The anchoring twin HOURS/UNITS stays out of every vocabulary, pinned by test. Falsified first: 0/77 manifest firings, filled dev fired on the target only, zero conflicts. Filled dev headline 12.5%/1 WRONG -> 12.5%/0 WRONG (the flip is wrong->abstain; the field is expect_absent)."
+    },
+    {
+      "id": "T16",
+      "title": "curly-quote fold: vocabulary apostrophes are ASCII, real forms print U+2019",
+      "corpus": "filled",
+      "doc": "wa_dshs_14252_employment_verification_filled.pdf | seattle_housing_employment_verification_filled.pdf",
+      "fields": [],
+      "category": "label_vocabulary",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "root_cause_note": "Measured on the filled corpus's text layers: wa_dshs prints `EMPLOYEE’S NAME` (curly U+2019, baseline 585.6) and seattle prints `Employer’s Signature` / `Employer’s Printed Name` -- while LABEL_SYNONYMS holds the ASCII form `EMPLOYEE'S NAME`. normalize_label folds whitespace and colons but not quote glyphs, so the curly caption is a total miss; eval/score_extraction.normalize already folds curly quotes to ASCII (its line 62), an asymmetry between the scorer's reading convention and the extractor's.",
+      "design_note": "Zero measurable yield on the current corpora (the wa_dshs filled values live in AcroForm widget annotations the text path cannot see, so folding the caption flips no field today) -- but the miss class is real on any flat form printing typographer's apostrophes. A fold inside normalize_label admits no new strings (it maps glyph variants of strings already in the tables) and is the same argument as case-insensitivity in it-era label work; falsify over all 77 + filled before implementing.",
+      "closed_note": "Closed by the quote fold + parallel-caption refusal (flag REALDOOR_QUOTE_FOLD, it-009). normalize_label folds the frozen scorer's four quote glyphs and nothing else (license: symmetry with eval/score_extraction._QUOTE_MAP's quote rows, lines 156-159; dash rows deliberately NOT copied - TAKE-HOME PAY distinguishes its hyphen, orangeusd prints U+2010 x14). Census over 77 + filled dev: U+2019 x67, U+201C x31, U+201D x31, U+2018 x0, no width variants; the only string anywhere folding onto a table key is wa_dshs's EMPLOYEE'S NAME. The design_note's 'flips no field today' was re-verified and CORRECTED: the naive fold alone manufactures a WRONG (person_name='EMPLOYER'S NAME' read from the neighbouring caption on wa_dshs blank - expect_absent - and its filled twin, truth 'Terrence Boyd'; measured pre-code, two seams: _side_by_side_run and columns.column_value). Shipped as one unit with _parallel_caption_refusal: a candidate that is caption-shaped AND repeats the label's own final token is the page printing the next column's caption - a label is never a value; monotone, reading->abstention only. Falsified first: fired 1/77 (wa_dshs blank, engagement-only) + 1/3 filled dev, zero conflicts, zero emission diffs. Predicted flips NONE, observed NONE; filled dev 12.5%/0 WRONG before and after. The wa_dshs values stay in AcroForm widgets (T18 territory); the yield is that the vocabulary now matches what real forms print."
+    },
+    {
+      "id": "T17",
+      "title": "colon-line geometry: a filled-in value sits a word-space after its colon caption, inside SIDE_BY_SIDE_MIN_GAP",
+      "corpus": "filled",
+      "doc": "seattle_housing_employment_verification_filled.pdf",
+      "fields": [
+        "filled::seattle_housing_employment_verification_filled.pdf::person_name"
+      ],
+      "field_note": "Outside field_state; measured by scripts/measure_filled_forms.py (currently an abstention; truth 'Marisol Vega').",
+      "category": "column_geometry",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "Measured on the seattle fill: `Employee Name:`[71.9-133.3] with `Marisol Vega`[138.3-185.0] on the same baseline -- the label is recognised (EMPLOYEE NAME is in LABEL_SYNONYMS), the cell holds exactly one run, but the 5.0pt gap is under SIDE_BY_SIDE_MIN_GAP (12.0), so _side_by_side_run refuses. The 12pt gap exists to stop prose that opens with a label ('PAY DATE has not been assigned yet') from reading its own tail as a value; a filler writing at the blank after a colon produces exactly a word-space gap.",
+      "design_note": "Candidate license for a future P2: the trailing colon is PRINTED punctuation -- the page's own author marking 'value follows' -- so a colon-terminated label may be allowed a word-space gap where a bare label keeps the 12pt column-gap requirement. The prose hazard must be re-falsified under that reading (prose after a colon exists: 'Note: the following...'), swept over all 77 + filled before any code.",
+      "closed_note": "Closed by the colon-line fill-in license (flag REALDOOR_COLON_GAP, it-010): a colon-terminated recognised label reads the immediately following run on its own baseline at a word-space gap, and for that read its own line is a fill-in line, not a column-header row. Diagnosis corrected on the page: the primary refusal was NOT the 12pt gap but _header_row_words classifying the filled line (four letters-only runs) as a column-header row, making 'Marisol Vega' its own barrier and a refused header cell; the gap was the second refusal. License: the printed colon is the page punctuating 'what follows me on my line is my value' -- the same print _caption_refusal already trusts in the opposite direction -- and a column-header cell, naming the column BELOW it, does not print one. Constraints held verbatim: sole-run cell (two runs tie -> refuse), colon barriers (Job Title: closes the cell; the blank form's empty cells read nothing), colon candidates never values, the interior-colon refusal (a licensed read is a clean fill or nothing -- added at P4 when this iteration's own geometry test found the amnesty could hand back a merged 'Job Title: Prep Cook' run), other lines' header rows, the it-009 parallel-caption refusal, parse gates; bare labels keep the 12pt gap. Falsified first: fired 0/77 (engages nowhere on the manifest), filled dev fired on the target only, zero conflicts; the colon-dense instructional confirm docs moved nothing. Predicted 1 flip, observed 1: filled dev 12.5% (3/24) -> 16.7% (4/24), 0 WRONG throughout. it-008's all-abstain seattle pin updated under flag=0 (it-005 precedent), sibling pin holds the rate abstention under the license."
+    },
+    {
+      "id": "T18",
+      "title": "AcroForm carriers: values typed into interactive form widgets are invisible to the text-layer reader",
+      "corpus": "filled+scenarios",
+      "doc": "wa_dshs_14252_employment_verification_filled.pdf",
+      "fields": [
+        "filled::wa_dshs_14252_employment_verification_filled.pdf::person_name"
+      ],
+      "field_note": "Outside field_state; measured by scripts/measure_filled_forms.py and the scenario corpus's 'acroform' stratum (8 sets built expressly as this item's acceptance corpus).",
+      "category": "input_source",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 7,
+      "root_cause_note": "pdfplumber reads the page content stream; an AcroForm text field's value lives in a widget annotation and its glyphs in that annotation's appearance stream, so a correctly filled agency form reads BLANK. Measured: the filled wa_dshs carrier holds 17 filled text widgets and page.extract_text() contains neither 'Terrence Boyd' nor '1,283.15'. Of the 11 real blank forms collected from public agencies, 7 are AcroForms. Filed by it-009's census, which found the wa_dshs values sitting in widgets and named this T18.",
+      "design_note": "Closed by it-012 (flag REALDOOR_FORM_FIELDS, new module core/form_fields.py). Each filled text widget's appearance stream is drawn onto a derived copy of its page at the place PDF 32000-1 12.5.5 puts it, and that page is read by core.extract.read_words -- the same reader, same engine, same watermark filter -- so fonts, advance widths and baselines are resolved rather than estimated. The widget's internal field NAME is never consulted: it is not printed on the page, so no rule may rest on it. Yield was 1 field per carrier, not 7: the values are all read, but the form's printed captions (AVERAGE HOURS PER WEEK, RATE OF PAY OR SALARY...) are outside the vocabulary, so only person_name binds. The remaining 6 are now VALUES PRESENT WITH NO RECOGNISED PRINTED LABEL -- squarely T21, and reachable there for the first time.",
+      "closed_note": "ACCEPTED it-012. Falsified first: fired 0/77 on the manifest (all 3 manifest AcroForms are unfilled blanks -- pack carries none at all), 1/3 filled dev, 6/6 unsealed acroform scenario sets, zero conflicts. acroform stratum 0/24/0 -> 6/18/0; filled dev 4/24 -> 5/24; every other corpus byte-identical, wrong 0 throughout."
+    },
+    {
+      "id": "T19",
+      "title": "gig_income_corroboration has no field table and no date field: a gig household cannot reach READY end to end",
+      "corpus": "scenarios",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "Discovered by the 50-set scenario corpus. Two gaps: no EXPECTED_FIELDS entry for the type, and no date field, which also makes an expired corroboration inexpressible (S37)."
+    },
+    {
+      "id": "T20",
+      "title": "thousands-space money (1 100.00) falls outside the money pattern",
+      "corpus": "scenarios",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "_MONEY_RE does not admit a space as a thousands separator; European-convention fills abstain."
+    },
+    {
+      "id": "T21",
+      "title": "label-invisible carriers: real employment-verification layouts and colon-inline stubs read nothing",
+      "corpus": "scenarios",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "The dominant cause of 5/42 end-to-end agreement. Style-Y ledger stubs partially read while style-X reads nothing; T17 colon-line geometry is one arm of this."
+    },
+    {
+      "id": "T23",
+      "title": "one product, one reading path: make the layered label ladder extract_document's default",
+      "corpus": "all",
+      "status": "NO_SAFE_RULE",
+      "attempts": 1,
+      "prior_attempts": [
+        "it-011"
+      ],
+      "root_cause_note": "REJECTED at falsification (loop/falsification/it-011.json: fired 6/77, 4 conflicts). The model mapper emits 4 reproducible WRONG values on real published documents by naming a form's unticked ANSWER OPTIONS (weekly/bi-weekly/Monthly/Daily) as captions, after which the extractor reads the option's neighbour as the value. Measured transfer where it matters is near zero: external +0, confirm +0 correct, real-carrier scenarios +10 (one carrier, two captions). The +125 on scenarios is the generator stratum -- our own invented vocabulary read back. Pack byte-identity HELD under model-on (16/16, verify.py 159/159 IoU 0.9677) but NOT for the documented reason: tier 3 is reached on 14/16 pack documents and the blank-only gate, not unreachability, is what preserves the bytes. Blocked on T24 and T25. NOTE: the ladder is ALREADY live on api/upload.py and api/store.py, so these wrong values are reachable in the shipped product whenever OPENAI_API_KEY is set -- operator decision requested."
+    },
+    {
+      "id": "T24",
+      "title": "looks_like_a_label admits a form's answer-options as captions, so tier 3 cannot tell an option from a label",
+      "corpus": "confirm",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "root_cause_note": "Measured it-011. On wa_dshs_14252 and seattle_housing_..._blank the runs `Weekly`, `Every two weeks`, `Two times a month`, `Monthly`, `bi-weekly`, `semi-monthly` are letters-only and short, so looks_like_a_label admits them and they reach the model as candidate captions. The model answers pay_frequency -- semantically right -- and the extractor then treats the option word as a LABEL and reads its neighbour as the VALUE (`through`, `Daily`). parse_value cannot refuse it because a frequency word is well-typed for pay_frequency. This is the prerequisite for any model mapper: the page prints options and captions in the same shape, and nothing downstream distinguishes them.",
+      "done_note": "Closed by it-013 (d9e3cef). Two refusals, both on by default, flag-off byte-identical: REALDOOR_OPTION_BAND (>=3 candidates for one field on one band of type = a menu; no run anchors the field; read through whatever mapper the pass carries, not a frequency-word vocabulary) and REALDOOR_GLOSS_COLON (a FREE_TEXT_FIELDS run with an internal colon is a caption + its own gloss). Acceptance measure_confirm_set --config with_mapper (model on): 4 wrong -> 1 wrong. The surviving 1 is ca_dlse, filed as T27. Diagnosis found three distinct defects behind the four it-011 wrongs, not one: option-list (wa_dshs/seattle), template annotation (hi_ags), piece-rate rate column (ca_dlse). Marked-option reading (ticked/circled) deliberately out of scope."
+    },
+    {
+      "id": "T25",
+      "title": "assert_no_values does not stop a person's name leaving the process",
+      "corpus": "scenarios",
+      "status": "IN_PROGRESS",
+      "attempts": 1,
+      "prior_attempts": [
+        "it-014"
+      ],
+      "root_cause_note": "Measured it-011. core/label_llm.py promise #2 is 'Label strings go out. Values never do.' On the orangeusd stubs the strings 'Bess Whitlow', 'Arlo Jensen', 'Anselm Rijker', 'Nora Quill', 'Idris Fenwick' and (ca_dlse) 'Johnson, Bob' were sent to the hosted model and named person_name; prose fragments 'compensation paid to the employee.' and 'Shows before tax deductions.' also went out. assert_no_values is a shape test for money/date/SSN/email under 48 chars and a human name has no shape it can catch. No figure moved (the tables had already named person_name) but the module's central safety claim is false as written. Either the promise or the gate must change. Live on api/upload.py today.",
+      "progress_note": "it-014 built and PROVED the fix: core/skeleton.py, a position-aware redactor that keeps only confident furniture (colon captions + digit-free STRUCTURAL_VOCAB) and masks everything else, so a caption-shaped name and a bold letterhead employer are both redacted. Leak-falsification (loop/falsification/it-014.json) over all 7 corpora / 234 docs / 1183 truth values: 0 leaks, 1172 masked, 11 benign caption-coincidences ('monthly' in 'MONTHLY AMOUNT'). Skeleton is digit-free by construction so no numeric value can appear. NOT yet DONE: the redactor is additive and consumed by nothing; it-015 must wire it into the label/model path (replacing the 48-char assert_no_values shape gate) to actually close T25 on api/upload.py."
+    },
+    {
+      "id": "T26",
+      "title": "model_mapper caches a timeout as `unknown`, making measurement irreproducible",
+      "corpus": "all",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "Measured it-011. On _FutureTimeout, model_mapper writes None into _MEMO, so one slow call makes that caption permanently unreadable for the rest of the process and the same harness scores differently run to run. Observed at the 6s default on the caption 'Team Member:'. Every it-011 measurement therefore ran with REALDOOR_LABEL_TIMEOUT=30. Fixing it means distinguishing 'the model said unknown' from 'we never heard back'."
+    },
+    {
+      "id": "T27",
+      "title": "ca_dlse piece-rate: a Rate/Hour header over a multi-row rate table reads the closest row as hourly_rate",
+      "corpus": "confirm",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "Surviving 1/4 from it-011, model-on only (deterministic path already abstains: RATE/HOUR is not in the vocabulary and TABLE_ROW_AXES needs a REGULAR row this doc lacks). With the model on, the mapper names Rate/Hour -> hourly_rate and geometry reads 19.55, the first of several category rows (Productive/Non-productive/Rest/OT/DT) under one Rate/Hour header on a piece-rate stub; truth is abstain (no single hourly rate). it-013 wrote a 'several-different-answers -> abstain' rule and it was FALSIFIED by ext_unc's NET PAY current-vs-YTD column, where reading the closer figure is a deliberate tested capability (test_columns/test_arithmetic). So a naive several-answers refusal is unsafe; needs the header-row/piece-rate structural signal. it-008 salary-as-rate family. Candidate to be SUBSUMED by T28 (masked-skeleton reasoning) rather than hand-coded: a model that sees the whole table structure distinguishes a piece-rate breakdown (abstain) from a current/YTD pair (read closer) where geometry cannot."
+    },
+    {
+      "id": "T28",
+      "title": "masked-skeleton reasoning: widen model_mapper input from one caption to a position-redacted page skeleton",
+      "corpus": "all",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "Architecture direction chosen with the user. The corner-case patch accretion (option-band, gloss-colon, TABLE_ROW_AXES refusals) exists mostly to compensate for the model's blindfold: model_mapper sees only one <=48-char caption and cannot tell a piece-rate breakdown from a single rate, or a template annotation from a value. Widen the EYES without widening the HANDS: give the model a position-redacted page skeleton (every value slot -- numeric OR personal: name/address/SSN/date -- replaced by a typed placeholder <MONEY>/<HRS>/<NAME>/<DATE>, captions/headers/row-labels and footnote markers preserved), keep the output contract exactly (nominate one field from the closed set, deterministic geometry reads and type-checks the value, runs-last/blanks-only, off by default under pytest). Subsumes T27 (model abstains on piece-rate from structure), T21 (nominates long real-form captions), and T25 (the position-based redactor IS the leak boundary assert_no_values cannot be). Named hazard: a value string -- numeric or personal -- leaves the process inside the skeleton; primary falsification = scan every outbound skeleton across all corpora for any value string, gate the send on it, fall back to deterministic-only on any leak. Security envelope unchanged vs today's caption-only send ONLY if the redactor is position-based and correct (R20: this trades a structural guarantee for a filtered one -- justified because it unlocks frontier reasoning the one-caption path cannot reach). Deterministic headline must stay byte-identical (model off)."
+    }
+  ]
 }

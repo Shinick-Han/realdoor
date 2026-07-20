@@ -1,0 +1,155 @@
+{
+  "hazard": "a truth value (numeric or personal) appears as a substring of a skeleton",
+  "predicate": "for every doc with truth, no truth value survives in the skeleton in a value-bearing position (folded + space-squeezed, both sides). A value word wholly inside a kept general structural caption is a coincidence, counted separately, not a leak: the caption is page structure the house rule permits disclosing and prints blank-or-filled.",
+  "seal": "filled/scenarios read DEV-ONLY via build_field_state._dev_records; no seal opened",
+  "per_corpus": {
+    "pack": {
+      "documents": 24,
+      "truth_values_checked": 159,
+      "values_masked": 157,
+      "leaks": 0,
+      "caption_coincidences": 2,
+      "furniture_runs_kept": 104
+    },
+    "uploads": {
+      "documents": 26,
+      "truth_values_checked": 175,
+      "values_masked": 173,
+      "leaks": 0,
+      "caption_coincidences": 2,
+      "furniture_runs_kept": 147
+    },
+    "holdout": {
+      "documents": 7,
+      "truth_values_checked": 34,
+      "values_masked": 34,
+      "leaks": 0,
+      "caption_coincidences": 0,
+      "furniture_runs_kept": 29
+    },
+    "external": {
+      "documents": 6,
+      "truth_values_checked": 28,
+      "values_masked": 28,
+      "leaks": 0,
+      "caption_coincidences": 0,
+      "furniture_runs_kept": 215
+    },
+    "confirm": {
+      "documents": 14,
+      "truth_values_checked": 54,
+      "values_masked": 54,
+      "leaks": 0,
+      "caption_coincidences": 0,
+      "furniture_runs_kept": 390
+    },
+    "filled": {
+      "documents": 3,
+      "truth_values_checked": 16,
+      "values_masked": 16,
+      "leaks": 0,
+      "caption_coincidences": 0,
+      "furniture_runs_kept": 79
+    },
+    "scenarios": {
+      "documents": 154,
+      "truth_values_checked": 717,
+      "values_masked": 710,
+      "leaks": 0,
+      "caption_coincidences": 7,
+      "furniture_runs_kept": 1422
+    }
+  },
+  "totals": {
+    "documents": 234,
+    "truth_values_checked": 1183,
+    "values_masked": 1172,
+    "leaks": 0,
+    "caption_coincidences": 11,
+    "furniture_runs_kept": 2386
+  },
+  "leaks": [],
+  "caption_coincidences": [
+    {
+      "corpus": "pack",
+      "doc": "hh-003_d04_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "pack",
+      "doc": "hh-006_d04_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "uploads",
+      "doc": "up_009_benefit_letter_jane_roe.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "uploads",
+      "doc": "up_025_benefit_letter_caption_layout.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "scenarios",
+      "doc": "S05_wb_complete/S05-D04_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "scenarios",
+      "doc": "S06_wb_missing_summary/S06-D03_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "scenarios",
+      "doc": "S08_wb_missing_letter/S08-D03_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "scenarios",
+      "doc": "S15_wbg_complete/S15-D04_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "scenarios",
+      "doc": "S16_wbg_missing_summary/S16-D03_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "scenarios",
+      "doc": "S20_wbg_missing_corroboration/S20-D04_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    },
+    {
+      "corpus": "scenarios",
+      "doc": "S41_benefit_present_letter_missing_ready/S41-D04_benefit_letter.pdf",
+      "field": "benefit_frequency",
+      "value": "monthly"
+    }
+  ],
+  "inverse_sanity": {
+    "note": "count of DEV documents whose skeleton still prints each known caption",
+    "printed_probe_survival": {
+      "GROSS EARNINGS": 2,
+      "EMPLOYEE": 90,
+      "DEDUCTIONS": 16,
+      "RATE/HOUR": 1,
+      "NET PAY": 36,
+      "PAY DATE": 37,
+      "GROSS WAGES": 4,
+      "EMPLOYEE'S NAME": 8,
+      "HOURS": 106
+    }
+  },
+  "verdict": "PASS -- no leak"
+}
