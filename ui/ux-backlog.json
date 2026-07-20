@@ -63,12 +63,13 @@
     },
     {
       "id": "U6",
-      "status": "OPEN",
+      "status": "DONE",
       "harm": 6,
       "title": "Words no renter knows, on the screens that carry the most weight",
       "evidence": "'Abstentions (3)' in the always-visible rail (the product's own Korean says 'things we did not say'); 'Currency: Unreadable' as a status chip when the real problem is a missing day; 'that document stops settling what the recurring pay is' (grade 13.7); step 4 shows Ruleset, 'Engine sha:c45064647e2f', and five rule-id cards on the applicant's income screen - 17 visible machine identifiers on step 4 alone.",
       "fix": "English follows its own Korean where the Korean is plainer. Machine identifiers fold behind the Technical details pattern step 5 already uses.",
-      "constraint": "Folding is not hiding: everything stays on the page, one disclosure away."
+      "constraint": "Folding is not hiding: everything stays on the page, one disclosure away.",
+      "done_note": "Four parts, verified live on HH-004. (1) Rail heading 'Abstentions (3)' -> 'Things we did not say (3)', following the product's own Korean (말하지 않은 것); Korean toggle still renders 말하지 않은 것 (3). Same rename applied to the step-6 summary row ('N thing(s) we did not say'). (2) Step-1 currency chip: 'Currency: ✕ Unreadable' -> 'Still current?: ? No day in the date' for the month-precision case (date 2026-06), keyed on days_until_stale===null AND a YYYY-MM date; machine state unchanged on the report/checklist. (3) 'that document stops settling what the recurring pay is' -> plainer rewrite, FK 13.7 -> 7.2. (4) Step-4 machine identifiers folded behind Technical details: Ruleset version and Engine sha (kept Frozen event date visible), and the per-calc Threshold/Calculation rule refs (duplicated in the visible citation cards below). Visible machine-id tokens on step 4: 19 -> 14; folded content still retrievable (24 with disclosures open). JUDGMENT: kept the 'Rules cited by this report' citation cards visible - folding them would weaken ROLE_UI rule 5 (rule claims carry visible citation + effective date). Gates: axe 0, reflow 35/35, keyboard 31/31, pytest 1237."
     },
     {
       "id": "U7",

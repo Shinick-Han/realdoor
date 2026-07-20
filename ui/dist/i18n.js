@@ -237,6 +237,8 @@
     "not stated": "적혀 있지 않음",
     "no date": "날짜 없음",
     "Currency": "유효 기간",
+    "Still current?": "아직 유효한가요?",
+    "No day in the date": "날짜에 일(日)이 없음",
     "Read via": "읽은 방법",
     "text layer": "텍스트 레이어",
     "Page size": "페이지 크기",
@@ -263,8 +265,8 @@
 
     // ── app.js: 정정 화면 ───────────────────────────────────────────────────
     "Your correction is recorded, and it may still not be used": "정정은 기록되지만, 그래도 쓰이지 않을 수 있습니다",
-    "A correction changes what the file says. It does not automatically change the annualized amount: if the corrected figure no longer agrees with the hours and rate printed on the same document, that document stops settling what the recurring pay is, and the system says so instead of quietly using the new number.":
-      "정정은 파일에 적힌 내용을 바꿉니다. 그렇다고 연환산 금액이 자동으로 바뀌지는 않습니다. 정정한 숫자가 같은 문서에 인쇄된 근무시간·시급과 더 이상 맞지 않으면, 그 문서는 정기 급여가 얼마인지를 확정해 주지 못하게 됩니다. 이때 시스템은 새 숫자를 조용히 쓰지 않고 그 사실을 말합니다.",
+    "A correction changes what the file says. It does not always change your yearly income figure. Here is why: if your new figure no longer matches the hours and pay rate printed on the same document, that document can no longer show what your regular pay is. When that happens the system tells you, instead of quietly using the new number.":
+      "정정은 파일에 적힌 내용을 바꿉니다. 그렇다고 연 소득 금액이 늘 바뀌는 것은 아닙니다. 이유는 이렇습니다: 정정한 숫자가 같은 문서에 인쇄된 근무시간·시급과 더 이상 맞지 않으면, 그 문서는 정기 급여가 얼마인지를 더는 보여줄 수 없습니다. 그럴 때 시스템은 새 숫자를 조용히 쓰지 않고 그 사실을 알려 드립니다.",
     "Recorded corrections available offline": "오프라인에서 쓸 수 있는 기록된 정정",
     "Without a server the app can only replay corrections the pipeline actually ran. Both of these are real pipeline output. Point the app at the API to edit any field.":
       "서버가 없으면 이 앱은 파이프라인이 실제로 실행한 정정만 재생할 수 있습니다. 아래 둘 다 실제 파이프라인 출력입니다. 아무 항목이나 고치려면 앱을 API 에 연결하세요.",
@@ -1487,7 +1489,8 @@
         return "서로 다른 검사 " + m[1] + "건이 이 한 항목을 제기했습니다. 각 검사는 " +
                "기술 세부사항에 전부 나열되어 있습니다.";
       }],
-    [/^Abstentions \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
+    // U6: 영어 제목이 이 한국어를 따라 "Things we did not say" 로 바뀌었다. 한국어는 그대로.
+    [/^Things we did not say \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
     [/^Reasons this needs review \((\d+)\)$/, function (m) {
       return "검토가 필요한 이유 (" + m[1] + ")";
     }],
@@ -1538,7 +1541,7 @@
         return lookup(label) || label;
       }).join(", ");
     }],
-    [/^(\d+) abstention\(s\) and (\d+) reason\(s\) this needs review\. All of them are listed in full under “What this system is unsure about”, and all of them travel with your packet\.$/,
+    [/^(\d+) thing\(s\) we did not say and (\d+) reason\(s\) this needs review\. All of them are listed in full under “What this system is unsure about”, and all of them travel with your packet\.$/,
       function (m) {
         return "말하지 않은 것 " + m[1] + "건과 검토가 필요한 이유 " + m[2] + "건. 모두 “이 시스템이 확신하지 못하는 것”" +
                "아래에 빠짐없이 나열되어 있으며, 모두 서류 묶음에 함께 실립니다.";

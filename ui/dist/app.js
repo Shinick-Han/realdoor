@@ -1822,10 +1822,22 @@
     } else {
       staleText = stale + " day(s) of the 60-day window remaining.";
     }
+    /* The chip on this row read "Currency: Unreadable" for a document whose only trouble is
+     * a date with no day (2026-06). The document was read fine; what cannot be worked out is
+     * whether it is still within the 60-day window, because that needs a day to count from.
+     * "Unreadable" names the wrong problem. When the window cannot be computed because the
+     * date is month-only, the chip says that instead. The machine state is unchanged on the
+     * report and still drives the checklist; this is only what this row shows. */
+    var monthOnly = /^\d{4}-\d{2}$/.test(String(doc.document_date || ""));
+    var currencyChip = ((stale === null || stale === undefined) && monthOnly)
+      ? h("span", { class: "chip chip--undatable" }, [
+          h("span", { "aria-hidden": "true", text: "? " }), "No day in the date"
+        ])
+      : stateChip(doc.state);
     return h("dl", { class: "kv" }, [
       h("dt", { text: "File" }), h("dd", { class: "mono", text: doc.file_name }),
       h("dt", { text: "Document date" }), h("dd", { text: doc.document_date || "not stated" }),
-      h("dt", { text: "Currency" }), h("dd", null, [stateChip(doc.state), " ", staleText]),
+      h("dt", { text: "Still current?" }), h("dd", null, [currencyChip, " ", staleText]),
       h("dt", { text: "Rule" }), h("dd", null, [ruleRef(doc.stale_rule_id)]),
       h("dt", { text: "Read via" }), h("dd", { text: (doc.source || "unknown").replace(/_/g, " ") }),
       h("dt", { text: "Page size" }),
@@ -2447,10 +2459,10 @@
     root.appendChild(h("div", { class: "callout" }, [
       h("h3", { text: "Your correction is recorded, and it may still not be used" }),
       h("p", {
-        text: "A correction changes what the file says. It does not automatically change the " +
-              "annualized amount: if the corrected figure no longer agrees with the hours and rate " +
-              "printed on the same document, that document stops settling what the recurring pay is, " +
-              "and the system says so instead of quietly using the new number."
+        text: "A correction changes what the file says. It does not always change your yearly income " +
+              "figure. Here is why: if your new figure no longer matches the hours and pay rate " +
+              "printed on the same document, that document can no longer show what your regular pay " +
+              "is. When that happens the system tells you, instead of quietly using the new number."
       })
     ]));
 
@@ -3587,10 +3599,21 @@
     clear(root);
     if (!state.report) { root.appendChild(noReportNotice()); return; }
 
+    /* This screen opened with three machine strings before it said anything a renter could
+     * use: a ruleset version, a frozen event date, and an engine build hash. The date is
+     * load-bearing and plain, so it stays in view; the two version identifiers are for
+     * someone auditing which build produced this file, and they fold behind the same
+     * Technical details disclosure step 5 uses. Folded, not dropped — the packet still
+     * carries both and the disclosure still shows both. */
     root.appendChild(h("dl", { class: "kv" }, [
-      h("dt", { text: "Ruleset" }), h("dd", { class: "mono", text: state.report.ruleset_version }),
-      h("dt", { text: "Frozen event date" }), h("dd", { text: state.report.reference_date || "—" }),
-      h("dt", { text: "Engine" }), h("dd", { class: "mono", text: state.report.engine_version })
+      h("dt", { text: "Frozen event date" }), h("dd", { text: state.report.reference_date || "—" })
+    ]));
+    root.appendChild(h("details", { class: "tech" }, [
+      h("summary", { text: "Technical details" }),
+      h("dl", { class: "kv" }, [
+        h("dt", { text: "Ruleset" }), h("dd", { class: "mono", text: state.report.ruleset_version }),
+        h("dt", { text: "Engine" }), h("dd", { class: "mono", text: state.report.engine_version })
+      ])
     ]));
 
     (state.report.calculations || []).forEach(function (calc) {
@@ -3633,9 +3656,18 @@
           h("dt", { text: "Frozen 60% threshold" }),
           h("dd", { text: calc.threshold === null || calc.threshold === undefined
             ? "No threshold applies to this line" : money(calc.threshold) }),
-          h("dt", { text: "Threshold rule" }), h("dd", null, [ruleRef(calc.threshold_rule_id)]),
-          h("dt", { text: "Calculation rule" }), h("dd", null, [ruleRef(calc.rule_id)]),
           h("dt", { text: "Effective date" }), h("dd", { text: calc.effective_date || "—" })
+        ]),
+        /* The two rule ids this line stands on used to sit in the panel above as raw codes.
+         * They are not dropped — every rule is named in full, with its authority, effective
+         * date and source, in "Rules cited by this report" directly below, and the same two
+         * ids fold here behind Technical details for a reader checking this line in place. */
+        h("details", { class: "tech" }, [
+          h("summary", { text: "Technical details" }),
+          h("dl", { class: "kv" }, [
+            h("dt", { text: "Threshold rule" }), h("dd", null, [ruleRef(calc.threshold_rule_id)]),
+            h("dt", { text: "Calculation rule" }), h("dd", null, [ruleRef(calc.rule_id)])
+          ])
         ]),
         h("div", { class: "callout" }, [
           h("p", { text: COMPARISON[calc.comparison] || String(calc.comparison) }),
@@ -4177,7 +4209,7 @@
           : "Nothing. Every required item is present and current.", 5,
         "what is missing or out of date"),
       answerRow("Questions the system will not answer on its own",
-        abstentions.length + " abstention(s) and " + reasons.length +
+        abstentions.length + " thing(s) we did not say and " + reasons.length +
         " reason(s) this needs review. All of them are listed in full under " +
         "“What this system is unsure about”, and all of them travel with your packet.",
         null, null)
@@ -4815,7 +4847,12 @@
     var abstentions = state.report.abstentions || [];
     var reasons = state.report.review_reasons || [];
 
-    root.appendChild(h("h3", { text: "Abstentions (" + abstentions.length + ")" }));
+    /* "Abstentions" is a word from measurement, not from anyone's kitchen table. The
+     * product's own Korean for this rail already says the plainer thing — 말하지 않은 것,
+     * "the things we did not say" — and the review found that Korean better than the English
+     * it was translating. So the English follows its own Korean. The count stays; nothing is
+     * hidden or collapsed; only the noun changes. */
+    root.appendChild(h("h3", { text: "Things we did not say (" + abstentions.length + ")" }));
     if (!abstentions.length) {
       root.appendChild(h("p", {
         class: "q-empty",
