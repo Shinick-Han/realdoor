@@ -185,14 +185,55 @@ def _is_watermark(obj: dict) -> bool:
     return float(obj.get("size", 0.0) or 0.0) >= WATERMARK_MIN_SIZE
 
 
+def _watermark_sanity_enabled() -> bool:
+    """`REALDOOR_WATERMARK_SANITY=0` restores the unconditional size filter exactly.
+
+    Same convention as `REALDOOR_ARITHMETIC` / `REALDOOR_COLUMNS`: on by default, and
+    with the flag at `0` nothing below `_filter_refutes_itself` ever runs, so
+    `read_words` is bit-identical to what it was before the flag existed. Read through
+    a function rather than captured at import so a test can flip the environment
+    variable and see the change -- same reasoning as `_arithmetic_enabled`.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_WATERMARK_SANITY", "").strip() != "0"
+
+
+def _filter_refutes_itself(page: Any) -> bool:
+    """True when the watermark size filter would delete the page's entire text layer.
+
+    A watermark is an overlay ON a body -- the two coexist on a page by definition, and
+    `WATERMARK_MIN_SIZE` works because the pack prints a big-over-small contrast: the
+    diagonal banner is the only text above 20 pt. A page on which EVERY printed char
+    sits at or above the threshold prints no such contrast, so classifying all of it as
+    watermark refutes itself: it leaves nothing for the supposed watermark to overlay.
+
+    Measured, not hypothetical: `ca_dlse_paystub_hourly.pdf` is a 1756x1176 pt page
+    whose text matrix draws every one of its 630 chars at 27.3-48.6 pt -- large in
+    absolute points because the page is large, not because a watermark covers it. The
+    unconditional filter returned 0 of its 96 words and the extractor was blind to the
+    whole page. Falsified before this was written: across all 77 corpus documents this
+    condition holds on exactly that one page (loop/falsification/it-001.json). A page
+    with no text layer cannot fire (`chars` is empty), so scans still read as empty.
+    """
+    chars = page.chars
+    return bool(chars) and all(_is_watermark(c) for c in chars)
+
+
 def read_words(page: Any, page_number: int) -> list[Word]:
     """Extract watermark-free words from a pdfplumber page, in bottom-left coordinates.
 
     Returns an empty list for a page with no text layer (a scan). That is a legitimate
     result, and the caller must abstain rather than invent anything.
+
+    The size filter is conditional per page (`REALDOOR_WATERMARK_SANITY=0` to make it
+    unconditional again): a page it would empty entirely is read unfiltered instead --
+    see `_filter_refutes_itself` for the bound and the measurement behind it.
     """
     height = float(page.height)
     body = page.filter(lambda obj: not _is_watermark(obj))
+    if _watermark_sanity_enabled() and _filter_refutes_itself(page):
+        body = page
     words: list[Word] = []
     for w in body.extract_words(
         extra_attrs=["size", "fontname"], use_text_flow=False, return_chars=True
@@ -973,6 +1014,24 @@ def _columns_enabled() -> bool:
     return os.environ.get("REALDOOR_COLUMNS", "").strip() != "0"
 
 
+def _header_cell_enabled() -> bool:
+    """Is the header-cell column reader switched on? ON by default; `0` switches it off.
+
+    Guards exactly one branch in `_scan_page` -- the call to
+    `columns.header_cell_value`, which reads the single run beneath a vocabulary label
+    that is itself a cell of one of the page's own column-header rows. The branch also
+    sits inside `_columns_enabled()`, so `REALDOOR_COLUMNS=0` keeps its standing promise
+    that `core.columns` is never imported. With `REALDOOR_HEADER_CELL=0` the branch never
+    runs and this module's output is bit-identical to what it was before the rule
+    existed (loop iteration it-002; falsified over all 77 corpus documents first --
+    loop/falsification/it-002.json). Read through a function rather than captured at
+    import so a test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_HEADER_CELL", "").strip() != "0"
+
+
 def infer_document_type(pdf_path: str | Path) -> str:
     """Derive the document type from the pack's file naming convention."""
     stem = Path(pdf_path).stem
@@ -1163,6 +1222,28 @@ def _scan_page(
                 if recovered is not None:
                     resolved = recovered
             # ------------------------------------------------------------------------
+            # A label that is itself a printed header-row cell licenses its column
+            # (`REALDOOR_HEADER_CELL=0` to disable) -- see `core.columns.header_cell_value`
+            # ------------------------------------------------------------------------
+            # Same abstention-only gate, placed directly after the row reader above so
+            # it is consulted exactly when that reader found nothing -- the ordering the
+            # falsification sweep measured (loop/falsification/it-002.json: fired on
+            # 2 of 77 documents, zero conflicts). Like every branch in this chain, it
+            # converts abstentions or does nothing.
+            if (
+                _columns_enabled()
+                and _header_cell_enabled()
+                and (resolved is None or resolved.get("certainty") == "abstain")
+            ):
+                from core import columns
+
+                recovered = columns.header_cell_value(
+                    lines, run, field_name, convention, is_exact, label_words,
+                    header_words,
+                )
+                if recovered is not None:
+                    resolved = recovered
+            # ------------------------------------------------------------------------
             # A printed conjunction names two fields at once -- see `_period_span_fields`
             # ------------------------------------------------------------------------
             # Same abstention-only gate as the column branch above: only a field the
@@ -1178,10 +1259,12 @@ def _scan_page(
                 )
                 if span is not None:
                     start_field, end_field = span
-                    resolved = start_field
-                    existing_end = found.get("pay_period_end")
-                    if existing_end is None or existing_end.get("certainty") == "abstain":
-                        found["pay_period_end"] = end_field
+                    if start_field is not None:
+                        resolved = start_field
+                    if end_field is not None:
+                        existing_end = found.get("pay_period_end")
+                        if existing_end is None or existing_end.get("certainty") == "abstain":
+                            found["pay_period_end"] = end_field
             if resolved is not None:
                 found[field_name] = resolved
     return unmapped
@@ -1285,6 +1368,15 @@ def extract_fields_from_page(
             if existing is not None and existing.get("certainty") != "abstain":
                 continue
             recovered = columns.table_cell_value(lines, name, convention)
+            # A second two-axis reading with the same blank-only gate: the END DATE
+            # column of a table the page itself titles EARNINGS -- see
+            # `core.columns.earnings_end_date_value` for the axes and the refusals.
+            if recovered is None and name == "pay_period_end":
+                recovered = columns.earnings_end_date_value(lines, convention)
+            # And a third, for hours a page states as a titled block rather than a
+            # labelled field -- see `core.columns.hours_block_value`.
+            if recovered is None and name == "regular_hours":
+                recovered = columns.hours_block_value(lines, convention)
             if recovered is not None:
                 found[name] = recovered
     return found, unmapped
@@ -1806,6 +1898,16 @@ def _side_by_side_run(
     return run
 
 
+#: A month/day printed in full with a year token we refuse to read: a two-digit year
+#: (whose century strptime would have to invent) or a masked one (`1/7/XX`). This is a
+#: *shape* test, used only to confirm that the unreadable half of a printed span is still
+#: a date the page printed -- so that "8/21/2005 to 8/27/05" splits as a span while
+#: "8/21/2005 to present" and "due to processing" stay prose. A four-digit year never
+#: matches: a half like "13/45/2005" already failed `_parse_date` for being an impossible
+#: date, and that failure must kill the whole reading, not be waved through as "unreadable".
+_UNREADABLE_YEAR_DATE_RE = re.compile(r"^\d{1,2}[/-]\d{1,2}[/-](?:\d{2}|[Xx]{2,4})$")
+
+
 def _period_span_fields(
     line: Sequence[Word],
     label_runs: Sequence[Sequence[Word]],
@@ -1814,34 +1916,35 @@ def _period_span_fields(
     convention: LineBoxConvention,
     is_exact: bool,
     header_words: frozenset[int] = frozenset(),
-) -> tuple[dict[str, Any], dict[str, Any]] | None:
-    """`<date> to <date>` beside a pay-period label: both endpoints, or None.
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None] | None:
+    """`<date> to <date>` beside a pay-period label: each readable endpoint, or None.
 
     il_dol prints `Pay Period:  8/21/2005 to 8/27/05` -- one label, one run, two dates
     joined by the page's own printed word "to". The old chain located that run and then
     abstained because the whole string is not a date, which threw away the *shape* of an
     answer the page states in full.
 
-    What licenses the split is the conjunction plus a double parse, not position. The run
-    must contain exactly one standalone word `to`; the words on each side must
-    *independently* parse as dates through the unchanged `_parse_date`; and only then is
-    the left half the period start and the right half the period end. Each requirement is
-    a refusal with a concrete failure behind it:
+    What licenses the split is the conjunction plus the parse, not position. The run
+    must contain exactly one standalone word `to`; each side is read *independently*
+    through the unchanged `_parse_date`; the left half is the period start and the right
+    half the period end. Each requirement is a refusal with a concrete failure behind it:
 
     * more than one `to`, or a `to` at either edge, is prose ("due to processing"), and
       prose abstains;
-    * a half that does not parse kills the whole reading -- there is no "one good half".
-      The CA DLSE stubs print `1/7/XX to 1/13/XX` with the year masked, and emitting an
-      ISO date for either half would mean inventing the year. Both halves fail
-      `_parse_date` there, so the split never happens. il_dol itself falls to the same
-      refusal today: its right half, `8/27/05`, prints a two-digit year, and the note
-      above `_DATE_FORMATS` records why those stay unread -- so on the document that
-      motivated this rule the split correctly abstains rather than invent a century;
+    * a half that fails `_parse_date` is **never emitted** -- the masked and two-digit
+      years stay exactly as unread as the note above `_DATE_FORMATS` promises. But it no
+      longer kills the *other* half, provided the failing half still has the printed
+      shape of a date (`_UNREADABLE_YEAR_DATE_RE`): il_dol's left half `8/21/2005` prints
+      all eight of its digits, and refusing to read them because the right half redacts
+      its century would be abstaining from something the page states in full. The CA DLSE
+      stubs (`1/7/XX to 1/13/XX`) still yield nothing -- neither half parses -- and a
+      half that is not even date-shaped ("present", "processing") still kills the whole
+      reading, because then nothing printed says the run is a span of two dates at all;
     * the run itself is located by `_side_by_side_run`, so every refusal that rule makes
       (two runs in the cell, a caption in the way, a word space instead of a column gap)
       is inherited unchanged.
 
-    Both fields come back `certainty="low"`: the halves are dates only under the same
+    Emitted fields come back `certainty="low"`: the halves are dates only under the same
     US-convention caveat the slash formats already carry, and the pairing rests on one
     printed word. Each field's box is drawn around its own half's glyphs, so the overlay
     points at exactly the words that produced each value.
@@ -1857,20 +1960,39 @@ def _period_span_fields(
     left, right = list(run[: separators[0]]), list(run[separators[0] + 1 :])
     if not left or not right:
         return None
-    try:
-        start_value, _ = _parse_date(_join_run(left))
-        end_value, _ = _parse_date(_join_run(right))
-    except ParseError:
+
+    def _read(words: list[Word]) -> str | None:
+        try:
+            value, _ = _parse_date(_join_run(words))
+        except ParseError:
+            return None
+        return value
+
+    start_value, end_value = _read(left), _read(right)
+    if start_value is None and end_value is None:
         return None
+    if (start_value is None and not _UNREADABLE_YEAR_DATE_RE.match(_join_run(left))) or (
+        end_value is None and not _UNREADABLE_YEAR_DATE_RE.match(_join_run(right))
+    ):
+        return None  # the unreadable side is not even a printed date; this is not a span
 
     note = (
         "the run beside the label is two dates joined by the page's own printed word "
         "'to'; this half is the {} of that printed span"
     )
+    one_sided = (
+        "; the other half prints its year as two digits or masked, which this module "
+        "refuses to read (see the note above _DATE_FORMATS), so that half stays abstained"
+    )
     if not is_exact:
         note += " | label resolved by a non-exact mapper"
 
-    def _half(words: list[Word], field_name: str, value: str, side: str) -> dict[str, Any]:
+    def _half(
+        words: list[Word], field_name: str, value: str | None, side: str
+    ) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        suffix = one_sided if (start_value is None or end_value is None) else ""
         return _extracted_field(
             field_name,
             value,
@@ -1878,7 +2000,7 @@ def _period_span_fields(
             _run_box(words, convention),
             "low",
             _join_run(words),
-            note.format(side),
+            note.format(side) + suffix,
         )
 
     return (
@@ -2128,6 +2250,28 @@ def extract_document(
             # Every page's answers before any page's proposal -- see `verify_page`.
             for proposals in all_proposals:
                 for name, value in proposals.items():
+                    if _blank(name):
+                        found[name] = value
+
+        # Amounts the text layer shreds into digit groups, read back only when the
+        # page's own arithmetic closes over them at an anchored scale -- see
+        # `core/shredded.py` for the identities and the refusals. Same flag, same
+        # blank-only gate: a proposal (which is an abstention) may be replaced, a value
+        # never. With the flag off this module too is never imported.
+        # ("gross_pay", "net_pay") is `core.shredded.EMITTABLE`, restated so the module
+        # stays unimported until a blank actually asks for it.
+        shredded_wanted = [
+            name
+            for name in EXPECTED_FIELDS.get(doc_type, ())
+            if name in ("gross_pay", "net_pay") and _blank(name)
+        ]
+        if shredded_wanted:
+            from core import shredded
+
+            for words in words_by_page:
+                for name, value in shredded.recover(
+                    words, convention, shredded_wanted
+                ).items():
                     if _blank(name):
                         found[name] = value
 

@@ -41,6 +41,7 @@ from core.extract import (  # noqa: E402
     looks_like_a_label,
     normalize_label,
     parse_value,
+    read_words,
     synonym_mapper,
 )
 
@@ -420,11 +421,30 @@ class TestAPrintedConjunctionNamesTwoFields:
         assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
         assert "pay_period_end" not in got
 
-    def test_the_il_dol_two_digit_year_refuses_the_split(self) -> None:
-        """The document that motivated the rule is also one it must abstain on today: the
-        right half `8/27/05` prints no century, so neither endpoint is emitted -- see the
-        note above `_DATE_FORMATS` for the measurement behind that."""
+    def test_the_il_dol_fully_printed_half_is_read_and_the_two_digit_half_is_not(self) -> None:
+        """il_dol's span, reduced: `8/21/2005 to 8/27/05`. The left half prints all eight
+        of its digits and is read; the right half prints no century, and no century is
+        invented for it -- it stays an abstention, exactly as the note above
+        `_DATE_FORMATS` promises. The right half being date-*shaped* is what licenses
+        reading the left at all: it is the proof the run is a span of two dates."""
         got = read(self._span_line("8/21/2005 to 8/27/05"))
+        assert got["pay_period_start"]["value"] == "2005-08-21"
+        assert got["pay_period_start"]["certainty"] == "low"
+        assert "stays abstained" in (got["pay_period_start"]["notes"] or "")
+        assert "pay_period_end" not in got
+
+    def test_a_masked_far_half_licenses_the_printed_near_half(self) -> None:
+        """Same one-sided reading with the mask instead of a two-digit year: the masked
+        half is date-shaped (the page printed a date and redacted its year), so the fully
+        printed half is read and the masked half stays exactly as unread as before."""
+        got = read(self._span_line("1/5/2020 to 1/13/XX"))
+        assert got["pay_period_start"]["value"] == "2020-01-05"
+        assert "pay_period_end" not in got
+
+    def test_a_prose_left_half_kills_the_reading_even_with_a_good_right_half(self) -> None:
+        """`prior to 8/27/2005` must not become a period end: the left side is not even
+        date-shaped, so nothing printed says the run is a span of two dates."""
+        got = read(self._span_line("prior to 8/27/2005"))
         assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
         assert "pay_period_end" not in got
 
@@ -678,6 +698,125 @@ class TestPayDateCompounds:
         got = {f["field"]: f for f in view["fields"]}
         assert got["pay_date"]["value"] == "2018-09-30"
         assert got["pay_date"]["certainty"] == "low"
+
+
+# ======================================================================================
+# The watermark filter may not delete the whole page (it-001, REALDOOR_WATERMARK_SANITY)
+# ======================================================================================
+# `ca_dlse_paystub_hourly.pdf` is a 1756x1176 pt page whose every char reports
+# 27.3-48.6 pt, so the unconditional size filter classified 100% of the text layer as
+# watermark and `read_words` returned 0 of 96 words. A watermark is an overlay ON a
+# body; a classification that removes everything it was meant to be distinguished from
+# refutes itself, and such a page is read unfiltered instead. The fixtures below carry
+# the geometry, so the regression survives the confirmation PDFs being unavailable.
+
+
+class FakePage:
+    """The smallest object `read_words` can read.
+
+    Chars are pdfplumber-shaped dicts; one char stands for one word, which is all the
+    filter logic under test can distinguish. `filter` narrows the char set the way
+    pdfplumber's `FilteredPage` does, and `extract_words` hands each surviving char
+    back in the shape `read_words` consumes.
+    """
+
+    def __init__(self, chars: list[dict], height: float = 792.0) -> None:
+        self.chars = chars
+        self.height = height
+
+    def filter(self, keep) -> "FakePage":
+        return FakePage([c for c in self.chars if keep(c)], self.height)
+
+    def extract_words(self, extra_attrs=None, use_text_flow=False, return_chars=False):
+        return [
+            {
+                "text": c["text"],
+                "x0": c["x0"],
+                "x1": c["x1"],
+                "top": c["top"],
+                "bottom": c["bottom"],
+                "size": c["size"],
+                "fontname": c["fontname"],
+                "chars": [c],
+            }
+            for c in self.chars
+        ]
+
+
+def glyph(text: str, x0: float, size: float, top: float = 100.0) -> dict:
+    return {
+        "text": text,
+        "x0": x0,
+        "x1": x0 + 0.6 * size * len(text),
+        "top": top,
+        "bottom": top + size,
+        "size": size,
+        "fontname": "Arial",
+        "matrix": [size, 0.0, 0.0, size, x0, 692.0 - top],
+    }
+
+
+class _flag:
+    """Set REALDOOR_WATERMARK_SANITY for one test, restoring whatever was there.
+
+    Not a pytest fixture because `_run_standalone` calls test methods with no
+    arguments, and this file promises to keep working that way.
+    """
+
+    def __init__(self, value: str | None) -> None:
+        self.value = value
+
+    def __enter__(self) -> None:
+        import os
+
+        self.saved = os.environ.get("REALDOOR_WATERMARK_SANITY")
+        if self.value is None:
+            os.environ.pop("REALDOOR_WATERMARK_SANITY", None)
+        else:
+            os.environ["REALDOOR_WATERMARK_SANITY"] = self.value
+
+    def __exit__(self, *exc) -> None:
+        import os
+
+        if self.saved is None:
+            os.environ.pop("REALDOOR_WATERMARK_SANITY", None)
+        else:
+            os.environ["REALDOOR_WATERMARK_SANITY"] = self.saved
+
+
+class TestTheWatermarkFilterMayNotDeleteTheWholePage:
+    def _all_large_page(self) -> FakePage:
+        """Every char at 29 pt -- the ca_dlse geometry, reduced."""
+        return FakePage(
+            [glyph("Johnson,", 100.0, 29.0), glyph("Bob", 260.0, 29.0)], height=1176.0
+        )
+
+    def test_a_page_the_filter_would_empty_is_read_unfiltered(self) -> None:
+        with _flag(None):
+            words = read_words(self._all_large_page(), 1)
+        assert [w.text for w in words] == ["Johnson,", "Bob"]
+
+    def test_the_flag_off_restores_the_blind_read_exactly(self) -> None:
+        with _flag("0"):
+            words = read_words(self._all_large_page(), 1)
+        assert words == []
+
+    def test_a_real_watermark_over_a_body_is_still_filtered(self) -> None:
+        """The pack's contrast -- 8 pt body under a 34 pt banner -- is untouched."""
+        page = FakePage(
+            [
+                glyph("NET", 100.0, 8.0),
+                glyph("560.71", 160.0, 8.0),
+                glyph("SYNTHETIC", 80.0, 34.0, top=300.0),
+            ]
+        )
+        with _flag(None):
+            words = read_words(page, 1)
+        assert [w.text for w in words] == ["NET", "560.71"]
+
+    def test_a_scan_with_no_text_layer_still_reads_empty(self) -> None:
+        with _flag(None):
+            assert read_words(FakePage([]), 1) == []
 
 
 def _run_standalone() -> int:

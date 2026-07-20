@@ -491,3 +491,319 @@ def test_the_recovered_fields_are_abstentions_with_the_flag_off(flag_off) -> Non
     assert utep["regular_hours"]["certainty"] == "abstain"
     assert les["regular_hours"]["certainty"] == "abstain"
     assert les["gross_pay"]["certainty"] == "abstain"
+
+
+# ────────────────────────────────────── the EARNINGS table's own END DATE column
+
+
+def _w(text, x0, x1, baseline, size=7.3, bold=False, page=1):
+    return ex.Word(
+        text=text, x0=x0, x1=x1, baseline=baseline,
+        glyph_bottom=baseline - 0.2 * size, glyph_top=baseline + 0.8 * size,
+        size=size, bold=bold, page=page,
+    )
+
+
+def _bonita_like(*, titled=True, extra=()):
+    """The bonita layout, reduced: a titled EARNINGS block over a headed table row."""
+    words = [
+        _w("BASIS", 14.0, 31.0, 640.0),
+        _w("DESCRIPTION", 60.0, 100.0, 640.0),
+        _w("END", 118.4, 131.0, 640.0),
+        _w("DATE", 133.0, 148.8, 640.0),
+        _w("RATE", 162.0, 177.3, 640.0),
+        _w("AMOUNT", 227.5, 255.9, 640.0),
+        _w("9/30/2018", 118.7, 150.3, 631.0),
+    ]
+    if titled:
+        words += [
+            _w("EARNINGS", 2.2, 40.0, 649.0),
+            _w("-", 43.0, 45.0, 649.0),
+            _w("COMPENSATION", 47.0, 88.5, 649.0),
+        ]
+    return list(words) + list(extra)
+
+
+class TestEarningsEndDateColumn:
+    """`pay_period_end` from an END DATE header cell inside a page-titled EARNINGS table.
+    "END DATE" alone is the kind of compound the synonym table refuses (the end date of
+    *what*?), so the section word is a hard requirement, not decoration."""
+
+    CONVENTION = ex.LineBoxConvention()
+
+    def _run(self, words):
+        return col.earnings_end_date_value(ex.group_lines(words), self.CONVENTION)
+
+    def test_the_bonita_shape_is_read(self) -> None:
+        got = self._run(_bonita_like())
+        assert got is not None
+        assert got["value"] == "2018-09-30"
+        assert got["certainty"] == "low"
+        assert "END DATE" in got["notes"] and "EARNINGS" in got["notes"]
+
+    def test_without_the_earnings_title_nothing_is_read(self) -> None:
+        """The same table under any other section title could be an employment history,
+        and its END DATE would be the end of the job, not of the pay period."""
+        assert self._run(_bonita_like(titled=False)) is None
+
+    def test_disagreeing_dates_under_the_cell_refuse(self) -> None:
+        extra = [_w("9/15/2018", 118.7, 150.3, 620.0)]
+        assert self._run(_bonita_like(extra=extra)) is None
+
+    def test_agreeing_dates_under_the_cell_are_one_answer(self) -> None:
+        extra = [_w("9/30/2018", 118.7, 150.3, 620.0)]
+        got = self._run(_bonita_like(extra=extra))
+        assert got is not None and got["value"] == "2018-09-30"
+
+    def test_a_non_date_in_the_column_refuses(self) -> None:
+        extra = [_w("PENDING", 118.7, 150.3, 620.0)]
+        assert self._run(_bonita_like(extra=extra)) is None
+
+    def test_a_far_away_date_is_outside_the_headers_reach(self) -> None:
+        """bonita's own hazard: `AS OF DATE 8/31/2018` sits 259pt below the header in the
+        same x-band. `HEADER_SEARCH_BAND` is what keeps the column from claiming it."""
+        extra = [_w("8/31/2018", 118.7, 150.3, 640.0 - col.HEADER_SEARCH_BAND - 10.0)]
+        got = self._run(_bonita_like(extra=extra))
+        assert got is not None and got["value"] == "2018-09-30"
+
+    def test_a_lone_form_caption_is_not_a_header_row(self) -> None:
+        """`End Date:` beside a fill-in blank must never fire this rule: one caption is
+        not a row that names columns."""
+        words = [
+            _w("EARNINGS", 100.0, 140.0, 649.0),
+            _w("End", 100.0, 113.0, 640.0),
+            _w("Date:", 115.0, 133.0, 640.0),
+            _w("6/30/2018", 160.0, 195.0, 631.0),
+        ]
+        assert self._run(words) is None
+
+    def test_bonita_end_to_end(self, flag_on) -> None:
+        got = _fields(CONFIRM / "bonita_certificated_check_sample.pdf", "pay_stub")
+        assert got["pay_period_end"]["value"] == "2018-09-30"
+        assert got["pay_period_end"]["certainty"] == "low"
+
+    def test_bonita_abstains_with_the_flag_off(self, flag_off) -> None:
+        got = _fields(CONFIRM / "bonita_certificated_check_sample.pdf", "pay_stub")
+        assert got["pay_period_end"]["certainty"] == "abstain"
+
+
+# ─────────────────────────────────────── a titled hours block with a REGULAR row
+
+
+def _hours_block(*, title=True, value="40.00", second_run=None, gap_x0=490.0, extra=()):
+    """The CA DLSE piece-rate layout, reduced: `Total Hours in Pay Period` over
+    `Regular: <value>`."""
+    words = []
+    if title:
+        words += [
+            _w("Total", 401.4, 419.0, 595.4, size=7.7, bold=True),
+            _w("Hours", 421.0, 441.0, 595.4, size=7.7, bold=True),
+            _w("in", 443.0, 449.0, 595.4, size=7.7, bold=True),
+            _w("Pay", 451.0, 464.0, 595.4, size=7.7, bold=True),
+            _w("Period", 466.0, 481.6, 595.4, size=7.7, bold=True),
+        ]
+    words += [
+        _w("Regular:", 430.6, 456.5, 586.0, size=7.7, bold=True),
+        _w(value, gap_x0, gap_x0 + 17.0, 586.0, size=7.7),
+    ]
+    if second_run is not None:
+        words.append(_w(second_run, gap_x0 + 40.0, gap_x0 + 57.0, 586.0, size=7.7))
+    return words + list(extra)
+
+
+class TestHoursBlock:
+    """`regular_hours` from a REGULAR row under a printed hours-block title. Bare REGULAR
+    stays out of every vocabulary; the page's own title is what names the quantity."""
+
+    CONVENTION = ex.LineBoxConvention()
+
+    def _run(self, words):
+        return col.hours_block_value(ex.group_lines(words), self.CONVENTION)
+
+    def test_the_piecerate_shape_is_read(self) -> None:
+        got = self._run(_hours_block())
+        assert got is not None
+        assert got["value"] == 40
+        assert got["certainty"] == "low"
+        assert "Total Hours in Pay Period" in got["notes"]
+
+    def test_without_the_title_nothing_is_read(self) -> None:
+        assert self._run(_hours_block(title=False)) is None
+
+    def test_more_hours_than_a_month_holds_refuses(self) -> None:
+        """The bonita hazard in this rule's terms: a REGULAR row whose number is a monthly
+        amount, not hours. 744 = 31 days x 24 hours is a physical ceiling, not a knob."""
+        assert self._run(_hours_block(value="6333.00")) is None
+
+    def test_two_runs_beside_the_row_refuse(self) -> None:
+        assert self._run(_hours_block(second_run="15.00")) is None
+
+    def test_a_word_space_is_prose_not_a_column(self) -> None:
+        assert self._run(_hours_block(gap_x0=460.0)) is None
+
+    def test_two_regular_rows_refuse(self) -> None:
+        extra = [
+            _w("Regular:", 430.6, 456.5, 576.0, size=7.7, bold=True),
+            _w("38.00", 490.0, 507.0, 576.0, size=7.7),
+        ]
+        assert self._run(_hours_block(extra=extra)) is None
+
+    def test_piecerate_end_to_end(self, flag_on) -> None:
+        got = _fields(CONFIRM / "ca_dlse_paystub_piecerate.pdf", "pay_stub")
+        assert got["regular_hours"]["value"] == 40
+        assert got["regular_hours"]["certainty"] == "low"
+
+    def test_piecerate_abstains_with_the_flag_off(self, flag_off) -> None:
+        got = _fields(CONFIRM / "ca_dlse_paystub_piecerate.pdf", "pay_stub")
+        assert got["regular_hours"]["certainty"] == "abstain"
+
+
+# ─────────────────────── a label that is itself a header-row cell, and what it refuses
+
+
+def test_header_cell_default_is_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("REALDOOR_HEADER_CELL", raising=False)
+    assert ex._header_cell_enabled() is True
+
+
+@pytest.mark.parametrize("value", ["0", "0 ", " 0", "1", "", "true", "yes", "2", "1 "])
+def test_header_cell_only_literal_zero_switches_off(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("REALDOOR_HEADER_CELL", value)
+    assert ex._header_cell_enabled() is (value.strip() != "0")
+
+
+def _transposed(extra_value=None, value_text="Johnson, Bob", value_x=(227.4, 414.4),
+                data_y=741.0, second_row=None):
+    """The CA DLSE hourly shape: a 29pt non-bold header row, the data row 39pt below.
+
+    Coordinates are the measured ones from the real page (loop/proposals/it-002.md
+    section 2), so the geometry these tests pin is the geometry that was falsified.
+    """
+    header = [
+        _w("EMPLOYEE", 228.0, 397.4, 780.0, size=29.0),
+        _w("SOCIAL SECURITY NO.", 569.0, 910.0, 780.0, size=29.0),
+        _w("PAY RATE", 988.5, 1140.2, 780.0, size=29.0),
+        _w("PAY PERIOD", 1239.0, 1426.0, 780.0, size=29.0),
+    ]
+    data = [
+        _w(value_text, value_x[0], value_x[1], data_y, size=29.0),
+        _w("XXX-XX-6789", 570.0, 759.0, data_y, size=29.0),
+        _w("18.00", 989.0, 1064.6, data_y, size=29.0),
+        _w("regular", 1087.0, 1182.0, data_y, size=29.0),
+        _w("1/7/XXto 1/13/XX", 1239.0, 1480.0, data_y, size=29.0),
+    ]
+    if extra_value is not None:
+        data.append(extra_value)
+    words = header + data
+    if second_row is not None:
+        words += second_row
+    lines = ex.group_lines(words)
+    header_words = ex._header_row_words(lines)
+    label_words = frozenset(
+        id(w) for w in header if w.text in ("EMPLOYEE", "PAY RATE", "PAY PERIOD")
+    )
+    runs = {w.text: [w] for w in header}
+    return lines, runs, label_words, header_words
+
+
+class TestHeaderCellValue:
+    CONVENTION = ex.LineBoxConvention()
+
+    def _read(self, field, label_text, lines, runs, label_words, header_words):
+        return col.header_cell_value(
+            lines, runs[label_text], field, self.CONVENTION, True,
+            label_words, header_words,
+        )
+
+    def test_the_name_beneath_the_employee_cell_is_read(self) -> None:
+        lines, runs, label_words, header_words = _transposed()
+        got = self._read("person_name", "EMPLOYEE", lines, runs, label_words, header_words)
+        assert got is not None
+        assert got["value"] == "Johnson, Bob"
+        assert got["certainty"] == "low"
+
+    def test_the_rate_beneath_the_pay_rate_cell_is_read(self) -> None:
+        """`regular` [1087-1182] also shares x-extent with the PAY RATE cell, but a run
+        that does not parse as money is not a reading this rule could emit, so it is not
+        a candidate and does not trigger the ambiguity refusal (the `_is_numeric_run`
+        precedent in `table_cell_value`)."""
+        lines, runs, label_words, header_words = _transposed()
+        got = self._read("hourly_rate", "PAY RATE", lines, runs, label_words, header_words)
+        assert got is not None
+        assert got["value"] == 18.0
+        assert got["certainty"] == "low"
+
+    def test_a_masked_date_is_nobodys_candidate(self) -> None:
+        """`1/7/XXto 1/13/XX` parses as no date, so PAY PERIOD reads nothing -- a flip
+        here would mean the rule invented a century."""
+        lines, runs, label_words, header_words = _transposed()
+        assert self._read(
+            "pay_period_start", "PAY PERIOD", lines, runs, label_words, header_words
+        ) is None
+
+    def test_two_text_runs_under_one_cell_refuse(self) -> None:
+        """Free-text gets no type filter: a second string under EMPLOYEE is a rival the
+        shape test must never eliminate, so the rule abstains on count."""
+        rival = _w("Smith, Ann", 230.0, 390.0, 730.0, size=29.0)
+        lines, runs, label_words, header_words = _transposed(extra_value=rival)
+        assert self._read(
+            "person_name", "EMPLOYEE", lines, runs, label_words, header_words
+        ) is None
+
+    def test_a_caption_beneath_the_cell_is_refused(self) -> None:
+        """The orangeusd hazard: the run beneath the cell is itself a cell of another
+        header row, and `_caption_refusal` -- built after this document family shipped
+        wrong names -- refuses it."""
+        second = [
+            _w("Employee ID", 228.0, 390.0, 730.0, size=29.0),
+            _w("Pay Site", 569.0, 700.0, 730.0, size=29.0),
+            _w("Marital Status", 988.5, 1130.0, 730.0, size=29.0),
+        ]
+        lines, runs, label_words, header_words = _transposed(
+            value_text="MOVED AWAY", value_x=(1600.0, 1750.0), second_row=second
+        )
+        assert self._read(
+            "person_name", "EMPLOYEE", lines, runs, label_words, header_words
+        ) is None
+
+    def test_a_two_cell_line_is_not_a_header_row(self) -> None:
+        """An ordinary caption-value form line never engages this rule: with fewer than
+        `MIN_HEADER_ROW_CELLS` cells the label is not in `header_words` at all."""
+        label = _w("EMPLOYEE", 228.0, 397.4, 780.0, size=29.0)
+        value = _w("Johnson, Bob", 227.4, 414.4, 741.0, size=29.0)
+        lines = ex.group_lines([label, value])
+        header_words = ex._header_row_words(lines)
+        assert col.header_cell_value(
+            lines, [label], "person_name", self.CONVENTION, True,
+            frozenset({id(label)}), header_words,
+        ) is None
+
+    def test_a_run_attributed_to_no_cell_is_not_a_candidate(self) -> None:
+        """The osu hazard: a decimal-aligned number overhanging the cell span shares
+        x-extent with zero cells, so the page has not put it in any column."""
+        stray = _w("1,885.62", 429.4, 461.4, 741.0, size=29.0)
+        lines, runs, label_words, header_words = _transposed(
+            value_text="MOVED AWAY", value_x=(1600.0, 1750.0), extra_value=stray
+        )
+        assert self._read(
+            "person_name", "EMPLOYEE", lines, runs, label_words, header_words
+        ) is None
+
+    def test_dlse_hourly_end_to_end(self, flag_on) -> None:
+        got = _fields(CONFIRM / "ca_dlse_paystub_hourly.pdf", "pay_stub")
+        assert got["person_name"]["value"] == "Johnson, Bob"
+        assert got["person_name"]["certainty"] == "low"
+        assert got["hourly_rate"]["value"] == 18.0
+        assert got["hourly_rate"]["certainty"] == "low"
+        assert got["pay_period_start"]["certainty"] == "abstain"
+        assert got["pay_period_end"]["certainty"] == "abstain"
+
+    def test_dlse_hourly_abstains_with_the_flag_off(
+        self, flag_on, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("REALDOOR_HEADER_CELL", "0")
+        got = _fields(CONFIRM / "ca_dlse_paystub_hourly.pdf", "pay_stub")
+        assert got["person_name"]["certainty"] == "abstain"
+        assert got["hourly_rate"]["certainty"] == "abstain"
