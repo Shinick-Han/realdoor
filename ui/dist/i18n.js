@@ -243,6 +243,44 @@
     "Abstained — a person must supply this": "말하지 않았습니다 — 사람이 입력해야 합니다",
     "Not read — a person must supply this": "읽지 못함 — 사람이 입력해야 합니다",
 
+    // ── app.js: 기대 필드의 부재(문서 관점 안내 + 부재 확인) ─────────────────
+    // 준비도 관행은 빠진 필수 증거를 NEEDS_REVIEW 로 보낸다. 이 문장들은 기계의 자백
+    // ("no label ... was found") 대신 문서 관점으로 말한다. 판정 어휘 금지 규율 그대로:
+    // "없다"는 서류에 대한 사실이지 사람에 대한 판정이 아니다.
+    "This document does not show this": "이 문서에는 이 값이 없습니다",
+    "Checked by you": "직접 확인함",
+    "Not read — type what this should say, then choose Confirm.":
+      "읽지 못함 — 들어가야 할 값을 입력하고 확인을 누르세요.",
+    "the reader recorded no note": "판독기가 남긴 기록이 없습니다",
+    // 발급처 표현 (absenceNotice 의 issuerWords)
+    "your employer": "고용주",
+    "the benefits office": "급여를 지급한 기관",
+    "the app you work for": "일하시는 앱 회사",
+    "whoever gave you the form": "이 양식을 주신 곳",
+    "whoever issued this document": "이 문서를 발행한 곳",
+    "your bank or the app you work for": "거래 은행이나 일하시는 앱 회사",
+    // 부재 안내가 이름을 부르는 항목들 (fieldWords: 밑줄을 공백으로). 이미 위쪽 사전에
+    // 있는 "gross pay"·"pay frequency" 는 여기 다시 적지 않는다 — 중복 키는 조용히
+    // 덮어쓰므로, 한 사전에 한 번만 있어야 한다.
+    "person name": "이름",
+    "pay date": "지급일",
+    "pay period start": "급여 기간 시작일",
+    "pay period end": "급여 기간 종료일",
+    "regular hours": "정규 근무시간",
+    "hourly rate": "시급",
+    "net pay": "실수령액",
+    "household size": "세대원 수",
+    "application date": "신청일",
+    "address": "주소",
+    "document date": "문서 날짜",
+    "weekly hours": "주당 근무시간",
+    "monthly benefit": "월 수급액",
+    "benefit frequency": "수급 주기",
+    "statement month": "명세 대상 월",
+    "gross receipts": "총 수입",
+    "platform fees": "플랫폼 수수료",
+    "benefit letter": "수급 결정 통지서",
+
     // ── app.js: 검토 필요 사유의 사람용 제목 ────────────────────────────────
     "Your correction was recorded, but it was not used in the calculation":
       "정정을 기록했지만, 계산에는 쓰지 않았습니다",
@@ -1532,6 +1570,43 @@
     // U6: 영어 제목이 이 한국어를 따라 "Things we did not say" 로 바뀌었다. 한국어는 그대로.
     [/^Things we did not say \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
     // U10: "이 문서에 N개 값이 남았습니다" 카드 본문. N 과 항목 이름은 그대로 둔다.
+    // ── 기대 필드의 부재: 문서 관점 안내와 부재 확인 (app.js absenceNotice) ────
+    // 문서 종류와 항목 이름은 사전에서 찾아 옮기고, 없으면 영어 그대로 둔다 —
+    // 반쪽짜리 명사보다는 온전한 문장 안의 영어 명사가 낫다.
+    [/^An? (.+?) usually shows (.+?)\. We did not find one on this document\. The document may be incomplete, or printed in a way we cannot read\.$/,
+      function (m) {
+        return "보통 " + (lookup(m[1]) || m[1]) + "에는 " + (lookup(m[2]) || m[2]) + " 항목이 " +
+               "있습니다. 이 문서에서는 찾지 못했습니다. 문서가 불완전하거나, 저희가 읽을 수 " +
+               "없는 방식으로 인쇄되었을 수 있습니다.";
+      }],
+    [/^If you can, ask (.+?) for a version that shows it — or confirm below that this document really does not show it\.$/,
+      function (m) {
+        return "가능하시면 " + (lookup(m[1]) || m[1]) + "에 이 값이 보이는 문서를 요청하세요 — " +
+               "또는 이 문서에 정말로 이 값이 없다는 것을 아래에서 확인해 주세요.";
+      }],
+    [/^You checked this(?: on (.+?))?: not shown on this document\.$/, function (m) {
+      return (m[1] ? koDate(m[1]) + "에 " : "") + "직접 확인하셨습니다: 이 문서에는 이 값이 없습니다.";
+    }],
+    [/^Confirm that (\S+) is not shown on (\S+)$/, function (m) {
+      return m[2] + " 의 " + m[1] + " 이(가) 이 문서에 없음을 확인";
+    }],
+    [/^Withdraw the absence check for (\S+) on (\S+)$/, function (m) {
+      return m[2] + " 의 " + m[1] + " 에 대한 부재 확인을 철회";
+    }],
+    [/^(\S+) on (\S+) is checked: not shown on this document\. Nothing else changed, and you can undo this\.$/,
+      function (m) {
+        return m[2] + " 의 " + m[1] + " — 이 문서에 없음으로 확인했습니다. 다른 것은 아무것도 " +
+               "바뀌지 않았고, 되돌릴 수 있습니다.";
+      }],
+    [/^(\S+) on (\S+) is no longer marked as checked\. It is back to being only a value the machine could not read\.$/,
+      function (m) {
+        return m[2] + " 의 " + m[1] + " 은(는) 더 이상 확인된 것으로 표시되지 않습니다. 기계가 " +
+               "읽지 못한 값이라는 상태로만 돌아갔습니다.";
+      }],
+    [/^That check could not be recorded: (.+)$/, function (m) {
+      return "확인을 기록하지 못했습니다: " + (lookup(m[1]) || m[1]);
+    }],
+
     [/^You have (\d+) value\(s\) left on this document that only the machine has read: (.+)\. Confirming them together records that you compared each one against the page shown above and found it right\. It changes none of the values\. Anything you are unsure about, leave — you can confirm the others one at a time\.$/,
       function (m) {
         return "이 문서에는 기계만 읽은 값이 " + m[1] + "개 남아 있습니다: " + m[2] + ". 이것들을 함께 " +
@@ -1542,13 +1617,16 @@
     [/^(\d+) of (\d+) read values checked by you\.\s*$/, function (m) {
       return "읽어낸 값 " + m[2] + "개 중 " + m[1] + "개를 당신이 확인했습니다. ";
     }],
-    [/^Checking is optional and nothing here is wrong\. Whatever you leave unchecked still travels with your file, marked as read by the machine but not yet confirmed by you, and a person can review it either way\.( (\d+) value\(s\) could not be read at all — those need a person to supply them\.)?$/,
+    [/^Checking is optional and nothing here is wrong\. Whatever you leave unchecked still travels with your file, marked as read by the machine but not yet confirmed by you, and a person can review it either way\.( (\d+) value\(s\) could not be read at all — those need a person to supply them\.)?( For (\d+) of them, you checked the page and confirmed the document does not show the value\.)?$/,
       function (m) {
         var base = "확인은 선택 사항이고, 여기에 잘못된 것은 없습니다. 확인하지 않고 두신 것도 " +
                    "기계가 읽었지만 아직 당신이 확인하지는 않은 것으로 표시되어 파일과 함께 그대로 " +
                    "전달되며, 사람이 어느 쪽이든 검토할 수 있습니다.";
         if (m[2]) {
           base += " " + m[2] + "개 값은 전혀 읽을 수 없었습니다 — 그것들은 사람이 채워 넣어야 합니다.";
+        }
+        if (m[4]) {
+          base += " 그중 " + m[4] + "개는 페이지를 보고 이 문서에 그 값이 없다는 것을 직접 확인하셨습니다.";
         }
         return base;
       }],

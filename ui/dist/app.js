@@ -214,6 +214,47 @@
     abstain: "Abstained — a person must supply this"
   };
 
+  // ── an expected value that is not on the page ───────────────────────────────────
+  /* The pack's boundary statement names "document readiness and human-review handoff"
+   * as this product's output, and the participant guide's readiness convention sends
+   * missing required evidence to NEEDS_REVIEW. Until this block existed, an absent
+   * expected field surfaced only as the machine's confession — "no label for this
+   * field was found on the page" — which is the system's perspective on its own
+   * failure. The renter needs the document's perspective (a pay stub usually shows
+   * gross pay; this one does not), and the reviewer needs to know whether a human
+   * checked the absence: without that, "the extractor failed" and "the applicant
+   * looked: it is genuinely not on this page" are indistinguishable in the packet.
+   *
+   * Confirming an absence changes no enum. CONTRACTS §1 freezes `evidence_kind`
+   * (extracted / confirmed_by_renter / corrected_by_renter) and `certainty`
+   * (high / low / abstain); the field stays certainty="abstain", value=null, because a
+   * person checking the absence does not make the machine's reading any more certain.
+   * What is recorded is an activity-log event (field name and document only, never any
+   * typed content) plus two presentation annotations the server mirrors. The machine's
+   * own note is moved under Technical details below — moved, not deleted; its source
+   * string lives in core/ and ocr/ and is never re-phrased there. */
+  var ISSUER_WORDS = {
+    application_summary: "whoever gave you the form",
+    pay_stub: "your employer",
+    employment_letter: "your employer",
+    benefit_letter: "the benefits office",
+    gig_statement: "the app you work for",
+    gig_income_corroboration: "your bank or the app you work for"
+  };
+  function issuerWords(docType) {
+    return ISSUER_WORDS[docType] || "whoever issued this document";
+  }
+  /* Plain words the way the rest of the UI already makes them: underscores out,
+   * nothing invented. Internal field ids never reach the sentence. */
+  function fieldWords(name) { return String(name).replace(/_/g, " "); }
+  var MONTH_WORDS = ["January", "February", "March", "April", "May", "June", "July",
+                     "August", "September", "October", "November", "December"];
+  function dateSentence(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    if (!m) return String(iso || "");
+    return Number(m[3]) + " " + MONTH_WORDS[Number(m[2]) - 1] + " " + m[1];
+  }
+
   function stateChip(stateName) {
     var info = STATE_WORDS[stateName] || { word: String(stateName), glyph: "•" };
     return h("span", { class: "chip chip--" + stateName }, [
@@ -781,6 +822,29 @@
       return remarkLocally(report, documentId, field, "extracted");
     }
 
+    /* Offline twins of /api/absence and /api/absence/undo. Safe to compute locally for
+     * the same reason confirming is: an absence check changes no value, no certainty, no
+     * enum and no arithmetic — it adds or removes two presentation annotations on one
+     * field. Everything that could move a number still comes from recorded output. */
+    function reAnnotateAbsence(report, documentId, field, checked) {
+      var copy = JSON.parse(JSON.stringify(report));
+      (copy.documents || []).forEach(function (doc) {
+        if (doc.document_id !== documentId) return;
+        (doc.fields || []).forEach(function (f) {
+          if (f.field !== field) return;
+          if (checked) {
+            f.absence_confirmed_by_renter = true;
+            f.absence_confirmed_on = new Date().toISOString().slice(0, 10);
+          } else {
+            delete f.absence_confirmed_by_renter;
+            delete f.absence_confirmed_on;
+          }
+        });
+      });
+      delete copy.confirmation;   // recounted for display; see confirmationTally()
+      return copy;
+    }
+
     var source = {
       live: live,
       apiBase: apiBase,
@@ -923,6 +987,47 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ document_id: documentId, field: field })
         }).then(function (report) { return { report: report, server: true }; });
+      },
+
+      /* Confirming that a value is genuinely not on the page — and taking that back.
+       *
+       * One field, no value: the payload carries the document and the field name and
+       * nothing else, because the absence IS the content. The server answers with the
+       * thing the screen should re-render: the household report for a pack document, the
+       * updated upload view for an uploaded one (an upload joins no household, so it has
+       * no report to answer with). The page never asserts the check on its own live —
+       * one bug here and an absence nobody checked reads as checked. */
+      confirmAbsence: function (documentId, field, opts) {
+        opts = opts || {};
+        if (!live) {
+          if (!opts.report) {
+            return Promise.reject(new Error(
+              "Checking an absence offline needs the report this page is holding."));
+          }
+          return Promise.resolve({
+            body: reAnnotateAbsence(opts.report, documentId, field, true), server: false
+          });
+        }
+        return json("/api/absence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ document_id: documentId, field: field })
+        }).then(function (body) { return { body: body, server: true }; });
+      },
+
+      withdrawAbsence: function (documentId, field, opts) {
+        opts = opts || {};
+        if (!live) {
+          if (!opts.report) return Promise.resolve({ body: null, server: false });
+          return Promise.resolve({
+            body: reAnnotateAbsence(opts.report, documentId, field, false), server: false
+          });
+        }
+        return json("/api/absence/undo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ document_id: documentId, field: field })
+        }).then(function (body) { return { body: body, server: true }; });
       },
 
       recordedAskHousehold: RECORDED_ASK_HOUSEHOLD,
@@ -1699,7 +1804,13 @@
         activeField: state.uploadActiveField,
         setActive: function (name) { state.uploadActiveField = name; },
         rerender: renderUploadResult,
-        captionLead: "Values read from the document you uploaded."
+        captionLead: "Values read from the document you uploaded.",
+        // An absence round trip on an uploaded document answers with the updated upload
+        // view, not a household report — the upload joins no household.
+        applyAbsence: function (body) {
+          if (body) state.uploadResult = body;
+          renderUploadResult();
+        }
       }));
       renderPage(pageHost, view, {
         loadImage: function () { return Source.uploadPageImage(view.upload_id, 1); },
@@ -1972,6 +2083,105 @@
    */
   function fieldInputId(tableId, field) { return "confirm-value-" + tableId + "-" + field; }
   function fieldButtonId(tableId, field) { return "confirm-do-" + tableId + "-" + field; }
+  function absenceButtonId(tableId, field) { return "absence-do-" + tableId + "-" + field; }
+
+  /* Where the result of an absence round trip lands. The pack tables re-render the
+   * household report; the upload panel re-renders its own view (an upload joins no
+   * household, so the server answers with the updated upload view instead). */
+  function applyAbsenceResult(opts, body) {
+    if (opts && opts.applyAbsence) { opts.applyAbsence(body); return; }
+    if (body) state.report = body;
+    renderAll();
+  }
+
+  function submitAbsence(doc, field, tableId, opts) {
+    Source.confirmAbsence(doc.document_id, field.field, { report: state.report })
+      .then(function (result) {
+        applyAbsenceResult(opts, result.body);
+        announce(field.field + " on " + doc.document_id + " is checked: not shown on this " +
+                 "document. Nothing else changed, and you can undo this.");
+        var back = byId(absenceButtonId(tableId, field.field));
+        if (back) back.focus();
+      })
+      .catch(function (error) {
+        announce("That check could not be recorded: " + error.message);
+      });
+  }
+
+  /* Withdrawing an absence check mirrors withdrawing a confirmation: it is a claim a
+   * person made, so a person can take it back, and taking it back leaves the field
+   * exactly as it was before — nothing about it ever changed except the annotation. */
+  function withdrawAbsence(doc, field, tableId, opts) {
+    Source.withdrawAbsence(doc.document_id, field.field, { report: state.report })
+      .then(function (result) {
+        applyAbsenceResult(opts, result.body);
+        announce(field.field + " on " + doc.document_id + " is no longer marked as checked. " +
+                 "It is back to being only a value the machine could not read.");
+        var back = byId(absenceButtonId(tableId, field.field));
+        if (back) back.focus();
+      })
+      .catch(function (error) {
+        announce("That could not be undone: " + error.message);
+      });
+  }
+
+  /* The row for an expected field the machine could not read. Leads with the document's
+   * perspective, offers the way back (ask the issuer), then the human check, and keeps
+   * the machine's own sentence one disclosure away — the same Technical details pattern
+   * every other screen uses. `middle` slots extra nodes (the confirmable table's
+   * type-a-value box) between the lead and the next step, so both tables say the same
+   * words in the same order. See the block comment above ISSUER_WORDS for why. */
+  function absenceNotice(doc, field, tableId, opts, middle) {
+    var docName = typeWords(doc.document_type || "document");
+    var article = /^[aeiou]/i.test(docName) ? "An " : "A ";
+    var checked = Boolean(field.absence_confirmed_by_renter);
+    var parts = [
+      h("p", { class: "absence-lead" }, [
+        article + docName + " usually shows " + fieldWords(field.field) + ". We did not " +
+        "find one on this document. The document may be incomplete, or printed in a way " +
+        "we cannot read."
+      ])
+    ];
+    (middle || []).forEach(function (node) { parts.push(node); });
+    if (!checked) {
+      parts.push(h("p", { class: "hint" }, [
+        "If you can, ask " + issuerWords(doc.document_type) + " for a version that shows " +
+        "it — or confirm below that this document really does not show it."
+      ]));
+      parts.push(h("button", {
+        type: "button",
+        class: "action secondary",
+        id: absenceButtonId(tableId, field.field),
+        "aria-label": "Confirm that " + field.field + " is not shown on " + doc.document_id,
+        onclick: function () { submitAbsence(doc, field, tableId, opts); }
+      }, ["This document does not show this"]));
+    } else {
+      var when = field.absence_confirmed_on
+        ? " on " + dateSentence(field.absence_confirmed_on) : "";
+      parts.push(h("p", { class: "hint" }, [
+        h("span", { class: "chip chip--present" }, [
+          h("span", { "aria-hidden": "true", text: "✓ " }), "Checked by you"
+        ]),
+        " You checked this" + when + ": not shown on this document. ",
+        h("button", {
+          type: "button",
+          class: "field-row-btn",
+          id: absenceButtonId(tableId, field.field),
+          "aria-label": "Withdraw the absence check for " + field.field + " on " + doc.document_id,
+          onclick: function () { withdrawAbsence(doc, field, tableId, opts); }
+        }, ["Undo"])
+      ]));
+    }
+    parts.push(h("details", { class: "tech" }, [
+      h("summary", { text: "Technical details" }),
+      /* The machine's confession, word for word — moved behind the disclosure, never
+       * deleted and never re-phrased: the string is measurement-bearing at its source
+       * (core/, ocr/), and `.mono` also keeps it out of translation. */
+      h("p", { class: "mono", text: String(field.notes || "the reader recorded no note") +
+               " · certainty: " + String(field.certainty) })
+    ]));
+    return h("div", { class: "absence-note" }, parts);
+  }
 
   /** The pre-filled box holding what we read. Empty only when nothing was read. */
   function valueBox(doc, field, tableId) {
@@ -1993,7 +2203,10 @@
       }
     });
     if (wasRead) return input;
-    return h("div", null, [
+    /* An expected field with nothing read leads with the document-perspective sentence,
+     * keeps the type-a-value path in the middle, and ends with the absence check. The
+     * pack table always talks to the household report, so no applyAbsence override. */
+    return absenceNotice(doc, field, tableId, null, [
       input,
       h("p", { class: "hint", text: "Not read — type what this should say, then choose Confirm." })
     ]);
@@ -2155,16 +2368,25 @@
         confirmed: c.confirmed, corrected: c.corrected,
         not_confirmed: Math.max(0, (c.not_confirmed || 0) - probeCount),
         not_read: c.not_read,
+        // The server carries the key only when the count is nonzero (the packet JSON is
+        // byte-frozen against a capture with no absence events), so it is defaulted here.
+        confirmed_absent: c.confirmed_absent || 0,
         fields: Math.max(0, (c.fields || 0) - probeCount)
       };
     }
-    var t = { confirmed: 0, corrected: 0, not_confirmed: 0, not_read: 0, fields: 0 };
+    var t = { confirmed: 0, corrected: 0, not_confirmed: 0, not_read: 0,
+              confirmed_absent: 0, fields: 0 };
     ((report || {}).documents || []).forEach(function (doc) {
       renterFields(doc).forEach(function (f) {
         t.fields += 1;
         if (f.evidence_kind === "confirmed_by_renter") t.confirmed += 1;
         else if (f.evidence_kind === "corrected_by_renter") t.corrected += 1;
-        else if (f.value === null || f.value === undefined) t.not_read += 1;
+        else if (f.value === null || f.value === undefined) {
+          t.not_read += 1;
+          // A checked absence stays inside not_read — the machine still read nothing —
+          // and is counted again here so the summary line can say a person looked.
+          if (f.absence_confirmed_by_renter) t.confirmed_absent += 1;
+        }
         else t.not_confirmed += 1;
       });
     });
@@ -2278,6 +2500,10 @@
     if (t.not_read) {
       tail += " " + t.not_read + " value(s) could not be read at all — those need a person to " +
               "supply them.";
+      if (t.confirmed_absent) {
+        tail += " For " + t.confirmed_absent + " of them, you checked the page and confirmed " +
+                "the document does not show the value.";
+      }
     }
     // No id: this line appears on more than one screen, and two nodes with one id is a
     // defect in itself.
@@ -2362,7 +2588,15 @@
       if (confirmable) {
         valueCell = cell(null, "Value", [valueBox(doc, field, tableId), nameNote]);
       } else if (field.value === null || field.value === undefined) {
-        valueCell = cell({ class: "abstain-cell" }, "Value", ["Not read — a person must supply this"]);
+        /* The upload table's absent row. It used to say "Not read — a person must supply
+         * this", which is the system's perspective on its own failure; the document's
+         * perspective, the next step, the human check and the machine note now come from
+         * the shared notice. The non-abstain null case (which the pipeline never
+         * produces) keeps the old sentence rather than claiming an absence it has not
+         * measured. */
+        valueCell = (field.certainty === "abstain")
+          ? cell({ class: "abstain-cell" }, "Value", [absenceNotice(doc, field, tableId, opts)])
+          : cell({ class: "abstain-cell" }, "Value", ["Not read — a person must supply this"]);
       } else {
         valueCell = cell(null, "Value", [document.createTextNode(plain(field.value)), nameNote]);
       }

@@ -945,6 +945,15 @@ tr.is-active td { background: #fdf0ea; }
 
 .abstain-cell { color: var(--stop); font-weight: 700; }
 
+/* 부재 안내는 .abstain-cell 안에 살지만 통짜 빨강·볼드를 물려받으면 문단 전체가
+   경보처럼 읽힌다. 리드 문장만 힘을 주고, 나머지는 본문 색으로 돌린다. 폭은 표의
+   Value 칸이 좁아지지 않도록 최소만 확보한다 — 640px 아래에서는 행이 카드로
+   쌓이므로(--stack) 그대로 둔다. */
+.absence-note { color: var(--ink); font-weight: 400; min-width: 16rem; }
+.absence-note .absence-lead { font-weight: 700; margin: 0 0 .35rem; }
+.absence-note p { margin: 0 0 .4rem; }
+.absence-note details.tech { margin-top: .3rem; }
+
 .page-caption { font-size: .85rem; color: var(--ink-soft); text-align: center; }
 
 /* ── forms ────────────────────────────────────────────────────────── */
