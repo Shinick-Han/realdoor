@@ -13,6 +13,7 @@ store.py — 추출 캐시 · 세대 조립 · 세션 관리.
 """
 from __future__ import annotations
 
+import datetime
 import hashlib
 import json
 import sys
@@ -202,8 +203,18 @@ def confirmation_tally(rep: dict[str, Any]) -> dict[str, Any]:
 
     `not_read` 는 따로 센다 — 기계가 읽지 못한 필드는 '아직 확인 안 함' 이 아니라 애초에
     확인할 대상이 아니다. 둘을 한 칸에 합치면 화면이 도달할 수 없는 목표를 제시하게 된다.
+
+    `confirmed_absent` 는 `not_read` 의 **부분집합**이다: 기계가 읽지 못한 필드 중,
+    세입자가 페이지를 보고 "이 문서에는 이 값이 정말 없다" 고 확인한 것의 수. 팩의
+    참가자 가이드가 말하는 준비도 관행에서 빠진 필수 증거는 NEEDS_REVIEW 를 낳는데,
+    검토자는 "추출기가 놓쳤다" 와 "사람이 봤는데 정말 페이지에 없다" 를 구분할 수
+    있어야 한다 — 이 수가 그 구분의 집계다. 0이면 키 자체를 싣지 않는다: (a) 패킷의
+    JSON 은 바이트 단위로 동결된 캡처(api/packet_baseline/)와 대조되고, 부재 확인이
+    한 건도 없는 세션의 리포트는 그 캡처와 한 바이트도 달라져선 안 된다. (b) 거의 모든
+    파일에 없는 상태를 모든 리포트에 0으로 싣는 것은 목표처럼 읽힌다 — 부재 확인은
+    할 일이 아니라 일어난 일의 기록이다.
     """
-    confirmed = corrected = not_confirmed = not_read = 0
+    confirmed = corrected = not_confirmed = not_read = confirmed_absent = 0
     for doc in rep.get("documents", []):
         for f in doc.get("fields", []):
             kind = f.get("evidence_kind")
@@ -213,9 +224,11 @@ def confirmation_tally(rep: dict[str, Any]) -> dict[str, Any]:
                 corrected += 1
             elif f.get("value") is None:
                 not_read += 1
+                if f.get("absence_confirmed_by_renter"):
+                    confirmed_absent += 1
             else:
                 not_confirmed += 1
-    return {
+    tally = {
         "confirmed": confirmed,
         "corrected": corrected,
         "not_confirmed": not_confirmed,
@@ -223,6 +236,9 @@ def confirmation_tally(rep: dict[str, Any]) -> dict[str, Any]:
         "fields": confirmed + corrected + not_confirmed + not_read,
         "seen_by_a_person": confirmed + corrected,
     }
+    if confirmed_absent:
+        tally["confirmed_absent"] = confirmed_absent
+    return tally
 
 
 #: 이벤트를 세입자가 읽을 수 있는 한 줄로. 값은 절대 넣지 않는다 — 무엇을 했는지는 남기고,
@@ -235,6 +251,10 @@ EVENT_WORDS = {
     "field_corrected": "A value was corrected",
     "correction_undone": "A correction was undone",
     "confirmation_withdrawn": "A confirmation was withdrawn",
+    # 값이 없는 필드에 대한 사람의 확인. 여기에도 값은 실리지 않는다 — 애초에 값이
+    # 없다는 사실이 확인의 내용이다. field_confirmed 와 같은 규율: 동작·문서·필드명만.
+    "field_absence_confirmed": "A value the machine could not read was checked by the renter: not shown on that document",
+    "absence_confirmation_withdrawn": "An absence check was withdrawn",
     "question_asked": "A rule question was asked",
     "packet_exported": "A packet was exported by the renter",
 }
@@ -287,6 +307,12 @@ class Session:
     # apply_correction 은 필드를 제자리에서 덮어쓰므로 여기 남겨두지 않으면 원값이 사라진다.
     # 키가 (document_id, field) 단위이므로 한 정정의 취소가 다른 정정을 건드리지 않는다.
     originals: dict[tuple[str, str], dict[str, Any]] = field(default_factory=dict)
+    # 부재 확인: (document_id, field) -> 확인한 날짜(ISO). 값이 없는 필드에 대해 세입자가
+    # "이 문서에는 이 값이 없다" 고 확인한 기록이다. 값의 확인(`confirmed_by_renter`)과
+    # 달리 `evidence_kind` 를 움직이지 않는다 — 그 enum 은 계약 §1 에서 동결됐고, 사람이
+    # 부재를 확인해도 기계가 읽지 못했다는 사실은 그대로이기 때문이다. 팩 문서와 업로드
+    # 어느 쪽의 필드든 여기 실릴 수 있다.
+    absences: dict[tuple[str, str], str] = field(default_factory=dict)
     events: list[dict[str, Any]] = field(default_factory=list)
     # 사용자가 올린 문서. **팩 문서(`views`)와 같은 자루에 넣지 않는다** — 섞는 순간
     # 세대 계산·체크리스트·연소득이 골드 없는 문서를 먹기 시작하고, 그건 인수 데모가
@@ -546,6 +572,13 @@ class Store:
             f["value"] = value
             f["certainty"] = "high"
             f["evidence_kind"] = "corrected_by_renter"
+            # 부재를 확인해 둔 필드에 값을 채워 넣으면 두 주장이 충돌한다 — "이 문서에는
+            # 이 값이 없다" 와 "값은 이것이다" 는 같은 필드에 함께 설 수 없다. 새로 선
+            # 쪽(사람이 댄 값)이 이기고, 부재 표시는 여기서 걷힌다. 별도 이벤트는 남기지
+            # 않는다: field_corrected 가 이미 무슨 일이 일어났는지 말한다.
+            if s.absences.pop(key, None) is not None:
+                f.pop("absence_confirmed_by_renter", None)
+                f.pop("absence_confirmed_on", None)
             s.corrections[key] = value
             s.log("field_corrected", document_id=document_id, field=field_name,
                   evidence_kind="corrected_by_renter")
@@ -615,6 +648,75 @@ class Store:
                       evidence_kind=f.get("evidence_kind"))
                 return True
         return False
+
+    # ── 부재 확인 (값이 없는 필드를 사람이 보았다는 기록) ────────────────────
+    def _document_view(self, s: Session, document_id: str) -> dict[str, Any] | None:
+        """팩 문서와 업로드를 한 이름으로 찾는다. 부재는 두 곳 모두에서 생긴다 —
+        실제로는 팩이 159/159 로 기권이 없으므로, 사실상 업로드에서 생긴다."""
+        return s.views.get(document_id) or s.uploads.get(document_id)
+
+    def confirm_absence(self, s: Session, document_id: str, field_name: str) -> str:
+        """세입자가 "이 문서에는 이 값이 없다" 를 확인한다.
+
+        브리프의 경계 선언은 이 제품의 산출물을 "document readiness and human-review
+        handoff" 라고 이름 붙이고, 참가자 가이드의 준비도 관행은 빠진 필수 증거를
+        NEEDS_REVIEW 로 보낸다. 그런데 지금까지 기대 필드의 부재는 기계의 자백
+        ("no label for this field was found on the page")으로만 나갔다 — 검토자는
+        "추출기가 못 읽었다" 와 "신청자가 페이지를 봤는데 정말 없다" 를 구분할 수
+        없었다. 확인된 값(`confirmed_by_renter`)은 있는데 **확인된 부재**는 없었다.
+        이 메서드가 그 공백을 메운다.
+
+        ⚠️ **부재 확인은 enum 을 움직이지 않는다.** 계약 §1 은 `evidence_kind`
+        (extracted / confirmed_by_renter / corrected_by_renter)와 `certainty`
+        (high / low / abstain)를 동결했고, 여기서 그 어느 쪽도 늘리지 않는다. 필드는
+        `certainty="abstain"`, `value=null` 그대로다 — 사람이 부재를 확인해도 기계의
+        읽기가 더 확실해지는 것은 아니기 때문이다. 남는 것은 활동 기록의 이벤트 하나와
+        표시용 주석 두 개(`absence_confirmed_by_renter`, `absence_confirmed_on`)뿐이며,
+        둘 다 **확인이 있을 때만** 붙는다 — 없을 때 리포트는 한 바이트도 달라지지 않는다
+        (api/packet_baseline/ 이 그것을 잰다).
+
+        기록에는 값이 실리지 않는다 — 애초에 값이 없다는 사실이 확인의 내용이다.
+        field_confirmed 와 같은 규율: 동작·문서·필드명만 남는다.
+
+        반환값:
+          "absence_confirmed"   적용됨
+          "no_such_field"       그 문서에 그 필드가 없다
+          "value_was_read"      값이 읽힌 필드다 — 부재가 아니라 값을 확인·정정해야 한다
+        """
+        view = self._document_view(s, document_id)
+        if view is None:
+            return "no_such_field"
+        for f in view.get("fields", []):
+            if f.get("field") != field_name:
+                continue
+            if f.get("value") is not None:
+                return "value_was_read"
+            checked_on = datetime.date.today().isoformat()
+            s.absences[(document_id, field_name)] = checked_on
+            f["absence_confirmed_by_renter"] = True
+            f["absence_confirmed_on"] = checked_on
+            s.log("field_absence_confirmed", document_id=document_id, field=field_name)
+            return "absence_confirmed"
+        return "no_such_field"
+
+    def withdraw_absence(self, s: Session, document_id: str, field_name: str) -> bool:
+        """한 부재 확인을 걷어낸다 — 확인 철회(`confirmation_withdrawn`)의 거울.
+
+        부재 확인도 "내가 페이지를 봤고 거기 없다" 는 사람의 주장이므로, 철회할 수
+        없는 주장으로 만들면 오히려 신뢰가 떨어진다. 걷어내면 필드는 주석이 붙기 전과
+        완전히 같아진다 — 값도 certainty 도 evidence_kind 도 처음부터 움직인 적이 없다.
+        """
+        if s.absences.pop((document_id, field_name), None) is None:
+            return False
+        view = self._document_view(s, document_id)
+        if view is not None:
+            for f in view.get("fields", []):
+                if f.get("field") == field_name:
+                    f.pop("absence_confirmed_by_renter", None)
+                    f.pop("absence_confirmed_on", None)
+                    break
+        s.log("absence_confirmation_withdrawn", document_id=document_id, field=field_name)
+        return True
 
 
 STORE = Store()

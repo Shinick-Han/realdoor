@@ -278,6 +278,70 @@ def confirm(payload: dict, x_session_id: str | None = Header(default=None)) -> d
     return rep
 
 
+def _absence_response(s, document_id: str) -> dict:
+    """부재 확인·철회 뒤에 화면이 다시 그릴 대상을 돌려준다.
+
+    업로드는 세대에 합류하지 않으므로(`api/upload.py` 모듈 문서) 리포트가 없다 —
+    업로드 문서면 갱신된 업로드 뷰를, 팩 문서면 `/api/confirm` 과 같은 관례로 갱신된
+    세대 리포트를 돌려준다. 부재는 계산을 움직이지 않지만, 화면이 서버 상태를 다시
+    받아 그리는 왕복은 확인·정정과 같아야 한다 — 화면이 스스로 표시를 지어내기
+    시작하면, 화면 버그 하나가 아무도 확인한 적 없는 부재를 확인된 것으로 만든다.
+    """
+    if document_id in s.uploads:
+        return s.uploads[document_id]
+    hid = document_id.rsplit("-", 1)[0]
+    rep = STORE.report(s, hid)
+    if rep is None:
+        raise HTTPException(404, f"unknown household {hid}")
+    return rep
+
+
+@app.post("/api/absence")
+def confirm_absence(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
+    """세입자가 **값이 없는** 필드에 대해 "이 문서에는 이 값이 없다" 를 확인한다.
+
+    브리프의 경계 선언이 이 제품의 산출물이라 부르는 것은 "document readiness and
+    human-review handoff" 이고, 참가자 가이드의 준비도 관행은 빠진 필수 증거를
+    NEEDS_REVIEW 로 보낸다. 그 인수인계에서 검토자가 알아야 하는 것은 두 가지가
+    구분되는가다: 추출기가 못 읽은 것인가, 신청자가 페이지를 보고 "정말 없다" 고
+    확인한 것인가. 확인된 값(`confirmed_by_renter`)은 있었지만 확인된 부재는 지금까지
+    없었다. 이 라우트가 그 절반을 채운다.
+
+    **추가 전용이다.** `/api/confirm` 은 값(`value`)을 요구하고 그 계약은 테스트가
+    고정하고 있으므로, 값이 없는 확인은 자기 엔드포인트를 갖는다. 계약 §1 의 동결
+    enum(`evidence_kind`, `certainty`)은 늘리지 않는다 — 부재 확인은 활동 기록의
+    이벤트 + 표시용 주석이지 새 enum 값이 아니다. 근거는 `api/store.py::confirm_absence`.
+    """
+    s = _session(x_session_id)
+    for key in ("document_id", "field"):
+        if key not in payload:
+            raise HTTPException(400, f"missing `{key}`")
+    outcome = STORE.confirm_absence(s, payload["document_id"], payload["field"])
+    if outcome == "no_such_field":
+        raise HTTPException(404, "no such field on that document")
+    if outcome == "value_was_read":
+        raise HTTPException(
+            400, "this field holds a value, so there is no absence to confirm; "
+                 "confirm or correct the value instead")
+    return _absence_response(s, payload["document_id"])
+
+
+@app.post("/api/absence/undo")
+def withdraw_absence(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
+    """한 부재 확인을 철회한다 — `/api/undo` 가 확인 철회에 대해 하는 일의 거울.
+
+    부재 확인도 사람의 주장이므로 철회 가능해야 한다. 걷어낸 뒤 필드는 주석이 붙기
+    전과 완전히 같다: 값도 certainty 도 evidence_kind 도 처음부터 움직인 적이 없다.
+    """
+    s = _session(x_session_id)
+    for key in ("document_id", "field"):
+        if key not in payload:
+            raise HTTPException(400, f"missing `{key}`")
+    if not STORE.withdraw_absence(s, payload["document_id"], payload["field"]):
+        raise HTTPException(404, "no absence check on that field to withdraw")
+    return _absence_response(s, payload["document_id"])
+
+
 @app.post("/api/undo")
 def undo(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
     """한 정정을 취소한다. 취소는 **세션 상태에서** 일어나야 한다.
@@ -525,7 +589,18 @@ def _packet_summary_html(rep: dict, originals: dict) -> str:
             if value is None:
                 where = "&mdash;"
                 note = escape(str(f.get("notes") or "")) or "nothing usable was found on the page"
-                standing = f"not read &mdash; the machine took no value here ({note})"
+                if f.get("absence_confirmed_by_renter"):
+                    # 확인된 부재는 기계가 읽지 못한 부재와 **다른 문장**을 받는다.
+                    # 검토자가 이 칸에서 알아야 하는 것이 바로 그 구분이다: 아래 줄은
+                    # "사람이 페이지를 봤고, 값이 정말 거기 없다" 이고, else 가지는
+                    # "기계가 값을 얻지 못했고 아무도 아직 안 봤다" 다. 기계의 원문
+                    # 기록(note)은 옮겨질 뿐 지워지지 않는다.
+                    checked = escape(str(f.get("absence_confirmed_on") or ""))
+                    when = f" on {checked}" if checked else ""
+                    standing = (f"applicant confirmed: not shown on this document"
+                                f" (checked{when}; machine note kept on file: {note})")
+                else:
+                    standing = f"not read &mdash; the machine took no value here ({note})"
                 shown = "&mdash;"
             else:
                 page = f.get("page")
@@ -592,6 +667,16 @@ def _packet_summary_html(rep: dict, originals: dict) -> str:
     if tally.get("not_read"):
         tally_text += (f" {tally.get('not_read', 0)} value(s) could not be read at all; "
                        "those need a person to supply them.")
+    if tally.get("confirmed_absent"):
+        # 기계가 읽지 못한 것(위)과 사람이 부재를 확인한 것(아래)은 다른 사건이고,
+        # 검토자에게는 그 차이가 정보다. 키 자체가 0일 때는 존재하지 않으므로
+        # (api/store.py::confirmation_tally), 이 문장은 실제로 일어난 세션에만 실린다.
+        tally_text += (
+            f" For {tally.get('confirmed_absent', 0)} of the values the machine could not "
+            "read, the applicant looked at the page and confirmed the document does not "
+            "show it &mdash; a person checked the absence, which is not the same as the "
+            "machine simply reading nothing."
+        )
 
     # ── abstentions: what was not said, and why ─────────────────────────
     abstention_rows: list[str] = []
@@ -721,6 +806,17 @@ def packet(household_id: str, x_session_id: str | None = Header(default=None)) -
         # README 는 주소록이다. 첫 줄이 패킷 전체의 수신인을 말하고, 그 다음은 파일마다
         # 한 줄씩 "누구를 위한 파일인지"다. 확인 집계는 표지(packet_summary.html)로
         # 옮겨 갔다 — 집계는 사람이 읽는 문서의 일이고, 이제 그 문서가 생겼다.
+        #
+        # 부재 확인 한 줄은 예외로 여기에도 실린다: 있을 때만. 부재 확인이 0인 세션의
+        # README 는 한 글자도 달라지지 않는다 — 거의 모든 파일에 없는 상태를 모든
+        # README 에 0으로 적으면 그것이 목표처럼 읽히고, 표지의 집계 문단과도 어긋난다.
+        absent_checked = int((rep.get("confirmation") or {}).get("confirmed_absent") or 0)
+        absence_line = "" if not absent_checked else (
+            f"The applicant also checked {absent_checked} value(s) the machine could\n"
+            "not read, and confirmed each one is not shown on its document. The\n"
+            "cover sheet marks those rows, and the machine's own note stays with\n"
+            "each of them.\n\n"
+        )
         z.writestr("README.txt",
                    "This packet is for the person at the housing office who decides\n"
                    "on the application. You, the applicant, carry it to them.\n\n"
@@ -741,6 +837,7 @@ def packet(household_id: str, x_session_id: str | None = Header(default=None)) -
                    "                       were read. A correction you made is a note\n"
                    "                       in the files above, never a change to a\n"
                    "                       document - no document here was altered.\n\n"
+                   + absence_line +
                    "This packet is NOT an eligibility decision. A qualified\n"
                    "housing professional makes that determination.\n\n"
                    "Nothing here has been sent to any property or provider. Sharing it\n"
