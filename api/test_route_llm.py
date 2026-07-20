@@ -448,3 +448,84 @@ def test_profile_groups_partition_every_known_intent():
 def test_unknown_intent_has_no_profile_peers():
     assert route_llm.profile_peers("not_an_intent_at_all") == ()
     assert route_llm.profile_peers("") == ()
+
+
+# =====================================================================================
+# 한국어 질문과 confirm() — 게이트를 우회하지 않고 게이트에게 한국어를 가르쳤다
+# =====================================================================================
+
+
+def test_confirm_vetoes_a_money_intent_for_a_korean_eligibility_polar_question():
+    """모델이 "제가 승인받을 수 있나요?" 를 `frozen_threshold` 로 지명해도, 형태 게이트가
+    한국어 종결형(~나요, wh 없음)을 극성 질문으로 읽고 금액 답을 거부한다. 숫자가 판정
+    으로 읽히는 경로는 분류기가 어떻게 틀려도 열리지 않는다."""
+    q = "제가 승인받을 수 있나요?"
+    assert route_llm.confirm(q, "frozen_threshold") is None
+    assert route_llm.confirm(q, "annualized_income") is None
+    assert route_llm.stats()["rejected_shape_mismatch"] == 2
+    # 질문자 자신에 대한 물음이므로 프로그램 사실 의도도 거부된다 (주어 축).
+    assert route_llm.confirm(q, "geocode_precision", count=False) is None
+    # 거부 의도는 통과한다 — 게이트는 옳은 지명을 막지 않는다.
+    assert route_llm.confirm(q, "eligibility_refused", count=False) is not None
+
+
+def test_confirm_admits_a_money_intent_for_a_korean_amount_question():
+    q = "1인 가구의 소득 한도가 얼마예요?"
+    assert route_llm.confirm(q, "frozen_threshold", count=False) is not None
+    # 그리고 시점 의도는 거부된다 — 얼마 질문에 날짜 답은 답이 아니다.
+    assert route_llm.confirm(q, "limits_effective_date", count=False) is None
+
+
+def test_confirm_vetoes_a_money_intent_for_a_korean_temporal_question():
+    q = "새 소득 한도는 언제부터 적용되나요?"
+    assert route_llm.confirm(q, "frozen_threshold", count=False) is None
+    assert route_llm.confirm(q, "limits_effective_date", count=False) is not None
+
+
+# =====================================================================================
+# separation evidence — 질문이 명시한 세대 인원수는 그 자체가 구분 증거다
+# =====================================================================================
+
+
+def test_a_named_household_size_is_separation_evidence_for_the_threshold():
+    for question in ("what's the limit for a household of 3",
+                     "1인 가구의 소득 한도가 얼마예요?"):
+        found = route_llm.separation_evidence(question, "frozen_threshold")
+        assert found is not None
+        assert "household size" in found
+
+
+def test_separation_evidence_requires_a_size_in_the_question():
+    assert route_llm.separation_evidence("what is the income limit", "frozen_threshold") is None
+    assert route_llm.separation_evidence("", "frozen_threshold") is None
+
+
+def test_separation_evidence_is_only_for_the_size_keyed_intents():
+    """인원수는 한도 조회의 인자다. 다른 의도에는 아무 것도 증명하지 않으므로 아무 것도
+    주장하지 않는다 — `annualized_income` 이 특히 그렇다: 이웃이지만, 연환산 소득은
+    질문의 인원수를 받지 않는다."""
+    q = "what's the limit for a household of 3"
+    for intent in ("annualized_income", "limits_effective_date", "geocode_precision"):
+        assert route_llm.separation_evidence(q, intent) is None
+
+
+def test_shape_gate_reports_the_separation_when_the_question_names_a_size(monkeypatch,
+                                                                          houses):
+    """분류기 경로 끝까지: 인원수를 명시한 질문은 `separates_this_intent: true` 와 그
+    근거를 싣고, 명시하지 않은 질문은 예전 그대로 "구분하지 못했다"로 남는다."""
+    _enable(monkeypatch)
+    _stub_classifier(monkeypatch, "frozen_threshold", [])
+
+    named = ask_mod.handle("3인 가구면 얼마까지 되나요?", None, houses)
+    assert named["routing"]["path"] == "classifier"
+    gate_field = named["routing"]["shape_gate"]
+    assert gate_field["separates_this_intent"] is True
+    assert "household size 3" in gate_field["separation_evidence"]
+    assert gate_field["shares_profile_with"], "the peers are still disclosed, not hidden"
+    assert named["answer"] == "$92,580 for household size 3."
+
+    unnamed = ask_mod.handle("whats the most a person can bring in", None, houses)
+    if unnamed["routing"]["path"] == "classifier":
+        gate_field = unnamed["routing"]["shape_gate"]
+        assert gate_field["separates_this_intent"] is False
+        assert "separation_evidence" not in gate_field

@@ -1791,6 +1791,14 @@
     [/^(\$[\d,]+) for household size (\d+)\.$/, function (m) {
       return "세대원 " + m[2] + "인 기준 " + m[1] + " 입니다.";
     }],
+    // 승인 조건 프레임(예: "승인받으려면 … 얼마")이 붙은 한도 질문에는 api/ask.py 가
+    // 무판정 문장을 덧붙인다. 금액·세대원 수는 데이터라 그대로 둔다.
+    [/^(\$[\d,]+) for household size (\d+)\. That figure is the frozen limit for that household size, not a statement about any application: a qualified housing professional makes the eligibility determination\.$/,
+      function (m) {
+        return "세대원 " + m[2] + "인 기준 " + m[1] + " 입니다. 이 금액은 해당 세대원 수의 동결된 " +
+               "기준액일 뿐, 어떤 신청에 대한 판단이 아닙니다. 자격 판정은 자격을 갖춘 주택 " +
+               "전문가가 내립니다.";
+      }],
     [/^PDF page (\d+)$/, function (m) { return "PDF " + m[1] + "쪽"; }],
 
     // 진행 안내와 이동 (2페이지 구조)

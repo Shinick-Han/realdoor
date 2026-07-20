@@ -181,7 +181,15 @@ _TEMPORAL_QUESTION = re.compile(
     r"|^\W*(?:(?:so|ok|okay|um|uh|and|but|sorry|hey|well)[,\s]+)*when\b"
     r"|\b(?:since|as\s+of|from|until|till|up\s+to|by)\s+when\b"
     r"|\b(?:what|which)\s+(?:date|day|year|month)\b"
-    r"|\bhow\s+(?:recent|current|old)\b",
+    r"|\bhow\s+(?:recent|current|old)\b"
+    # The Korean temporal interrogative. One token is the whole enumeration: 언제
+    # ("when") asks for a date whether it carries a particle (언제부터, 언제까지), a
+    # copula (언제예요, 언제인가요) or nothing. Two guards keep it honest, in the same
+    # spirit as the English \b anchors: no preceding Hangul, so a word that merely
+    # contains these syllables cannot match, and not 언제나 ("always"), which contains
+    # 언제 and asks for no date at all. Still zero domain vocabulary -- 언제 is grammar,
+    # like "when".
+    r"|(?<![가-힣])언제(?!나)",
     re.IGNORECASE,
 )
 
@@ -192,20 +200,41 @@ _AMOUNT_QUESTION = re.compile(
     r"\bhow\s+much\b"
     r"|\bhow\s+many\s+dollars\b"
     r"|\b(?:what|which)\s+(?:amount|number|figure|total)\b"
-    r"|\bwhat'?s\s+the\s+(?:amount|number|figure|total)\b",
+    r"|\bwhat'?s\s+the\s+(?:amount|number|figure|total)\b"
+    # The Korean quantity interrogative. 얼마 ("how much") requests an amount whatever
+    # ending follows it -- 얼마예요, 얼마인가요, 얼마죠, 얼마정도여야 하나요 -- so no
+    # ending is enumerated. Excluded on purpose: 얼마나, where the request is carried by
+    # the word AFTER it (얼마나 자주 asks about frequency, 얼마나 오래 about duration);
+    # it stays a plain wh-word in _WH_WORD below, which is "no opinion", never a veto.
+    r"|(?<![가-힣])얼마(?!나)",
     re.IGNORECASE,
 )
 
 #: Any wh-word. Its ABSENCE is what makes a leading auxiliary a yes/no question rather
-#: than a wh-question that happens to start with one.
-_WH_WORD = re.compile(r"\b(?:what|when|where|which|who|whom|whose|why|how)\b", re.IGNORECASE)
+#: than a wh-question that happens to start with one. The Korean list serves the same
+#: single purpose: a Korean wh-question ends in the same suffixes a polar question does
+#: (서류가 뭐가 필요하나요 ends like 승인되나요), so without this list the polar branch
+#: would misread every Korean wh-question as yes/no and veto answers it should not.
+#: Presence here is only ever "no opinion" -- it can stop a veto, never cause one.
+_WH_WORD = re.compile(
+    r"\b(?:what|when|where|which|who|whom|whose|why|how)\b"
+    r"|(?<![가-힣])(?:무엇|뭐|뭘|언제|얼마|어떤|어느|어디|누가|누구|왜|어떻게|몇)",
+    re.IGNORECASE)
 
 #: A polar (yes/no) question: subject-auxiliary inversion at the head of the sentence,
 #: optionally behind a discourse filler.
 _YES_NO_QUESTION = re.compile(
     r"^\W*(?:(?:so|ok|okay|um|uh|and|but|sorry|hey|well|please)[,\s]+)*"
     r"(?:is|are|am|was|were|do|does|did|can|could|will|would|should|shall"
-    r"|has|have|had|may|might|must)\b",
+    r"|has|have|had|may|might|must)\b"
+    # The Korean polar question. English marks yes/no at the HEAD of the sentence
+    # (subject-auxiliary inversion); Korean marks it at the TAIL, so this alternative is
+    # anchored at the end instead: the interrogative endings ~나요 (있나요, 되나요,
+    # 하나요), ~까요 (될까요, 있을까요), ~ㄴ가요 (인가요, 한가요), the formal ~니까
+    # (입니까, 됩니까) and the indirect ~는지(요). asked_shapes() consults this branch
+    # only when no wh-word was found, exactly as it does for English, so 얼마인가요 -- a
+    # wh-question wearing a polar ending -- never reaches it.
+    r"|(?:나요|까요|니까|는지(?:요)?|가요)\s*[?!.…\s]*$",
     re.IGNORECASE,
 )
 
@@ -214,7 +243,18 @@ _YES_NO_QUESTION = re.compile(
 #: of these codes is ok to show on my address" is a question about the codes, not about
 #: the asker -- and not by "can i", which introduces questions about what is possible
 #: ("can i trust that listing") far more often than questions about the asker's standing.
-_SELF_SUBJECT = re.compile(r"\b(?:am|are)\s+(?:i|we)\b|\bdo\s+(?:i|we)\b", re.IGNORECASE)
+_SELF_SUBJECT = re.compile(
+    r"\b(?:am|are)\s+(?:i|we)\b|\bdo\s+(?:i|we)\b"
+    # The Korean first person as grammatical SUBJECT, particle-marked: 제가/내가
+    # (subject), 저는/나는 (topic), 저도/나도 ("I too"), and the plural 저희/우리 with
+    # the same particles. Particle-marked forms only, for the same reason the English
+    # half deliberately skips "my" and "me": bare 제/내/우리 before a noun is a
+    # possessive (제 서류 = "my papers"), and a question about the asker's papers is a
+    # question about the papers, not about the asker's standing. The lookbehind keeps
+    # words that merely end in these syllables out -- 문제가 ("the problem" + subject
+    # particle) contains 제가 and says nothing about the speaker.
+    r"|(?<![가-힣])(?:제가|내가|저는|나는|저도|나도|저희(?:가|는|도)|우리(?:가|는|도))",
+    re.IGNORECASE)
 
 
 def _first_at(pattern: re.Pattern[str], text: str) -> int | None:

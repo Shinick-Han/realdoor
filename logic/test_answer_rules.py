@@ -433,6 +433,24 @@ def test_the_gate_uses_no_domain_vocabulary():
     leaked = tokens & domain_words
     assert not leaked, f"domain vocabulary leaked into the gate: {sorted(leaked)}"
 
+    # The same rule holds for the Korean half of the gate. 얼마/언제/뭐 are grammar the
+    # way "how much"/"when"/"what" are; the moment a housing noun (소득, 한도, 가구,
+    # 서류, 승인 ...) appears in a question-side pattern, the gate has become a Korean
+    # alias table. The Hangul tokens are extracted the same way the Latin ones are.
+    hangul_tokens = set()
+    for pattern in (ar._TEMPORAL_QUESTION, ar._AMOUNT_QUESTION,
+                    ar._YES_NO_QUESTION, ar._WH_WORD, ar._SELF_SUBJECT):
+        hangul_tokens |= set(_re.findall(r"[가-힣]+", pattern.pattern))
+    korean_domain_words = {
+        "소득", "연소득", "수입", "연봉", "월급", "한도", "상한", "제한", "기준",
+        "가구", "세대", "가족", "서류", "문서", "승인", "거절", "거부", "자격",
+        "입주", "신청", "임대", "주택",
+    }
+    korean_leaked = hangul_tokens & korean_domain_words
+    assert not korean_leaked, f"Korean domain vocabulary leaked: {sorted(korean_leaked)}"
+    # The converse again: the Korean interrogatives are actually there.
+    assert {"언제", "얼마", "무엇", "뭐"} <= hangul_tokens
+
     # And the converse, so the test cannot pass by the patterns being empty: the gate is
     # in fact built out of interrogatives and auxiliaries.
     assert {"when", "what", "which", "how", "much", "is", "are", "am", "do"} <= tokens
@@ -519,6 +537,98 @@ def test_the_pack_questions_are_never_shown_the_gate(gold_households):
 
     for record in load_qa_gold():
         assert route(record["question"]) is not None, record["qa_id"]
+
+
+# =====================================================================================
+# the gate reads Korean interrogative grammar
+# =====================================================================================
+#
+# The defect these tests pin down: the gate's grammar was English-only, so a Korean
+# question could never be shape-classified. That cut both ways -- "1인 가구의 소득
+# 한도가 얼마예요?" could not be confirmed as an amount question, and "제가 승인받을 수
+# 있나요?" could not be VETOED as a polar question about the asker, so a classifier
+# nomination of a money intent for it would have sailed through. Teaching the gate the
+# small enumerated set of Korean interrogative shapes closes both, without any Korean
+# domain vocabulary (asserted above in test_the_gate_uses_no_domain_vocabulary).
+
+
+def test_a_korean_amount_question_admits_money_and_vetoes_a_date():
+    """얼마 is "how much": the question's grammar requests an amount."""
+    from logic.answer_rules import ANSWER_MONEY, ANSWER_RELATION, asked_shapes, canonical_admits
+
+    q = "1인 가구의 소득 한도가 얼마예요?"
+    assert asked_shapes(q) == frozenset({ANSWER_MONEY, ANSWER_RELATION})
+    assert canonical_admits(q, "frozen_threshold") is True
+    assert canonical_admits(q, "limits_effective_date") is False
+
+
+def test_the_owner_phrasing_is_an_amount_question():
+    """The acceptance phrasing: an eligibility frame around an amount interrogative.
+    The matrix interrogative is 얼마, so the grammar requests a figure -- the routing of
+    the eligibility frame itself is decided (and tested) in api/ask.py."""
+    from logic.answer_rules import ANSWER_MONEY, ANSWER_RELATION, asked_shapes
+
+    q = "이거 승인받으려면 1인가구 기준 연소득이 얼마정도여야 하나요?"
+    assert asked_shapes(q) == frozenset({ANSWER_MONEY, ANSWER_RELATION})
+
+
+def test_a_korean_temporal_question_is_never_answered_with_a_money_figure():
+    """언제 is "when": the Korean twin of the defect the gate was built for."""
+    from logic.answer_rules import ANSWER_DATE, asked_shapes, canonical_admits
+
+    q = "새 소득 한도는 언제부터 적용되나요?"
+    assert asked_shapes(q) == frozenset({ANSWER_DATE})
+    assert canonical_admits(q, "frozen_threshold") is False
+    assert canonical_admits(q, "annualized_income") is False
+    assert canonical_admits(q, "limits_effective_date") is True
+
+
+def test_a_korean_polar_question_is_never_answered_with_a_bare_figure():
+    """~나요 with no wh-word is a yes/no question, exactly as a leading auxiliary is in
+    English. Handing "$72,000" to someone who asked "제가 승인받을 수 있나요?" answers
+    nothing -- and reads as a determination, which is worse than answering nothing."""
+    from logic.answer_rules import ANSWER_DATE, ANSWER_MONEY, asked_shapes, canonical_admits
+
+    q = "제가 승인받을 수 있나요?"
+    shapes = asked_shapes(q)
+    assert shapes is not None and not ({ANSWER_MONEY, ANSWER_DATE} & shapes)
+    assert canonical_admits(q, "frozen_threshold") is False
+    assert canonical_admits(q, "annualized_income") is False
+    # ...while the intents whose answer is a policy sentence about the asker stay open.
+    assert canonical_admits(q, "decision_boundary") is True
+
+
+def test_a_korean_wh_question_with_a_polar_ending_is_not_polar():
+    """뭐/무엇 must block the yes/no reading the way "what" does -- Korean wh-questions
+    end in the same suffixes polar questions do."""
+    from logic.answer_rules import asked_shapes
+
+    assert asked_shapes("제 서류가 뭐가 필요한가요?") is None
+
+
+def test_korean_self_subject_agreement():
+    """제가/저희 as subject work the way "am i" / "do we" do; possessives do not."""
+    from logic.answer_rules import SCOPE_GENERAL, SCOPE_SELF, canonical_admits, question_scope
+
+    assert question_scope("제가 승인받을 수 있나요?") == SCOPE_SELF
+    assert question_scope("저희가 지금 내야 하나요?") == SCOPE_SELF
+    # An asker-predicated question is never answered with a program fact.
+    assert canonical_admits("제가 승인받을 수 있나요?", "geocode_precision") is False
+    assert canonical_admits("제가 승인받을 수 있나요?", "statutory_anchor") is False
+    # Possessive 제 ("my") is about the papers, not the asker -- same as English "my".
+    assert question_scope("제 서류가 뭐가 필요한가요?") == SCOPE_GENERAL
+    # 문제가 contains the syllables 제가 and says nothing about the speaker.
+    assert question_scope("문제가 있나요?") == SCOPE_GENERAL
+
+
+def test_korean_lookalikes_do_not_trigger_the_shapes():
+    """The enumerated exclusions, asserted: 언제나 ("always") is not 언제 ("when"), and
+    얼마나 ("how (often/long/...)") is not 얼마 ("how much"). Both fall back to "no
+    opinion", which can never veto."""
+    from logic.answer_rules import asked_shapes
+
+    assert asked_shapes("이 규칙은 언제나 적용되나요?") is None
+    assert asked_shapes("서류가 얼마나 최근이어야 하나요?") is None
 
 
 def test_only_the_matrix_interrogative_decides_the_asked_shape():

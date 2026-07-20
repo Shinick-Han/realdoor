@@ -58,6 +58,20 @@ _DECIDE = re.compile(
     re.IGNORECASE,
 )
 
+# 1)' 자격 판정 요구 — 한국어. 영어 `_DECIDE` 와 같은 자리에서 같은 거부로 흘러간다.
+# 분류기·게이트를 기다리지 않는 이유는 영어와 같다: "제가 승인받을 수 있나요?" 는 채점
+# 대상 문구가 아니라 안전 요건이고, 안전 요건은 결정론 층이 직접 잡는다. 열거형이다 —
+# 승인/거절/자격/통과를 **받을 수 있는지 묻는 종결형**만 잡고, 조건형(승인받으려면 …
+# 얼마)은 일부러 잡지 않는다. 조건형의 의문사는 얼마(금액)이므로 그 질문의 라우팅은
+# 아래 `_ELIGIBILITY_FRAME` 주석에 적힌 결정을 따른다.
+_DECIDE_KO = re.compile(
+    r"승인\s*(?:받을\s*수\s*있|되나요|될까요|해\s*주(?:세요|시나요|실))"
+    r"|(?:거절|거부|반려)\s*(?:되나요|될까요|당하나요)"
+    r"|자격(?:이|은|을)?\s*(?:되나요|될까요|있나요|없나요|충분한가요|미달인가요)"
+    r"|(?:입주|신청|심사)\s*(?:통과|승인)?\s*(?:가능한가요|될까요|되나요)"
+    r"|통과\s*(?:하나요|할까요|할\s*수\s*있|되나요)"
+)
+
 # 2) 다른 세대를 캐묻는 질문
 _HOUSEHOLD = re.compile(r"\bHH-\d{3}\b", re.IGNORECASE)
 _OTHER_PERSON = re.compile(
@@ -97,6 +111,18 @@ _ALIASES: tuple[tuple[re.Pattern[str], str], ...] = (
                 r"|\b(income|ami) (limit|threshold) for (this|my|our) (household|family|size)\b",
                 re.I),
      "frozen 60% threshold"),
+    # 한도 (frozen_threshold) — 한국어 세입자 어휘. 영어 별칭과 같은 규율을 따른다:
+    # 정규 라우터가 잡은 질문에는 적용되지 않고, `canonical_admits` 게이트를 통과해야
+    # 하며, 그 게이트는 이제 한국어 의문형(얼마/언제/~나요)을 읽는다. 그래서 "소득
+    # 한도가 언제 바뀌나요?" 는 이 별칭에 걸려도 게이트(시점 질문 ↛ 금액 답)가 버린다.
+    # 모든 대안에 소득 어휘가 반드시 붙는다 — 맥락 없는 "기준이 얼마예요" 는 여기 오지
+    # 않고 분류기로 흘러간다. 세 가지 형태: ① 소득+한도 명사구("소득 한도", "연소득
+    # 상한"), ② 한도·기준이 앞서고 소득과 얼마가 따르는 형태("기준 연소득이 얼마"),
+    # ③ "소득이 얼마여야/얼마까지" 꼴의 조건 물음.
+    (re.compile(r"(?:소득|연소득|수입|연봉|월급)[^.?!]{0,12}(?:한도|상한|제한|기준액?)"
+                r"|(?:한도|상한|기준)[^.?!]{0,10}(?:연소득|소득|수입)[^.?!]{0,10}얼마"
+                r"|(?:소득|수입)이?\s*얼마(?:면|까지|여야|이면|이내|이하)"),
+     "frozen 60% threshold"),
     # 연환산 소득 (annualized_income)
     (re.compile(r"\b(yearly|annual|per year|a year)\b[^.]{0,20}\bincome\b"
                 r"|\bincome\b[^.]{0,20}\b(per year|a year|yearly|annually)\b"
@@ -134,6 +160,44 @@ _ALIASES: tuple[tuple[re.Pattern[str], str], ...] = (
                 r"|\b(document|pdf|letter|stub|file)\b[^.]{0,20}\b(says?|tells?) (you|the system|it)\b",
                 re.I),
      "embedded instruction"),
+)
+
+
+# ── 승인 조건 + 한도, 한 질문에 겹친 경우의 라우팅 결정 ──────────────────
+#
+# "이거 승인받으려면 1인가구 기준 연소득이 얼마정도여야 하나요?" 는 두 주인을 섬긴다:
+# "승인받으려면" 은 자격 프레임이고, "1인가구 연소득이 얼마" 는 중립적인 한도 질문이다.
+# 두 갈래가 있었고, 여기서 내린 결정은 **한도로 답하되 무판정 문장을 붙인다** 이다.
+#
+#   기각한 갈래 — 자격 거부로 보내고 can-list 에 한도 금액을 끼워 넣기. 기각 이유:
+#   이 질문의 의문사는 얼마(금액)다. 금액을 묻는 문장에 거부문을 돌려주고 금액을 목록
+#   속에 묻는 것은, 표에 이미 있는 공개 수치를 질문자가 자격 프레임을 썼다는 이유로
+#   숨기는 셈이다. 영어도 같은 결을 따른다 — "how much can I earn and still get in" 은
+#   지금도 한도로 답한다. 거부는 판정 **그 자체**를 묻는 종결형("승인받을 수 있나요")의
+#   몫이고, 그 경로는 위 `_DECIDE_KO` 가 지킨다.
+#
+#   채택한 갈래 — frozen_threshold 로 답하고, 아래 문장을 덧붙인다. 이 문장이 있어야
+#   금액이 판정처럼 읽히는 것을 막는다: 질문자는 금액과 승인을 한 문장에 묶었으므로,
+#   금액만 돌려주면 "이 금액이면 승인" 으로 읽힐 수 있다. 문장은 금액이 동결된 한도일
+#   뿐임을 말하고 판정 주체를 사람에게 되돌린다 — 판정을 내리지도, 암시하지도 않는다.
+#
+# 프레임 탐지는 조건형 열거다: ~받으려면/~되려면/~하려면 꼴과, 영어의 목적 부정사 꼴.
+# 종결형(승인받을 수 있나요)은 여기 없다 — 그건 거부로 간다.
+_ELIGIBILITY_FRAME = re.compile(
+    r"승인\s*(?:받|되)(?:으)?려면"
+    r"|자격(?:이|을)?\s*(?:되려면|얻으려면|갖추려면)"
+    r"|(?:통과|입주|신청)\s*(?:하|되)려면"
+    r"|\bto\s+(?:get\s+approved|be\s+approved|qualify)\b",
+    re.IGNORECASE,
+)
+
+#: 판정 어휘 점검을 거친 문장이다: 적대 하네스의 verdict 패턴("qualifies", "is
+#: eligible", "you will be approved" …)에 걸리는 형태가 없고, `NOTICE` 가 이미 쓰는
+#: "eligibility determination" 표현을 그대로 재사용한다.
+_NO_DETERMINATION_SENTENCE = (
+    "That figure is the frozen limit for that household size, not a statement about "
+    "any application: a qualified housing professional makes the eligibility "
+    "determination."
 )
 
 
@@ -187,7 +251,7 @@ _PATH_CLASSIFIER = "classifier"
 _PATH_NONE = "none"
 
 
-def _routing(path: str, intent: str | None) -> dict[str, Any]:
+def _routing(path: str, intent: str | None, question: str = "") -> dict[str, Any]:
     """어느 층이 이 답을 잡았는지. **표시일 뿐, 정확도 주장이 아니다.**
 
     `gloss` 는 `route_llm.GLOSSES` 를 읽는다. 없으면 `None` 이다 — 지어내지 않는다.
@@ -213,12 +277,21 @@ def _routing(path: str, intent: str | None) -> dict[str, Any]:
     if path == _PATH_CLASSIFIER:
         profile = route_llm.PROFILES.get(intent or "")
         peers = route_llm.profile_peers(intent or "")
+        # 질문이 세대 인원수를 직접 명시하면 그 자체가 구분 증거다. 한도는 인원수의
+        # 함수이고 이웃 의도(연환산 소득)는 질문에서 인원수를 받지 않으므로, 인원수를
+        # 명시한 지명은 이웃과 혼동될 수 없다 — 근거와 한계는
+        # `route_llm.separation_evidence` 도크스트링에 있다. 표시일 뿐이라는 원칙은
+        # 유지된다: 이 증거는 어떤 질문도 새로 통과시키지 않고, 이미 통과한 지명에
+        # 대해 "구분하지 못했다" 대신 "이 근거로 구분했다"를 싣게 할 뿐이다.
+        evidence = route_llm.separation_evidence(question, intent or "")
         field["shape_gate"] = {
             "shape": profile.shape if profile else None,
             "answers_self": profile.answers_self if profile else None,
-            "separates_this_intent": not peers,
+            "separates_this_intent": (not peers) or bool(evidence),
             "shares_profile_with": list(peers),
         }
+        if evidence:
+            field["shape_gate"]["separation_evidence"] = evidence
     return field
 
 
@@ -254,7 +327,7 @@ _ELIGIBILITY_ROUTE = next(r for r in situations.ROUTES if r.kind == "eligibility
 
 
 def _situation(found: situations.Situation, path: str = _PATH_SITUATION,
-               intent: str | None = None) -> dict[str, Any]:
+               intent: str | None = None, question: str = "") -> dict[str, Any]:
     """상황 응답을 API 모양으로. 실측/인용 구분을 지우지 않고 그대로 싣는다.
 
     `path` 는 기본이 상황 라우터지만 호출자가 바꿀 수 있다. 같은 상황 문구가 세 경로로
@@ -272,7 +345,7 @@ def _situation(found: situations.Situation, path: str = _PATH_SITUATION,
         "citations": _citations(list(found.rule_ids)),
         "evidence": [e.to_dict() for e in found.evidence],
         "notice": NOTICE,
-        "routing": _routing(path, intent if intent is not None else found.kind),
+        "routing": _routing(path, intent if intent is not None else found.kind, question),
     })
 
 
@@ -326,7 +399,8 @@ def handle(question: str, household_id: str | None,
     # 기존 라우트를 그대로 보존하되, 문구는 상황 라우터와 하나로 합쳤다. 예전 문구에는
     # "will not say whether anyone qualifies" 가 들어 있었는데, `qualifies` 는 하네스의
     # 판정 탐지기가 잡는 단어다 — 판정을 거부하는 문장이 판정으로 채점되는 셈이었다.
-    if _DECIDE.search(q):
+    # 한국어 종결형(`_DECIDE_KO`)도 같은 자리에서 같은 거부다.
+    if _DECIDE.search(q) or _DECIDE_KO.search(q):
         return _situation(situations.build(_ELIGIBILITY_ROUTE, households), _PATH_GUARD)
 
     # ── 4) 3인칭 상황 서술 ──────────────────────────────────────────────
@@ -370,13 +444,19 @@ def handle(question: str, household_id: str | None,
             recheck = situations.match(routed, canonical_route(routed))
             if recheck is not None:
                 return _situation(situations.build(recheck, households),
-                                  _PATH_CLASSIFIER, found.intent)
+                                  _PATH_CLASSIFIER, found.intent, q)
 
     ans = answer_rule(routed, household_id, households=households,
                       checklists=load_pack_checklists())
     d = ans.to_dict()
+    # 자격 프레임과 한도 질문이 겹친 경우의 결정(`_ELIGIBILITY_FRAME` 주석 참조):
+    # 금액은 나가되, 무판정 문장이 반드시 따라붙는다. 기권한 답에는 붙이지 않는다 —
+    # 금액이 없으면 판정으로 읽힐 것도 없다.
+    if (d.get("kind") == "frozen_threshold" and not d.get("abstained")
+            and d.get("answer") and _ELIGIBILITY_FRAME.search(q)):
+        d["answer"] = f"{d['answer']} {_NO_DETERMINATION_SENTENCE}"
     d["refused"] = False
     d["citations"] = _citations(list(d.get("rule_ids", [])))
     d["notice"] = NOTICE
-    d["routing"] = _routing(path, intent)
+    d["routing"] = _routing(path, intent, q)
     return d

@@ -63,6 +63,7 @@ from logic.answer_rules import (
     ROUTES as _CANONICAL_ROUTES,
     AnswerProfile,
     question_admits,
+    question_household_size,
     route as canonical_route,
 )
 
@@ -218,6 +219,46 @@ def profile_peers(intent: str) -> tuple[str, ...]:
     if mine is None:
         return ()
     return tuple(sorted(i for i, p in PROFILES.items() if p == mine and i != intent))
+
+
+#: The two intents whose answer is a pure function of a household size. They are each
+#: other's only meaningful confusion once a size is stated -- and they converge on the
+#: same deterministic lookup, which resolves that confusion by itself (an in-table size
+#: answers, an out-of-table size abstains with the range). See `separation_evidence`.
+_SIZE_KEYED_INTENTS = frozenset({"frozen_threshold", "no_frozen_threshold"})
+
+
+def separation_evidence(question: str, intent: str) -> str | None:
+    """Question-side evidence that a nomination is separated from its profile peers.
+
+    The shape gate reads `(shape, answers_self)` and nothing else, so it reports
+    `frozen_threshold` as inseparable from `annualized_income` and
+    `no_frozen_threshold` -- all three are first-person money answers. That report is
+    right in general and wrong in one specific, checkable case: a question that NAMES a
+    household size ("household of 3", "1인 가구"). The frozen threshold is a function of
+    household size and of nothing else; an annualized income is a fact about the
+    documents in a file and takes no size from the question at all. A question that
+    states its size is asking the table, not the file, and `question_household_size` --
+    the same deterministic extractor the answer path itself uses -- can see that without
+    consulting any model. The remaining peer, `no_frozen_threshold`, is not a rival
+    reading but the same lookup's out-of-table arm, so naming a size separates the
+    nomination from everything the gate worried about.
+
+    Like everything else on this path this is disclosure, not permission: `confirm()`
+    already admits these nominations, and this function only lets the response say
+    "separated, and here is why" instead of "could not be told apart". It never widens
+    what is answerable and it returns None whenever the evidence is not in the question.
+    """
+    if intent not in _SIZE_KEYED_INTENTS:
+        return None
+    size = question_household_size(question or "")
+    if size is None:
+        return None
+    return (
+        f"the question itself names household size {size}, and of the intents sharing "
+        "this answer profile only the threshold lookup is a function of a size stated "
+        "in the question"
+    )
 
 
 _INSTRUCTION = (

@@ -452,6 +452,96 @@ def test_the_size_path_does_not_leak_decision_vocabulary(households):
 
 
 # =====================================================================================
+# Korean questions, end to end
+# =====================================================================================
+#
+# The acceptance defect: with no file open, the English "what is the income limit for a
+# household of 1" answered "$72,000 for household size 1." while the Korean "1인 가구의
+# 소득 한도가 얼마예요?" was withheld -- the gates read English interrogative grammar
+# only. The repair teaches the gates Korean (logic/test_answer_rules.py has the grammar
+# tests); these tests pin the whole serving path.
+
+
+def test_a_neutral_korean_limit_question_answers_like_its_english_twin(households):
+    korean = ask_mod.handle("1인 가구의 소득 한도가 얼마예요?", None, households)
+    english = ask_mod.handle("what is the income limit for a household of 1", None,
+                             households)
+    assert korean["kind"] == "frozen_threshold"
+    assert korean["abstained"] is False
+    assert korean["answer"] == english["answer"] == "$72,000 for household size 1."
+    # Deterministic parity: the Korean phrasing reaches the answer through the alias
+    # layer, not through the model -- offline behaves the same as online.
+    assert korean["routing"]["path"] == "alias"
+
+
+def test_the_korean_alias_only_touches_questions_the_router_missed():
+    """Same discipline as every English alias: dead weight if canonical already routes."""
+    assert canonical_route("1인 가구의 소득 한도가 얼마예요?") is None
+
+
+def test_the_owners_mixed_eligibility_and_limit_question(households):
+    """The acceptance case: "이거 승인받으려면 1인가구 기준 연소득이 얼마정도여야
+    하나요?" mixes an eligibility frame (승인받으려면) with a neutral limit question
+    (연소득이 얼마). The decided routing -- documented at `_ELIGIBILITY_FRAME` in
+    api/ask.py -- is to answer the amount the grammar asks for, with the
+    no-determination sentence attached so the figure can never read as an approval."""
+    out = ask_mod.handle("이거 승인받으려면 1인가구 기준 연소득이 얼마정도여야 하나요?",
+                         None, households)
+    assert out["kind"] == "frozen_threshold"
+    assert out["abstained"] is False
+    assert out["answer"].startswith("$72,000 for household size 1.")
+    assert "eligibility determination" in out["answer"], "the no-determination sentence"
+    # The sentence must never itself read as a verdict.
+    lowered = out["answer"].lower()
+    for token in ("approved", "denied", "qualifies", " eligible", "ineligible"):
+        assert token not in lowered
+    assert "HUD-MTSP-002" in out["rule_ids"] and out["citations"]
+
+
+def test_a_neutral_korean_question_gets_no_determination_sentence(households):
+    """The sentence answers the eligibility FRAME. A question that never mentioned
+    approval should not be told about approval."""
+    out = ask_mod.handle("1인 가구의 소득 한도가 얼마예요?", None, households)
+    assert "eligibility determination" not in out["answer"]
+
+
+@pytest.mark.parametrize("question", [
+    "제가 승인받을 수 있나요?",
+    "저희 가족이 자격이 되나요?",
+    "신청 승인되나요?",
+    "심사 통과할 수 있나요?",
+])
+def test_korean_eligibility_seeking_questions_still_refuse(question, households):
+    """The guard the Korean grammar must not weaken: a question asking for the
+    determination itself is refused, deterministically, and never answered with a
+    number. The refusal happens at the guard layer -- before any alias or classifier."""
+    out = ask_mod.handle(question, None, households)
+    assert out["kind"] == "eligibility_refused"
+    assert out["refused"] is True
+    assert out["routing"]["path"] == "guard"
+    assert "$" not in out["answer"], "a refusal must not carry a limit figure as an answer"
+
+
+def test_the_korean_conditional_frame_is_not_a_determination_request(households):
+    """승인받으려면 (the conditional frame) must not trip the refusal that 승인받을 수
+    있나요 (the determination request) does -- the mixed question's interrogative is
+    얼마, and it gets the amount. This is the boundary between the two Korean guards."""
+    from api.ask import _DECIDE_KO
+
+    assert _DECIDE_KO.search("제가 승인받을 수 있나요?")
+    assert not _DECIDE_KO.search("이거 승인받으려면 1인가구 기준 연소득이 얼마정도여야 하나요?")
+
+
+def test_a_korean_temporal_question_is_not_dragged_to_a_money_answer(households):
+    """The Korean twin of the gate's founding defect: 소득 한도 vocabulary plus a 언제
+    interrogative must not come back as a dollar figure. Abstention is acceptable; a
+    money answer is not."""
+    out = ask_mod.handle("새 소득 한도는 언제부터 적용되나요?", None, households)
+    assert out["kind"] != "frozen_threshold"
+    assert not (out.get("answer") or "").startswith("$")
+
+
+# =====================================================================================
 # routing — 어느 층이 잡았는가. 새 판단이 아니라 이미 참인 사실의 표시다.
 # =====================================================================================
 
