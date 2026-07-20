@@ -1,0 +1,131 @@
+{
+  "seeded_from": "extraction-loop-design.md section 7, in the priority order it gives",
+  "seeded_at_commit": "60edef4958254178cb433254b6c92ed7b527d65c",
+  "selection_rule": "highest expected field yield first, ties broken by lowest attempt count (design section C). With this seed that means T1 first.",
+  "status_values": ["OPEN", "IN_PROGRESS", "DONE", "NO_SAFE_RULE", "BLOCKED_CONTRACT", "MASKED_OUT", "IMAGE_ONLY_OUT_OF_SCOPE"],
+  "note": "Every `fields` list below was re-derived from loop/baseline.json's field_state on day 0, not copied from the design. All seven agree with design section 0.1 exactly: 5 ca_dlse abstains, 5 external abstains, 2 il_dol blocked, 5 masked, 22 image-only (hi_ags 6, ou 7, osu 3, lcc 6).",
+  "items": [
+    {
+      "id": "T1",
+      "title": "ca_dlse_hourly: the watermark filter deletes the whole page (malformed FontBBox sizes)",
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf",
+      "fields": [
+        "confirm::ca_dlse_paystub_hourly.pdf::person_name",
+        "confirm::ca_dlse_paystub_hourly.pdf::regular_hours",
+        "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate",
+        "confirm::ca_dlse_paystub_hourly.pdf::gross_pay",
+        "confirm::ca_dlse_paystub_hourly.pdf::net_pay"
+      ],
+      "category": "reader_loss",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 5,
+      "root_cause_note": "read_words returns 0 words for a page on which raw pdfplumber sees 96 words / 630 chars. The PDF's font descriptor has a malformed FontBBox, so every char on the page reports a bogus size of 27.3-48.6pt, and read_words filters size >= WATERMARK_MIN_SIZE (20.0) as watermark. The extractor is blind to the entire page; nothing downstream ever runs.",
+      "design_note": "Design section 8.1: ONE unit of work, not five. Five partial fixes around a blind reader are exactly the page-specific patching constraint 2 forbids. Candidate licenses for P2 to weigh: a physical bound (a 'watermark' classification that removes EVERY char on a page is self-refuting -- a watermark is by definition distinguishable from the body it overlays) or measured glyph-box height in place of declared font size. The falsification sweep must additionally prove real >=20pt content elsewhere in the corpus (pack headings, actual watermarks) is still handled -- that is the named hazard. The proposal must still predict all five flips individually; G7 holds it to that. It must also predict that this document's two masked-year fields (pay_period_start/end) stay abstained -- a flip there would mean the change invented a century, and is a G7 anomaly.",
+      "design_risk": "Design section 9.2: T1 changes how every page is read, so predicting zero incidental flips across 77 documents is a strong claim. Expect one REVIEW round-trip here; it is the likeliest place the loop burns its second expensive call."
+    },
+    {
+      "id": "T2",
+      "title": "ext_les pay_period_start: printed compound label `Pay Begin Date`",
+      "corpus": "external",
+      "doc": "ext_les.pdf",
+      "fields": ["external::ext_les.pdf::pay_period_start"],
+      "category": "label_vocabulary",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "Printed verbatim in the text layer as `Pay Begin Date 7/22/2010`. A printed label is license class 1 and the label is not in the vocabulary.",
+      "design_note": "Likely a label-vocabulary addition. Falsify the string against all 77 before implementing."
+    },
+    {
+      "id": "T3",
+      "title": "ext_unc regular_hours: row word plus header columns",
+      "corpus": "external",
+      "doc": "ext_unc.pdf",
+      "fields": ["external::ext_unc.pdf::regular_hours"],
+      "category": "column_geometry",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "Printed as `Regular 20.346846 74.50 1,515.84 855.00 17,446.65 ...` -- a row word under printed header columns.",
+      "design_note": "Column-path diagnosis; may already be near the committed core/columns.py capability."
+    },
+    {
+      "id": "T4",
+      "title": "external person_name x3: names printed with no adjacent label",
+      "corpus": "external",
+      "doc": "ext_adp.pdf | ext_utep.pdf | ext_les.pdf",
+      "fields": [
+        "external::ext_adp.pdf::person_name",
+        "external::ext_utep.pdf::person_name",
+        "external::ext_les.pdf::person_name"
+      ],
+      "category": "unlabelled_value",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "ADP: `Taxable Marital Status: Single AMIS SMITH`, the name floats over the address block with no name label adjacent. UTEP: `Mary Doe 55555 ABC Company 09-30-2014 ...`, a dense unlabelled row. LES: `STALLONE, SYLVESTER GS 07 05 $44,616.00 ...`.",
+      "design_note": "LES may have a printed NAME header cell; the other two are probable NO_SAFE_RULE. Say so early rather than burn attempts -- one P2 look each, closed on the first NO_SAFE_RULE. Design section 9.3: the loop is expected to spend most of its life writing NO_SAFE_RULE records, and closing items is progress."
+    },
+    {
+      "id": "T5",
+      "title": "il_dol two date fields: two-digit years the frozen scorer cannot represent",
+      "corpus": "confirm",
+      "doc": "il_dol_day_labor_wage_notice_sample.pdf",
+      "fields": [
+        "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_period_end",
+        "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_date"
+      ],
+      "category": "contract",
+      "status": "BLOCKED_CONTRACT",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "day 0, zero iterations spent",
+      "root_cause_note": "Blocked twice. (a) The output contract emits ISO dates and commit 2bb7337 deliberately refuses two-digit years. (b) Independently and absolutely: eval/score_extraction._as_date has no two-digit-year pattern, so truth `8/27/05` normalizes to ('date', UNPARSABLE, '8/27/05'). An extractor emitting the correct `2005-08-27` would be scored WRONG. The only string that scores correct is the literal `8/27/05`, which the ISO contract forbids emitting. Verified independently on day 0: both fields classify as blocked_contract in field_state by exactly that test.",
+      "design_note": "Design section 8.2: a span-borrow license DOES exist on the page for pay_period_end -- `Pay Period: 8/21/2005 to 8/27/05` prints the century on the same line inside the same span construct, and a rule borrowing A's century for B when B's two digits equal A's last two invents no digit and is refusal-biased. It still does not matter, because the frozen scorer forecloses it. pay_date (`Paydate: 9/2/05`) has no printed century relation at all and is out of reach regardless. Unblocking is an output-contract / scorer decision belonging to the repo owner, not to any extraction rule. Record in STOP.md; spend nothing."
+    },
+    {
+      "id": "T6",
+      "title": "five masked-year fields: no century or decade digit is printed anywhere",
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf | ca_dlse_paystub_piecerate.pdf",
+      "fields": [
+        "confirm::ca_dlse_paystub_hourly.pdf::pay_period_start",
+        "confirm::ca_dlse_paystub_hourly.pdf::pay_period_end",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_start",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_end",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_date"
+      ],
+      "category": "masked",
+      "status": "MASKED_OUT",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "day 0, zero iterations spent",
+      "root_cause_note": "Printed `1/7/XX`, `1/13/XX`, `1/20/XX`. Any emitted ISO date invents at least two digits -- constraint 3, no argument available.",
+      "design_note": "Design section 8.2: the only conceivable honest treatment is an output-contract extension for partial dates, which measure_confirm_set._masked_date could then score. Changing the contract is not this loop's decision. STOP.md records the option; the loop does not act on it."
+    },
+    {
+      "id": "T7",
+      "title": "22 image-only fields in four hybrid documents",
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf | ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf | lcc_understanding_your_paycheck.pdf",
+      "fields": ["see loop/baseline.json field_state, the 22 confirm entries valued image_only"],
+      "field_counts": {"hi_ags_pay_statement_example_2021.pdf": 6, "ou_sample_check_stub.pdf": 7, "osu_sample_earnings_statement.pdf": 3, "lcc_understanding_your_paycheck.pdf": 6},
+      "category": "image_only",
+      "status": "IMAGE_ONLY_OUT_OF_SCOPE",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "day 0, zero iterations spent",
+      "root_cause_note": "The four documents are hybrid, not scans: they carry large text layers (2.3k-10.3k chars of explanatory prose) with the actual pay stub embedded as a raster image. The 22 values exist only in those pixels. Measured image resolutions: hi_ags/ou/osu ~150-200 dpi (OCR-viable), lcc ~96-116 dpi (marginal).",
+      "design_note": "Design section 8.3 gives the five go/no-go inputs a future OCR effort must obtain before starting -- root cause of the existing 0/7, the recoverability upper bound measured offline, a verification story compatible with zero-wrong (do the embedded stubs print closable identities?), the bbox mapping from image pixels to PDF points at IoU>0.5, and the determinism cost of a nondeterministic dependency. Decision rule: start only if (1) is understood, (2) is >= ~two-thirds clean and (3) closes identities on at least the ou/osu-class documents. Otherwise IMAGE_ONLY is the honest boundary of a text-layer extractor."
+    }
+  ]
+}
