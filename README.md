@@ -19,27 +19,35 @@ Hack-Nation #6 — Challenge 3 (RealPage).
 Uploading a document, asking a question in your own words, the output gate returning
 its own 500 — all of that needs the server, and that link is the server.
 
-Three things to do once it loads, **in this order**. The page opens holding nothing —
-upload is the front door, and the prepared files are a second offer on the same screen:
+The renter flow is **two pages** — the owner's call, after the six-step version proved
+too big an obstacle: page 1 is the renter's file, page 2 is readiness and handoff, and
+the judges' annex sits behind the header link. Three things to do once it loads, **in
+this order**. The page opens holding nothing — upload is the front door, and the
+prepared files are a second offer on the same screen:
 
-1. **Press "Open the example file for Mara North"** on step 1, under *"Or open a prepared
-   example file"*. That loads `HH-001` in one click. Then **walk steps 1 → 2.** Step 2 offers the two corrections the
-   pipeline actually ran as one-press buttons. Press *"Household size is 3, not 1"* and the
-   before/after table moves the frozen threshold from $72,000 to $92,580 while the income
-   figure stays put — a corrected value changing what it should change and nothing else.
-   Press the other one and watch a correction get **recorded and then not used**, because
-   the corrected figure no longer agrees with the hours and rate on the same document.
-2. **Now change the file to `HH-004 — 4 documents`.** From step 2, press **"Change on
-   step 1"** in the line under the heading, use the `Prepared example file` select, then
-   go to step 5. `HH-001` has every document in order, so its
-   checklist has nothing to show you. `HH-004` is missing an employment letter and has a
-   gig statement dated to the month with no day — the system says so and abstains rather
-   than inventing a date. `HH-005` has an employment letter that fell outside the 60-day
-   window.
+1. **Press "Open the example file for Mara North"** on page 1, under *"Or open a prepared
+   example file"*. That loads `HH-001` in one click. Then **fix a value on its row**:
+   on the application summary, press *"This is wrong — fix it"* on `household_size`,
+   type `3`, and Save. The before/after summary appears **in place, under that
+   document's table**: the frozen threshold moves from $72,000 to $92,580 while the
+   income figure stays put — a corrected value changing what it should change and
+   nothing else. (Offline, the same two recorded corrections are one-press buttons
+   above the table.) Fix `gross_pay` on the newer pay stub to `2500` and watch a
+   correction get **recorded and then not used**, because the corrected figure no
+   longer agrees with the hours and rate on the same document.
+2. **Now change the file to `HH-004 — 4 documents`** with the `Prepared example file`
+   select, then press **Continue to page 2**. `HH-001` has every document in order, so
+   its checklist has nothing to show you. `HH-004` is missing an employment letter and
+   has a gig statement dated to the month with no day — the system says so and abstains
+   rather than inventing a date. `HH-005` has an employment letter that fell outside
+   the 60-day window. Page 2 reads top to bottom: the calculation, the checklist, then
+   the tally and the packet, with jump links under the heading.
 3. Open **"How this works, and how we tested it"** in the header. The refusals, the
-   prompt-injection probe, the output gate and session deletion all live there.
+   prompt-injection probe, the output gate and session deletion all live there. The
+   recorded rule questions — the eligibility refusal included — are under the ask box
+   pinned to the foot of every page, in the "Recorded questions" list.
 
-All six households carry a bundled report, so the prepared-file select on step 1 renders any of them offline.
+All six households carry a bundled report, so the prepared-file select on page 1 renders any of them offline.
 
 **The public URL is the full server; only the offline copy withholds anything.** Earlier
 versions of this README described the hosted page as a static build that replayed
@@ -49,11 +57,12 @@ is no longer true of this one: the link above runs the FastAPI process itself
 (re-checked 2026-07-20 — `/api/health` answers live and `/api/_gate_selftest` returns
 its 500 from the running gate). The withholding behaviour still exists in exactly one
 place: opening `ui/dist/index.html` from disk with no server. In that offline mode the
-page runs on bundled fixtures; steps 2 and 3 replay recordings made in an `HH-001`
-session, so on any other household those controls switch off and say which household
-they belong to rather than showing `HH-001`'s figures under another name, and the gate
-panel reports there is no server to test rather than replaying a recording and calling
-it live. To see the gate withhold a response on your own machine, run the server:
+page runs on bundled fixtures; the inline corrections and the ask box replay recordings
+made in an `HH-001` session, so on any other household those controls switch off and
+say which household they belong to rather than showing `HH-001`'s figures under another
+name, and the gate panel reports there is no server to test rather than replaying a
+recording and calling it live. To see the gate withhold a response on your own machine,
+run the server:
 
 ```bash
 python -m uvicorn api.app:app --host 127.0.0.1 --port 8077
@@ -85,19 +94,20 @@ listed.)*
 
 ## The brief's six acceptance steps, and where each one is
 
-Our walkthrough is six screens, but the numbering is **not** 1:1 with the brief. Step 5
-of the brief spans two of our screens, and step 6 is deliberately not a renter step.
+Our walkthrough is **two pages** — it used to be six step-screens, and the owner ended
+that: six screens were too big an obstacle. The mapping is **not** 1:1 with the brief,
+and it never was; every acceptance step remains individually demonstrable.
 
 | Brief's acceptance step | Where it is in our UI |
 | --- | --- |
-| 1. Upload documents, show extraction evidence | Step 1 — "Check the values we read from your documents". The pack's 24 documents are **pre-loaded**, and the same screen takes an upload when a server is running (the public URL is one); every value carries the box on the page it came from. |
-| 2. Edit one field, show downstream values update | Step 2 — "Correct a value we read wrong" |
-| 3. Ask a rule question, show an authoritative citation | Step 3 — "Ask what a housing rule says" |
-| 4. Deterministic calculation with effective dates | Step 4 — "See how your yearly income figure was worked out" |
-| 5. Identify missing or expired items, export a packet | Steps 5 and 6 — "See what is missing or out of date", then "Check what we found, then take your packet" |
-| 6. Run the refusal, prompt-injection and session-deletion tests | **"How this works" page**, captioned *"Not part of the renter's six steps"* — a renter should not have to walk through our safety demos to get their documents ready. |
+| 1. Upload documents, show extraction evidence | **Page 1** — "Check the values we read from your documents". Upload is the front door, a prepared example is one press, and every value carries the box on the page it came from. The session's uploads together form a file both pages can walk. |
+| 2. Edit one field, show downstream values update | **Page 1** — "This is wrong — fix it" opens an editor on the row itself; when the correction commits, the before/after summary (the recomputed figure, the threshold move, or the recorded-but-not-used explanation) appears in place under that document's table. |
+| 3. Ask a rule question, show an authoritative citation | **The ask box pinned to every page.** Answers carry rule id, authority, effective date and source; the recorded questions, the eligibility refusal included, are in the "Recorded questions" list under the same box. |
+| 4. Deterministic calculation with effective dates | **Page 2, "How your yearly figure was worked out"** — the answer leads, the full working (inputs, formulas, citations) is one fold below, and a figure that could not be computed stays unfolded. |
+| 5. Identify missing or expired items, export a packet | **Page 2** — "What is missing or out of date", then "Check what we found, then take your packet", top to bottom on the same page with jump links. |
+| 6. Run the refusal, prompt-injection and session-deletion tests | **"How this works" page**, captioned *"Not part of the renter's walkthrough"* — a renter should not have to walk through our safety demos to get their documents ready. |
 
-The API endpoints do map 1:1 to the brief's six steps; the screens do not.
+The API endpoints do map 1:1 to the brief's six steps; the pages do not.
 
 ---
 
@@ -107,7 +117,7 @@ Stated first, because this is the point of the product.
 
 - **Upload needs a running server — and the public URL is one.** Reading a PDF needs the
   extractor, which is Python, so the offline `file://` copy shows the upload panel on
-  step 1 switched off rather than hidden, saying what to run. On the hosted server and
+  page 1 switched off rather than hidden, saying what to run. On the hosted server and
   on a local one, the same panel takes one synthetic document, held in that session's
   memory, never written to disk and never joined to the household's file. (An earlier
   version of this bullet said a judge could not bring their own PDF to the public URL;
@@ -129,8 +139,11 @@ Stated first, because this is the point of the product.
 - **Identifier redaction is shape-based and incomplete.** We substitute recognisable
   identifier shapes before sending anything outward. We do not claim it is exhaustive,
   and the scorecard publishes the count of machine identifiers still visible on screen
-  (21, from re-running `node ui/tools/screen-scan.mjs` on 2026-07-20; an earlier draft
-  said 72, and the count fell as screens were reworked) rather than hiding it.
+  (3, from re-running `node ui/tools/screen-scan.mjs` on 2026-07-21 against the two-page
+  layout; the 2026-07-20 six-screen count was 21, and an earlier draft said 72. Part of
+  the latest fall is real rework and part is the fold rule: page 2's working now sits
+  behind disclosures, and text inside a collapsed disclosure is not "visible" — the
+  method note in `ui/screen-scan.json` states this) rather than hiding it.
 - **The adversarial pack is 12 distinct hostile inputs, each present twice.** 24/24 is
   evidence, not proof.
 
@@ -144,7 +157,7 @@ number and are labelled as such — a pack number is measured on inputs this sys
 built against; a hold-out number is not.
 
 ```
-1167 automated tests pass  (python -m pytest -q, 2026-07-20)
+1490 automated tests pass  (python -m pytest -q, 2026-07-21)
 
 — on the pack (inputs we built against) —
 Extraction        159/159 exact · 0 wrong · 0 abstained · 0 missed
@@ -175,11 +188,19 @@ Real layouts      external six PDFs: 14/44 correct · 30 abstained · 0 wrong (d
                   extractor mostly cannot read
 
 — interface —
-axe-core          0 violations across 4 origins x 7 screens — at 1280px only
-Keyboard journey  31/31
-Reflow            35/35 — 5 widths (320/360/390/412/768 px) x 7 screens
+axe-core          0 violations across 4 origins x 6 screen states — at 1280px only
+                  (2 pages + editor/downstream/unfolded states + the judges' page)
+Keyboard journey  36/36 on the two-page layout (was 31/31 on the six-step layout)
+Reflow            15/15 — 5 widths (320/360/390/412/768 px) x 3 screens (was 35/35 x 7;
+                  the same content, absorbed into fewer screens)
 Live API check    11/11 against a local server; health, upload and the gate's 500 also
                   re-checked against the public URL on 2026-07-20
+Page height       merged pages, default state, HH-001 open: page 1 = 5,129px at 1280px
+                  (old step 1: 5,156px) · page 2 = 2,721px (tallest absorbed screen,
+                  old step 4: 4,206px; the three absorbed screens summed to 8,659px).
+                  At 390px: page 1 = 8,486px (old 8,534) · page 2 = 4,390px (old step 4
+                  7,069; sum 14,896). Summary-first: what is settled folds, what is
+                  open never does
 Citations         6/7 outside-authority citations re-fetched and matched (2026-07-19);
                   1 could not be re-fetched — uscode.house.gov did not answer in 45 s,
                   reported as not checked, never as checked and fine
@@ -293,8 +314,8 @@ Browser checks need Node and Playwright:
 ```bash
 cd ui/tools && npm install && npx playwright install chromium && cd ../..
 
-node ui/tools/keyboard-journey.mjs    # 31/31
-node ui/tools/reflow-check.mjs        # 35/35 — 5 widths (320/360/390/412/768) x 7 screens
+node ui/tools/keyboard-journey.mjs    # 36/36
+node ui/tools/reflow-check.mjs        # 15/15 — 5 widths (320/360/390/412/768) x 3 screens
 node ui/tools/axe-scan.mjs            # 0 violations; rewrites ui/axe-report.json
 
 # 11/11 — needs the server running; pass the URL, it defaults to port 8000
