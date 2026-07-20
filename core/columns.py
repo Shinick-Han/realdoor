@@ -94,6 +94,7 @@ from core.extract import (
     _build_value_field,
     _caption_refusal,
     _join_run,
+    _parallel_caption_refusal,
     _split_runs,
     normalize_label,
     parse_value,
@@ -342,6 +343,10 @@ def column_value(
         return None
 
     if len(candidates) == 1:
+        # A candidate that repeats the label's own construction is the next column's
+        # caption, not a value -- see `core.extract._parallel_caption_refusal` (it-009).
+        if _parallel_caption_refusal(label_run, candidates[0]):
+            return None
         return _build_value_field(
             candidates[0], field_name, convention, is_exact,
             "value read from the same row as its label, in the column to its right",
@@ -352,6 +357,8 @@ def column_value(
     if attributed is None:
         return None
     run, header = attributed
+    if _parallel_caption_refusal(label_run, run):
+        return None
     return _build_value_field(
         run, field_name, convention, is_exact,
         f"value read from the same row as its label, in the column the page's own header "

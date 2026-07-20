@@ -1,12 +1,13 @@
 {
-  "iteration": 0,
-  "target": null,
-  "run_at": "2026-07-20T16:19:35+00:00",
-  "head": "e850355e3013ec8100af9ca9a5cc12add51bf8f5",
+  "iteration": 9,
+  "target": "T16",
+  "run_at": "2026-07-20T16:33:38+00:00",
+  "head": "c2d0a0ffb1e806cb3f7f7fa10d2ddfc15e20de66",
   "accepted_commit": "538567ab40d820c3c45c0d2a1e7b920141cb83a9",
   "verdict": "REJECTED_GATE",
   "failed_gates": [
-    "G6"
+    "G6",
+    "G7"
   ],
   "gates": [
     {
@@ -44,7 +45,7 @@
       "gate": "G4",
       "pass": true,
       "detail": {
-        "passed": 1491,
+        "passed": 1539,
         "failed": 0,
         "baseline_passed": 1491
       }
@@ -53,7 +54,9 @@
       "gate": "G5",
       "pass": true,
       "detail": {
-        "flags_off": [],
+        "flags_off": [
+          "REALDOOR_QUOTE_FOLD"
+        ],
         "compared_against": "538567ab40d820c3c45c0d2a1e7b920141cb83a9",
         "documents_compared": 77,
         "identical": true,
@@ -65,39 +68,48 @@
       "gate": "G6",
       "pass": false,
       "detail": {
-        "allowlist": [],
+        "allowlist": [
+          "core/columns.py",
+          "core/extract.py",
+          "core/test_quote_fold.py"
+        ],
         "changed": [
-          "api/ask.py",
-          "api/route_llm.py",
-          "api/test_ask_routing.py",
-          "api/test_route_llm.py",
-          "logic/test_answer_rules.py",
+          "core/columns.py",
+          "core/extract.py",
+          "core/test_quote_fold.py",
           "loop/baseline.json",
           "loop/falsification/it-009.json",
           "loop/falsify/it-009.py",
+          "loop/measurements/it-000.json",
           "loop/proposals/it-009.md",
-          "ui/dist/i18n.js"
+          "testdata/blank_carriers_raw/carriers_manifest.json",
+          "testdata/blank_carriers_raw/hud_home_self_certification_income.pdf",
+          "testdata/blank_carriers_raw/nevada_dwss_self_employment_worksheet.pdf",
+          "testdata/blank_carriers_raw/texas_h1049_self_employment_statement.pdf",
+          "testdata/blank_carriers_raw/wshfc_self_employment_income_worksheet.pdf"
         ],
         "outside_allowlist": [
-          "api/ask.py",
-          "api/route_llm.py",
-          "api/test_ask_routing.py",
-          "api/test_route_llm.py",
-          "logic/test_answer_rules.py",
-          "ui/dist/i18n.js"
+          "testdata/blank_carriers_raw/carriers_manifest.json",
+          "testdata/blank_carriers_raw/hud_home_self_certification_income.pdf",
+          "testdata/blank_carriers_raw/nevada_dwss_self_employment_worksheet.pdf",
+          "testdata/blank_carriers_raw/texas_h1049_self_employment_statement.pdf",
+          "testdata/blank_carriers_raw/wshfc_self_employment_income_worksheet.pdf"
         ],
         "forbidden_touched": [],
         "cache_paths_exempted": 0,
-        "preexisting_dirt_exempted": 59
+        "preexisting_dirt_exempted": 73
       }
     },
     {
       "gate": "G7",
-      "pass": true,
+      "pass": false,
       "detail": {
-        "mode": "baseline self-check",
+        "mode": "iteration",
+        "target": "T16",
+        "predicted": [],
         "observed": [],
-        "requirement": "the unchanged tree must flip nothing"
+        "unpredicted": [],
+        "target_fields_flipped": []
       }
     }
   ],
@@ -123,7 +135,7 @@
       "abstained": 100
     },
     "pytest": {
-      "passed": 1491,
+      "passed": 1539,
       "failed": 0,
       "exit_code": 0
     }
@@ -155,15 +167,18 @@
   "field_flips_observed": [],
   "flag_off_identical": true,
   "diff_files": [
-    "api/ask.py",
-    "api/route_llm.py",
-    "api/test_ask_routing.py",
-    "api/test_route_llm.py",
-    "logic/test_answer_rules.py",
+    "core/columns.py",
+    "core/extract.py",
+    "core/test_quote_fold.py",
     "loop/baseline.json",
     "loop/falsification/it-009.json",
     "loop/falsify/it-009.py",
+    "loop/measurements/it-000.json",
     "loop/proposals/it-009.md",
-    "ui/dist/i18n.js"
+    "testdata/blank_carriers_raw/carriers_manifest.json",
+    "testdata/blank_carriers_raw/hud_home_self_certification_income.pdf",
+    "testdata/blank_carriers_raw/nevada_dwss_self_employment_worksheet.pdf",
+    "testdata/blank_carriers_raw/texas_h1049_self_employment_statement.pdf",
+    "testdata/blank_carriers_raw/wshfc_self_employment_income_worksheet.pdf"
   ]
 }

@@ -1,0 +1,48 @@
+{
+  "predicate": "loop/falsify/it-009.py",
+  "run_at": "2026-07-20T16:15:07+00:00",
+  "documents_swept": 77,
+  "docs_fired": [
+    "confirm::wa_dshs_14252_employment_verification.pdf"
+  ],
+  "firing_count": 1,
+  "firings": [
+    {
+      "corpus": "confirm",
+      "doc": "wa_dshs_14252_employment_verification.pdf",
+      "field": "(none -- engagement only)",
+      "value": {},
+      "engagement": [
+        "p1: ['EMPLOYEE’S NAME'] newly recognised"
+      ],
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {}
+    }
+  ],
+  "conflicts": [],
+  "target_fired": true,
+  "verdict": "pass",
+  "filled_dev": {
+    "documents_swept": 3,
+    "docs_fired": [
+      "filled::wa_dshs_14252_employment_verification_filled.pdf"
+    ],
+    "firings": [
+      {
+        "corpus": "filled",
+        "doc": "wa_dshs_14252_employment_verification_filled.pdf",
+        "field": "(none -- engagement only)",
+        "value": {},
+        "engagement": [
+          "p1: ['EMPLOYEE’S NAME'] newly recognised"
+        ],
+        "page": null,
+        "bbox": null,
+        "emitted_with_rule": {}
+      }
+    ],
+    "conflicts": [],
+    "target_fired": true
+  }
+}

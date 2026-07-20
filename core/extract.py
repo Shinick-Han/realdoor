@@ -529,14 +529,47 @@ LABEL_SYNONYMS: dict[str, dict[str, str]] = {
 
 _LABEL_PUNCT_RE = re.compile(r"[\s:]+")
 
+#: The frozen scorer's own quote rows, verbatim (`eval/score_extraction.py` `_QUOTE_MAP`,
+#: quote entries only): the typographer's apostrophes and double quotes fold to ASCII.
+#: The scorer's dash rows are deliberately NOT copied -- labels distinguish hyphens
+#: (`TAKE-HOME PAY` is a table key, and orangeusd prints U+2010 fourteen times), so
+#: folding dashes would widen what a key can match. Corpus census (loop iteration
+#: it-009): U+2019 x67, U+201C x31, U+201D x31, U+2018 x0, no width variants anywhere.
+_QUOTE_FOLD_TABLE = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
+
+
+def _quote_fold_enabled() -> bool:
+    """Is the curly-quote fold (and its parallel-caption refusal) on? ON by default.
+
+    Two gated behaviours, one flag, because the second exists only on account of the
+    first: (a) `normalize_label` folds the four scorer quote glyphs before matching, so
+    `EMPLOYEE’S NAME` -- the apostrophe wa_dshs actually prints -- matches the ASCII
+    `EMPLOYEE'S NAME` already in `LABEL_SYNONYMS`; (b) `_parallel_caption_refusal`
+    refuses the misread the fold otherwise admits (measured on wa_dshs: the newly
+    recognised label's row reader took the neighbouring caption `EMPLOYER’S NAME` as a
+    person_name value). With `REALDOOR_QUOTE_FOLD=0` neither runs and this module's
+    output is bit-identical to what it was before the fold existed (loop iteration
+    it-009; falsified over all 77 corpus documents plus the filled dev set first --
+    loop/falsification/it-009.json). Read through a function rather than captured at
+    import so a test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_QUOTE_FOLD", "").strip() != "0"
+
 
 def normalize_label(text: str) -> str:
-    """Upper-case, collapse whitespace, drop a trailing colon.
+    """Upper-case, collapse whitespace, drop a trailing colon; fold curly quotes.
 
     Only ever used to compare a label against a closed set of strings. It does not widen
     what counts as a label run, so it cannot admit a string that is not already in one of
-    the two tables.
+    the two tables. The quote fold keeps that argument intact: it maps glyph variants the
+    project's own frozen scorer already declares equivalent (`eval/score_extraction.py`
+    `_QUOTE_MAP`) onto strings already in the tables -- the same argument as the
+    case-insensitive comparison in `_label_runs` path 2, which admits no new strings.
     """
+    if _quote_fold_enabled():
+        text = text.translate(_QUOTE_FOLD_TABLE)
     return _LABEL_PUNCT_RE.sub(" ", text.upper()).strip()
 
 
@@ -1825,6 +1858,36 @@ def _caption_refusal(
     return None
 
 
+def _parallel_caption_refusal(label_run: Sequence[Word], run: Sequence[Word]) -> bool:
+    """Is this candidate the page printing its label's construction again, not a value?
+
+    wa_dshs prints `EMPLOYEE’S NAME | EMPLOYER’S NAME` -- two captions on one row, one
+    blank cell each. Once the quote fold recognises the left caption as a label, the row
+    readers take the right caption as its value (measured: person_name =
+    `EMPLOYER’S NAME` at certainty low, on the blank form and its filled twin). The two
+    existing caption tests cannot object: no colon, and a two-cell row is below
+    `MIN_HEADER_ROW_CELLS`.
+
+    What the page prints is the same slot-naming construction twice: the candidate is
+    caption-shaped (`_is_caption_cell` -- no digit, label-shaped) AND repeats the label's
+    own final normalized token (`EMPLOYEE'S NAME` -> `NAME` = `EMPLOYER'S NAME` ->
+    `NAME`). That is the next column's caption, and a label is never a value. The test
+    reads only printed tokens and is monotone -- it turns a reading into an abstention,
+    never one value into another. Gated with the fold because it exists on account of
+    the fold; falsified with it over all 77 + filled dev (zero emission diffs anywhere,
+    loop/falsification/it-009.json).
+    """
+    if not _quote_fold_enabled():
+        return False
+    label_tokens = normalize_label(_join_run(label_run)).split()
+    run_tokens = normalize_label(_join_run(run)).split()
+    return (
+        bool(label_tokens and run_tokens)
+        and run_tokens[-1] == label_tokens[-1]
+        and _is_caption_cell(run)
+    )
+
+
 def _first_caption_run(
     runs: Sequence[Sequence[Word]], header_words: frozenset[int]
 ) -> float | None:
@@ -2126,6 +2189,8 @@ def _side_by_side_run(
 
     run = runs[0]
     if run[0].x0 - label_end < SIDE_BY_SIDE_MIN_GAP:
+        return None
+    if _parallel_caption_refusal(label_run, run):
         return None
     return run
 
