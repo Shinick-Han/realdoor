@@ -78,6 +78,26 @@ const SCREENS = [
       await page.locator("#documents-body .field-row-btn").first().click();
     } },
 
+  // The same screen with the inline row editor OPEN ("This is wrong — fix it") and the
+  // picker's Start-over control armed on its confirming step. Both are states a renter
+  // actually reaches, and both draw controls that exist in no other state. The
+  // drag-to-read layer itself needs the live API (the static origins have no reader), so
+  // its focus states are checked against the live server separately; everything the
+  // offline build CAN reach of the editor is scanned here.
+  { id: "step1-row-editor", enter: async () => {},
+    setUp: async (page) => {
+      await page.locator("#documents-body button[id^='fixit-']").first().click();
+      await page.locator("#documents-body .row-editor input").waitFor();
+      await page.locator("#start-over-open").click();
+      await page.locator("#start-over-yes").waitFor();
+    },
+    tearDown: async (page) => {
+      // leave the screen as the next state expects it: control disarmed, editor closed.
+      // Structural selectors, per the note above -- both buttons translate.
+      await page.locator("#start-over-host .button-row button").nth(1).click();
+      await page.locator("#documents-body button[id^='cancel-']").first().click();
+    } },
+
   { id: "step2-correct", enter: async (page) => page.locator("#step-next").click(),
     setUp: async (page) => {
       // load the rejected-correction scenario: the case that must be prominent, and the
@@ -156,6 +176,8 @@ for (const origin of ORIGINS) {
         rules_passed: outcome.passes ? outcome.passes.length : null
       };
     }, WCAG_TAGS);
+
+    if (screen.tearDown) await screen.tearDown(page);
 
     results.push({ screen: screen.id, ...run });
     console.log(

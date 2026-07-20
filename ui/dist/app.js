@@ -85,6 +85,12 @@
       timesSeen[row.applicant_name] = (timesSeen[row.applicant_name] || 0) + 1;
     });
     return rows.map(function (row) {
+      /* The session's own file is named for what it is, not for a person: its documents
+       * may name nobody, or several people, and the row must be findable by the renter
+       * who just uploaded — they are looking for "my documents", not for a name. */
+      if (row.file_kind === "uploads") {
+        return "Your uploaded documents (" + row.document_count + ")";
+      }
       var name = row.applicant_name;
       var head = name || row.household_id;
       if (name && timesSeen[name] > 1) head = name + " (" + row.household_id + ")";
@@ -96,6 +102,7 @@
 
   /** The name to speak for a household id, for announcements. Id when there is no name. */
   function householdName(householdId) {
+    if (householdId === UPLOADS_HOUSEHOLD_ID) return "your uploaded documents";
     var row = (state.households || []).filter(function (r) {
       return r.household_id === householdId;
     })[0];
@@ -901,6 +908,9 @@
               document_count: row.document_count,
               applicant_name: row.applicant_name || null,
               applicant_name_certainty: row.applicant_name_certainty || null,
+              // "uploads" marks the session's own file, made of what the renter
+              // uploaded. Absent on fixtures rows: the offline build has no uploads.
+              file_kind: row.file_kind || "pack",
               has_report: true
             };
           });
@@ -946,14 +956,30 @@
           if (!match) return Promise.resolve({ report: null, unsupported: true });
           return Promise.resolve({ report: fixtures[match.fixture], unsupported: false });
         }
+        var payload = {
+          document_id: documentId, field: field, value: value,
+          together: Boolean(opts.together)
+        };
+        /* The rectangle the renter drew on the page, if they used "Point at it on the
+         * page". Additive: a correction without one is exactly the request it always was. */
+        if (opts.region) payload.region = opts.region;
         return json("/api/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            document_id: documentId, field: field, value: value,
-            together: Boolean(opts.together)
-          })
+          body: JSON.stringify(payload)
         }).then(function (report) { return { report: report, unsupported: false }; });
+      },
+
+      /* Read one renter-drawn rectangle off a page. The answer is a SUGGESTION: it fills
+       * the editor's input and nothing else. Committing still goes through confirm(),
+       * where the server compares and decides. Offline there is no reader to ask. */
+      readRegion: function (documentId, payload) {
+        if (!live) return Promise.resolve({ unsupported: true });
+        return json("/api/document/" + encodeURIComponent(documentId) + "/read-region", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
       },
 
       /* Undoing a correction is a round trip, not a local rewind.
@@ -1256,6 +1282,11 @@
   })();
 
   // ── application state ───────────────────────────────────────────────────────────
+  /* The id of the session's own file, made of the renter's uploads. Must match
+   * api/store.py::UPLOADS_HOUSEHOLD_ID. It shares the household machinery end to end;
+   * the picker row for it exists only while the session holds at least one upload. */
+  var UPLOADS_HOUSEHOLD_ID = "YOUR-UPLOADS";
+
   var state = {
     households: [],
     householdId: null,
@@ -1275,6 +1306,18 @@
     uploadError: null,
     uploadBusy: false,
     uploadActiveField: null,
+    /* The one open inline row editor, or null. Keys: key ("tableId::field"), docId,
+     * tableId, field, draft (what the renter has typed so far — kept across re-renders),
+     * region ({page, box} in PDF points, the renter-drawn rectangle), suggestionShown
+     * (a machine reading of that rectangle was placed in the input), cropUrl (data URL of
+     * the enlarged crop, drawn from the same pixels the renter dragged over), note (the
+     * read outcome sentence), pointing (the drag tool is armed on the page image).
+     * One editor at a time: opening another row closes this one, dropping its state. */
+    rowEdit: null,
+    // the field whose page-image tag is lifted (row focus / tag hover), if any
+    liftedField: null,
+    // the picker's "Start over" control is armed (showing its confirming step)
+    startOverArmed: false,
     selftest: null,
     lastQuestion: null,     // for the step 6 check-answers row
     screen: "screen-1",     // the one screen currently on show; the walkthrough opens on step 1
@@ -1668,6 +1711,13 @@
           class: "hint", id: "upload-file-hint",
           text: "PDF only, up to 10 MB. A scanned page is fine — if there is no text in the " +
                 "file we read the picture instead, and say which of the two we did."
+        }),
+        /* The honest expectation line: the one thing about this panel that surprises
+         * people is how long a scan takes, so the panel says it before it happens. */
+        h("span", {
+          class: "hint",
+          text: "Documents with scanned or photographed parts can take up to a minute " +
+                "to read — plain documents are quick."
         })
       ]),
       h("p", { class: "button-row" }, [submit])
@@ -1713,6 +1763,10 @@
           ? "We could not confidently read any field from that document."
           : "Read " + view.located_count + " of " + view.field_count + " fields from the " +
             "uploaded document.");
+        /* The upload just created — or grew — the session's own file, so the picker has a
+         * new row to offer. Refreshing the list is what makes that row exist on screen,
+         * and the result panel below wants to see it, so the refresh is waited for. */
+        return loadHouseholdList();
       })
       .catch(function (err) {
         state.uploadResult = null;
@@ -1851,6 +1905,28 @@
       });
     }
 
+    /* The uploads now form a file of their own, and this is where the renter learns
+     * that. The button is the same open the picker offers — one action, two doors. */
+    var uploadsRow = (state.households || []).filter(function (r) {
+      return r.file_kind === "uploads";
+    })[0];
+    if (Source.live && uploadsRow) {
+      block.appendChild(h("div", { class: "callout" }, [
+        h("h4", { style: { marginTop: "0" }, text: "Walk the six steps with your own documents" }),
+        h("p", {
+          text: "Everything you upload in this session is kept together as one file. " +
+                "Open it and every step reads your documents — you can fix values, " +
+                "see the numbers, check the list, and take the packet."
+        }),
+        h("p", { class: "button-row", style: { marginBottom: "0" } }, [
+          h("button", {
+            type: "button", class: "action action--lead",
+            onclick: function () { openUploadsFile(); }
+          }, ["Open your uploaded documents (" + uploadsRow.document_count + ")"])
+        ])
+      ]));
+    }
+
     if ((view.limits || []).length) {
       block.appendChild(h("div", { class: "callout callout--warn" }, [
         h("h3", { text: "What this reading does not tell you" }),
@@ -1861,6 +1937,18 @@
     }
 
     host.appendChild(block);
+  }
+
+  /** Open the session's own file — the one made of the renter's uploads. */
+  function openUploadsFile() {
+    var select = byId("household-select");
+    if (select) select.value = UPLOADS_HOUSEHOLD_ID;
+    loadHousehold(UPLOADS_HOUSEHOLD_ID).then(function () {
+      announce("Opened the file of your uploaded documents. " +
+        (state.report ? READINESS[state.report.readiness_status].title : ""));
+      var heading = byId("doc-detail-heading") || byId("h-1");
+      if (heading && heading.focus) heading.focus();
+    });
   }
 
   // ── panel 1: documents and evidence ─────────────────────────────────────────────
@@ -1918,15 +2006,32 @@
       h("h4", { style: { marginTop: "0" }, text: "Check each value, then confirm it" }),
       h("p", {
         style: { marginBottom: "0" },
-        text: "Every box below already holds what we read off this page. If a value is " +
-              "right, choose Confirm and leave the box alone. If it is wrong, change the " +
-              "box and choose the same button — that records a correction instead. " +
+        text: "Each row below shows what we read off this page. If a value is right, " +
+              "choose Confirm. If it is wrong, choose “This is wrong — fix it”: the row " +
+              "opens a box where you type what the page really says, or you point at " +
+              "the spot on the page and check our reading of it before you save. " +
               "Confirming does not change the value or any number below it; it records " +
               "that you read it."
       }),
       confirmationSummary(state.report)
     ]));
-    detail.appendChild(fieldTable(doc, { confirmable: true }));
+    var tableOpts = { confirmable: true };
+    if (state.householdId === UPLOADS_HOUSEHOLD_ID) {
+      /* The absence endpoint answers with the updated upload view (the upload panel's
+       * contract). This screen reads the file's report, so it re-fetches that instead of
+       * pouring a view into `state.report` — and it keeps the panel's copy in step. */
+      tableOpts.applyAbsence = function (body) {
+        if (body && state.uploadResult && body.upload_id === state.uploadResult.upload_id) {
+          state.uploadResult = body;
+          renderUploadResult();
+        }
+        Source.report(UPLOADS_HOUSEHOLD_ID).then(function (report) {
+          if (report) state.report = report;
+          renderAll();
+        });
+      };
+    }
+    detail.appendChild(fieldTable(doc, tableOpts));
     var rest = confirmRemaining(doc, doc.document_id);
     if (rest) detail.appendChild(rest);
 
@@ -2038,7 +2143,10 @@
       located.forEach(function (field) {
         var pct = boxPercent(field.bbox, pageW, pageH);
         var box = h("div", {
-          class: "evidence-box" + (activeField === field.field ? " is-active" : ""),
+          class: "evidence-box" + (activeField === field.field ? " is-active" : "") +
+                 // the lift survives a re-render: the page image reloads on every draw,
+                 // and a focus-held lift that lived only in the DOM died with the old boxes
+                 (state.liftedField === field.field ? " tag-lifted" : ""),
           "data-field": field.field,
           style: {
             left: pct.left.toFixed(3) + "%",
@@ -2046,8 +2154,79 @@
             width: pct.width.toFixed(3) + "%",
             height: pct.height.toFixed(3) + "%"
           }
-        }, [h("span", { class: "box-tag", text: field.field })]);
+        }, [
+          /* The tag wears the same plain words the renter reads everywhere else, never
+           * the internal id — `pay_period_start` on the face of someone's pay stub is a
+           * machine talking to itself. The id stays one hover away in `title` for
+           * whoever wants it. A tag floats OVER document pixels by construction, so two
+           * behaviours keep the page readable: placement (placeTags below) and the lift
+           * — hovering a tag, or focusing its field's row, drops it to near-transparent
+           * so the pixels beneath can be read without dismissing anything. */
+          h("span", {
+            class: "box-tag",
+            text: fieldWords(field.field),
+            title: field.field,
+            onpointerenter: function (event) { event.target.parentNode.classList.add("tag-lifted"); },
+            onpointerleave: function (event) { event.target.parentNode.classList.remove("tag-lifted"); }
+          })
+        ]);
         container.appendChild(box);
+      });
+      placeTags(container);
+    }
+
+    /* Deterministic tag placement. Each tag prefers to sit OUTSIDE its own box — above
+     * its top-left corner — and flips below when the page top would clip it. Among the
+     * four candidate anchors the first with zero overlap against every OTHER field's
+     * box (and against tags already placed) wins; ties go to above-left by candidate
+     * order. Only when every candidate collides does it fall back to above-left, the
+     * least-bad constant. Same inputs, same layout, every render. */
+    function placeTags(container) {
+      var boxes = Array.prototype.slice.call(container.querySelectorAll(".evidence-box"));
+      if (!boxes.length) return;
+      var host = container.getBoundingClientRect();
+      if (!host.width || !host.height) return;
+      var rects = boxes.map(function (el) {
+        var r = el.getBoundingClientRect();
+        return { left: r.left - host.left, top: r.top - host.top,
+                 right: r.right - host.left, bottom: r.bottom - host.top };
+      });
+      var placed = [];
+      function collides(a, b) {
+        return !(a.right <= b.left || b.right <= a.left ||
+                 a.bottom <= b.top || b.bottom <= a.top);
+      }
+      boxes.forEach(function (el, index) {
+        var tag = el.querySelector(".box-tag");
+        if (!tag) return;
+        var own = rects[index];
+        var w = tag.offsetWidth, ht = tag.offsetHeight;
+        var candidates = [
+          { left: own.left, top: own.top - ht },                 // above-left (preferred)
+          { left: own.right - w, top: own.top - ht },            // above-right
+          { left: own.left, top: own.bottom },                   // below-left
+          { left: own.right - w, top: own.bottom }               // below-right
+        ].map(function (c) {
+          return { left: c.left, top: c.top, right: c.left + w, bottom: c.top + ht };
+        }).filter(function (c) {
+          return c.top >= 0 && c.bottom <= host.height &&
+                 c.left >= 0 && c.right <= host.width;
+        });
+        var others = rects.filter(function (_, i) { return i !== index; });
+        var chosen =
+          candidates.filter(function (c) {
+            return !others.some(function (o) { return collides(c, o); }) &&
+                   !placed.some(function (p) { return collides(c, p); });
+          })[0] ||
+          candidates.filter(function (c) {
+            return !others.some(function (o) { return collides(c, o); });
+          })[0] ||
+          candidates[0] ||
+          { left: own.left, top: Math.max(0, own.top - ht),
+            right: own.left + w, bottom: Math.max(0, own.top - ht) + ht };
+        tag.style.left = (chosen.left - own.left).toFixed(1) + "px";
+        tag.style.top = (chosen.top - own.top).toFixed(1) + "px";
+        placed.push(chosen);
       });
     }
 
@@ -2058,8 +2237,11 @@
         state.pageImageUrl = url;
         frame.appendChild(h("img", { src: url, alt: "Rendered page 1 of " + doc.file_name }));
         var overlay = h("div", { class: "page-schematic", "aria-hidden": "true" });
-        drawBoxes(overlay);
+        // Appended BEFORE the boxes are drawn: tag placement measures real pixels, and a
+        // detached node measures nothing.
         frame.appendChild(overlay);
+        drawBoxes(overlay);
+        attachRegionLayer(frame, host, doc, pageW, pageH);
         host.appendChild(h("p", {
           class: "page-caption",
           text: "Page 1 as rendered by the server. Each rectangle is the box the value was read from; " +
@@ -2087,8 +2269,8 @@
           text: field.source_text === null || field.source_text === undefined ? "" : String(field.source_text)
         }));
       });
-      drawBoxes(schematic);
       frame.appendChild(schematic);
+      drawBoxes(schematic);
       host.appendChild(h("p", {
         class: "page-caption"
       }, [
@@ -2097,6 +2279,205 @@
         "each rectangle is at the real extracted coordinates and holds the real source text, drawn " +
         "with the same bottom-left-origin conversion the server uses. Exact coordinates are in the table below."
       ]));
+    }
+  }
+
+  /* ── the drag-to-read layer ────────────────────────────────────────────────────────
+   *
+   * Armed by "Point at it on the page" in the inline editor. It sits ON TOP of the
+   * evidence overlay, so no tag and no box can ever block starting a drag — and while it
+   * is armed, every tag drops to near-transparent (CSS `.is-pointing`) so the pixels the
+   * renter needs to aim at are readable.
+   *
+   * The keyboard is not left out, twice over: the typed path in the editor is the
+   * complete equivalent of this whole tool, and the layer itself takes Enter to place a
+   * box, arrows to nudge it, Shift+arrows to resize it, Enter to read, Escape to leave.
+   */
+  function attachRegionLayer(frame, host, doc, pageW, pageH) {
+    var ed = state.rowEdit;
+    if (!ed || !ed.pointing || ed.docId !== doc.document_id) return;
+    frame.classList.add("is-pointing");
+
+    var rect = null;      // {x, y, w, h} as fractions of the page, top-left origin
+    var dragFrom = null;
+    var rectEl = h("div", { class: "region-rect", hidden: true });
+
+    var layer = h("div", {
+      class: "region-layer",
+      tabindex: "0",
+      role: "application",
+      "aria-label": "Point at " + fieldWords(ed.field) + " on the page. Drag a box " +
+        "around the value with a mouse or a finger. With the keyboard: Enter places a " +
+        "box, the arrow keys move it, Shift with an arrow key resizes it, Enter again " +
+        "reads it, Escape stops. You can always type the value instead."
+    }, [rectEl]);
+
+    function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+    function paint() {
+      if (!rect) { rectEl.hidden = true; return; }
+      rectEl.hidden = false;
+      rectEl.style.left = (rect.x * 100).toFixed(2) + "%";
+      rectEl.style.top = (rect.y * 100).toFixed(2) + "%";
+      rectEl.style.width = (rect.w * 100).toFixed(2) + "%";
+      rectEl.style.height = (rect.h * 100).toFixed(2) + "%";
+    }
+    function fractionOf(event) {
+      var b = layer.getBoundingClientRect();
+      return { x: clamp01((event.clientX - b.left) / b.width),
+               y: clamp01((event.clientY - b.top) / b.height) };
+    }
+    function defaultRect() { return { x: 0.35, y: 0.45, w: 0.3, h: 0.05 }; }
+
+    layer.addEventListener("pointerdown", function (event) {
+      event.preventDefault();
+      if (layer.setPointerCapture) layer.setPointerCapture(event.pointerId);
+      dragFrom = fractionOf(event);
+      rect = { x: dragFrom.x, y: dragFrom.y, w: 0, h: 0 };
+      paint();
+    });
+    layer.addEventListener("pointermove", function (event) {
+      if (!dragFrom) return;
+      var f = fractionOf(event);
+      rect = { x: Math.min(dragFrom.x, f.x), y: Math.min(dragFrom.y, f.y),
+               w: Math.abs(f.x - dragFrom.x), h: Math.abs(f.y - dragFrom.y) };
+      paint();
+    });
+    layer.addEventListener("pointerup", function () {
+      if (!dragFrom) return;
+      dragFrom = null;
+      if (!rect || rect.w < 0.006 || rect.h < 0.006) {
+        rect = null;
+        paint();
+        announce("That was a click, not a box. Drag a box around the value, or press " +
+                 "Escape to stop.");
+        return;
+      }
+      finishRegion();
+    });
+    layer.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        disarm();
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (!rect) {
+          rect = defaultRect();
+          paint();
+          announce("A box is on the page. The arrow keys move it, Shift with an arrow " +
+                   "key resizes it, Enter reads it.");
+        } else {
+          finishRegion();
+        }
+        return;
+      }
+      var step = 0.01;
+      var dx = 0, dy = 0;
+      if (event.key === "ArrowLeft") dx = -step;
+      else if (event.key === "ArrowRight") dx = step;
+      else if (event.key === "ArrowUp") dy = -step;
+      else if (event.key === "ArrowDown") dy = step;
+      else return;
+      event.preventDefault();
+      if (!rect) rect = defaultRect();
+      if (event.shiftKey) {
+        rect.w = Math.max(0.01, Math.min(1 - rect.x, rect.w + dx));
+        rect.h = Math.max(0.01, Math.min(1 - rect.y, rect.h + dy));
+      } else {
+        rect.x = clamp01(Math.min(rect.x + dx, 1 - rect.w));
+        rect.y = clamp01(Math.min(rect.y + dy, 1 - rect.h));
+      }
+      paint();
+    });
+
+    function disarm() {
+      var current = state.rowEdit;
+      if (current) {
+        current.pointing = false;
+        current.rerender();
+        var back = byId(pointButtonId(current.tableId, current.field));
+        if (back) back.focus();
+      }
+      announce("Pointing stopped. Nothing was read and nothing changed.");
+    }
+
+    function finishRegion() {
+      var current = state.rowEdit;
+      if (!current) return;
+      var img = frame.querySelector("img");
+      var cropUrl = img ? cropDataUrl(img, rect) : null;
+      // fractions (top-left origin) → PDF points (bottom-left origin)
+      var box = [
+        Math.round(rect.x * pageW * 100) / 100,
+        Math.round((1 - rect.y - rect.h) * pageH * 100) / 100,
+        Math.round((rect.x + rect.w) * pageW * 100) / 100,
+        Math.round((1 - rect.y) * pageH * 100) / 100
+      ];
+      announce("Reading the area you pointed at…");
+      Source.readRegion(doc.document_id, { page: 1, box: box, field: current.field })
+        .then(function (body) {
+          var still = state.rowEdit;
+          if (!still || still.key !== current.key) return;   // the editor moved on
+          still.pointing = false;
+          still.region = { page: (body && body.page) || 1, box: (body && body.box) || box };
+          still.cropUrl = cropUrl;
+          if (body && body.could_read) {
+            still.draft = String(body.reading);
+            still.suggestionShown = true;
+            still.note = "We read “" + String(body.reading) + "” from the area you " +
+                         "pointed at. It is a suggestion — check it against the " +
+                         "picture, fix it if it is wrong, then save.";
+          } else {
+            still.suggestionShown = false;
+            still.note = "We could not read that area — type what it says.";
+          }
+          still.rerender();
+          announce(still.note);
+          var input = byId(fieldInputId(still.tableId, still.field));
+          if (input) input.focus();
+        })
+        .catch(function (error) {
+          var still = state.rowEdit;
+          if (!still || still.key !== current.key) return;
+          still.pointing = false;
+          still.region = null;
+          still.cropUrl = null;
+          still.suggestionShown = false;
+          still.note = "That area could not be read (" +
+                       String(error && error.message ? error.message : error) +
+                       "). Type what the page says.";
+          still.rerender();
+          announce(still.note);
+        });
+    }
+
+    frame.appendChild(layer);
+    host.appendChild(h("p", {
+      class: "hint region-hint",
+      text: "Drag a box around the value on the page above. Press Escape to stop. " +
+            "Typing the value works without this."
+    }));
+    layer.focus();
+  }
+
+  /** The enlarged crop of the marked area, cut from the SAME rendered pixels the renter
+   *  dragged over — not a second rendering that could disagree with what they saw. */
+  function cropDataUrl(img, rect) {
+    try {
+      var sw = img.naturalWidth * rect.w;
+      var sh = img.naturalHeight * rect.h;
+      if (sw < 2 || sh < 2) return null;
+      var zoom = Math.max(1, Math.min(4, 360 / sw));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.round(sw * zoom);
+      canvas.height = Math.round(sh * zoom);
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(img, img.naturalWidth * rect.x, img.naturalHeight * rect.y, sw, sh,
+                    0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/png");
+    } catch (e) {
+      return null;   // a tainted or half-loaded image forfeits the picture, not the flow
     }
   }
 
@@ -2223,39 +2604,204 @@
     return h("div", { class: "absence-note" }, parts);
   }
 
-  /** The pre-filled box holding what we read. Empty only when nothing was read. */
-  function valueBox(doc, field, tableId) {
+  /* ── the inline row editor ──────────────────────────────────────────────────────
+   *
+   * The row IS the selection. "This is wrong — fix it" opens an editor in place: no
+   * document picker, no field picker, no other screen. The editor commits through the
+   * same correction machinery as everything else (`/api/confirm` decides confirmed vs
+   * corrected by comparing), so a fix made here is indistinguishable in the record from
+   * a fix made anywhere else — one machinery, one audit trail.
+   *
+   * "Point at it on the page" is a pointer ENHANCEMENT of the typed path, never a
+   * replacement: the reading it fetches lands in the input as an editable suggestion
+   * and is committed by nothing but the renter choosing Save. Beside the suggestion the
+   * editor shows the enlarged pixels of the exact area the renter marked, so the moment
+   * of decision is a comparison of picture to value — the anchoring defence. When the
+   * machine cannot read the area (low confidence, or the text does not fit the field),
+   * there is NO suggestion: a shaky prefill anchors exactly like a wrong prefill.
+   */
+  function editKey(tableId, field) { return tableId + "::" + field; }
+  function isEditing(tableId, field) {
+    return Boolean(state.rowEdit && state.rowEdit.key === editKey(tableId, field));
+  }
+  function fixItButtonId(tableId, field) { return "fixit-" + tableId + "-" + field; }
+  function pointButtonId(tableId, field) { return "point-" + tableId + "-" + field; }
+
+  function openRowEditor(doc, field, tableId, opts) {
+    state.rowEdit = {
+      key: editKey(tableId, field.field),
+      docId: doc.document_id, tableId: tableId, field: field.field,
+      draft: undefined, region: null, suggestionShown: false,
+      cropUrl: null, note: null, pointing: false,
+      rerender: (opts && opts.rerender) || renderDocuments
+    };
+    state.rowEdit.rerender();
+    var input = byId(fieldInputId(tableId, field.field));
+    if (input) { input.focus(); if (input.select) input.select(); }
+    announce("Editing " + fieldWords(field.field) + ". The box holds what we read. " +
+             "Type what the page really shows, or point at it on the page. " +
+             "Nothing changes until you choose Save.");
+  }
+
+  function closeRowEditor(focusId) {
+    var ed = state.rowEdit;
+    state.rowEdit = null;
+    if (ed && ed.rerender) ed.rerender(); else renderDocuments();
+    var back = focusId ? byId(focusId) : null;
+    if (back) back.focus();
+  }
+
+  /** Arm the drag tool for one row. For an absent row this also creates the editor
+   *  state, since its input is always on screen and needs somewhere to keep a region. */
+  function armPointing(doc, field, tableId, opts) {
+    var key = editKey(tableId, field.field);
+    if (!state.rowEdit || state.rowEdit.key !== key) {
+      var existing = byId(fieldInputId(tableId, field.field));
+      state.rowEdit = {
+        key: key, docId: doc.document_id, tableId: tableId, field: field.field,
+        draft: existing ? existing.value : undefined, region: null,
+        suggestionShown: false, cropUrl: null, note: null, pointing: true,
+        rerender: (opts && opts.rerender) || renderDocuments
+      };
+    } else {
+      state.rowEdit.pointing = !state.rowEdit.pointing;
+    }
+    state.rowEdit.rerender();
+    if (state.rowEdit.pointing) {
+      var layer = document.querySelector(".region-layer");
+      if (layer) {
+        if (layer.scrollIntoView) layer.scrollIntoView({ block: "nearest" });
+        layer.focus();
+      }
+      announce("Point at the value on the page. Drag a box around it, or press Enter " +
+               "to place a box and move it with the arrow keys. Press Escape to stop. " +
+               "You can always just type the value instead.");
+    } else {
+      var back = byId(pointButtonId(tableId, field.field));
+      if (back) back.focus();
+    }
+  }
+
+  /** The picture-beside-value block: the enlarged crop of the exact area the renter
+   *  marked, rendered where the eyes already are. This is the anchoring defence — the
+   *  moment of decision holds the pixels and the value side by side. */
+  function regionCompareBlock(ed) {
+    if (!ed || (!ed.cropUrl && !ed.note)) return null;
+    var parts = [];
+    if (ed.cropUrl) {
+      parts.push(h("figure", { class: "region-compare__crop" }, [
+        h("img", { src: ed.cropUrl, alt: "The area of the page you pointed at, enlarged." }),
+        h("figcaption", {
+          text: ed.suggestionShown
+            ? "This is the area you pointed at, enlarged. The box holds what the machine " +
+              "read there — a suggestion, nothing more. If the picture says something " +
+              "else, type that instead."
+            : "This is the area you pointed at, enlarged. We could not read it — type " +
+              "what it says."
+        })
+      ]));
+    }
+    if (ed.note) {
+      parts.push(h("p", { class: "hint region-compare__note", text: ed.note }));
+    }
+    return h("div", { class: "region-compare" }, parts);
+  }
+
+  function pointControl(doc, field, tableId, opts) {
+    /* Pointer enhancement only where a pointer path exists: the live build renders the
+     * page image; the static build has no server to read a region, so no button. */
+    if (!Source.live) return null;
+    var ed = isEditing(tableId, field.field) ? state.rowEdit : null;
+    return h("button", {
+      type: "button",
+      class: "action secondary point-at-page",
+      id: pointButtonId(tableId, field.field),
+      "aria-pressed": ed && ed.pointing ? "true" : "false",
+      "aria-label": "Point at " + field.field + " on the page image of " + doc.document_id,
+      onclick: function () { armPointing(doc, field, tableId, opts); }
+    }, ["Point at it on the page"]);
+  }
+
+  /** The row editor's input. Also the always-present input of an absent row. */
+  function editorInput(doc, field, tableId, initialValue) {
     var wasRead = !(field.value === null || field.value === undefined);
-    var input = h("input", {
+    return h("input", {
       type: "text",
       class: "value-box",
       id: fieldInputId(tableId, field.field),
-      value: wasRead ? plain(field.value) : "",
+      value: initialValue,
       autocomplete: "off",
       // The row header names the field and the caption names the document, but a screen
       // reader landing on the box out of that context needs both in one string.
       "aria-label": (wasRead ? "Value read for " : "Value to supply for ") +
                     field.field + " on " + doc.document_id,
+      oninput: function (event) {
+        var ed = state.rowEdit;
+        if (ed && ed.key === editKey(tableId, field.field)) ed.draft = event.target.value;
+      },
       onkeydown: function (event) {
+        if (event.key === "Escape" && isEditing(tableId, field.field) &&
+            field.value !== null && field.value !== undefined) {
+          event.preventDefault();
+          closeRowEditor(fixItButtonId(tableId, field.field));
+          announce("Nothing was changed.");
+          return;
+        }
         if (event.key !== "Enter") return;
         event.preventDefault();
         submitFieldValue(doc, field, tableId, false);
       }
     });
-    if (wasRead) return input;
+  }
+
+  /** The value cell. Read state shows the value as text; the editor replaces it in
+   *  place. Empty only when nothing was read — then the typed path is always open. */
+  function valueBox(doc, field, tableId, opts) {
+    var wasRead = !(field.value === null || field.value === undefined);
+    if (wasRead) {
+      if (!isEditing(tableId, field.field)) {
+        var read = [h("span", { class: "value-read", text: plain(field.value) })];
+        if (field.region_marked_by_renter) {
+          read.push(h("p", {
+            class: "hint",
+            text: "You pointed at page " + field.region_marked_by_renter.page +
+                  " for this value. The packet carries the spot you marked."
+          }));
+        }
+        return h("div", { class: "value-cell" }, read);
+      }
+      var ed = state.rowEdit;
+      return h("div", { class: "row-editor" }, [
+        h("p", { class: "hint row-editor__lead" }, [
+          "The box holds what we read. Type what the page really shows, then choose Save."
+        ]),
+        editorInput(doc, field, tableId,
+                    ed.draft !== undefined ? ed.draft : plain(field.value)),
+        regionCompareBlock(ed),
+        h("p", { class: "button-row row-editor__tools" }, [pointControl(doc, field, tableId, opts)])
+      ]);
+    }
     /* An expected field with nothing read leads with the document-perspective sentence,
-     * keeps the type-a-value path in the middle, and ends with the absence check. The
-     * pack table always talks to the household report, so no applyAbsence override. */
-    return absenceNotice(doc, field, tableId, null, [
-      input,
-      h("p", { class: "hint", text: "Not read — type what this should say, then choose Confirm." })
+     * keeps the type-a-value path in the middle — with the drag tool beside it, since an
+     * abstaining field is exactly where pointing earns its keep — and ends with the
+     * absence check. `opts` rides along so the uploads file's table can answer with its
+     * own report. */
+    var edAbsent = isEditing(tableId, field.field) ? state.rowEdit : null;
+    return absenceNotice(doc, field, tableId, opts, [
+      editorInput(doc, field, tableId,
+                  edAbsent && edAbsent.draft !== undefined ? edAbsent.draft : ""),
+      regionCompareBlock(edAbsent),
+      h("p", { class: "hint", text: "Not read — type what this should say, then choose Confirm." }),
+      h("p", { class: "button-row" }, [pointControl(doc, field, tableId, opts)])
     ]);
   }
 
-  /** The single button, plus the way back out of a confirmation once it is made. */
-  function confirmControl(doc, field, tableId) {
+  /** The action cell: Confirm and the way into the editor; Save and the way out of it;
+   *  the way back out of a mark once one is made. */
+  function confirmControl(doc, field, tableId, opts) {
     var kind = field.evidence_kind;
     var marked = kind === "confirmed_by_renter" || kind === "corrected_by_renter";
+    var wasRead = !(field.value === null || field.value === undefined);
     if (marked) {
       return h("div", { class: "confirm-cell" }, [
         h("span", { class: "chip chip--present" }, [
@@ -2279,30 +2825,83 @@
         }, ["Undo"])
       ]);
     }
-    return h("button", {
+    if (wasRead && isEditing(tableId, field.field)) {
+      return h("div", { class: "confirm-cell" }, [
+        h("button", {
+          type: "button",
+          class: "action confirm-one",
+          id: fieldButtonId(tableId, field.field),
+          "aria-label": "Save the value for " + field.field + " on " + doc.document_id,
+          onclick: function () { submitFieldValue(doc, field, tableId, false); }
+        }, ["Save"]),
+        h("button", {
+          type: "button",
+          class: "action secondary",
+          id: "cancel-" + tableId + "-" + field.field,
+          "aria-label": "Stop editing " + field.field + " on " + doc.document_id +
+                        " without changing it",
+          onclick: function () {
+            closeRowEditor(fixItButtonId(tableId, field.field));
+            announce("Nothing was changed.");
+          }
+        }, ["Cancel"])
+      ]);
+    }
+    var actions = [h("button", {
       type: "button",
       class: "action secondary confirm-one",
       id: fieldButtonId(tableId, field.field),
       "aria-label": "Confirm the value for " + field.field + " on " + doc.document_id,
       onclick: function () { submitFieldValue(doc, field, tableId, false); }
-    }, ["Confirm"]);
+    }, ["Confirm"])];
+    if (wasRead) {
+      /* The way into the editor. The row is the selection: no document picker, no field
+       * picker — this button and the row it sits on already name both. */
+      actions.push(h("button", {
+        type: "button",
+        class: "action secondary",
+        id: fixItButtonId(tableId, field.field),
+        "aria-label": "Fix the value read for " + field.field + " on " + doc.document_id,
+        onclick: function () { openRowEditor(doc, field, tableId, opts); }
+      }, ["This is wrong — fix it"]));
+    }
+    return h("div", { class: "confirm-cell" }, actions);
   }
 
-  /** Send whatever is in the box back. Same call for both outcomes. */
+  /** Send a value back. Same call for both outcomes.
+   *
+   *  With the editor open, what is sent is what its box holds. With no editor on the
+   *  row there is nothing typed, so Confirm sends the value exactly as read — the same
+   *  claim the pre-filled box used to carry, made by the same server comparison. */
   function submitFieldValue(doc, field, tableId, together) {
     var box = byId(fieldInputId(tableId, field.field));
-    if (!box) return Promise.resolve(false);
-    var raw = String(box.value).trim();
+    var raw;
+    if (box) {
+      raw = String(box.value).trim();
+    } else if (field.value !== null && field.value !== undefined) {
+      raw = plain(field.value);
+    } else {
+      return Promise.resolve(false);
+    }
     if (!raw) {
       announce("Type the value this field should hold, then choose Confirm.");
-      box.focus();
+      if (box) box.focus();
       return Promise.resolve(false);
     }
     var value = /^-?\d+(\.\d+)?$/.test(raw.replace(/,/g, "")) ? Number(raw.replace(/,/g, "")) : raw;
     var unchanged = sameAsRead(value, field.value);
 
+    /* The renter-marked rectangle rides with the commit — an ADDITIVE note beside the
+     * evidence. The machine's own page and box never move (frozen contract), and the
+     * server records whether a machine reading was on screen as a suggestion. */
+    var editing = isEditing(tableId, field.field) ? state.rowEdit : null;
+    var region = editing && editing.region
+      ? { page: editing.region.page, box: editing.region.box,
+          machine_suggestion_shown: Boolean(editing.suggestionShown) }
+      : null;
+
     return Source.confirm(state.householdId, doc.document_id, field.field, value, {
-      unchanged: unchanged, together: together, report: state.report
+      unchanged: unchanged, together: together, report: state.report, region: region
     }).then(function (result) {
       if (result.unsupported) {
         announce("Changing " + field.field + " to " + raw + " is not available without the server. " +
@@ -2315,6 +2914,9 @@
         if (!state.baselineReport) state.baselineReport = state.report;
         state.correction = { document_id: doc.document_id, field: field.field, value: value };
       }
+      // The commit is what closes the editor — a failed request leaves it open with
+      // everything the renter typed and marked still in place.
+      if (isEditing(tableId, field.field)) state.rowEdit = null;
       state.report = result.report;
       renderAll();
       var kind = evidenceKindOf(state.report, doc.document_id, field.field);
@@ -2554,6 +3156,18 @@
     ]);
   }
 
+  /** Lift (or settle) the page-image tag for one field, from wherever the reveal is
+   *  asked for — tag hover and row focus share this so the two can never diverge. The
+   *  field is remembered in state so a re-render (the page image reloads on every draw)
+   *  redraws the lift instead of silently dropping it while the row still has focus. */
+  function liftTagFor(fieldName, lifted) {
+    if (lifted) state.liftedField = fieldName;
+    else if (state.liftedField === fieldName) state.liftedField = null;
+    Array.prototype.forEach.call(
+      document.querySelectorAll(".evidence-box[data-field=\"" + fieldName + "\"]"),
+      function (el) { el.classList[lifted ? "add" : "remove"]("tag-lifted"); });
+  }
+
   /* `opts` mirrors renderPage's: the upload panel gets the same table, tracking its own
    * highlighted field and re-rendering its own panel. Called with no opts it behaves
    * exactly as it did before. */
@@ -2634,7 +3248,7 @@
         : null;
       var valueCell;
       if (confirmable) {
-        valueCell = cell(null, "Value", [valueBox(doc, field, tableId), nameNote]);
+        valueCell = cell(null, "Value", [valueBox(doc, field, tableId, opts), nameNote]);
       } else if (field.value === null || field.value === undefined) {
         /* The upload table's absent row. It used to say "Not read — a person must supply
          * this", which is the system's perspective on its own failure; the document's
@@ -2662,12 +3276,16 @@
                   announce(isActive
                     ? "Cleared the highlight"
                     : "Highlighted " + field.field + " on page " + field.page);
-                }
+                },
+                /* Focusing the row lifts its tag on the page image, exactly as hovering
+                 * the tag does — the keyboard gets the same reveal as the pointer. */
+                onfocus: function () { liftTagFor(field.field, true); },
+                onblur: function () { liftTagFor(field.field, false); }
               }, [field.field])
             : h("span", { text: field.field })
         ]),
         valueCell,
-        confirmable ? cell(null, "Is this right?", [confirmControl(doc, field, tableId)]) : null,
+        confirmable ? cell(null, "Is this right?", [confirmControl(doc, field, tableId, opts)]) : null,
         cell(null, "How we got it", [document.createTextNode(EVIDENCE_WORDS[field.evidence_kind] || field.evidence_kind)]),
         cell(null, "Certainty", [document.createTextNode(CERTAINTY_WORDS[field.certainty] || field.certainty)]),
         cell({ class: "mono" }, "Text on the page", [document.createTextNode(field.source_text === null ? "—" : String(field.source_text))]),
@@ -5432,20 +6050,52 @@
       })
     ]);
   }
-  /** The opening state of the product: nothing has been given to it yet.
+  /** The opening state of the product: no file is open.
    *
    *  Deliberately not `callout--warn`. Nothing is wrong, nothing failed, and nothing is
-   *  missing from this build -- the reader simply has not handed over a document, which on
-   *  a first visit is the expected state and not a problem to be flagged. It names the two
-   *  ways forward and puts both of them one click away rather than describing them. */
+   *  missing from this build -- the reader simply has not opened a file, which on a
+   *  first visit is the expected state and not a problem to be flagged.
+   *
+   *  Two different facts, two different notices (R26: an abstention is a redirect, not a
+   *  verdict — registered in ui/abstention-audit.md):
+   *
+   *    * Uploads exist. Then "nothing has been uploaded" would be FALSE, and the honest
+   *      sentence is the opposite: the uploads already form a file, and the one action
+   *      that changes this screen — opening it — is right here, not a step away.
+   *    * No uploads. The empty desk. The old wording enumerated what had not happened;
+   *      what the reader needs is only what this step reads and where to change that. */
   function nothingReadYetNotice() {
+    var uploadsRow = (state.households || []).filter(function (r) {
+      return r.file_kind === "uploads";
+    })[0];
+    if (uploadsRow) {
+      return h("div", { class: "callout" }, [
+        h("h3", { style: { marginTop: "0" },
+          text: "Your uploaded documents form a file you can open" }),
+        h("p", {
+          text: "This step reads whatever file is open, and none is. The documents you " +
+                "uploaded on step 1 are kept together as a file of your own — open it " +
+                "and this step reads them."
+        }),
+        h("p", { class: "button-row", style: { marginBottom: ".6rem" } }, [
+          h("button", {
+            type: "button", class: "action action--lead",
+            onclick: function () { openUploadsFile(); }
+          }, ["Open your uploaded documents (" + uploadsRow.document_count + ")"]),
+          h("button", {
+            type: "button", class: "action secondary",
+            onclick: function () { goToStep(1); }
+          }, ["Go to step 1"])
+        ])
+      ]);
+    }
     return h("div", { class: "callout" }, [
       h("h3", { style: { marginTop: "0" },
         text: "There is no document to show yet" }),
       h("p", {
-        text: "This step reads whatever document is open, and none is. Nothing has been " +
-              "uploaded and no example has been opened, so there is nothing here to be right " +
-              "or wrong about — this is not an empty result, it is an empty desk."
+        text: "This step reads whatever file is open, and none is — so there is nothing " +
+              "here to be right or wrong about. This is not an empty result, it is an " +
+              "empty desk."
       }),
       h("p", { style: { marginBottom: ".6rem" },
         text: "Step 1 does both of the things that change that: it reads a PDF you choose, " +
@@ -5583,41 +6233,159 @@
    */
   var WALKTHROUGH_HOUSEHOLD = "HH-001";
 
+  /* ONE opener, wired to the select below it. The button used to be hard-wired to
+   * HH-001 — a leftover from the landing-screen removal, when it was the README's
+   * one-click into the walkthrough — and it kept saying "Mara North" whatever the
+   * select showed, and kept offering to open her file while a different one was open.
+   * Now the button reads the select: whatever household the select shows is what the
+   * button names and opens. The default selection stays Mara North, so the README's
+   * one-click walkthrough still works in one click. */
   function renderExampleOpen() {
     var host = byId("example-open");
     if (!host) return;
     clear(host);
     var rows = state.households || [];
-    if (!rows.length) return;
-    var lead = rows.filter(function (r) {
-      return r.household_id === WALKTHROUGH_HOUSEHOLD && r.has_report;
-    })[0] || rows.filter(function (r) { return r.has_report; })[0];
-    if (!lead) return;
+    if (!rows.length) { renderStartOver(); return; }
 
-    if (state.householdId === lead.household_id) {
+    if (state.householdId) {
+      var openLabel = state.householdId === UPLOADS_HOUSEHOLD_ID
+        ? "Your uploaded documents are open. "
+        : householdName(state.householdId) + " (" + state.householdId + ") is open. ";
       host.appendChild(h("p", { class: "hint",
-        text: householdName(lead.household_id) + " (" + lead.household_id + ") is open. " +
+        text: openLabel +
               "Use the list below to open a different one, or close it to start from your own document." }));
       host.appendChild(h("button", {
         type: "button", class: "action secondary",
-        onclick: function () { closeHousehold(); announce("Closed the example file. Nothing is open."); }
-      }, ["Close this example"]));
+        onclick: function () { closeHousehold(); announce("Closed the file. Nothing is open."); }
+      }, [state.householdId === UPLOADS_HOUSEHOLD_ID ? "Close this file" : "Close this example"]));
+      renderStartOver();
       return;
     }
-    var name = lead.applicant_name || lead.household_id;
+
+    var select = byId("household-select");
+    var chosen = (select && select.value
+      ? rows.filter(function (r) { return r.household_id === select.value; })
+      : [])[0] ||
+      rows.filter(function (r) {
+        return r.household_id === WALKTHROUGH_HOUSEHOLD && r.has_report;
+      })[0] || rows.filter(function (r) { return r.has_report; })[0];
+    if (!chosen) { renderStartOver(); return; }
+
+    var isUploads = chosen.file_kind === "uploads";
+    var name = chosen.applicant_name || chosen.household_id;
     host.appendChild(h("button", {
       type: "button", class: "action action--lead",
       onclick: function () {
-        var select = byId("household-select");
-        if (select) select.value = lead.household_id;
-        loadHousehold(lead.household_id).then(function () {
-          announce("Opened " + name + ", a prepared example file. " +
-            (state.report ? READINESS[state.report.readiness_status].title : ""));
+        if (select) select.value = chosen.household_id;
+        loadHousehold(chosen.household_id).then(function () {
+          announce("Opened " + (isUploads ? "the file of your uploaded documents" : name + ", a prepared example file") +
+            ". " + (state.report ? READINESS[state.report.readiness_status].title : ""));
           var heading = byId("documents-heading") || byId("h-1");
           if (heading && heading.focus) heading.focus();
         });
       }
-    }, ["Open the example file for " + name]));
+    }, [isUploads
+      ? "Open your uploaded documents (" + chosen.document_count + ")"
+      : "Open the example file for " + name]));
+    renderStartOver();
+  }
+
+  /* ── starting over, findable from step 1 ─────────────────────────────────────────
+   *
+   * Session reset used to live only inside step 6's "Delete this session now". This is
+   * the lighter door to the SAME machinery — Source.deleteSession destroys the server
+   * session, Source.startOver forgets the id so the next request mints a fresh one.
+   * There is no second deletion path here, only a second doorway.
+   *
+   * One confirming step, always: the button arms, and the armed state says exactly what
+   * will be lost, in numbers where the page has them, before anything is sent. */
+  function sessionWorkWords() {
+    var uploadsRow = (state.households || []).filter(function (r) {
+      return r.file_kind === "uploads";
+    })[0];
+    var uploads = uploadsRow ? uploadsRow.document_count : 0;
+    var counts = (state.report && state.report.activity_log &&
+                  state.report.activity_log.counts) || {};
+    var corrections = counts.field_corrected || 0;
+    var confirmations = (counts.field_confirmed || 0) + (counts.fields_confirmed_together || 0);
+    return "This clears all your work in this session: " + uploads +
+           " upload(s), " + corrections + " correction(s) and " + confirmations +
+           " confirmation(s). The prepared example files are not touched.";
+  }
+
+  function renderStartOver() {
+    var host = byId("start-over-host");
+    if (!host) return;
+    clear(host);
+    if (state.sessionDeleted) return;   // step 6's outcome cards own that state
+    if (!state.startOverArmed) {
+      host.appendChild(h("button", {
+        type: "button", class: "field-row-btn", id: "start-over-open",
+        onclick: function () {
+          state.startOverArmed = true;
+          renderStartOver();
+          var confirm = byId("start-over-yes");
+          if (confirm) confirm.focus();
+        }
+      }, ["Start over"]));
+      return;
+    }
+    host.appendChild(h("div", { class: "callout callout--warn" }, [
+      h("h3", { style: { marginTop: "0" }, text: "Start over?" }),
+      h("p", { text: sessionWorkWords() }),
+      h("p", { class: "button-row", style: { marginBottom: "0" } }, [
+        h("button", {
+          type: "button", class: "action", id: "start-over-yes",
+          onclick: function () { resetSessionFromPicker(); }
+        }, ["Yes, clear this session"]),
+        h("button", {
+          type: "button", class: "action secondary",
+          onclick: function () {
+            state.startOverArmed = false;
+            renderStartOver();
+            var back = byId("start-over-open");
+            if (back) back.focus();
+            announce("Nothing was cleared.");
+          }
+        }, ["Keep working"])
+      ])
+    ]));
+  }
+
+  function resetSessionFromPicker() {
+    state.startOverArmed = false;
+    Source.deleteSession(state.householdId).then(function () {
+      // the same forget-the-id the step 6 flow uses; the next request mints fresh
+      Source.startOver();
+      state.sessionDeleted = false;
+      state.householdId = null;
+      state.report = null;
+      state.baselineReport = null;
+      state.correction = null;
+      state.documentId = null;
+      state.activeField = null;
+      state.lastQuestion = null;
+      state.rowEdit = null;
+      state.uploadResult = null;
+      state.uploadError = null;
+      state.uploadBusy = false;
+      state.uploadActiveField = null;
+      var picker = byId("household-select");
+      if (picker) { picker.disabled = false; picker.value = ""; }
+      setAskEnabled(true);
+      renderAskAnswerEmpty();
+      renderUpload();
+      renderAll();
+      return loadHouseholdList();
+    }).then(function () {
+      announce("Started over. The old session is gone — its uploads, corrections and " +
+               "confirmations with it — and this is a fresh session holding nothing.");
+      var back = byId("start-over-open");
+      if (back) back.focus();
+    }).catch(function (error) {
+      var host = byId("start-over-host");
+      if (host) host.appendChild(errorCard("The session could not be cleared", error));
+    });
   }
 
   /** Put the product back to holding nothing. Not a deletion — there is no session to

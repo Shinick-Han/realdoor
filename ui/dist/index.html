@@ -94,8 +94,11 @@
            click away, with no upload flow to get past first. The six packs are the
            measured artefact (extraction 159/159, calculation 90/90, qa_gold 36/36 are all
            counted on them), so a judge checking those numbers has to be able to open one
-           immediately. app.js fills #example-open with that one button; the select beside
-           it is for reaching the other five. -->
+           immediately. app.js fills #example-open with ONE opener wired to the select
+           below it — the button names whatever the select shows (default: the README
+           walkthrough's household), so the two can never disagree. #start-over-host is
+           the lighter door to the session reset step 6 also offers: same machinery,
+           with one confirming step. -->
       <section class="example-offer" aria-labelledby="example-offer-heading">
         <h2 id="example-offer-heading">Or open a prepared example file</h2>
         <p>If you would rather look around first, this copy carries six made-up household files.
@@ -107,6 +110,7 @@
           <select id="household-select"></select>
           <p class="mode-line" id="mode-line">Data source: loading…</p>
         </div>
+        <div id="start-over-host"></div>
       </section>
 
       <!-- The pointer to the household that actually shows the checklist doing work. It was

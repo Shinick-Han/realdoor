@@ -4,13 +4,13 @@
   "step1-documents": 3,
   "step2-correct": 0,
   "step3-ask": 0,
-  "step4-calculation": 17,
+  "step4-calculation": 10,
   "step5-checklist": 0,
   "step6-check-and-packet": 1
  },
  "page": "ui/dist/index.html",
  "origin": "file:// (offline, bundled fixtures — the state the submitted build opens in)",
- "generated_at": "2026-07-20T02:01:51.309Z",
+ "generated_at": "2026-07-20T13:59:18.544Z",
  "households_walked": [
   "HH-001",
   "HH-004",
@@ -22,14 +22,14 @@
   "CHK-[A-Z][A-Z-]+",
   "CH-[A-Z]+-\\d+"
  ],
- "total_visible_identifiers": 21,
+ "total_visible_identifiers": 14,
  "plain_wording_gaps": [],
  "page_errors": [],
  "method_note": "Counts machine identifiers in text that is painted on the six renter steps, plus the always-visible open-questions rail, the error summary and the header. Text inside a collapsed <details> is not counted: it is one disclosure away by design, and every code and original message is still there. Household ids are counted separately and excluded from the total, because the header picker names the file being read.",
  "results": [
   {
    "household_id": "HH-001",
-   "visible_identifiers": 7,
+   "visible_identifiers": 5,
    "plain_wording_gaps": [],
    "screens": [
     {
@@ -58,19 +58,9 @@
     },
     {
      "step": "step4-calculation",
-     "visible_identifiers": 5,
+     "visible_identifiers": 3,
      "household_ids_named": 1,
      "offenders": [
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
       {
        "pattern": "rule_id",
        "identifier": "CH-READINESS-001",
@@ -110,13 +100,13 @@
   },
   {
    "household_id": "HH-004",
-   "visible_identifiers": 8,
+   "visible_identifiers": 5,
    "plain_wording_gaps": [],
    "screens": [
     {
      "step": "step1-documents",
      "visible_identifiers": 1,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": [
       {
        "pattern": "rule_id",
@@ -139,24 +129,9 @@
     },
     {
      "step": "step4-calculation",
-     "visible_identifiers": 7,
+     "visible_identifiers": 4,
      "household_ids_named": 1,
      "offenders": [
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
       {
        "pattern": "rule_id",
        "identifier": "CH-READINESS-001",
@@ -195,13 +170,13 @@
   },
   {
    "household_id": "HH-005",
-   "visible_identifiers": 6,
+   "visible_identifiers": 4,
    "plain_wording_gaps": [],
    "screens": [
     {
      "step": "step1-documents",
      "visible_identifiers": 1,
-     "household_ids_named": 0,
+     "household_ids_named": 1,
      "offenders": [
       {
        "pattern": "rule_id",
@@ -224,19 +199,9 @@
     },
     {
      "step": "step4-calculation",
-     "visible_identifiers": 5,
+     "visible_identifiers": 3,
      "household_ids_named": 1,
      "offenders": [
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
       {
        "pattern": "rule_id",
        "identifier": "CH-READINESS-001",

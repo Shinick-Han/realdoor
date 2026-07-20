@@ -1153,3 +1153,76 @@ body{ line-height:1.62; }
 .screen > * + *{ margin-top:1.15rem; }
 /* the step rail stops being a coloured bar and becomes type */
 .steps a[aria-current="step"], .steps [aria-current="step"]{ font-weight:700; }
+
+/* ── inline row editor + drag-to-read + tag behaviour ───────────────────────
+ *
+ * The tag lift: a .box-tag floats over document pixels by construction, so the
+ * lift makes the pixels readable without dismissing anything. It is reached two
+ * ways that must never diverge — pointer over the tag, keyboard focus on the
+ * field's row — and both add .tag-lifted to the box (app.js liftTagFor). While
+ * the drag tool is armed (.is-pointing) every tag drops at once, and loses
+ * pointer events so nothing can block the start of a drag. */
+.evidence-box .box-tag { transition: opacity .12s ease; }
+.evidence-box.tag-lifted .box-tag { opacity: .12; }
+.page-schematic { pointer-events: none; }
+.page-schematic .box-tag { pointer-events: auto; }
+.page-frame.is-pointing .box-tag { opacity: .12; pointer-events: none; }
+
+.page-frame { position: relative; }
+.region-layer {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none;
+  z-index: 30;
+}
+.region-layer:focus { outline: none; }
+.region-layer:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.region-rect {
+  position: absolute;
+  border: 2px dashed var(--focus);
+  background: rgba(168, 56, 10, .12);
+  pointer-events: none;
+}
+.region-hint { margin-top: .3rem; }
+
+.value-cell .value-read { font-variant-numeric: tabular-nums; }
+.row-editor {
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: .6rem .7rem;
+  background: rgba(11, 79, 122, .05);
+}
+.row-editor__lead { margin: 0 0 .35rem; }
+.row-editor__tools { margin: .5rem 0 0; }
+
+/* The anchoring defence made visible: the enlarged crop of the area the renter
+ * marked sits right beside the value box, framed so it cannot be overlooked. */
+.region-compare {
+  margin-top: .55rem;
+  border: 2px solid var(--focus);
+  border-radius: var(--radius);
+  padding: .55rem .65rem;
+  background: rgba(168, 56, 10, .06);
+}
+.region-compare__crop { margin: 0; }
+.region-compare__crop img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  background: #fff;
+  image-rendering: -webkit-optimize-contrast;
+}
+.region-compare__crop figcaption {
+  font-size: .85rem;
+  color: var(--ink-soft);
+  margin-top: .3rem;
+}
+.region-compare__note { margin: .4rem 0 0; }
+
+.confirm-cell { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .evidence-box .box-tag { transition: none; }
+}
