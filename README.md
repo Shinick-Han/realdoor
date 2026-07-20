@@ -41,21 +41,19 @@ upload is the front door, and the prepared files are a second offer on the same 
 
 All six households carry a bundled report, so the prepared-file select on step 1 renders any of them offline.
 
-**What the hosted build withholds, and why.** Steps 2 and 3 replay recorded pipeline
-output, and both recordings were made in an `HH-001` session. So on any other household
-the static build switches those controls off and says which household they belong to,
-rather than showing `HH-001`'s figures under another household's name — step 3 would
-otherwise answer "$72,000 for household size 1" two clicks before step 4 worked out
-$102,840.00 for the household actually on show. The rule questions that name no household
-(the eligibility refusal, the prompt-injection probe) are answered for every household,
-because those answers do not depend on whose session it was.
-
-### The hosted build cannot demonstrate the output gate
-
-The public URL runs on bundled fixtures — real pipeline output, no server, no network.
-The output gate lives inside the API process, so on the hosted build it reports
-**"Not run — there is no server to test"** rather than replaying a recording and calling
-it a live test. To see the gate actually withhold a response, run the server:
+**The public URL is the full server; only the offline copy withholds anything.** Earlier
+versions of this README described the hosted page as a static build that replayed
+recorded pipeline output, could not take an upload, and reported the output gate as
+"Not run — there is no server to test". That was true of the old static deployment and
+is no longer true of this one: the link above runs the FastAPI process itself
+(re-checked 2026-07-20 — `/api/health` answers live and `/api/_gate_selftest` returns
+its 500 from the running gate). The withholding behaviour still exists in exactly one
+place: opening `ui/dist/index.html` from disk with no server. In that offline mode the
+page runs on bundled fixtures; steps 2 and 3 replay recordings made in an `HH-001`
+session, so on any other household those controls switch off and say which household
+they belong to rather than showing `HH-001`'s figures under another name, and the gate
+panel reports there is no server to test rather than replaying a recording and calling
+it live. To see the gate withhold a response on your own machine, run the server:
 
 ```bash
 python -m uvicorn api.app:app --host 127.0.0.1 --port 8077
@@ -72,12 +70,15 @@ pip install pytest fastapi uvicorn python-multipart pdfplumber pypdfium2 numpy \
             jsonschema httpx pillow rapidocr-onnxruntime textstat
 ```
 
-*(There is no root `requirements.txt`; this list is derived from the imports. Three of
-them are easy to miss and each was: without `python-multipart` FastAPI raises at import
-time — the upload route takes form data — which aborts collection before a single test
-runs; the OCR fallback needs `rapidocr-onnxruntime`; and one readability measurement
-skips itself without `textstat`. In a clean 3.12 venv this exact line reproduces
-`880 passed`. Drop `textstat` and it is `879 passed, 1 skipped`, which is why it is
+*(The root `requirements.txt` pins the runtime dependencies of the deployed server
+image; the line above is the wider development set the test suite needs. An earlier
+version of this note said there was no root `requirements.txt` — it has since been
+added — and promised `880 passed`; the suite has grown well past that and `python -m
+pytest` is the authority, with the last measured count under **Measured** below. Three
+packages are easy to miss and each was: without `python-multipart` FastAPI raises at
+import time — the upload route takes form data — which aborts collection before a
+single test runs; the OCR fallback needs `rapidocr-onnxruntime`; and one readability
+measurement skips itself without `textstat` rather than failing, which is why it is
 listed.)*
 
 ---
@@ -89,7 +90,7 @@ of the brief spans two of our screens, and step 6 is deliberately not a renter s
 
 | Brief's acceptance step | Where it is in our UI |
 | --- | --- |
-| 1. Upload documents, show extraction evidence | Step 1 — "Check the values we read from your documents". Documents are **pre-loaded, not uploaded**; every value carries the box on the page it came from. |
+| 1. Upload documents, show extraction evidence | Step 1 — "Check the values we read from your documents". The pack's 24 documents are **pre-loaded**, and the same screen takes an upload when a server is running (the public URL is one); every value carries the box on the page it came from. |
 | 2. Edit one field, show downstream values update | Step 2 — "Correct a value we read wrong" |
 | 3. Ask a rule question, show an authoritative citation | Step 3 — "Ask what a housing rule says" |
 | 4. Deterministic calculation with effective dates | Step 4 — "See how your yearly income figure was worked out" |
@@ -104,12 +105,14 @@ The API endpoints do map 1:1 to the brief's six steps; the screens do not.
 
 Stated first, because this is the point of the product.
 
-- **Upload works only with the server running.** Reading a PDF needs the extractor, which
-  is Python. On the hosted build the panel is on step 1, switched off rather than hidden,
-  saying what to run — a judge cannot bring their own PDF to the public URL. Start the
-  server and the same panel takes one synthetic document, held in that session's memory,
-  never written to disk and never joined to the household's file. The 24 pack documents
-  are pre-loaded either way.
+- **Upload needs a running server — and the public URL is one.** Reading a PDF needs the
+  extractor, which is Python, so the offline `file://` copy shows the upload panel on
+  step 1 switched off rather than hidden, saying what to run. On the hosted server and
+  on a local one, the same panel takes one synthetic document, held in that session's
+  memory, never written to disk and never joined to the household's file. (An earlier
+  version of this bullet said a judge could not bring their own PDF to the public URL;
+  that was written when the public URL was a static build, and is no longer true.) The
+  24 pack documents are pre-loaded either way.
 - **One citation in seven could not be re-checked.** Of the 11 rules in the corpus, 7 cite
   an outside authority over https and 4 are the challenge pack's own frozen convention,
   whose source is a file in this repository — re-fetching those would be us reading back
@@ -126,7 +129,8 @@ Stated first, because this is the point of the product.
 - **Identifier redaction is shape-based and incomplete.** We substitute recognisable
   identifier shapes before sending anything outward. We do not claim it is exhaustive,
   and the scorecard publishes the count of machine identifiers still visible on screen
-  (72) rather than hiding it.
+  (21, from re-running `node ui/tools/screen-scan.mjs` on 2026-07-20; an earlier draft
+  said 72, and the count fell as screens were reworked) rather than hiding it.
 - **The adversarial pack is 12 distinct hostile inputs, each present twice.** 24/24 is
   evidence, not proof.
 
@@ -134,24 +138,51 @@ Stated first, because this is the point of the product.
 
 ## Measured
 
-Every number below is reproduced by the commands in *Reproducing the checks*.
+Every number below is reproduced by the commands in *Reproducing the checks*, and was
+last re-measured 2026-07-20. Pack numbers and hold-out numbers are different kinds of
+number and are labelled as such — a pack number is measured on inputs this system was
+built against; a hold-out number is not.
 
 ```
-880 automated tests pass
+1167 automated tests pass  (python -m pytest -q, 2026-07-20)
 
-Extraction        157/159 exact · 0 wrong · 2 abstained · 0 missed
-Bounding boxes    IoU > 0.5 on 157/157 · mean 0.9677  (anchored to the text baseline)
-Adversarial       24/24, 0 must_not violations
-                  control set: 24/24 safe responses pass, 24/24 unsafe responses caught
-Rule questions    36/36 correct · 0 wrong · 0 abstained  (pack qa_gold)
+— on the pack (inputs we built against) —
+Extraction        159/159 exact · 0 wrong · 0 abstained · 0 missed
+Bounding boxes    IoU > 0.5 on 159/159 · mean 0.9677  (anchored to the text baseline)
+Rule questions    36/36 correct · 0 wrong · 0 abstained  (pack qa_gold — the pack's own
+                  phrasing, which the router was developed against: a fit score)
+Adversarial       24/24, 0 must_not violations (12 distinct hostile inputs, each twice)
+                  controls: 24/24 compliant responses pass; unsafe_responder caught on
+                  all 24 runs (12 distinct unsafe responses — the pack reuses inputs);
+                  eval/control_set.py probes 42 distinct unsafe responses — 24 blatant
+                  all caught, 18 evasive with 5 caught and 13 documented misses
 Calculation       90/90 arithmetic cases agree with the organizer's own calculate.py,
                   imported not copied (80 annualization + 10 threshold comparisons)
 Schema            6/6 households validate against pack submission.schema.json
-axe-core          0 violations across 4 origins x 8 screens — at 1280px only
-Keyboard journey  28/28
-Reflow            40/40 at 320 / 360 / 390 / 412 / 768 px
-Live API check    11/11
-Citations         6/7 outside-authority citations re-fetched and matched; 1 unreachable
+
+— on hold-outs (inputs we did not choose) —
+Question phrasing 44 questions: deterministic router alone 6 correct · 38 abstained ·
+                  0 wrong; with the intent classifier 36 correct · 7 abstained ·
+                  1 wrong (classifier column needs an OpenAI key)
+Label wording     own 26 docs 93.1% tables-only and 93.1% with the label model (gain 0);
+                  hold-out captions 70.6% tables-only · 79.4% with the model · 0 wrong
+                  in every cell, against the correct counts just stated
+Real layouts      external six PDFs: 14/44 correct · 30 abstained · 0 wrong (default);
+                  18/44 · 26 · 0 with REALDOOR_COLUMNS=1 REALDOOR_ARITHMETIC=1 (the
+                  deployed server's flags). Confirm set, 14 docs: 4/126 correct ·
+                  122 abstained · 0 wrong (6/120/0 with the flags). Low correct, zero
+                  wrong — read together: the guard holds by abstaining on pages the
+                  extractor mostly cannot read
+
+— interface —
+axe-core          0 violations across 4 origins x 7 screens — at 1280px only
+Keyboard journey  31/31
+Reflow            35/35 — 5 widths (320/360/390/412/768 px) x 7 screens
+Live API check    11/11 against a local server; health, upload and the gate's 500 also
+                  re-checked against the public URL on 2026-07-20
+Citations         6/7 outside-authority citations re-fetched and matched (2026-07-19);
+                  1 could not be re-fetched — uscode.house.gov did not answer in 45 s,
+                  reported as not checked, never as checked and fine
                   (4 of the 11 rules are the pack's own convention — out of scope)
 ```
 
@@ -168,11 +199,17 @@ Chromium blocks axe from reading the stylesheet, so colour contrast comes back
 
 ## How it is built
 
-- **No language model is on the judgment path.** Extraction, rules and arithmetic are
-  deterministic end to end.
+- **No language model is on the judgment path.** Rules and arithmetic are deterministic
+  end to end. In extraction, a model may *nominate* a field name for a caption both
+  lookup tables miss — both server extraction paths wire that seam in — but the value
+  still has to be found by the same geometry and parse as every other field, a
+  model-named field is marked and carries low certainty, and with no API key the layer
+  stands down to tables-only.
 - **An intent classifier sits at the entrance.** It returns exactly one label from a
   closed set of 21 and cannot write a sentence. If the deterministic router does not
-  independently confirm the label, it is discarded. Adversarial inputs and scored
+  independently confirm the label, it is discarded — a confirmation that is a filter,
+  not a proof: on the 44-question phrasing hold-out it let one wrong label through
+  (1 wrong / 36 correct / 7 abstained, see Measured). Adversarial inputs and scored
   questions never reach the classifier at all — tests hold its call counter at 0.
 - **Recognisable identifier shapes are substituted before anything is sent outward.**
   Not exhaustive, and not claimed to be.
@@ -213,18 +250,33 @@ Chromium blocks axe from reading the stylesheet, so colour contrast comes back
 
 ## Reproducing the checks
 
-Run from the repository root. None of these need a network connection or an API key.
+Run from the repository root. The deterministic numbers need no network connection and
+no API key; the two commands whose model column needs `OPENAI_API_KEY` say so below,
+and each reports that column as unmeasured — not estimated — when the key is absent.
 
 ```bash
 # the full suite
 python -m pytest
 
-# 157/159 extraction, IoU mean 0.9677, adversarial 24/24, qa_gold 36/36
+# 159/159 extraction, IoU mean 0.9677, adversarial 24/24, qa_gold 36/36
 # (one command, roughly a minute — this is the one to run if you run only one)
 python scripts/verify.py
 
-# the adversarial control set: 24/24 safe pass, 24/24 unsafe caught
+# the adversarial controls: 24/24 safe pass; unsafe caught on all 24 runs
+# (12 distinct unsafe responses — the pack reuses each input twice)
 python eval/run_adversarial.py --demo
+
+# extraction on real published PDFs — low correct, zero wrong, printed together
+python scripts/measure_external_holdout.py
+REALDOOR_COLUMNS=1 REALDOOR_ARITHMETIC=1 python scripts/measure_external_holdout.py
+python scripts/measure_confirm_set.py
+
+# label vocabulary on captions we did not write (93.1% own / 70.6%→79.4% hold-out);
+# the with-model column needs OPENAI_API_KEY
+python scripts/measure_label_mapping.py
+
+# the question-phrasing hold-out; the classifier column needs OPENAI_API_KEY
+python scripts/measure_intent_router.py
 
 # the organizer-agreement file: 140 tests, of which the 90 above are the direct
 # arithmetic comparisons against their calculate.py. The other 50 check our output
@@ -241,8 +293,8 @@ Browser checks need Node and Playwright:
 ```bash
 cd ui/tools && npm install && npx playwright install chromium && cd ../..
 
-node ui/tools/keyboard-journey.mjs    # 28/28
-node ui/tools/reflow-check.mjs        # 40/40 at 320/360/390/412/768
+node ui/tools/keyboard-journey.mjs    # 31/31
+node ui/tools/reflow-check.mjs        # 35/35 — 5 widths (320/360/390/412/768) x 7 screens
 node ui/tools/axe-scan.mjs            # 0 violations; rewrites ui/axe-report.json
 
 # 11/11 — needs the server running; pass the URL, it defaults to port 8000
