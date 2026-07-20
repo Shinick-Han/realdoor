@@ -27,16 +27,16 @@ const base = process.argv[2] || pathToFileURL(DIST).href;
 // 깨지는 경우를 잡기 위해 함께 잰다.
 const WIDTHS = [320, 360, 390, 412, 768];
 
-// 랜딩 화면(screen-start)은 없어졌다. 그 내용은 "How this works"(screen-how)로 옮겨
-// 갔으므로 여기서 빠진 만큼이 검사에서 사라진 것이 아니라, 같은 텍스트가 screen-how 폭
-// 검사 안으로 들어갔다. 총 검사 수는 40 에서 35 로 줄지만 재는 콘텐츠는 줄지 않았다.
+// 세입자 흐름이 6단계 화면에서 2페이지로 재구성되었다(오너 결정). 옛 6화면의 콘텐츠는
+// screen-file(1페이지)과 screen-ready(2페이지)로 흡수되었고, 판정용 부속 화면
+// screen-how 는 그대로다. 총 검사 수는 35(5폭×7화면)에서 15(5폭×3화면)로 줄지만,
+// 재는 콘텐츠가 준 것이 아니다 — 같은 텍스트가 두 페이지의 폭 검사 안으로 들어갔다.
 //
 // 화면에 속하지 않는 상시 요소 — 헤더, 우측 레일, 그리고 모든 화면 아래에 붙는 질문
-// 상자(#ask-anywhere) — 는 아래 루프에서 매 화면·매 폭마다 함께 측정된다. 질문 상자는
-// 숨겨지지 않으므로 320px 검사 35 회 전부가 그 상자를 포함한다.
+// 상자(#ask-anywhere, 이제 기록된 질문 목록 포함) — 는 아래 루프에서 매 화면·매 폭마다
+// 함께 측정된다. 질문 상자는 숨겨지지 않으므로 320px 검사 전부가 그 상자를 포함한다.
 const SCREENS = [
-  "screen-1", "screen-2", "screen-3",
-  "screen-4", "screen-5", "screen-6", "screen-how",
+  "screen-file", "screen-ready", "screen-how",
 ];
 
 const browser = await chromium.launch();

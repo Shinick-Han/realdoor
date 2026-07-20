@@ -1,13 +1,15 @@
-/* Keyboard-only walk through the mandated six-step demo, plus the secondary route that
- * holds the judge-facing material.
+/* Keyboard-only walk through the renter flow — two pages now, not six step-screens
+ * (the owner's call: six screens were too big an obstacle) — plus the secondary route
+ * that holds the judge-facing material.
  *
  * The mouse is never used: this script only sends Tab, Shift+Tab, Enter and Space, and it
  * asserts on what actually appears on screen after each step. A step counts as passing only
  * if its evidence is visible -- not if the key press was accepted.
  *
- * The walk is a forward walk: landing -> step 1 -> ... -> step 6, driven by the same Back
- * and Next buttons a user has. There is no tab bar to arrow along any more, and one of the
- * checks below asserts that there is not.
+ * The walk: page 1 (the renter's file — evidence, inline corrections with their downstream
+ * summary, the ask dock with its recorded questions) then page 2 (calculation, checklist,
+ * check-answers and packet, top to bottom), driven by the same rail and Continue controls a
+ * user has.
  *
  *   node ui/tools/keyboard-journey.mjs
  */
@@ -24,7 +26,7 @@ const context = await browser.newContext({ viewport: { width: 1280, height: 900 
 const page = await context.newPage();
 await page.goto(pageUrl);
 
-/* Step 1 now opens with nothing loaded: upload is the front door and the six prepared
+/* Page 1 opens with nothing loaded: upload is the front door and the six prepared
  * households are a secondary offer on the same screen. The example is opened further down,
  * *after* the tab-order checks — those measure the page as it is delivered, and a click
  * would move the sequential-focus starting point and make the walk start somewhere a fresh
@@ -42,7 +44,7 @@ const focusInfo = () => page.evaluate(() => {
 });
 
 /** Press Tab until the focused element satisfies `match`, or give up. */
-async function tabTo(match, limit = 220, key = "Tab") {
+async function tabTo(match, limit = 260, key = "Tab") {
   for (let i = 0; i < limit; i += 1) {
     await page.keyboard.press(key);
     const info = await focusInfo();
@@ -72,41 +74,46 @@ async function hasVisibleFocusRing() {
   });
 }
 
-// ── step 0: what the first screen is, and the absence of a tab bar ──────────────
+// ── step 0: what the first screen is, and what the rail is ──────────────────────
 await page.keyboard.press("Tab");
 const firstStop = await focusInfo();
 record("Skip link is the first tab stop", /Skip to main content/.test(firstStop.text), firstStop.text);
 record("Focused control shows a visible focus indicator", await hasVisibleFocusRing());
 
 {
+  /* The rail is navigation now — two pages need a way across, not a progress bar — but
+   * it is a <nav> with links, never an ARIA tab widget: these are two pages of one flow,
+   * not two panels of one screen. */
   const tablists = await page.locator('[role="tablist"]').count();
   const tabs = await page.locator('[role="tab"]').count();
-  record("No tab bar exists — the flow is linear, not parallel",
-    tablists === 0 && tabs === 0, `${tablists} tablists, ${tabs} tabs`);
+  const railLinks = await page.locator(".page-rail button").count();
+  const current = await page.locator('.page-rail [aria-current="page"]').count();
+  record("The rail is a two-link nav with the current page marked, and no ARIA tab widget",
+    tablists === 0 && tabs === 0 && railLinks === 2 && current === 1,
+    `${railLinks} rail links, ${current} marked current, ${tablists} tablists, ${tabs} tabs`);
 
   /* The one click a judge takes to reach the graded pack. Everything below this walks the
-   * six steps on a loaded file, exactly as before; everything above it measured the screen
-   * as delivered, which is now a screen holding nothing. */
+   * two pages on a loaded file; everything above it measured the screen as delivered,
+   * which is a screen holding nothing. */
   await page.locator("#example-open button").click();
   await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0,
     { timeout: 20000 });
 
-  /* There used to be a landing screen in front of step 1 carrying a process list and a
-   * "Before you start" trust line. Both were demo instructions, and both now live on the
-   * judges' page. This check is not "the landing is gone" — it is the stronger pair: the
-   * walkthrough opens on step 1, *and* nothing that used to be on the landing was thrown
-   * away, it is on screen-how and still says the same words. */
+  /* The walkthrough opens on page 1, and the judge-facing material that used to front the
+   * flow is on screen-how, still saying the same words. The process list describes two
+   * pages now — the six-step description would be a description of a flow that no longer
+   * exists. */
   const opensOn = await currentScreen();
   const processItems = await page.locator("#screen-how #process-list .process-item").count();
   const trust = ((await page.locator("#screen-how #trust-line").textContent().catch(() => "")) || "")
     .replace(/\s+/g, " ");
-  record("The walkthrough opens on step 1, with no screen in front of it",
-    opensOn === "screen-1", `first screen on show: ${opensOn}`);
-  record("The landing's process list and trust line were moved to the judges' page, not dropped",
-    processItems === 6 && /about ten minutes/i.test(trust) && /nothing is sent anywhere/i.test(trust),
+  record("The walkthrough opens on page 1, with no screen in front of it",
+    opensOn === "screen-file", `first screen on show: ${opensOn}`);
+  record("The judges' page describes the two-page flow, and the trust line survived the move",
+    processItems === 2 && /about ten minutes/i.test(trust) && /nothing is sent anywhere/i.test(trust),
     `${processItems} process items and the trust line, both inside #screen-how`);
 
-  /* The point of the whole change: the free-text question control is on the first screen
+  /* The point of the ask dock: the free-text question control is on the first screen
    * with nothing pressed. On this static build it is switched off rather than hidden, so
    * what is asserted is that it is *present and reachable*, and that the page says which of
    * the two it is. */
@@ -129,86 +136,65 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
     "static build: control present, disabled, with the command that turns it on");
 }
 
-// ── step 1: documents and evidence ──────────────────────────────────────────────
+// ── page 1: documents and evidence ──────────────────────────────────────────────
 {
   const screen = await currentScreen();
-  const caption = (await page.locator("#cap-1").textContent()) || "";
-  const heading = (await page.locator("#screen-1 h1").textContent()) || "";
-  const segments = await page.locator(".segment").count();
-  const currentSeg = (await page.locator(".segment--current").textContent()) || "";
-  const indicatorControls = await page.locator(".step-indicator a, .step-indicator button").count();
-  /* Focus is not asserted here any more, and deliberately: step 1 is now the screen the
-   * page loads on, and moving focus off the document start on load is a thing to avoid,
-   * not a thing to test for. Focus-on-arrival is still asserted at every step reached by
-   * pressing Next, which is every other step in this walk. */
-  record("Step 1 is the opening screen, with a step caption and a unique H1",
-    screen === "screen-1" && /Step 1 of 6/.test(caption) &&
+  const railCurrent = (await page.locator('.page-rail [aria-current="page"]').textContent()) || "";
+  const heading = (await page.locator("#screen-file h1").textContent()) || "";
+  record("Page 1 is the opening screen, named current in the rail, with a unique H1",
+    screen === "screen-file" && /Your documents/.test(railCurrent) &&
     /Check the values we read/.test(heading),
-    `${caption.trim()} / "${heading.trim()}"`);
-  record("Step 1 — step indicator shows six segments and is not itself navigable",
-    segments === 6 && indicatorControls === 0 && /current step/.test(currentSeg),
-    `${segments} segments, ${indicatorControls} controls inside the indicator`);
+    `rail: "${railCurrent.trim()}" / "${heading.trim()}"`);
 
   const hit = await tabTo((info) => /^(person_name|household_size)$/.test(info.text));
   if (hit) await page.keyboard.press("Enter");
   const highlighted = await page.locator(".evidence-box.is-active").count();
   const boxes = await page.locator("#documents-body .evidence-box").count();
   const rows = await page.locator("#documents-body tbody tr").count();
-  record("Step 1 — evidence box highlighted from the keyboard",
+  record("Page 1 — evidence box highlighted from the keyboard",
     Boolean(hit) && highlighted === 1 && boxes > 0 && rows > 0,
     `${boxes} boxes drawn, ${rows} field rows, ${highlighted} highlighted`);
 }
 
-// ── step 2: correct a field, including the rejected correction ──────────────────
+// ── page 1: correct a value in place, including the rejected correction ─────────
+// This used to be a screen of its own. The editor is on the row now, and the downstream
+// before/after summary renders in place under the corrected document's table.
 {
-  await page.locator("#h-1").focus();
-  const moved = await pressById("step-next");
-  record("Step 2 — reached with the Next button, not a tab",
-    moved && (await currentScreen()) === "screen-2",
-    (await page.locator("#cap-2").textContent()).trim());
-
+  await page.locator("#h-file").focus();
   const scenario = await tabTo((info) => /Gross pay on the newer stub/.test(info.text));
   if (scenario) await page.keyboard.press("Enter");
-  const apply = await tabTo((info) => info.id === "correct-apply");
-  if (apply) await page.keyboard.press("Enter");
-  await page.locator("#correction-outcome-heading").waitFor({ timeout: 3000 }).catch(() => {});
-  const heading = (await page.locator("#correction-outcome-heading").textContent().catch(() => "")) || "";
-  const explained = await page.locator("#correct-outcome .callout--stop").count();
-  record("Step 2a — rejected correction is shown as rejected, with the reason",
+  await page.locator("#downstream-heading").waitFor({ timeout: 3000 }).catch(() => {});
+  const heading = (await page.locator("#downstream-heading").textContent().catch(() => "")) || "";
+  const explained = await page.locator("#downstream-note.callout--stop").count();
+  record("Page 1a — rejected correction is shown as rejected, in place, with the reason",
     /NOT used/.test(heading) && explained === 1, heading.trim());
 
   // the machine code must be present for verification but never as the headline
-  const reasonHeadings = await page.locator("#correct-body .reason-heading").allTextContents();
+  const reasonHeadings = await page.locator("#documents-body .reason-heading").allTextContents();
   const codeVisibleUpFront = /RENTER_CORRECTION_NOT_USED|PAY_STUB_TOTAL_CONFLICT/.test(
     (await page.locator("#error-summary-host").textContent()) + reasonHeadings.join(" "));
   const codeAvailable = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#correct-body details.tech"))
+    Array.from(document.querySelectorAll("#documents-body details.tech"))
       .some((d) => /RENTER_CORRECTION_NOT_USED/.test(d.textContent)));
   // The headline must be the plain layer's, not a string this harness or app.js keeps.
-  // Asserting equality with report.plain rather than a snapshot of the wording is the
-  // point: it fails if the screen ever stops reading api/plain.py, and it does not fail
-  // merely because that layer rephrased itself. It replaces a regex that matched a
-  // hand-written heading table in app.js, which no longer exists.
   const headlineFromPlain = await page.evaluate(() => {
     const said = (window.REALDOOR_LAST_REPORT?.plain?.messages || [])
       .find((m) => m.code === "RENTER_CORRECTION_NOT_USED");
     if (!said) return null;
-    const headings = Array.from(document.querySelectorAll("#correct-body .reason-heading"))
+    const headings = Array.from(document.querySelectorAll("#documents-body .reason-heading"))
       .map((n) => n.textContent.trim());
     return { headline: said.headline, matched: headings.includes(said.headline.trim()) };
   });
-  record("Step 2b — the error code is kept for verification but is never the headline",
+  record("Page 1b — the error code is kept for verification but is never the headline",
     !codeVisibleUpFront && codeAvailable && headlineFromPlain?.matched === true,
     `${reasonHeadings.length} headlines, none of them a code; headline is the plain layer's ` +
     `("${headlineFromPlain?.headline ?? "MISSING"}"); code reachable under Technical details`);
 
   // error summary sits above the H1 and quotes the inline message word for word
-  // Each summary link must name the same problem, in the same words, as the inline item it
-  // points at -- and the inline item must carry the API's own message underneath, unedited.
   const match = await page.evaluate(() => {
     const links = Array.from(document.querySelectorAll("#error-summary-host .error-summary-list a"));
     const summary = document.querySelector("#error-summary-host .error-summary");
-    const h1 = document.querySelector("#screen-2 h1");
+    const h1 = document.querySelector("#screen-file h1");
     if (!links.length || !summary || !h1) return null;
     const aboveH1 = Boolean(summary.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING);
     const paired = links.every((link) => {
@@ -222,83 +208,139 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
     });
     return { paired, aboveH1, count: links.length };
   });
-  record("Step 2c — error summary sits above the H1 and each link matches its inline item exactly",
+  record("Page 1c — error summary sits above the H1 and each link matches its inline item exactly",
     Boolean(match) && match.paired && match.aboveH1,
     match ? `${match.count} links, all matching their inline heading, aboveH1=${match.aboveH1}` : "missing");
 
-  // and the accepted correction, which moves the threshold 72,000 -> 92,580
-  await page.locator("#correct-doc").focus();
-  const undo = await tabTo((info) => /Undo correction/.test(info.text));
+  // undo from the row, then the accepted correction, which moves the threshold
+  // 72,000 -> 92,580 in the same in-place summary
+  const undo = await tabTo((info) => /^Undo$/.test(info.text));
   if (undo) await page.keyboard.press("Enter");
-  await page.locator("#h-2").focus();
+  await page.waitForTimeout(200);
+  await page.locator("#h-file").focus();
   const sizeScenario = await tabTo((info) => /Household size is 3, not 1/.test(info.text));
   if (sizeScenario) await page.keyboard.press("Enter");
-  const apply2 = await tabTo((info) => info.id === "correct-apply");
-  if (apply2) await page.keyboard.press("Enter");
-  await page.waitForTimeout(150);
-  const table = (await page.locator("#correct-outcome table").textContent().catch(() => "")) || "";
-  record("Step 2d — accepted correction moves the threshold 72,000 to 92,580",
+  await page.waitForTimeout(200);
+  const table = (await page.locator("#downstream-note table").textContent().catch(() => "")) || "";
+  record("Page 1d — accepted correction moves the threshold 72,000 to 92,580, in place",
     /\$72,000\.00/.test(table) && /\$92,580\.00/.test(table),
     table.includes("$92,580.00") ? "new threshold $92,580.00 shown beside the old $72,000.00" : "not found");
+
+  // the summary is dismissible, and dismissing it does not undo the correction
+  const dismissed = await pressById("downstream-dismiss");
+  const noteGone = (await page.locator("#downstream-note").count()) === 0;
+  const stillCorrected = await page.evaluate(() => {
+    const docs = window.REALDOOR_LAST_REPORT?.documents || [];
+    return docs.some((d) => (d.fields || [])
+      .some((f) => f.evidence_kind === "corrected_by_renter"));
+  });
+  record("Page 1e — the downstream summary dismisses from the keyboard, correction intact",
+    dismissed && noteGone && stillCorrected,
+    `note removed, correction still recorded`);
 }
 
-// ── step 3: ask about a rule, with citation ─────────────────────────────────────
+// ── the ask dock: recorded questions, citation, and the eligibility refusal ─────
+// The old rules screen is gone; its recorded questions live in the dock's expandable
+// group, on show from every page. Nothing that screen demonstrated is unreachable.
 {
-  await page.locator("#h-2").focus();
-  await pressById("step-next");
+  await page.locator("#h-file").focus();
+  const summary = await tabTo((info) => /Recorded questions/.test(info.text));
+  if (summary) await page.keyboard.press("Enter");
+  await page.waitForTimeout(120);
+  const open = await page.evaluate(() =>
+    document.getElementById("recorded-questions")?.open === true);
+  record("Dock — the recorded questions open from the keyboard, on page 1 itself",
+    Boolean(summary) && open, `group open: ${open}`);
+
   const question = await tabTo((info) => /What is the frozen 60% threshold for HH-001\?/.test(info.text));
   if (question) await page.keyboard.press("Enter");
   await page.waitForTimeout(120);
   const body = (await page.locator("#ask-answer").textContent()) || "";
   const link = await page.locator('#ask-answer a[href^="https://"]').count();
-  record("Step 3 — answer carries rule id, authority, effective date, locator and source link",
-    (await currentScreen()) === "screen-3" &&
+  record("Dock — answer carries rule id, authority, effective date, locator and source link",
     /HUD-MTSP-002/.test(body) && /official hud/.test(body) && /2026-05-01/.test(body) &&
     /PDF page 130/.test(body) && link > 0,
     `source links: ${link}`);
+
+  // the eligibility refusal demo, reachable from the same group
+  await page.locator("#recorded-questions > summary").focus();
+  const refusal = await tabTo((info) => /Am I eligible for this apartment\?/.test(info.text));
+  if (refusal) await page.keyboard.press("Enter");
+  await page.waitForTimeout(120);
+  const refusalBody = (await page.locator("#ask-answer").textContent()) || "";
+  record("Dock — the eligibility question refuses, and says only a person decides",
+    /Only a person can decide that/.test(refusalBody) &&
+    /We cannot tell you whether you will get this home/.test(refusalBody),
+    "refusal headline and plain-language body shown");
 }
 
-// ── step 4: the calculation ─────────────────────────────────────────────────────
+// ── page 2: the calculation, summary first, working one fold away ───────────────
 {
-  await page.locator("#h-3").focus();
-  await pressById("step-next");
-  const body = (await page.locator("#calc-body").textContent()) || "";
-  record("Step 4 — inputs, formula, result, threshold, comparison and effective date all present",
-    (await currentScreen()) === "screen-4" &&
-    /2166\.0 \* 26/.test(body) && /\$56,316\.00/.test(body) && /\$92,580\.00|\$72,000\.00/.test(body) &&
-    /at or below the frozen 60% threshold/.test(body) && /2026-05-01/.test(body) &&
-    /A comparison is not a determination/.test(body));
+  await page.locator("#h-file").focus();
+  const moved = await pressById("page-next");
+  record("Page 2 — reached with the Continue button, not a tab",
+    moved && (await currentScreen()) === "screen-ready",
+    ((await page.locator('.page-rail [aria-current="page"]').textContent()) || "").trim());
+
+  const sectionLinks = await page.locator("#ready-sections-nav a").count();
+  record("Page 2 — in-page section links exist for the three sections",
+    sectionLinks === 3, `${sectionLinks} jump links`);
+
+  const lead = (await page.locator("#calc-body").textContent()) || "";
+  record("Page 2 — the calculation leads with result, comparison and the no-determination line",
+    /\$56,316\.00/.test(lead) &&
+    /at or below the frozen 60% threshold/.test(lead) &&
+    /A comparison is not a determination/.test(lead) && /2026-05-01/.test(lead));
+
+  // the full working is one fold away, keyboard-operable, nothing dropped
+  await page.locator("#h-sec-calc").focus();
+  const fold = await tabTo((info) => /Show the full working/.test(info.text));
+  if (fold) await page.keyboard.press("Enter");
+  await page.waitForTimeout(120);
+  const working = (await page.locator("#fold-calc-working").textContent().catch(() => "")) || "";
+  record("Page 2 — the fold opens to inputs, formula, threshold and rule citations",
+    /2166\.0 \* 26/.test(working) && /Frozen 60% threshold/.test(working) &&
+    /Rules cited by this report/.test(working),
+    "formula, threshold and citations inside the opened fold");
 }
 
-// ── step 5: what is missing or out of date ──────────────────────────────────────
+// ── page 2: what is missing or out of date ──────────────────────────────────────
 {
-  /* Switch to HH-005, which holds the genuinely expired document.
-   *
-   * The picker used to follow the reader onto every screen, so this could select from
-   * wherever it happened to be standing. It does not any more: the prepared files are a
-   * secondary offer and their control stays on step 1, with steps 2-6 carrying a one-line
-   * banner naming what is open and a button back. So this walks back the way a reader
-   * walks back, changes the file, and returns. */
+  /* Switch to HH-005, which holds the genuinely expired document. The walk goes back the
+   * way a reader goes back: the file banner under page 2's heading names what is open and
+   * offers the way to page 1. */
   await page.locator("#file-banner button").click();
-  await page.waitForFunction(() => !document.getElementById("screen-1").hidden, { timeout: 10000 });
+  await page.waitForFunction(() => !document.getElementById("screen-file").hidden, { timeout: 10000 });
   await page.locator("#household-select").focus();
   await page.selectOption("#household-select", "HH-005");
   await page.waitForTimeout(400);
-  for (const id of ["step-next", "step-next", "step-next"]) { await pressById(id); await page.waitForTimeout(150); }
-  await page.locator("#h-4").focus();
-  await pressById("step-next");
+  await page.locator("#h-file").focus();
+  await pressById("page-next");
 
   const body = (await page.locator("#checklist-body").textContent()) || "";
   const expiredShown = /Expired \(1\)/.test(body) && /2026-04-14/.test(body);
   const nextSteps = await page.locator("#checklist-body .summary-box__list li").count();
-  record("Step 5 — the expired document is surfaced, with a short list of what to do next",
-    (await currentScreen()) === "screen-5" && expiredShown && nextSteps > 0,
+  record("Page 2 — the expired document is surfaced, with a short list of what to do next",
+    (await currentScreen()) === "screen-ready" && expiredShown && nextSteps > 0,
     `${expiredShown ? "expired item shown" : "expired item MISSING"}; ${nextSteps} next-step items`);
+
+  /* What is SATISFIED folds; what is OPEN stays loud. The expired card is on the page
+   * unfolded; the present items collapse behind a summary that still carries their count. */
+  const openUnfolded = await page.evaluate(() => {
+    const card = Array.from(document.querySelectorAll("#checklist-body .card"))
+      .find((c) => /Expired/.test(c.textContent));
+    return Boolean(card) && !card.closest("details");
+  });
+  const presentFolded = await page.evaluate(() => {
+    const fold = document.getElementById("fold-checklist-present");
+    return Boolean(fold) && /Present \(\d+\)/.test(fold.querySelector("summary")?.textContent || "");
+  });
+  record("Page 2 — open items stay unfolded while the present items fold with their count visible",
+    openUnfolded && presentFolded,
+    `expired card outside any fold; present fold labelled with its count`);
 
   // The inline item states the expiry date in words a renter reads; the API's own
   // sentence, ISO date and document id included, is kept verbatim one disclosure away.
-  // Both halves are asserted, because "plain" must not become "vaguer": if the date
-  // stopped being stated, or the precise string stopped being retrievable, this fails.
   const match = await page.evaluate(() => {
     const link = document.querySelector("#error-summary-host .error-summary-list a");
     if (!link) return null;
@@ -312,48 +354,49 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
            /2026-04-14/.test(tech.textContent) &&
            /HH-005-D04/.test(tech.textContent);
   });
-  record("Step 5 — the expiry is stated plainly inline and the API's own words are kept verbatim",
+  record("Page 2 — the expiry is stated plainly inline and the API's own words are kept verbatim",
     match === true, match === null ? "summary or inline item missing" : "heading matches, date stated inline, precise wording retrievable");
 }
 
-// ── step 6: check what we found, then take the packet ───────────────────────────
+// ── page 2: check what we found, then the packet ────────────────────────────────
 {
-  await page.locator("#h-5").focus();
-  await pressById("step-next");
+  await page.locator("#h-sec-packet").focus();
+  const fold = await tabTo((info) => /Check each answer, row by row/.test(info.text));
+  if (fold) await page.keyboard.press("Enter");
+  await page.waitForTimeout(120);
   const rows = await page.locator("#summary-body .answer-row").count();
   const changeNames = await page.locator("#summary-body .change-link").allTextContents();
-  record("Step 6a — a check-answers screen with rows and descriptive Change controls",
-    (await currentScreen()) === "screen-6" && rows >= 6 && changeNames.length >= 5 &&
+  record("Packet section — a check-answers list with rows and descriptive Change controls",
+    rows >= 6 && changeNames.length >= 5 &&
     changeNames.every((t) => /^Change .+/.test(t.replace(/\s+/g, " ").trim())),
     `${rows} rows, ${changeNames.length} Change controls`);
 
-  // a Change control must land on the right step and offer a way straight back
-  await page.locator("#h-6").focus();
-  const change = await tabTo((info) => /^Change\s+the housing rule you asked about/.test(info.text.replace(/\s+/g, " ")));
+  // a Change control that lives on page 1 must land there and offer a way straight back
+  const change = await tabTo((info) => /^Change\s+the correction you made/.test(info.text.replace(/\s+/g, " ")));
   if (change) await page.keyboard.press("Enter");
   await page.waitForTimeout(120);
   const landed = await currentScreen();
   const returnedOk = await pressById("step-return");
-  record("Step 6b — Change goes to the right step and returns straight to the check screen",
-    landed === "screen-3" && returnedOk && (await currentScreen()) === "screen-6",
+  record("Packet section — Change goes to page 1 and returns straight to the check section",
+    landed === "screen-file" && returnedOk && (await currentScreen()) === "screen-ready",
     `Change -> ${landed} -> ${await currentScreen()}`);
 
   const body = (await page.locator("#packet-body").textContent()) || "";
   const download = page.waitForEvent("download", { timeout: 5000 }).catch(() => null);
-  await page.locator("#h-6").focus();
+  await page.locator("#h-sec-packet").focus();
   const button = await tabTo((info) => info.id === "packet-download");
   if (button) await page.keyboard.press("Enter");
   const file = await download;
-  record("Step 6c — packet downloaded by keyboard, with nothing transmitted",
+  record("Packet section — packet downloaded by keyboard, with nothing transmitted",
     Boolean(file) && /Nothing is sent anywhere/.test(body),
     `download: ${file ? file.suggestedFilename() : "none"}`);
 }
 
 // ── the secondary route: judge-facing material, one click away ──────────────────
 {
-  await page.locator("#h-6").focus();
+  await page.locator("#h-ready").focus();
   const reached = await pressById("go-how");
-  record("Judge-facing material is one click away and is not part of the six steps",
+  record("Judge-facing material is one click away and is not part of the two pages",
     reached === false || (await currentScreen()) === "screen-how",
     `landed on ${await currentScreen()}`);
   if ((await currentScreen()) !== "screen-how") {
@@ -396,12 +439,6 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
   // The measurements are read from ui/fixtures/selftest.json as exported. Assert on the
   // shape of the honesty rather than on numbers that legitimately move between exports.
   //
-  // This check used to require that at least one section be labelled Not run, because the
-  // citations section had been not_run since it was written. That made a shortfall into a
-  // fixture of the test, and once the citation re-check was wired the suite failed for the
-  // one reason it must never fail: a number got better. Requiring a permanent red chip
-  // would also have been an invitation to keep one, which is the opposite of the point.
-  //
   // The invariant is the correspondence, in both directions: every section the export marks
   // not_run is chipped Not run, every section it marks measured is not, and the summary
   // names them. Zero not-run sections is then an allowed and reportable state, not a pass
@@ -428,8 +465,7 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
 
 // ── constraint checks that must hold on every screen ────────────────────────────
 {
-  const SCREEN_IDS = ["screen-1", "screen-2", "screen-3", "screen-4",
-                      "screen-5", "screen-6", "screen-how"];
+  const SCREEN_IDS = ["screen-file", "screen-ready", "screen-how"];
 
   // Every screen must announce itself with its own heading. GOV.UK: do not reuse a page
   // heading across pages; the heading must describe this screen, not the section.
@@ -462,8 +498,7 @@ record("Focused control shows a visible focus indicator", await hasVisibleFocusR
     const offenders = await page.evaluate((pattern) => {
       const re = new RegExp(pattern);
       const found = [];
-      for (const id of ["screen-1", "screen-2", "screen-3", "screen-4",
-                        "screen-5", "screen-6", "screen-how"]) {
+      for (const id of ["screen-file", "screen-ready", "screen-how"]) {
         document.querySelectorAll(".screen").forEach((s) => { s.hidden = s.id !== id; });
         // scope to what is actually on show: the current screen, the summary above it,
         // and the open-questions rail that is present on every screen

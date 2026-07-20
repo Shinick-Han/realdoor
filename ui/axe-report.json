@@ -10,16 +10,12 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-20T14:06:54.828Z",
- "screens_per_origin": 8,
+ "generated_at": "2026-07-20T15:08:50.488Z",
+ "screens_per_origin": 6,
  "total_violations": 0,
  "violations_by_impact": {},
  "incomplete_note": "Over file:// Chromium blocks axe-core from reading the stylesheet, so colour-contrast is reported as incomplete (unknown) rather than passing. The http:// run reads the same CSS and gives the real contrast verdict; compare the two blocks below.",
  "page_errors": [
-  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "[file] Failed to load resource: net::ERR_FAILED",
-  "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "[file] Failed to load resource: net::ERR_FAILED",
   "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
   "[file] Failed to load resource: net::ERR_FAILED",
   "[file] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
@@ -45,10 +41,6 @@
   "[file-ko] Failed to load resource: net::ERR_FAILED",
   "[file-ko] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
   "[file-ko] Failed to load resource: net::ERR_FAILED",
-  "[file-ko] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "[file-ko] Failed to load resource: net::ERR_FAILED",
-  "[file-ko] Access to XMLHttpRequest at 'file:///C:/Users/jcpuk/source/realdoor/ui/dist/app.css' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
-  "[file-ko] Failed to load resource: net::ERR_FAILED",
   "[http-ko] Failed to load resource: the server responded with a status of 404 (Not Found)"
  ],
  "runs": [
@@ -56,10 +48,10 @@
    "origin": "file",
    "url": "file:// (offline, bundled fixtures)",
    "total_violations": 0,
-   "total_incomplete": 4,
+   "total_incomplete": 5,
    "results": [
     {
-     "screen": "step1-documents",
+     "screen": "page1-file",
      "violations": [],
      "incomplete": [
       {
@@ -139,7 +131,7 @@
      "rules_passed": 36
     },
     {
-     "screen": "step1-row-editor",
+     "screen": "page1-row-editor",
      "violations": [],
      "incomplete": [
       {
@@ -255,25 +247,7 @@
      "rules_passed": 37
     },
     {
-     "screen": "step2-correct",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 32
-    },
-    {
-     "screen": "step3-ask",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step4-calculation",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 33
-    },
-    {
-     "screen": "step5-checklist",
+     "screen": "page1-downstream",
      "violations": [],
      "incomplete": [
       {
@@ -281,6 +255,194 @@
        "impact": "serious",
        "help": "Elements must meet minimum color contrast ratio thresholds",
        "nodes": [
+        {
+         "target": [
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(1)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(2)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(3)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(6)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(7)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(8)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(9)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(5) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(6) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(7) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          ".confirm-cell > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        }
+       ]
+      }
+     ],
+     "rules_passed": 36
+    },
+    {
+     "screen": "page2-ready",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 27
+    },
+    {
+     "screen": "page2-unfolded",
+     "violations": [],
+     "incomplete": [
+      {
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          ".card:nth-child(2) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
         {
          "target": [
           ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
@@ -292,22 +454,10 @@
           ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
-        },
-        {
-         "target": [
-          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
-         ],
-         "reason": "Element content contains only non-text characters"
         }
        ]
       }
      ],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step6-check-and-packet",
-     "violations": [],
-     "incomplete": [],
      "rules_passed": 30
     },
     {
@@ -384,10 +534,10 @@
    "origin": "http",
    "url": "http:// (as FastAPI serves ui/dist)",
    "total_violations": 0,
-   "total_incomplete": 4,
+   "total_incomplete": 5,
    "results": [
     {
-     "screen": "step1-documents",
+     "screen": "page1-file",
      "violations": [],
      "incomplete": [
       {
@@ -467,7 +617,7 @@
      "rules_passed": 36
     },
     {
-     "screen": "step1-row-editor",
+     "screen": "page1-row-editor",
      "violations": [],
      "incomplete": [
       {
@@ -583,25 +733,7 @@
      "rules_passed": 37
     },
     {
-     "screen": "step2-correct",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 32
-    },
-    {
-     "screen": "step3-ask",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step4-calculation",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 33
-    },
-    {
-     "screen": "step5-checklist",
+     "screen": "page1-downstream",
      "violations": [],
      "incomplete": [
       {
@@ -609,6 +741,194 @@
        "impact": "serious",
        "help": "Elements must meet minimum color contrast ratio thresholds",
        "nodes": [
+        {
+         "target": [
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(1)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(2)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(3)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(6)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(7)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(8)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(9)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(5) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(6) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(7) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          ".confirm-cell > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        }
+       ]
+      }
+     ],
+     "rules_passed": 36
+    },
+    {
+     "screen": "page2-ready",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 27
+    },
+    {
+     "screen": "page2-unfolded",
+     "violations": [],
+     "incomplete": [
+      {
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          ".card:nth-child(2) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
         {
          "target": [
           ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
@@ -620,22 +940,10 @@
           ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
-        },
-        {
-         "target": [
-          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
-         ],
-         "reason": "Element content contains only non-text characters"
         }
        ]
       }
      ],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step6-check-and-packet",
-     "violations": [],
-     "incomplete": [],
      "rules_passed": 30
     },
     {
@@ -712,10 +1020,10 @@
    "origin": "file-ko",
    "url": "file:// (offline, bundled fixtures), ?lang=ko (Korean reading layer on, html lang=ko)",
    "total_violations": 0,
-   "total_incomplete": 4,
+   "total_incomplete": 5,
    "results": [
     {
-     "screen": "step1-documents",
+     "screen": "page1-file",
      "violations": [],
      "incomplete": [
       {
@@ -777,7 +1085,7 @@
      "rules_passed": 36
     },
     {
-     "screen": "step1-row-editor",
+     "screen": "page1-row-editor",
      "violations": [],
      "incomplete": [
       {
@@ -893,25 +1201,7 @@
      "rules_passed": 37
     },
     {
-     "screen": "step2-correct",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 32
-    },
-    {
-     "screen": "step3-ask",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step4-calculation",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 33
-    },
-    {
-     "screen": "step5-checklist",
+     "screen": "page1-downstream",
      "violations": [],
      "incomplete": [
       {
@@ -919,6 +1209,158 @@
        "impact": "serious",
        "help": "Elements must meet minimum color contrast ratio thresholds",
        "nodes": [
+        {
+         "target": [
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(1)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(2)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(3)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(6)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(7)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(8)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(9)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          ".confirm-cell > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        }
+       ]
+      }
+     ],
+     "rules_passed": 36
+    },
+    {
+     "screen": "page2-ready",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 27
+    },
+    {
+     "screen": "page2-unfolded",
+     "violations": [],
+     "incomplete": [
+      {
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          ".card:nth-child(2) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
         {
          "target": [
           ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
@@ -930,22 +1372,10 @@
           ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
-        },
-        {
-         "target": [
-          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
-         ],
-         "reason": "Element content contains only non-text characters"
         }
        ]
       }
      ],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step6-check-and-packet",
-     "violations": [],
-     "incomplete": [],
      "rules_passed": 30
     },
     {
@@ -1022,10 +1452,10 @@
    "origin": "http-ko",
    "url": "http:// (as FastAPI serves ui/dist), ?lang=ko (Korean reading layer on, html lang=ko)",
    "total_violations": 0,
-   "total_incomplete": 4,
+   "total_incomplete": 5,
    "results": [
     {
-     "screen": "step1-documents",
+     "screen": "page1-file",
      "violations": [],
      "incomplete": [
       {
@@ -1087,7 +1517,7 @@
      "rules_passed": 36
     },
     {
-     "screen": "step1-row-editor",
+     "screen": "page1-row-editor",
      "violations": [],
      "incomplete": [
       {
@@ -1203,25 +1633,7 @@
      "rules_passed": 37
     },
     {
-     "screen": "step2-correct",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 32
-    },
-    {
-     "screen": "step3-ask",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step4-calculation",
-     "violations": [],
-     "incomplete": [],
-     "rules_passed": 33
-    },
-    {
-     "screen": "step5-checklist",
+     "screen": "page1-downstream",
      "violations": [],
      "incomplete": [
       {
@@ -1229,6 +1641,158 @@
        "impact": "serious",
        "help": "Elements must meet minimum color contrast ratio thresholds",
        "nodes": [
+        {
+         "target": [
+          "dd:nth-child(6) > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(1)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(2)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(3)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(4)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(5)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(6)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(7)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(8)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          ".schematic-text:nth-child(9)"
+         ],
+         "reason": "Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          ".confirm-cell > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+         ],
+         "reason": "Element's background color could not be determined because it's partially obscured by another element"
+        },
+        {
+         "target": [
+          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+         ],
+         "reason": "Element content is too short to determine if it is actual text content"
+        }
+       ]
+      }
+     ],
+     "rules_passed": 36
+    },
+    {
+     "screen": "page2-ready",
+     "violations": [],
+     "incomplete": [],
+     "rules_passed": 27
+    },
+    {
+     "screen": "page2-unfolded",
+     "violations": [],
+     "incomplete": [
+      {
+       "id": "color-contrast",
+       "impact": "serious",
+       "help": "Elements must meet minimum color contrast ratio thresholds",
+       "nodes": [
+        {
+         "target": [
+          ".card:nth-child(2) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
+         ],
+         "reason": "Element content contains only non-text characters"
+        },
         {
          "target": [
           ".card:nth-child(3) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
@@ -1240,22 +1804,10 @@
           ".card:nth-child(4) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
          ],
          "reason": "Element content contains only non-text characters"
-        },
-        {
-         "target": [
-          ".card:nth-child(5) > h4 > .chip.chip--present > span[aria-hidden=\"true\"]"
-         ],
-         "reason": "Element content contains only non-text characters"
         }
        ]
       }
      ],
-     "rules_passed": 30
-    },
-    {
-     "screen": "step6-check-and-packet",
-     "violations": [],
-     "incomplete": [],
      "rules_passed": 30
     },
     {

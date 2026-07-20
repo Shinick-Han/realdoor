@@ -7,7 +7,7 @@
  * beside the point: it measured the message layer, and the message layer was not wired
  * to the screen. The scorecard was describing strings nobody was being shown.
  *
- * So this measures the other end. It walks the six renter steps in the browser, reads the
+ * So this measures the other end. It walks the two renter pages in the browser, reads the
  * text that is actually painted, and counts machine identifiers in it. The two numbers
  * answer different questions and both belong on the scorecard:
  *
@@ -63,22 +63,21 @@ const PATTERNS = [
  * honest word for the thing. Reported so the choice stays visible rather than assumed. */
 const HOUSEHOLD_ID = "HH-\\d{3}(?!-D)";
 
+// The renter flow is two pages now (owner's call: six screens were too big an obstacle).
+// Page 1 is scanned with a correction applied, because that is the state that renders the
+// downstream before/after summary and the reason cards; without it the page has nothing
+// to say about corrections. Best effort: the offline replay buttons exist only for the
+// household the pipeline recorded corrections for, so a household that offers none is
+// scanned as it stands rather than skipped. The recorded-questions list under the ask box
+// is opened too — it replaced the old step-3 screen, and a scan that never opens it would
+// measure less text than the old walk did.
 const STEPS = [
-  { id: "step1-documents", screen: "screen-1" },
-  // Step 2 is scanned with a correction applied, because that is the state that renders
-  // reason cards; without it the screen has nothing to say. Best effort: the scenario
-  // buttons differ per household, so a household that offers none is scanned as it stands
-  // rather than skipped.
-  { id: "step2-correct", screen: "screen-2", setUp: async (page) => {
-      await page.locator("#correct-body .button-row").first().locator("button").nth(1)
-        .click({ timeout: 2000 });
-      await page.locator("#correct-apply").click({ timeout: 2000 });
-      await page.locator("#correction-outcome-heading").waitFor({ timeout: 2000 });
+  { id: "page1-file", screen: "screen-file", setUp: async (page) => {
+      await page.locator("#recorded-questions > summary").click({ timeout: 2000 });
+      await page.locator("#replay-corrections button").nth(1).click({ timeout: 2000 });
+      await page.locator("#downstream-heading").waitFor({ timeout: 2000 });
     } },
-  { id: "step3-ask", screen: "screen-3" },
-  { id: "step4-calculation", screen: "screen-4" },
-  { id: "step5-checklist", screen: "screen-5" },
-  { id: "step6-check-and-packet", screen: "screen-6" }
+  { id: "page2-ready", screen: "screen-ready" }
 ];
 
 const browser = await chromium.launch();
@@ -90,15 +89,13 @@ page.on("pageerror", (error) => pageErrors.push(String(error)));
 const households = [];
 
 for (const householdId of HOUSEHOLDS) {
-  // A fresh load per household, then the app's own controls: the walkthrough opens on step
-  // 1, so there is nothing to press to enter it. The picker chooses the file and #step-next
-  // advances. Toggling `.screen[hidden]`
-  // directly would be quicker and wrong — the router *moves* the household picker into
-  // the current screen, so a hand-hidden screen takes the picker down with it, and more
-  // to the point a walk that skips the navigation is not a walk through the flow.
+  // A fresh load per household, then the app's own controls: the walkthrough opens on
+  // page 1, so there is nothing to press to enter it. The picker chooses the file and
+  // #page-next advances. Toggling `.screen[hidden]` directly would be quicker and wrong —
+  // a walk that skips the navigation is not a walk through the flow.
   await page.goto(url);
 
-  // Step 1 opens with nothing loaded now; one click opens the prepared example.
+  // Page 1 opens with nothing loaded; one click opens the prepared example.
   await page.locator("#example-open button").waitFor({ timeout: 30000 });
   await page.locator("#example-open button").click();
   await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);
@@ -108,8 +105,8 @@ for (const householdId of HOUSEHOLDS) {
 
   const screens = [];
   for (const step of STEPS) {
-    if (step.screen !== "screen-1") {
-      await page.locator("#step-next").click();
+    if (step.screen !== "screen-file") {
+      await page.locator("#page-next").click();
       await page.waitForTimeout(150);
     }
     if (step.setUp) await step.setUp(page).catch(() => {});
@@ -231,11 +228,13 @@ const report = {
   plain_wording_gaps: gaps,
   page_errors: pageErrors,
   method_note:
-    "Counts machine identifiers in text that is painted on the six renter steps, plus the " +
+    "Counts machine identifiers in text that is painted on the two renter pages, plus the " +
     "always-visible open-questions rail, the error summary and the header. Text inside a " +
     "collapsed <details> is not counted: it is one disclosure away by design, and every " +
-    "code and original message is still there. Household ids are counted separately and " +
-    "excluded from the total, because the header picker names the file being read.",
+    "code and original message is still there — page 2's summary-first folds (the full " +
+    "working, the present checklist items, the row-by-row answers) fall under the same " +
+    "rule. Household ids are counted separately and excluded from the total, because the " +
+    "picker names the file being read.",
   results: households
 };
 writeFileSync(resolve(uiDir, "screen-scan.json"), JSON.stringify(report, null, 1) + "\n");

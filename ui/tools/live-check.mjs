@@ -22,7 +22,7 @@ function record(name, ok, detail) {
 
 await page.goto(`${base}/?live`);
 
-/* Step 1 now opens with nothing loaded: upload is the front door and the six prepared
+/* Page 1 opens with nothing loaded: upload is the front door and the six prepared
  * households are a secondary offer on the same screen. This walk is about the prepared
  * pack, so it takes the one click a judge takes to open it. */
 await page.locator("#example-open button").waitFor({ timeout: 30000 });
@@ -36,11 +36,7 @@ record("Page served by FastAPI at the same origin as /api/*",
 const households = await page.locator("#household-select option").count();
 record("Households listed from the live API", households > 0, `${households} households`);
 
-/* The flow is linear now, so this walk is linear too: start, then Next, using the same
- * controls a user has. Screens are no longer reachable by jumping to a tab. */
-const next = async () => { await page.locator("#step-next").click(); await page.waitForTimeout(120); };
-
-// 1. rendered page image with overlay boxes on top of it — step 1 is the screen the page
+// 1. rendered page image with overlay boxes on top of it — page 1 is the screen the app
 // opens on, so no control has to be pressed to reach it
 await page.locator(".page-frame img").waitFor({ timeout: 15000 }).catch(() => {});
 const imageOk = await page.evaluate(() => {
@@ -48,7 +44,7 @@ const imageOk = await page.evaluate(() => {
   return img ? { w: img.naturalWidth, h: img.naturalHeight, alt: img.alt } : null;
 });
 const boxCount = await page.locator(".page-frame .evidence-box").count();
-record("Step 1 — server-rendered page PNG with evidence boxes drawn over it",
+record("Page 1 — server-rendered page PNG with evidence boxes drawn over it",
   Boolean(imageOk) && imageOk.w > 0 && boxCount > 0,
   imageOk ? `${imageOk.w}x${imageOk.h}px, ${boxCount} boxes, alt="${imageOk.alt}"` : "no image");
 
@@ -65,52 +61,48 @@ const geometry = await page.evaluate(() => {
     };
   });
 });
-record("Step 1 — every box lands inside the page (no y-flip)",
+record("Page 1 — every box lands inside the page (no y-flip)",
   geometry.every((g) => g.insideFrame),
   geometry.map((g) => `${g.field}@${(g.topFraction * 100).toFixed(1)}%`).join(" "));
 
-// 2. an arbitrary correction, not one of the two recorded offline
-await next();
-await page.selectOption("#correct-doc", "HH-001-D01");
-await page.selectOption("#correct-field", "household_size");
-await page.fill("#correct-value", "5");
-await page.locator("#correct-apply").click();
-await page.locator("#correction-outcome-heading").waitFor({ timeout: 8000 }).catch(() => {});
-const diff = (await page.locator("#correct-outcome table").textContent().catch(() => "")) || "";
-record("Step 2 — arbitrary correction accepted and threshold recomputed by the server",
+// 2. an arbitrary correction, not one of the two recorded offline. The editor is on the
+// row itself now (the correction screen is gone), and the downstream summary renders in
+// place under the table.
+await page.locator("#fixit-HH-001-D01-household_size").click();
+await page.fill("#confirm-value-HH-001-D01-household_size", "5");
+await page.locator("#confirm-do-HH-001-D01-household_size").click();
+await page.locator("#downstream-heading").waitFor({ timeout: 8000 }).catch(() => {});
+const diff = (await page.locator("#downstream-note table").textContent().catch(() => "")) || "";
+record("Page 1 — arbitrary inline correction accepted and threshold recomputed by the server",
   /\$111,120\.00/.test(diff),
   /\$111,120\.00/.test(diff) ? "household size 5 -> frozen threshold $111,120.00" : diff.slice(0, 90));
 
-// 3. free-text rule question. The box is at the foot of every screen now, not inside step 3,
-// so this could be asked from anywhere; it is asked from step 3 because that is where the
-// walk happens to be, and because the check downstream reads step 3's own answer area.
-await next();
+// 3. free-text rule question, from the dock pinned at the foot of the page.
 await page.fill("#ask-input", "What is the frozen 60% threshold for HH-001?");
 await page.locator("#ask-box-body button[type=submit]").click();
 await page.waitForTimeout(600);
 const askBody = (await page.locator("#ask-answer").textContent()) || "";
-record("Step 3 — free-text question answered live with a citation",
+record("Dock — free-text question answered live with a citation",
   /HUD-MTSP-002/.test(askBody) && /2026-05-01/.test(askBody),
   askBody.slice(0, 80).replace(/\s+/g, " ").trim());
 
-// 5. packet zip from the server -- reached by walking steps 4, 5 and 6 in order
-await next();   // step 4, the calculation
-await next();   // step 5, what is missing or out of date
-await next();   // step 6, check what we found and take the packet
+// 5. packet zip from the server -- on page 2, one Continue away
+await page.locator("#page-next").click();
+await page.waitForTimeout(200);
 const download = page.waitForEvent("download", { timeout: 15000 }).catch(() => null);
 await page.locator("#packet-download").click();
 const file = await download;
-record("Step 5 — packet downloaded from the server as a zip",
+record("Page 2 — packet downloaded from the server as a zip",
   Boolean(file) && /\.zip$/.test(file ? file.suggestedFilename() : ""),
   file ? file.suggestedFilename() : "no download");
 
-// 6. the controls, on the secondary route, reached in one click from step 6
+// 6. the controls, on the secondary route, reached in one click from page 2
 await page.locator("#go-how").click();
 await page.waitForTimeout(150);
 await page.getByRole("button", { name: /Try to make the server return a decision/ }).click();
 await page.locator("#gate-output .callout").waitFor({ timeout: 8000 });
 const gateText = (await page.locator("#gate-output").textContent()) || "";
-record("Step 6 — output gate demonstrated live: server withholds its own response with HTTP 500",
+record("Judges' page — output gate demonstrated live: server withholds its own response with HTTP 500",
   /Gate held\. HTTP 500/.test(gateText) && /eligible/.test(gateText),
   gateText.slice(0, 90).replace(/\s+/g, " ").trim());
 
@@ -119,7 +111,7 @@ for (const index of [0, 1, 2]) {
 }
 await page.waitForTimeout(500);
 const probes = await page.locator("#controls-body .callout--stop").count();
-record("Step 6 — three refusals answered by the live server", probes >= 3, `${probes} refusals rendered`);
+record("Judges' page — three refusals answered by the live server", probes >= 3, `${probes} refusals rendered`);
 
 // session deletion really destroys the session
 const sessionId = await page.evaluate(() => window.performance.now() && null);
@@ -135,13 +127,13 @@ if (deletedId) {
   }, [base, deletedId]);
   gone = followUp === 404;
 }
-record("Step 6 — deleted session is really gone (follow-up request 404s)",
+record("Judges' page — deleted session is really gone (follow-up request 404s)",
   /deleted/i.test(sessionText) && gone, `session ${deletedId} -> follow-up ${gone ? "404" : "still answering"}`);
 
 // 7. live measurements -- same secondary route, further down the page
 await page.waitForTimeout(400);
 const measureText = (await page.locator("#measure-body").textContent()) || "";
-record("Step 7 — measurements fetched from /api/selftest",
+record("Judges' page — measurements fetched from /api/selftest",
   /Measured/.test(measureText) && /exact match|fields total/i.test(measureText),
   measureText.slice(0, 70).replace(/\s+/g, " ").trim());
 

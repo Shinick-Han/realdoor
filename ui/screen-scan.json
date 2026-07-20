@@ -1,39 +1,35 @@
 {
  "tool": "screen-scan",
  "by_step": {
-  "step1-documents": 3,
-  "step2-correct": 0,
-  "step3-ask": 0,
-  "step4-calculation": 10,
-  "step5-checklist": 0,
-  "step6-check-and-packet": 1
+  "page1-file": 3,
+  "page2-ready": 0
  },
  "page": "ui/dist/index.html",
  "origin": "file:// (offline, bundled fixtures — the state the submitted build opens in)",
- "generated_at": "2026-07-20T13:59:18.544Z",
+ "generated_at": "2026-07-20T15:08:59.842Z",
  "households_walked": [
   "HH-001",
   "HH-004",
   "HH-005"
  ],
- "steps_per_household": 6,
+ "steps_per_household": 2,
  "patterns": [
   "HH-\\d{3}-D\\d{2}",
   "CHK-[A-Z][A-Z-]+",
   "CH-[A-Z]+-\\d+"
  ],
- "total_visible_identifiers": 14,
+ "total_visible_identifiers": 3,
  "plain_wording_gaps": [],
  "page_errors": [],
- "method_note": "Counts machine identifiers in text that is painted on the six renter steps, plus the always-visible open-questions rail, the error summary and the header. Text inside a collapsed <details> is not counted: it is one disclosure away by design, and every code and original message is still there. Household ids are counted separately and excluded from the total, because the header picker names the file being read.",
+ "method_note": "Counts machine identifiers in text that is painted on the two renter pages, plus the always-visible open-questions rail, the error summary and the header. Text inside a collapsed <details> is not counted: it is one disclosure away by design, and every code and original message is still there — page 2's summary-first folds (the full working, the present checklist items, the row-by-row answers) fall under the same rule. Household ids are counted separately and excluded from the total, because the picker names the file being read.",
  "results": [
   {
    "household_id": "HH-001",
-   "visible_identifiers": 5,
+   "visible_identifiers": 1,
    "plain_wording_gaps": [],
    "screens": [
     {
-     "step": "step1-documents",
+     "step": "page1-file",
      "visible_identifiers": 1,
      "household_ids_named": 3,
      "offenders": [
@@ -45,66 +41,20 @@
      ]
     },
     {
-     "step": "step2-correct",
+     "step": "page2-ready",
      "visible_identifiers": 0,
      "household_ids_named": 1,
      "offenders": []
-    },
-    {
-     "step": "step3-ask",
-     "visible_identifiers": 0,
-     "household_ids_named": 4,
-     "offenders": []
-    },
-    {
-     "step": "step4-calculation",
-     "visible_identifiers": 3,
-     "household_ids_named": 1,
-     "offenders": [
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-READINESS-001",
-       "context": "CH-READINESS-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-DECISION-001",
-       "context": "CH-DECISION-001"
-      }
-     ]
-    },
-    {
-     "step": "step5-checklist",
-     "visible_identifiers": 0,
-     "household_ids_named": 1,
-     "offenders": []
-    },
-    {
-     "step": "step6-check-and-packet",
-     "visible_identifiers": 1,
-     "household_ids_named": 2,
-     "offenders": [
-      {
-       "pattern": "document_id",
-       "identifier": "HH-001-D02",
-       "context": "gross_pay = 2,500 on HH-001-D02 — recorded, but not used in the calculation"
-      }
-     ]
     }
    ]
   },
   {
    "household_id": "HH-004",
-   "visible_identifiers": 5,
+   "visible_identifiers": 1,
    "plain_wording_gaps": [],
    "screens": [
     {
-     "step": "step1-documents",
+     "step": "page1-file",
      "visible_identifiers": 1,
      "household_ids_named": 1,
      "offenders": [
@@ -116,65 +66,20 @@
      ]
     },
     {
-     "step": "step2-correct",
-     "visible_identifiers": 0,
-     "household_ids_named": 4,
-     "offenders": []
-    },
-    {
-     "step": "step3-ask",
-     "visible_identifiers": 0,
-     "household_ids_named": 9,
-     "offenders": []
-    },
-    {
-     "step": "step4-calculation",
-     "visible_identifiers": 4,
-     "household_ids_named": 1,
-     "offenders": [
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-READINESS-001",
-       "context": "CH-READINESS-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-DECISION-001",
-       "context": "CH-DECISION-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-SAFETY-001",
-       "context": "CH-SAFETY-001"
-      }
-     ]
-    },
-    {
-     "step": "step5-checklist",
+     "step": "page2-ready",
      "visible_identifiers": 0,
      "household_ids_named": 1,
-     "offenders": []
-    },
-    {
-     "step": "step6-check-and-packet",
-     "visible_identifiers": 0,
-     "household_ids_named": 2,
      "offenders": []
     }
    ]
   },
   {
    "household_id": "HH-005",
-   "visible_identifiers": 4,
+   "visible_identifiers": 1,
    "plain_wording_gaps": [],
    "screens": [
     {
-     "step": "step1-documents",
+     "step": "page1-file",
      "visible_identifiers": 1,
      "household_ids_named": 1,
      "offenders": [
@@ -186,49 +91,9 @@
      ]
     },
     {
-     "step": "step2-correct",
-     "visible_identifiers": 0,
-     "household_ids_named": 4,
-     "offenders": []
-    },
-    {
-     "step": "step3-ask",
-     "visible_identifiers": 0,
-     "household_ids_named": 9,
-     "offenders": []
-    },
-    {
-     "step": "step4-calculation",
-     "visible_identifiers": 3,
-     "household_ids_named": 1,
-     "offenders": [
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-READINESS-001",
-       "context": "CH-READINESS-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-INCOME-001",
-       "context": "CH-INCOME-001"
-      },
-      {
-       "pattern": "rule_id",
-       "identifier": "CH-DECISION-001",
-       "context": "CH-DECISION-001"
-      }
-     ]
-    },
-    {
-     "step": "step5-checklist",
+     "step": "page2-ready",
      "visible_identifiers": 0,
      "household_ids_named": 1,
-     "offenders": []
-    },
-    {
-     "step": "step6-check-and-packet",
-     "visible_identifiers": 0,
-     "household_ids_named": 2,
      "offenders": []
     }
    ]

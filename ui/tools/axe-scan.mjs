@@ -1,9 +1,10 @@
 /* Accessibility measurement for the RealDoor UI.
  *
  * Drives ui/dist/index.html in headless Chromium over file:// -- the same way a judge
- * with no server would open it -- walks the landing screen, all six ordered steps and the
- * secondary "how this works" route, puts each one into the state a user actually reaches
- * (correction applied, probe run, packet section rendered), and runs axe-core against each.
+ * with no server would open it -- walks the two renter pages and the secondary "how this
+ * works" route, puts each one into the states a user actually reaches (row editor open,
+ * correction committed with its downstream summary, recorded questions expanded, page-2
+ * folds both closed and open, probe run), and runs axe-core against each.
  *
  * The walk is a real forward walk through the flow, using the same Back/Next controls a
  * user has, rather than jumping between panels: the flow is the thing being measured.
@@ -70,21 +71,21 @@ const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
  *  recorded question below: those strings come from the challenge pack and are deliberately
  *  never translated, so matching them by name stays correct in both languages. */
 const SCREENS = [
-  // Step 1 is the screen the page opens on. There is no landing screen in front of it any
-  // more: the walkthrough instructions it carried are on the "How this works" page, scanned
-  // at the end of this list.
-  { id: "step1-documents", enter: async () => {},
+  // The renter flow is two pages now (owner's call: six step-screens were too big an
+  // obstacle). Page 1 is the screen the app opens on: the file — upload, evidence, and
+  // every row action in place.
+  { id: "page1-file", enter: async () => {},
     setUp: async (page) => {
       await page.locator("#documents-body .field-row-btn").first().click();
     } },
 
-  // The same screen with the inline row editor OPEN ("This is wrong — fix it") and the
+  // The same page with the inline row editor OPEN ("This is wrong — fix it") and the
   // picker's Start-over control armed on its confirming step. Both are states a renter
   // actually reaches, and both draw controls that exist in no other state. The
   // drag-to-read layer itself needs the live API (the static origins have no reader), so
   // its focus states are checked against the live server separately; everything the
   // offline build CAN reach of the editor is scanned here.
-  { id: "step1-row-editor", enter: async () => {},
+  { id: "page1-row-editor", enter: async () => {},
     setUp: async (page) => {
       await page.locator("#documents-body button[id^='fixit-']").first().click();
       await page.locator("#documents-body .row-editor input").waitFor();
@@ -98,25 +99,35 @@ const SCREENS = [
       await page.locator("#documents-body button[id^='cancel-']").first().click();
     } },
 
-  { id: "step2-correct", enter: async (page) => page.locator("#step-next").click(),
+  // Page 1 with a committed correction: the downstream before/after callout is on show
+  // (the moment that replaced the old correction screen), the rejected case included, so
+  // the error summary above the H1 has an inline item to link to. The recorded-questions
+  // group under the ask box is opened in the same state — it replaced the old step-3
+  // screen and its expanded state must be scanned somewhere.
+  { id: "page1-downstream", enter: async () => {},
     setUp: async (page) => {
-      // load the rejected-correction scenario: the case that must be prominent, and the
-      // one that puts an error summary above the H1 with an inline item to match it
-      await page.locator("#correct-body .button-row").first().locator("button").nth(1).click();
-      await page.locator("#correct-apply").click();
-      await page.locator("#correction-outcome-heading").waitFor();
-    } },
-
-  { id: "step3-ask", enter: async (page) => page.locator("#step-next").click(),
-    setUp: async (page) => {
+      await page.locator("#recorded-questions > summary").click();
+      // A recorded question's ANSWER state — citations, routing note, disclosure — is
+      // scanned here too; it used to be the step-3 scan. The string is from the pack and
+      // is deliberately never translated, so matching by name is correct in ko too.
       await page.getByRole("button", { name: "What annualized income should the scorer use for HH-001?" }).click();
+      await page.locator("#replay-corrections button").nth(1).click();
+      await page.locator("#downstream-heading").waitFor();
     } },
 
-  { id: "step4-calculation", enter: async (page) => page.locator("#step-next").click() },
+  // Page 2 in its default, summary-first state: calc lead, checklist with open items,
+  // tally and packet, everything else folded.
+  { id: "page2-ready", enter: async (page) => page.locator("#page-next").click() },
 
-  { id: "step5-checklist", enter: async (page) => page.locator("#step-next").click() },
-
-  { id: "step6-check-and-packet", enter: async (page) => page.locator("#step-next").click() },
+  // Page 2 with every fold open: the full working, the region panel, the present
+  // checklist items, the row-by-row answers. The folded state must not hide a violation.
+  { id: "page2-unfolded", enter: async () => {},
+    setUp: async (page) => {
+      await page.evaluate(() => {
+        document.querySelectorAll("#screen-ready details.fold")
+          .forEach((d) => { d.open = true; });
+      });
+    } },
 
   // the secondary route, reached in one click from wherever the user happens to be
   { id: "how-this-works", enter: async (page) => page.locator("#go-how").click(),
@@ -144,7 +155,7 @@ for (const origin of ORIGINS) {
 
   await page.goto(origin.url);
 
-  // Step 1 opens with nothing loaded now; one click opens the prepared example.
+  // Page 1 opens with nothing loaded; one click opens the prepared example.
   await page.locator("#example-open button").waitFor({ timeout: 30000 });
   await page.locator("#example-open button").click();
   await page.waitForFunction(() => document.querySelectorAll("#documents-body table").length > 0);

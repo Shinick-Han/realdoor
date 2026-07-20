@@ -39,8 +39,6 @@ const activeSessions = async () =>
 /** The report the page is holding right now, through the read-only window app.js exposes. */
 const shownReport = () => page.evaluate(() => window.REALDOOR_LAST_REPORT);
 
-const next = async () => { await page.locator("#step-next").click(); await page.waitForTimeout(150); };
-
 async function loadHousehold(id) {
   await page.selectOption("#household-select", id);
   await page.waitForFunction(
@@ -48,12 +46,31 @@ async function loadHousehold(id) {
     id, { timeout: 15000 });
 }
 
+/** Show `documentId`'s table on page 1. The doc list renders in report order, so the
+ *  index in the report is the index in the list. */
+async function showDocument(documentId) {
+  const index = await page.evaluate((id) =>
+    (window.REALDOOR_LAST_REPORT.documents || []).findIndex((d) => d.document_id === id),
+    documentId);
+  await page.locator(".doc-list li button").nth(index).click();
+  await page.waitForTimeout(200);
+}
+
+/* The correction form died with the correction screen; the editor is on the row now.
+ * Same machinery underneath (Source.confirm), driven the way a person drives it. */
 async function applyCorrection(documentId, field, value) {
-  await page.selectOption("#correct-doc", documentId);
-  await page.selectOption("#correct-field", field);
-  await page.fill("#correct-value", String(value));
-  await page.locator("#correct-apply").click();
+  await showDocument(documentId);
+  await page.locator(`#fixit-${documentId}-${field}`).click();
+  await page.fill(`#confirm-value-${documentId}-${field}`, String(value));
+  await page.locator(`#confirm-do-${documentId}-${field}`).click();
   await page.waitForTimeout(700);
+}
+
+/** Undo the mark on one row — the correction screen's Undo button is the row's now. */
+async function undoCorrection(documentId, field) {
+  await showDocument(documentId);
+  await page.locator(`#confirm-do-${documentId}-${field}`).click();
+  await page.waitForTimeout(900);
 }
 
 function fieldValue(report, documentId, field) {
@@ -75,9 +92,8 @@ await page.waitForFunction(() => document.querySelectorAll("#documents-body tabl
 
 /* ── sequence 1: correct, undo, correct something else ────────────────────────── */
 await loadHousehold("HH-004");
-// The walkthrough opens on step 1; there is no landing screen in front of it to leave.
+// The corrections live on page 1's rows now; there is nowhere to navigate to first.
 await page.waitForTimeout(200);
-await next();   // step 2
 
 const baseline = await shownReport();
 const extractedPay = fieldValue(baseline, "HH-004-D02", "gross_pay").value;
@@ -88,12 +104,7 @@ record("Sequence 1a — the correction is applied and visible in the report",
   fieldValue(corrected, "HH-004-D02", "gross_pay").value === 2280,
   `gross_pay ${extractedPay} -> ${fieldValue(corrected, "HH-004-D02", "gross_pay").value}`);
 
-/* Found by role as well as by id, so this script can be pointed at a build that predates
- * the id and still produce a FAIL line rather than a crash. A regression check that dies
- * on the broken build is not reporting the regression, it is just dying. */
-await page.locator("#correct-undo")
-  .or(page.getByRole("button", { name: "Undo correction" })).first().click();
-await page.waitForTimeout(900);
+await undoCorrection("HH-004-D02", "gross_pay");
 const undone = await shownReport();
 const undoneField = fieldValue(undone, "HH-004-D02", "gross_pay");
 record("Sequence 1b — undo puts the extracted value back, as the button says it does",
@@ -116,14 +127,13 @@ record("Sequence 1e — and the correction actually being made survives the undo
   `household_size = ${kept.value} (${kept.evidence_kind})`);
 
 /* ── sequence 2: delete, then carry on using the page ─────────────────────────── */
-await next();   // 3
-await next();   // 4
-await next();   // 5
-await next();   // 6
+await page.locator("#page-next").click();   // page 2: readiness and handoff
+await page.waitForTimeout(200);
+await page.locator("#packet-delete-session").scrollIntoViewIfNeeded().catch(() => {});
 
-record("Sequence 2a — the renter can delete from inside the six steps, not only from the judges' page",
+record("Sequence 2a — the renter can delete from inside the walkthrough, not only from the judges' page",
   await page.locator("#packet-delete-session").isVisible(),
-  "delete control present on step 6");
+  "delete control present at the end of page 2");
 
 const before = await activeSessions();
 /* On a build where the journey has no delete control, fall back to the judge-facing one
@@ -150,24 +160,26 @@ record("Sequence 2c — the page empties itself instead of still showing the hou
   `report held: ${emptied === null ? "none" : emptied.household_id}, download buttons: ${await page.locator("#packet-download").count()}`);
 
 /* Read the whole screen, not one panel: what matters is that the person standing on
- * step 6 is told, wherever on it the sentence happens to be rendered. */
-const saysSo = ((await page.locator("#screen-6").textContent().catch(() => "")) || "") +
+ * page 2 is told, wherever on it the sentence happens to be rendered. */
+const saysSo = ((await page.locator("#screen-ready").textContent().catch(() => "")) || "") +
   ((await page.locator("#session-output").textContent().catch(() => "")) || "");
 record("Sequence 2d — the screen says what happened and that carrying on means starting again",
   /deleted this session/i.test(saysSo) && /start(ing)? again/i.test(saysSo),
   saysSo.replace(/\s+/g, " ").trim().slice(0, 100));
 
-/* Walk back through the steps the way a judge would after deleting. This is the exact
- * move that used to resurrect everything: any screen making a request was enough. */
+/* Walk back the way a judge would after deleting. This is the exact move that used to
+ * resurrect everything: any screen making a request was enough. */
 if (await page.locator("#nav-how button").count()) {
   await page.locator("#nav-how button").first().click();   // "go back to where you were"
   await page.waitForTimeout(400);
 }
-for (const _ of [0, 1]) {
-  if (await page.locator("#step-back").count()) {
-    await page.locator("#step-back").click();
-    await page.waitForTimeout(250);
-  }
+if (await page.locator("#page-back").count()) {
+  await page.locator("#page-back").click();
+  await page.waitForTimeout(250);
+}
+if (await page.locator("#rail-page-2").count()) {
+  await page.locator("#rail-page-2").click();
+  await page.waitForTimeout(250);
 }
 await page.waitForTimeout(400);
 const afterWalking = await shownReport();
