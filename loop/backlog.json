@@ -145,7 +145,8 @@
       "expected_yield": 0,
       "closed_on": "day 0, zero iterations spent",
       "root_cause_note": "The four documents are hybrid, not scans: they carry large text layers (2.3k-10.3k chars of explanatory prose) with the actual pay stub embedded as a raster image. The 22 values exist only in those pixels. Measured image resolutions: hi_ags/ou/osu ~150-200 dpi (OCR-viable), lcc ~96-116 dpi (marginal).",
-      "design_note": "Design section 8.3 gives the five go/no-go inputs a future OCR effort must obtain before starting -- root cause of the existing 0/7, the recoverability upper bound measured offline, a verification story compatible with zero-wrong (do the embedded stubs print closable identities?), the bbox mapping from image pixels to PDF points at IoU>0.5, and the determinism cost of a nondeterministic dependency. Decision rule: start only if (1) is understood, (2) is >= ~two-thirds clean and (3) closes identities on at least the ou/osu-class documents. Otherwise IMAGE_ONLY is the honest boundary of a text-layer extractor."
+      "design_note": "Design section 8.3 gives the five go/no-go inputs a future OCR effort must obtain before starting -- root cause of the existing 0/7, the recoverability upper bound measured offline, a verification story compatible with zero-wrong (do the embedded stubs print closable identities?), the bbox mapping from image pixels to PDF points at IoU>0.5, and the determinism cost of a nondeterministic dependency. Decision rule: start only if (1) is understood, (2) is >= ~two-thirds clean and (3) closes identities on at least the ou/osu-class documents. Otherwise IMAGE_ONLY is the honest boundary of a text-layer extractor.",
+      "superseded_note": "2026-07-20: ocr-extension-design.md obtained all five inputs and its decision rule said GO, so this closure is superseded by T9-T14. Corrected accounting: of the nominal image-only population, these 22 are loop-visible; 10 carry a closable printed identity (licensable), the other 12 (10 dates, 2 names) have none and are recorded NO_SAFE_RULE at T13. The uploads-31 harness block is recorded at T14."
     },
     {
       "id": "T8",
@@ -162,6 +163,122 @@
       "prior_attempts": [],
       "root_cause_note": "CORRECTED during it-002 diagnosis -- the it-001 note blamed typography, and that is the wrong mechanism. Measured: _label_runs DOES recognise the 29pt non-bold cells (EMPLOYEE via LABEL_MAP, PAY RATE via LABEL_SYNONYMS -- the vocabulary path is typography-independent). What failed was every value rule downstream: the data row sits 39.0pt below the header baseline (781.0 -> 742.0) and VALUE_Y_WINDOW=(6,22) -- fitted to the pack's 14.5-15.3pt pitch -- cannot reach it; the side-by-side and column_value rules read across the row; table_cell_value's REGULAR row sits under a header with no RATE cell; the arithmetic path found 18.00 by label adjacency only and correctly refused it.",
       "closed_note": "Both fields recovered by columns.header_cell_value (flag REALDOOR_HEADER_CELL, license: printed header row): a vocabulary label that is one whole cell of a printed column-header row (>=3 caption cells, _header_row_words) licenses the single run beneath it within HEADER_SEARCH_BAND that shares x-extent with exactly that cell and no other. Falsified first over all 77 (loop/falsification/it-002.json): fired on 2 docs, zero conflicts. Flips: target person_name='Johnson, Bob' + hourly_rate=18.00, plus uploads::up_024_pay_stub_table.pdf person_name + pay_date -- the fixture authored to probe exactly this layout; its two-data-row columns (regular_hours/hourly_rate/gross_pay) still abstain on the two-candidate refusal, which is the safety property, not a residue: up_024's own manifest says no rule may pick between the two numbers. No successor items."
+    },
+    {
+      "id": "T9",
+      "title": "OCR injection/reuse (design it-A): embedded-image regions OCR'd into Words for the identity paths only",
+      "corpus": "confirm",
+      "doc": "ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf",
+      "fields": [
+        "confirm::ou_sample_check_stub.pdf::hourly_rate",
+        "confirm::ou_sample_check_stub.pdf::gross_pay",
+        "confirm::ou_sample_check_stub.pdf::net_pay",
+        "confirm::osu_sample_earnings_statement.pdf::gross_pay"
+      ],
+      "category": "image_only",
+      "status": "DONE",
+      "attempts": 2,
+      "prior_attempts": [],
+      "expected_yield": 2,
+      "root_cause_note": "ocr-extension-design.md section 1: the confirm hybrids never reach OCR at all (text-layer prose routes them down the text path, and the confirm harness only calls core.extract.extract_document), and the existing ocr/ocr_extract.py is page-1-only, LABEL_MAP-only, pack-geometry-fitted. The stub pixels print closable identities (section A: ou four independent closures, osu summary band).",
+      "design_note": "Design section F it-A: region discovery from page.images, crop OCR at the region's own native scale, engine-geometry Words, injection into extract_document behind REALDOOR_OCR_WORDS -- handed ONLY to verified/shredded (the identity-closing paths), never to the label/column value paths. The design's measured floor was +2 (ou hourly_rate, osu gross_pay); the P2 grounding sweep at native scale measured +4 (ou gross/net land in it-A already). Zero wrong under the identity gate everywhere.",
+      "closed_note": "4 image-only fields read via OCR word injection + the existing identity chain (predicted 4, observed 4). Remaining OCR iterations per the design stay OPEN with their own expected yields."
+    },
+    {
+      "id": "T10",
+      "title": "OCR band-role completion (design it-B): L4 quantization products, band-role members, L5 hours header",
+      "corpus": "confirm",
+      "doc": "ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf",
+      "fields": [
+        "confirm::ou_sample_check_stub.pdf::regular_hours",
+        "confirm::osu_sample_earnings_statement.pdf::net_pay"
+      ],
+      "category": "image_only",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 2,
+      "root_cause_note": "Design sections A.2/A.3: ou regular_hours refuses on S3 two-survivors {68.43, 8.00} (needs the REGULAR row word + hours-column-sums-to-printed-80.00 + L5 unqualified-HOURS header); osu net_pay refuses on band-role assignment (the remaining member of an already-closed band, named by printed row position). Note: it-A's native-scale measurement already landed ou gross/net, which the design had listed here -- this item shrank from 4 to 2 predicted fields.",
+      "design_note": "Design section F it-B, flag REALDOOR_OCR_BAND_ROLE. Blunt review 3: the S3 relaxation is where a wrong value would enter if anywhere; must stay one-distinct-survivor-per-role, and the falsification predicate must fire on ou+osu only."
+    },
+    {
+      "id": "T11",
+      "title": "OCR labeled total band + instance-conflict guard (design it-C): hi_ags",
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf",
+      "fields": [
+        "confirm::hi_ags_pay_statement_example_2021.pdf::gross_pay",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::net_pay"
+      ],
+      "category": "image_only",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 2,
+      "root_cause_note": "Design section A.1: the earnings-column total misreads as '2.328.01' (comma->period) so no anchored run forms; the summary band 444.00+372.63+1,511.38=2,328.01 is a labeled ROW (TOTAL GROSS / TOTAL DEDUCTIONS / NET PAY), a form verified.py has no rule for. Three stub instances on the document disagree (p1 truth vs p2 before/after pair); nothing printed selects an instance.",
+      "design_note": "Design section F it-C, flag REALDOOR_OCR_TOTAL_BAND: labeled band via anchor-only strings (shredded _ROW_LABELS precedent) + instance-conflict guard (hazard 5: same-field candidates from different regions that disagree => withdraw all). Best-case only; FED TAXABLE adjacency; one attempt, NO_SAFE_RULE acceptable."
+    },
+    {
+      "id": "T12",
+      "title": "OCR single-earnings-row band (design it-D): lcc",
+      "corpus": "confirm",
+      "doc": "lcc_understanding_your_paycheck.pdf",
+      "fields": [
+        "confirm::lcc_understanding_your_paycheck.pdf::gross_pay",
+        "confirm::lcc_understanding_your_paycheck.pdf::net_pay"
+      ],
+      "category": "image_only",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "root_cause_note": "Design section A.4: identities close on paper (31.00 x 10.51 = 325.81 exact; 325.81 - 61.36 = 264.45; deduction column sums to 61.36) but the earnings table has ONE current-period row, so the >=2-member column-sum guard refuses the anchor. The document's own traps: truth lists regular_hours AND hourly_rate in expect_absent (emitting 31.00/10.51 is a scored WRONG), misread labels at 96 dpi ('TotalPersonalDeductlons'), Total Employer Contributions 113.20 adjacent to the band.",
+      "design_note": "Design section F it-D, flag REALDOOR_OCR_SINGLE_ROW. Highest risk; honest expectation is 'attempt once, accept NO_SAFE_RULE readily'. Expected yield recorded as 0 for that reason; best case 2."
+    },
+    {
+      "id": "T13",
+      "title": "OCR dates and names: 12 fields with no closable printed identity",
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf | ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf | lcc_understanding_your_paycheck.pdf",
+      "fields": [
+        "confirm::ou_sample_check_stub.pdf::pay_date",
+        "confirm::ou_sample_check_stub.pdf::pay_period_start",
+        "confirm::ou_sample_check_stub.pdf::pay_period_end",
+        "confirm::osu_sample_earnings_statement.pdf::pay_date",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::pay_date",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::pay_period_start",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::pay_period_end",
+        "confirm::hi_ags_pay_statement_example_2021.pdf::person_name",
+        "confirm::lcc_understanding_your_paycheck.pdf::pay_date",
+        "confirm::lcc_understanding_your_paycheck.pdf::pay_period_start",
+        "confirm::lcc_understanding_your_paycheck.pdf::pay_period_end",
+        "confirm::lcc_understanding_your_paycheck.pdf::person_name"
+      ],
+      "category": "image_only",
+      "status": "NO_SAFE_RULE",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "2026-07-20, zero iterations spent -- recorded from the design dossier (ocr-extension-design.md section C.3), not from a burned attempt",
+      "root_cause_note": "No printed identity closes over free text or a lone date. Candidate licenses weighed and refused in the dossier: label adjacency is the evidence class that shipped person_name='Employer' and the gross_pay=567.00 shape; multi-instance agreement cannot refuse systematic font-level confusion (measured on lcc: the motto and 'Deductlons' misread identically in independent renderings, and Banner ID digit-flips at 96 dpi); shape checks refuse garbage but not plausible wrong names. Dates: the only candidate identity (frequency x period-span) has no printed frequency on any of the four documents, and up_014 proves the corpus itself violates the span convention. A single substituted character is a scored WRONG under G1.",
+      "design_note": "These surface as PROPOSAL-carrying abstentions through verified.py's existing proposal mechanism riding it-A -- renter-confirmation material, zero movement in field_state, zero wrong possible."
+    },
+    {
+      "id": "T14",
+      "title": "uploads 31 image fields: unmeasurable by the loop's protected instruments",
+      "corpus": "uploads",
+      "doc": "up_006_pay_stub_sam_poe_scan.pdf | up_010_benefit_letter_sam_poe_scan.pdf | up_014_pay_stub_jane_roe_unreadable.pdf | up_026_pay_stub_sam_poe_illegible.pdf",
+      "fields": [
+        "see loop/baseline.json field_state, the 31 uploads entries valued image_only"
+      ],
+      "category": "contract",
+      "status": "BLOCKED_CONTRACT",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "closed_on": "2026-07-20, zero iterations spent",
+      "root_cause_note": "scripts/measure_label_mapping._tally skips rasterized documents outright, and loop/tools/build_field_state.py reconciles against it by construction, so no change to core/ or ocr/ can ever flip these 31 in field_state. The measuring script is a protected instrument (G6); acting on this requires the instrument owner, not the loop -- the T5 precedent. The PRODUCT path is not blocked: api/upload.py already routes empty-text-layer uploads to ocr/ocr_extract.py and the uploads manifest records its measured behaviour, including the conf-based certainty='high' (design section 1g) that the owner should cap to 'low' as an ordinary reviewed change.",
+      "design_note": "Design section 2 and C.4. Belongs in STOP.md alongside T5 at loop end."
     }
   ]
 }

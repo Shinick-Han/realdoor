@@ -1,9 +1,9 @@
 {
   "iteration": 0,
   "target": null,
-  "run_at": "2026-07-20T06:41:24+00:00",
-  "head": "c45064647e2f3f496b5f0492b534d232677f5982",
-  "accepted_commit": "c45064647e2f3f496b5f0492b534d232677f5982",
+  "run_at": "2026-07-20T08:38:01+00:00",
+  "head": "b070d15d14e15aed0ec0afc8feea3b25bbc003c1",
+  "accepted_commit": "b070d15d14e15aed0ec0afc8feea3b25bbc003c1",
   "verdict": "PASS",
   "failed_gates": [],
   "gates": [
@@ -42,9 +42,9 @@
       "gate": "G4",
       "pass": true,
       "detail": {
-        "passed": 1245,
+        "passed": 1285,
         "failed": 0,
-        "baseline_passed": 1245
+        "baseline_passed": 1285
       }
     },
     {
@@ -52,7 +52,7 @@
       "pass": true,
       "detail": {
         "flags_off": [],
-        "compared_against": "c45064647e2f3f496b5f0492b534d232677f5982",
+        "compared_against": "b070d15d14e15aed0ec0afc8feea3b25bbc003c1",
         "documents_compared": 77,
         "identical": true,
         "documents_differing": [],
@@ -66,14 +66,12 @@
         "allowlist": [],
         "changed": [
           "loop/baseline.json",
-          "loop/measurements/it-000.json",
-          "loop/tools/build_field_state.py",
-          "loop/tools/gate.py"
+          "loop/measurements/it-000.json"
         ],
         "outside_allowlist": [],
         "forbidden_touched": [],
-        "cache_paths_exempted": 24,
-        "preexisting_dirt_exempted": 61
+        "cache_paths_exempted": 0,
+        "preexisting_dirt_exempted": 64
       }
     },
     {
@@ -102,22 +100,21 @@
       "abstained": 21
     },
     "confirm": {
-      "correct": 12,
+      "correct": 17,
       "of": 126,
       "wrong": 0,
-      "abstained": 114
+      "abstained": 109
     },
     "pytest": {
-      "passed": 1245,
+      "passed": 1285,
       "failed": 0,
       "exit_code": 0
     }
   },
   "field_state_census": {
     "confirm": {
-      "abstain": 5,
       "blocked_contract": 2,
-      "correct": 12,
+      "correct": 17,
       "image_only": 22,
       "masked": 5
     },
@@ -133,8 +130,8 @@
       "correct": 159
     },
     "uploads": {
-      "abstain": 10,
-      "correct": 134,
+      "abstain": 8,
+      "correct": 136,
       "image_only": 31
     }
   },
@@ -142,8 +139,6 @@
   "flag_off_identical": true,
   "diff_files": [
     "loop/baseline.json",
-    "loop/measurements/it-000.json",
-    "loop/tools/build_field_state.py",
-    "loop/tools/gate.py"
+    "loop/measurements/it-000.json"
   ]
 }

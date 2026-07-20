@@ -1032,6 +1032,24 @@ def _header_cell_enabled() -> bool:
     return os.environ.get("REALDOOR_HEADER_CELL", "").strip() != "0"
 
 
+def _ocr_words_enabled() -> bool:
+    """Is embedded-image region OCR switched on? ON by default; `0` switches it off.
+
+    Guards `core.ocr_words.region_ocr_words` -- OCR of a page's embedded raster regions
+    into ordinary `Word`s that are handed ONLY to the identity-closing paths
+    (`core.verified`, `core.shredded`); the label/column/header-cell value paths never
+    see them, so no adjacency rule can emit an OCR reading (the licensing rule -- see
+    `core/ocr_words.py`'s docstring; loop iteration it-003, falsified over all 77 corpus
+    documents first -- loop/falsification/it-003.json). With `REALDOOR_OCR_WORDS=0`
+    `core.ocr_words` is never imported and this module's output is bit-identical to
+    what it was before the module existed. Read through a function rather than captured
+    at import so a test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OCR_WORDS", "").strip() != "0"
+
+
 def infer_document_type(pdf_path: str | Path) -> str:
     """Derive the document type from the pack's file naming convention."""
     stem = Path(pdf_path).stem
@@ -2159,6 +2177,41 @@ def assess_staleness(
 # --------------------------------------------------------------------------------------
 
 
+def _with_ocr_provenance(
+    field: dict[str, Any], injected: list[Word]
+) -> dict[str, Any]:
+    """Mark an identity-path answer whose accepted token is an OCR-read word.
+
+    The identity paths already cap at `certainty="low"` and their notes already name
+    the closed identity; this adds the provenance so a reader can see the value came
+    off pixels, and pins the cap for any future path that forgets it. An answer whose
+    box does not touch an injected word is a printed-word answer and passes through
+    untouched -- injected words never overlap printed ones (the overlap guard in
+    `core/ocr_words.py`), so a touching box identifies the source.
+    """
+    if not injected:
+        return field
+    bbox, page = field.get("bbox"), field.get("page")
+    if not bbox:
+        return field
+    x0, y0, x1, y1 = bbox
+    for word in injected:
+        if word.page != page:
+            continue
+        if not (x1 <= word.x0 or word.x1 <= x0
+                or y1 <= word.glyph_bottom or word.glyph_top <= y0):
+            marked = dict(field)
+            marked["certainty"] = "low"
+            marked["notes"] = (
+                (marked.get("notes") or "")
+                + " | source word read by OCR from an embedded image region of this "
+                "page (REALDOOR_OCR_WORDS); emitted only because the identity named "
+                "above closes over the page's own printed numbers"
+            )
+            return marked
+    return field
+
+
 def extract_document(
     pdf_path: str | Path | bytes,
     document_type: str | None = None,
@@ -2183,12 +2236,14 @@ def extract_document(
     in_memory = isinstance(pdf_path, (bytes, bytearray))
     if in_memory:
         source: Any = io.BytesIO(bytes(pdf_path))
+        render_source: Any = bytes(pdf_path)
         display_name = file_name or "upload.pdf"
         doc_type = document_type or "unknown"
         resolved_id, household_id = (document_id or "UPLOAD", "")
     else:
         path = Path(pdf_path)
         source = path
+        render_source = path
         display_name = file_name or path.name
         doc_type = document_type or infer_document_type(path)
         inferred_id, household_id = infer_ids(path)
@@ -2199,11 +2254,29 @@ def extract_document(
         page_count = len(pdf.pages)
         all_words: list[Word] = []
         words_by_page: list[list[Word]] = []
+        # Words read by OCR out of the page's embedded-image regions (empty when
+        # `REALDOOR_OCR_WORDS=0`, or when the page embeds no images). Kept SEPARATE from
+        # `words_by_page` deliberately: the label/column/header-cell paths below read
+        # only the printed words, so an OCR reading can never be emitted by adjacency --
+        # only the identity-closing paths further down ever see these. See
+        # `core/ocr_words.py` for the licensing rule and the guards.
+        ocr_by_page: list[list[Word]] = []
         found: dict[str, dict[str, Any]] = {}
         for page_number, page in enumerate(pdf.pages, start=1):
             words = read_words(page, page_number)
             all_words.extend(words)
             words_by_page.append(words)
+            # Collected only when something can consume them: the identity paths below
+            # are the sole consumers and live under `_arithmetic_enabled()`, so with
+            # arithmetic off the OCR pass would be paid for nothing.
+            if _ocr_words_enabled() and _arithmetic_enabled():
+                from core import ocr_words
+
+                ocr_by_page.append(
+                    ocr_words.region_ocr_words(render_source, page, page_number, words)
+                )
+            else:
+                ocr_by_page.append([])
             page_fields, _ = extract_fields_from_page(
                 words, doc_type, convention, field_mapper, fallback_mapper
             )
@@ -2239,13 +2312,18 @@ def extract_document(
         ]
         if wanted:
             all_proposals: list[dict[str, dict[str, Any]]] = []
-            for words in words_by_page:
+            for words, injected in zip(words_by_page, ocr_by_page):
+                # OCR-read words join the printed ones HERE and nowhere else: the
+                # identity chain is the only path licensed to emit them (see
+                # `core/ocr_words.py`). With no injected words this is the exact call
+                # that always ran.
+                page_words = [*words, *injected] if injected else words
                 answers, proposals = verified.verify_page(
-                    words, doc_type, found, convention, wanted
+                    page_words, doc_type, found, convention, wanted
                 )
                 for name, value in answers.items():
                     if _blank(name):
-                        found[name] = value
+                        found[name] = _with_ocr_provenance(value, injected)
                 all_proposals.append(proposals)
             # Every page's answers before any page's proposal -- see `verify_page`.
             for proposals in all_proposals:
@@ -2268,12 +2346,13 @@ def extract_document(
         if shredded_wanted:
             from core import shredded
 
-            for words in words_by_page:
+            for words, injected in zip(words_by_page, ocr_by_page):
+                page_words = [*words, *injected] if injected else words
                 for name, value in shredded.recover(
-                    words, convention, shredded_wanted
+                    page_words, convention, shredded_wanted
                 ).items():
                     if _blank(name):
-                        found[name] = value
+                        found[name] = _with_ocr_provenance(value, injected)
 
     fields: list[dict[str, Any]] = []
     has_text_layer = bool(all_words)

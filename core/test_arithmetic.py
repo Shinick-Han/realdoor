@@ -281,9 +281,19 @@ PACK_SAMPLES = sorted(PACK.rglob("*.pdf"))[:6]
 def test_the_flag_moves_nothing_on_the_pack(pdf: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """The pack is what the 159/159 gold and the bbox IoU were measured against. The arithmetic
     path may not touch it in either direction -- every field there is already answered by the
-    label geometry, so there is no blank for it to fill and it must stay silent."""
+    label geometry, so there is no blank for it to fill and it must stay silent.
+
+    `REALDOOR_OCR_WORDS` is pinned off alongside `REALDOOR_COLUMNS` for the same reason
+    both always had to be: this test isolates the ARITHMETIC flag. Since it-003, a
+    rasterized pack sample (hh-001_d02) reaches the arithmetic path carrying OCR-read
+    words from its full-page image region, which surface a proposal-abstention note --
+    a change the OCR flag makes, not this one. The scored pack surface is untouched
+    either way: `api.store` routes rasterized documents through `extract_document_ocr`,
+    and gate G2 pins 159/159 with the OCR flag on. `core/test_ocr_words.py` owns the
+    OCR flag's own on/off pins."""
     document_type = ex.infer_document_type(pdf)
     monkeypatch.setenv("REALDOOR_COLUMNS", "0")
+    monkeypatch.setenv("REALDOOR_OCR_WORDS", "0")
     monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     off = _view_signature(pdf, document_type)
     monkeypatch.setenv("REALDOOR_ARITHMETIC", "1")

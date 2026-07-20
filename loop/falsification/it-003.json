@@ -1,0 +1,57 @@
+{
+  "predicate": "loop/falsify/it-003.py",
+  "run_at": "2026-07-20T08:55:24+00:00",
+  "documents_swept": 77,
+  "docs_fired": [
+    "confirm::osu_sample_earnings_statement.pdf",
+    "confirm::ou_sample_check_stub.pdf"
+  ],
+  "firing_count": 2,
+  "firings": [
+    {
+      "corpus": "confirm",
+      "doc": "ou_sample_check_stub.pdf",
+      "field": "gross_pay, hourly_rate, net_pay",
+      "value": {
+        "gross_pay": {
+          "without_rule": null,
+          "with_rule": 1251.09
+        },
+        "hourly_rate": {
+          "without_rule": null,
+          "with_rule": 12.4808
+        },
+        "net_pay": {
+          "without_rule": null,
+          "with_rule": 750.14
+        }
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "gross_pay": 1251.09,
+        "hourly_rate": 12.4808,
+        "net_pay": 750.14
+      }
+    },
+    {
+      "corpus": "confirm",
+      "doc": "osu_sample_earnings_statement.pdf",
+      "field": "gross_pay",
+      "value": {
+        "gross_pay": {
+          "without_rule": null,
+          "with_rule": 5994.0
+        }
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "gross_pay": 5994.0
+      }
+    }
+  ],
+  "conflicts": [],
+  "target_fired": true,
+  "verdict": "pass"
+}
