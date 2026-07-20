@@ -1,0 +1,127 @@
+{
+  "predicate": "loop/falsify/it-013.py",
+  "run_at": "2026-07-20T20:15:31+00:00",
+  "documents_swept": 77,
+  "docs_fired": [
+    "confirm::hi_ags_pay_statement_example_2021.pdf",
+    "confirm::seattle_housing_employment_verification_blank.pdf",
+    "confirm::wa_dshs_14252_employment_verification.pdf"
+  ],
+  "firing_count": 3,
+  "firings": [
+    {
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf",
+      "field": "person_name",
+      "value": {
+        "person_name": {
+          "flag_off": "Employee Address: Your Payroll Address",
+          "flag_on": null
+        }
+      },
+      "withheld": {
+        "person_name": "Employee Address: Your Payroll Address"
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {}
+    },
+    {
+      "corpus": "confirm",
+      "doc": "seattle_housing_employment_verification_blank.pdf",
+      "field": "pay_frequency",
+      "value": {
+        "pay_frequency": {
+          "flag_off": "through",
+          "flag_on": null
+        }
+      },
+      "withheld": {
+        "pay_frequency": "through"
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {}
+    },
+    {
+      "corpus": "confirm",
+      "doc": "wa_dshs_14252_employment_verification.pdf",
+      "field": "pay_frequency",
+      "value": {
+        "pay_frequency": {
+          "flag_off": "daily",
+          "flag_on": null
+        }
+      },
+      "withheld": {
+        "pay_frequency": "daily"
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {}
+    }
+  ],
+  "conflicts": [],
+  "target_fired": null,
+  "verdict": "pass",
+  "dev_corpora": {
+    "documents_swept": 157,
+    "docs_fired": [
+      "filled::seattle_housing_employment_verification_filled.pdf",
+      "filled::wa_dshs_14252_employment_verification_filled.pdf"
+    ],
+    "firings": [
+      {
+        "corpus": "filled",
+        "doc": "seattle_housing_employment_verification_filled.pdf",
+        "field": "pay_frequency",
+        "value": {
+          "pay_frequency": {
+            "flag_off": "through",
+            "flag_on": null
+          }
+        },
+        "withheld": {
+          "pay_frequency": "through"
+        },
+        "page": null,
+        "bbox": null,
+        "emitted_with_rule": {}
+      },
+      {
+        "corpus": "filled",
+        "doc": "wa_dshs_14252_employment_verification_filled.pdf",
+        "field": "pay_frequency",
+        "value": {
+          "pay_frequency": {
+            "flag_off": "daily",
+            "flag_on": null
+          }
+        },
+        "withheld": {
+          "pay_frequency": "daily"
+        },
+        "page": null,
+        "bbox": null,
+        "emitted_with_rule": {}
+      }
+    ],
+    "conflicts": []
+  },
+  "label_llm_stats": {
+    "enabled": true,
+    "asked": 608,
+    "calls": 595,
+    "cache_hits": 595,
+    "cache_hits_measurable": true,
+    "returned_unknown": 416,
+    "rejected_not_in_field_set": 0,
+    "rejected_value_shaped": 13,
+    "accepted": 179,
+    "offline_or_uncached": 0,
+    "timeouts": 0,
+    "errors": 0,
+    "model": "gpt-4o-mini",
+    "memoized_labels": 608
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "iteration": 13,
+  "target": "T24",
+  "run_at": "2026-07-20T20:41:33+00:00",
+  "head": "ba75e9b0ff7909bdba53c19a8dbd4b802d7d6314",
+  "accepted_commit": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+  "verdict": "GATE_DEFECT",
+  "failed_gates": [
+    "G7"
+  ],
+  "gate_defects": [
+    {
+      "gate": "G7",
+      "defect": "backlog item T24 declares no fields, so \"the target's fields moved\" is unsatisfiable before anything is measured"
+    }
+  ],
+  "gates": [
+    {
+      "gate": "G1",
+      "pass": true,
+      "detail": {
+        "pack": 0,
+        "external": 0,
+        "confirm": 0
+      }
+    },
+    {
+      "gate": "G2",
+      "pass": true,
+      "detail": {
+        "correct": 159,
+        "correct_required": 159,
+        "abstained": 0,
+        "abstained_required": 0,
+        "iou_over_05": 159,
+        "iou_over_05_required": 159,
+        "iou_mean": 0.967727,
+        "iou_mean_floor": 0.9672
+      }
+    },
+    {
+      "gate": "G3",
+      "pass": true,
+      "detail": {
+        "regressions": [],
+        "fields_compared": 1340
+      }
+    },
+    {
+      "gate": "G4",
+      "pass": true,
+      "detail": {
+        "passed": 1662,
+        "failed": 0,
+        "baseline_passed": 1644
+      }
+    },
+    {
+      "gate": "G5",
+      "pass": true,
+      "detail": {
+        "flags_off": [
+          "REALDOOR_OPTION_BAND",
+          "REALDOOR_GLOSS_COLON"
+        ],
+        "compared_against": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+        "documents_compared": 77,
+        "identical": true,
+        "documents_differing": [],
+        "documents_differing_total": 0
+      }
+    },
+    {
+      "gate": "G6",
+      "pass": true,
+      "detail": {
+        "allowlist": [
+          "core/extract.py",
+          "core/test_option_band.py"
+        ],
+        "changed": [
+          "core/extract.py",
+          "core/test_option_band.py",
+          "loop/falsification/it-013.json",
+          "loop/falsify/it-013.py",
+          "loop/proposals/it-013.md"
+        ],
+        "outside_allowlist": [],
+        "forbidden_touched": [],
+        "cache_paths_exempted": 0,
+        "preexisting_dirt_exempted": 59
+      }
+    },
+    {
+      "gate": "G7",
+      "pass": false,
+      "detail": {
+        "mode": "iteration",
+        "target": "T24",
+        "predicted": [],
+        "observed": [],
+        "unpredicted": [],
+        "target_fields_flipped": [],
+        "registry_fields": 1340,
+        "registry_defect": "target declares no fields"
+      },
+      "gate_defect": "backlog item T24 declares no fields, so \"the target's fields moved\" is unsatisfiable before anything is measured"
+    }
+  ],
+  "measurements": {
+    "pack": {
+      "correct": 159,
+      "of": 159,
+      "wrong": 0,
+      "abstained": 0,
+      "iou_mean": 0.967727,
+      "iou_over_05": 159
+    },
+    "external": {
+      "correct": 23,
+      "of": 44,
+      "wrong": 0,
+      "abstained": 21
+    },
+    "confirm": {
+      "correct": 26,
+      "of": 126,
+      "wrong": 0,
+      "abstained": 100
+    },
+    "pytest": {
+      "passed": 1662,
+      "failed": 0,
+      "exit_code": 0
+    }
+  },
+  "baseline_provenance": {
+    "built_from_commit": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+    "extraction_tree_clean": true,
+    "extraction_tree_dirt": [],
+    "dirty_tree_override_used": false,
+    "paths_checked": [
+      "core/",
+      "api/",
+      "eval/",
+      "logic/",
+      "ocr/",
+      "scripts/",
+      "pack/"
+    ],
+    "note": "a baseline built from uncommitted work is worse than no baseline, because every later gate silently trusts it"
+  },
+  "field_state_census": {
+    "confirm": {
+      "abstain": 2,
+      "correct": 26,
+      "image_only": 13,
+      "masked": 5
+    },
+    "external": {
+      "abstain": 5,
+      "correct": 23
+    },
+    "filled": {
+      "abstain": 5,
+      "correct": 5,
+      "image_only": 1
+    },
+    "holdout": {
+      "abstain": 10,
+      "correct": 24
+    },
+    "pack": {
+      "correct": 159
+    },
+    "scenarios": {
+      "abstain": 378,
+      "correct": 278,
+      "image_only": 50
+    },
+    "uploads": {
+      "abstain": 8,
+      "correct": 136,
+      "image_only": 31
+    }
+  },
+  "field_flips_observed": [],
+  "flag_off_identical": true,
+  "diff_files": [
+    "core/extract.py",
+    "core/test_option_band.py",
+    "loop/falsification/it-013.json",
+    "loop/falsify/it-013.py",
+    "loop/proposals/it-013.md"
+  ]
+}

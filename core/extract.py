@@ -1432,6 +1432,9 @@ def _scan_page(
     anchors, label_words = _label_anchors(lines, document_type, field_mapper)
     # Computed once per page: the page's own column-header rows. See `_caption_refusal`.
     header_words = _header_row_words(lines)
+    # Computed once per page: bands that offer a choice rather than state a fact. See
+    # `_option_menu_runs`.
+    menu_runs = _option_menu_runs(lines, document_type, field_mapper)
     for line in lines:
         label_runs = _label_runs(line, document_type, field_mapper)
         if not label_runs:
@@ -1446,6 +1449,15 @@ def _scan_page(
                 continue
             if field_name in found:
                 continue  # first occurrence wins; forms do not repeat labels
+            # This run is one of three or more candidates for this field on one band --
+            # the page is offering a choice, not stating a fact, and nothing on the band
+            # may anchor the field. See `_option_menu_runs`. The run stays a label
+            # everywhere else it matters (it still bounds the columns computed above, it
+            # is still in `label_words`, it still shields the value beneath it from the
+            # caption rule), so this only ever withholds a reading: the field is left for
+            # the ordinary abstention, never given a different value.
+            if (field_name, id(run[0])) in menu_runs:
+                continue
             column_right = starts[index + 1] if index + 1 < len(starts) else float("inf")
             resolved = _resolve_value(
                 lines, run, column_right, field_name, convention, is_exact, label_words,
@@ -1866,6 +1878,120 @@ def _header_row_words(lines: Sequence[Sequence[Word]]) -> frozenset[int]:
     return frozenset(out)
 
 
+# --------------------------------------------------------------------------------------
+# A menu is not an answer (`REALDOOR_OPTION_BAND=0` to disable)
+# --------------------------------------------------------------------------------------
+# A form asks "Pay frequency:" and prints five words after it -- `Daily  Weekly  Every two
+# weeks  Two times a month  Monthly` -- each with an empty checkbox beneath its left edge.
+# Until a filler marks one, the page has asserted nothing about pay frequency. It has
+# offered a choice.
+#
+# The extractor could not see that. `looks_like_a_label` admits any short letters-only run,
+# so every option reached the mapper as a candidate caption, and a mapper asked "what field
+# is `Monthly` the caption for?" answers `pay_frequency` -- which is semantically right and
+# structurally fatal, because the extractor then treats the option as a LABEL and reads its
+# neighbour as the VALUE. Measured (loop/falsification/it-011.json), on real published
+# blank forms:
+#
+#   * `wa_dshs_14252` -- `Pay frequency:` took the first option on its own line as its
+#     value: pay_frequency = "daily", on a form nobody had filled in.
+#   * `seattle_housing_..._blank` -- the options `hourly weekly monthly` are three
+#     digit-free captions on one baseline, so they read as a column-HEADER row, and the
+#     header-cell rule read the run beneath `monthly`: pay_frequency = "through".
+#
+# Two different readers, one printed cause. What the page prints, and what this rule reads:
+# **three or more candidates for the SAME field, sitting on the same band.** An assertion
+# needs one answer; a band offering three cannot be supplying it, whichever of them we
+# happen to recognise. So no run on such a band may anchor that field, and the field
+# abstains exactly as it did before any mapper was attached.
+#
+# Deliberately NOT a vocabulary. Nothing here knows what "monthly" means, and it must not:
+# the next form's options are words nobody listed. The signal is the page's own geometry,
+# read through whatever mapper this pass happens to carry -- which is why the same rule
+# closes an option list our tables name and one only the model names.
+#
+# **Marks are out of scope, and that is a real limitation.** If a filler ticks a box or
+# circles a word this rule still refuses the whole band, so a marked menu abstains where it
+# could in principle be read. That is the safe direction, and it is honest about what we
+# can see: a text layer carries all the menu words equally, and a circle drawn as a vector
+# is not legible to a word reader at all. Reading the marked option is filed as a
+# successor, not smuggled in here as a guess about ink.
+
+#: How many same-field candidates on one band make it a menu rather than a caption beside
+#: its value. Two is the commonest honest layout -- a caption and its year-to-date twin,
+#: the same header printed over two columns, `GROSS EARN'S` twice across one row -- so two
+#: is exactly the count that must NOT qualify. Same threshold as `MIN_HEADER_ROW_CELLS`,
+#: chosen for the same reason and measured the same way.
+MIN_OPTION_CELLS = 3
+
+
+def _option_band_enabled() -> bool:
+    """Is the option-menu refusal on? ON by default, `REALDOOR_OPTION_BAND=0` to disable.
+
+    Read through a function rather than captured at import so a test can flip the
+    environment variable and see the change (loop iteration it-013).
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OPTION_BAND", "").strip() != "0"
+
+
+def _on_one_band(first: tuple[float, float], second: tuple[float, float]) -> bool:
+    """Do these two (baseline, size) runs sit on one printed band?
+
+    Less than one line of their own type apart, and that measurement is the whole
+    discrimination. A menu is set as one visual row even when its words are staggered:
+    seattle prints `hourly weekly monthly` on 256.01 and `bi-weekly semi-monthly` on
+    260.57 -- 4.6pt apart in 8.0pt type, half a line, one row to the eye. A table's rows
+    are not: the piece-rate stub's earnings lines sit 10.7pt apart in 7.7pt type, more
+    than a full line, and they must stay separate or a rate column reads as a menu.
+    The type size is the page's own statement of how far apart its lines are, so the
+    threshold is derived from what is printed rather than fitted to these two documents.
+    """
+    return abs(first[0] - second[0]) < min(first[1], second[1])
+
+
+def _option_menu_runs(
+    lines: Sequence[Sequence[Word]],
+    document_type: str,
+    field_mapper: FieldMapper,
+) -> frozenset[tuple[str, int]]:
+    """(field name, id of a run's first word) for every run that is one option among many.
+
+    Computed once per page per mapper pass and threaded like `label_words` and
+    `header_words`, because the question it answers -- "is this band offering a choice
+    rather than stating a fact?" -- is a property of the page, not of the label being
+    resolved. Keyed by `id` of the run's first `Word`, which is stable across the repeated
+    `_label_runs` calls in one pass because the `Word` objects are.
+    """
+    if not _option_band_enabled():
+        return frozenset()
+
+    by_field: dict[str, list[tuple[float, float, int]]] = {}
+    for line in lines:
+        for run in _label_runs(line, document_type, field_mapper):
+            field_name = field_mapper(document_type, _join_run(run))
+            if field_name is None:
+                continue
+            by_field.setdefault(field_name, []).append(
+                (run[0].baseline, run[0].size, id(run[0]))
+            )
+
+    menu: set[tuple[str, int]] = set()
+    for field_name, entries in by_field.items():
+        entries.sort()
+        band: list[tuple[float, float, int]] = []
+        for entry in entries:
+            if band and not _on_one_band(entry[:2], band[-1][:2]):
+                if len(band) >= MIN_OPTION_CELLS:
+                    menu.update((field_name, member[2]) for member in band)
+                band = []
+            band.append(entry)
+        if len(band) >= MIN_OPTION_CELLS:
+            menu.update((field_name, member[2]) for member in band)
+    return frozenset(menu)
+
+
 def _caption_refusal(
     field_name: str, run: Sequence[Word], header_words: frozenset[int]
 ) -> str | None:
@@ -1880,9 +2006,45 @@ def _caption_refusal(
     text = _join_run(run).strip()
     if text.endswith(":"):
         return "the page punctuates this run as a caption (it ends in a colon)"
+    if _gloss_colon_enabled() and ":" in text:
+        return "the page punctuates this run as a caption with its own gloss (a colon inside it)"
     if run and all(id(word) in header_words for word in run):
         return "this run is a cell in one of the page's own column-header rows"
     return None
+
+
+def _gloss_colon_enabled() -> bool:
+    """Is the glossed-caption refusal on? ON by default, `REALDOOR_GLOSS_COLON=0` to disable.
+
+    A page may explain itself. `hi_ags_pay_statement_example_2021.pdf` devotes page 3 to a
+    numbered key to the statement's own parts, printed as bulleted `caption: what goes
+    here` lines:
+
+        3  Employee Name and Payroll Address   * Employee Name: Your Payroll Name
+                                               * Employee Address: Your Payroll Address
+                                               * Advice Date: The date the funds are available
+
+    The mapper reads `Employee Name: Your Payroll Name` and answers `person_name`, which is
+    the right answer to the question it was asked. The extractor then took the NEXT line of
+    the key as the value, and the document reported its employee's name as
+    `Employee Address: Your Payroll Address` -- while `John Aloha` was printed on the
+    sample statement two pages earlier (loop/falsification/it-011.json).
+
+    The printed refusal is the colon, read one notch further than the rule above it. A
+    terminal colon says "my value follows me". A colon *inside* a run says the run is
+    already a caption AND its own gloss -- the page describing a slot rather than filling
+    one. Neither is ever how a name, an address or a frequency word is printed, which is
+    why the scope stays exactly where the terminal-colon rule's scope is: `FREE_TEXT_FIELDS`,
+    the fields whose parser cannot refuse a well-formed sentence. Everything else is
+    already protected by `parse_value` -- `Advice Date: The date the funds are available`
+    is not money.
+
+    Like every test in `_caption_refusal` this only ever withholds: a refused run is not a
+    candidate, so the field falls through to the next rule and ultimately to an abstention.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_GLOSS_COLON", "").strip() != "0"
 
 
 def _colon_gap_enabled() -> bool:
