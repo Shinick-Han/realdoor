@@ -656,3 +656,154 @@ class TestHoursBlock:
     def test_piecerate_abstains_with_the_flag_off(self, flag_off) -> None:
         got = _fields(CONFIRM / "ca_dlse_paystub_piecerate.pdf", "pay_stub")
         assert got["regular_hours"]["certainty"] == "abstain"
+
+
+# ─────────────────────── a label that is itself a header-row cell, and what it refuses
+
+
+def test_header_cell_default_is_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("REALDOOR_HEADER_CELL", raising=False)
+    assert ex._header_cell_enabled() is True
+
+
+@pytest.mark.parametrize("value", ["0", "0 ", " 0", "1", "", "true", "yes", "2", "1 "])
+def test_header_cell_only_literal_zero_switches_off(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("REALDOOR_HEADER_CELL", value)
+    assert ex._header_cell_enabled() is (value.strip() != "0")
+
+
+def _transposed(extra_value=None, value_text="Johnson, Bob", value_x=(227.4, 414.4),
+                data_y=741.0, second_row=None):
+    """The CA DLSE hourly shape: a 29pt non-bold header row, the data row 39pt below.
+
+    Coordinates are the measured ones from the real page (loop/proposals/it-002.md
+    section 2), so the geometry these tests pin is the geometry that was falsified.
+    """
+    header = [
+        _w("EMPLOYEE", 228.0, 397.4, 780.0, size=29.0),
+        _w("SOCIAL SECURITY NO.", 569.0, 910.0, 780.0, size=29.0),
+        _w("PAY RATE", 988.5, 1140.2, 780.0, size=29.0),
+        _w("PAY PERIOD", 1239.0, 1426.0, 780.0, size=29.0),
+    ]
+    data = [
+        _w(value_text, value_x[0], value_x[1], data_y, size=29.0),
+        _w("XXX-XX-6789", 570.0, 759.0, data_y, size=29.0),
+        _w("18.00", 989.0, 1064.6, data_y, size=29.0),
+        _w("regular", 1087.0, 1182.0, data_y, size=29.0),
+        _w("1/7/XXto 1/13/XX", 1239.0, 1480.0, data_y, size=29.0),
+    ]
+    if extra_value is not None:
+        data.append(extra_value)
+    words = header + data
+    if second_row is not None:
+        words += second_row
+    lines = ex.group_lines(words)
+    header_words = ex._header_row_words(lines)
+    label_words = frozenset(
+        id(w) for w in header if w.text in ("EMPLOYEE", "PAY RATE", "PAY PERIOD")
+    )
+    runs = {w.text: [w] for w in header}
+    return lines, runs, label_words, header_words
+
+
+class TestHeaderCellValue:
+    CONVENTION = ex.LineBoxConvention()
+
+    def _read(self, field, label_text, lines, runs, label_words, header_words):
+        return col.header_cell_value(
+            lines, runs[label_text], field, self.CONVENTION, True,
+            label_words, header_words,
+        )
+
+    def test_the_name_beneath_the_employee_cell_is_read(self) -> None:
+        lines, runs, label_words, header_words = _transposed()
+        got = self._read("person_name", "EMPLOYEE", lines, runs, label_words, header_words)
+        assert got is not None
+        assert got["value"] == "Johnson, Bob"
+        assert got["certainty"] == "low"
+
+    def test_the_rate_beneath_the_pay_rate_cell_is_read(self) -> None:
+        """`regular` [1087-1182] also shares x-extent with the PAY RATE cell, but a run
+        that does not parse as money is not a reading this rule could emit, so it is not
+        a candidate and does not trigger the ambiguity refusal (the `_is_numeric_run`
+        precedent in `table_cell_value`)."""
+        lines, runs, label_words, header_words = _transposed()
+        got = self._read("hourly_rate", "PAY RATE", lines, runs, label_words, header_words)
+        assert got is not None
+        assert got["value"] == 18.0
+        assert got["certainty"] == "low"
+
+    def test_a_masked_date_is_nobodys_candidate(self) -> None:
+        """`1/7/XXto 1/13/XX` parses as no date, so PAY PERIOD reads nothing -- a flip
+        here would mean the rule invented a century."""
+        lines, runs, label_words, header_words = _transposed()
+        assert self._read(
+            "pay_period_start", "PAY PERIOD", lines, runs, label_words, header_words
+        ) is None
+
+    def test_two_text_runs_under_one_cell_refuse(self) -> None:
+        """Free-text gets no type filter: a second string under EMPLOYEE is a rival the
+        shape test must never eliminate, so the rule abstains on count."""
+        rival = _w("Smith, Ann", 230.0, 390.0, 730.0, size=29.0)
+        lines, runs, label_words, header_words = _transposed(extra_value=rival)
+        assert self._read(
+            "person_name", "EMPLOYEE", lines, runs, label_words, header_words
+        ) is None
+
+    def test_a_caption_beneath_the_cell_is_refused(self) -> None:
+        """The orangeusd hazard: the run beneath the cell is itself a cell of another
+        header row, and `_caption_refusal` -- built after this document family shipped
+        wrong names -- refuses it."""
+        second = [
+            _w("Employee ID", 228.0, 390.0, 730.0, size=29.0),
+            _w("Pay Site", 569.0, 700.0, 730.0, size=29.0),
+            _w("Marital Status", 988.5, 1130.0, 730.0, size=29.0),
+        ]
+        lines, runs, label_words, header_words = _transposed(
+            value_text="MOVED AWAY", value_x=(1600.0, 1750.0), second_row=second
+        )
+        assert self._read(
+            "person_name", "EMPLOYEE", lines, runs, label_words, header_words
+        ) is None
+
+    def test_a_two_cell_line_is_not_a_header_row(self) -> None:
+        """An ordinary caption-value form line never engages this rule: with fewer than
+        `MIN_HEADER_ROW_CELLS` cells the label is not in `header_words` at all."""
+        label = _w("EMPLOYEE", 228.0, 397.4, 780.0, size=29.0)
+        value = _w("Johnson, Bob", 227.4, 414.4, 741.0, size=29.0)
+        lines = ex.group_lines([label, value])
+        header_words = ex._header_row_words(lines)
+        assert col.header_cell_value(
+            lines, [label], "person_name", self.CONVENTION, True,
+            frozenset({id(label)}), header_words,
+        ) is None
+
+    def test_a_run_attributed_to_no_cell_is_not_a_candidate(self) -> None:
+        """The osu hazard: a decimal-aligned number overhanging the cell span shares
+        x-extent with zero cells, so the page has not put it in any column."""
+        stray = _w("1,885.62", 429.4, 461.4, 741.0, size=29.0)
+        lines, runs, label_words, header_words = _transposed(
+            value_text="MOVED AWAY", value_x=(1600.0, 1750.0), extra_value=stray
+        )
+        assert self._read(
+            "person_name", "EMPLOYEE", lines, runs, label_words, header_words
+        ) is None
+
+    def test_dlse_hourly_end_to_end(self, flag_on) -> None:
+        got = _fields(CONFIRM / "ca_dlse_paystub_hourly.pdf", "pay_stub")
+        assert got["person_name"]["value"] == "Johnson, Bob"
+        assert got["person_name"]["certainty"] == "low"
+        assert got["hourly_rate"]["value"] == 18.0
+        assert got["hourly_rate"]["certainty"] == "low"
+        assert got["pay_period_start"]["certainty"] == "abstain"
+        assert got["pay_period_end"]["certainty"] == "abstain"
+
+    def test_dlse_hourly_abstains_with_the_flag_off(
+        self, flag_on, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("REALDOOR_HEADER_CELL", "0")
+        got = _fields(CONFIRM / "ca_dlse_paystub_hourly.pdf", "pay_stub")
+        assert got["person_name"]["certainty"] == "abstain"
+        assert got["hourly_rate"]["certainty"] == "abstain"

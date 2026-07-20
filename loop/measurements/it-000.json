@@ -1,0 +1,149 @@
+{
+  "iteration": 0,
+  "target": null,
+  "run_at": "2026-07-20T06:41:24+00:00",
+  "head": "c45064647e2f3f496b5f0492b534d232677f5982",
+  "accepted_commit": "c45064647e2f3f496b5f0492b534d232677f5982",
+  "verdict": "PASS",
+  "failed_gates": [],
+  "gates": [
+    {
+      "gate": "G1",
+      "pass": true,
+      "detail": {
+        "pack": 0,
+        "external": 0,
+        "confirm": 0
+      }
+    },
+    {
+      "gate": "G2",
+      "pass": true,
+      "detail": {
+        "correct": 159,
+        "correct_required": 159,
+        "abstained": 0,
+        "abstained_required": 0,
+        "iou_over_05": 159,
+        "iou_over_05_required": 159,
+        "iou_mean": 0.967727,
+        "iou_mean_floor": 0.9672
+      }
+    },
+    {
+      "gate": "G3",
+      "pass": true,
+      "detail": {
+        "regressions": [],
+        "fields_compared": 538
+      }
+    },
+    {
+      "gate": "G4",
+      "pass": true,
+      "detail": {
+        "passed": 1245,
+        "failed": 0,
+        "baseline_passed": 1245
+      }
+    },
+    {
+      "gate": "G5",
+      "pass": true,
+      "detail": {
+        "flags_off": [],
+        "compared_against": "c45064647e2f3f496b5f0492b534d232677f5982",
+        "documents_compared": 77,
+        "identical": true,
+        "documents_differing": [],
+        "documents_differing_total": 0
+      }
+    },
+    {
+      "gate": "G6",
+      "pass": true,
+      "detail": {
+        "allowlist": [],
+        "changed": [
+          "loop/baseline.json",
+          "loop/measurements/it-000.json",
+          "loop/tools/build_field_state.py",
+          "loop/tools/gate.py"
+        ],
+        "outside_allowlist": [],
+        "forbidden_touched": [],
+        "cache_paths_exempted": 24,
+        "preexisting_dirt_exempted": 61
+      }
+    },
+    {
+      "gate": "G7",
+      "pass": true,
+      "detail": {
+        "mode": "baseline self-check",
+        "observed": [],
+        "requirement": "the unchanged tree must flip nothing"
+      }
+    }
+  ],
+  "measurements": {
+    "pack": {
+      "correct": 159,
+      "of": 159,
+      "wrong": 0,
+      "abstained": 0,
+      "iou_mean": 0.967727,
+      "iou_over_05": 159
+    },
+    "external": {
+      "correct": 23,
+      "of": 44,
+      "wrong": 0,
+      "abstained": 21
+    },
+    "confirm": {
+      "correct": 12,
+      "of": 126,
+      "wrong": 0,
+      "abstained": 114
+    },
+    "pytest": {
+      "passed": 1245,
+      "failed": 0,
+      "exit_code": 0
+    }
+  },
+  "field_state_census": {
+    "confirm": {
+      "abstain": 5,
+      "blocked_contract": 2,
+      "correct": 12,
+      "image_only": 22,
+      "masked": 5
+    },
+    "external": {
+      "abstain": 5,
+      "correct": 23
+    },
+    "holdout": {
+      "abstain": 10,
+      "correct": 24
+    },
+    "pack": {
+      "correct": 159
+    },
+    "uploads": {
+      "abstain": 10,
+      "correct": 134,
+      "image_only": 31
+    }
+  },
+  "field_flips_observed": [],
+  "flag_off_identical": true,
+  "diff_files": [
+    "loop/baseline.json",
+    "loop/measurements/it-000.json",
+    "loop/tools/build_field_state.py",
+    "loop/tools/gate.py"
+  ]
+}

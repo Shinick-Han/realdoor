@@ -16,3 +16,6 @@ node_modules/
 # outrank a deliverable.
 build/
 *.zip
+
+# The loop's scratch space: word dumps, G5 worktrees, dump runners. Never committed.
+loop/worktmp/

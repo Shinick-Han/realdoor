@@ -185,14 +185,55 @@ def _is_watermark(obj: dict) -> bool:
     return float(obj.get("size", 0.0) or 0.0) >= WATERMARK_MIN_SIZE
 
 
+def _watermark_sanity_enabled() -> bool:
+    """`REALDOOR_WATERMARK_SANITY=0` restores the unconditional size filter exactly.
+
+    Same convention as `REALDOOR_ARITHMETIC` / `REALDOOR_COLUMNS`: on by default, and
+    with the flag at `0` nothing below `_filter_refutes_itself` ever runs, so
+    `read_words` is bit-identical to what it was before the flag existed. Read through
+    a function rather than captured at import so a test can flip the environment
+    variable and see the change -- same reasoning as `_arithmetic_enabled`.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_WATERMARK_SANITY", "").strip() != "0"
+
+
+def _filter_refutes_itself(page: Any) -> bool:
+    """True when the watermark size filter would delete the page's entire text layer.
+
+    A watermark is an overlay ON a body -- the two coexist on a page by definition, and
+    `WATERMARK_MIN_SIZE` works because the pack prints a big-over-small contrast: the
+    diagonal banner is the only text above 20 pt. A page on which EVERY printed char
+    sits at or above the threshold prints no such contrast, so classifying all of it as
+    watermark refutes itself: it leaves nothing for the supposed watermark to overlay.
+
+    Measured, not hypothetical: `ca_dlse_paystub_hourly.pdf` is a 1756x1176 pt page
+    whose text matrix draws every one of its 630 chars at 27.3-48.6 pt -- large in
+    absolute points because the page is large, not because a watermark covers it. The
+    unconditional filter returned 0 of its 96 words and the extractor was blind to the
+    whole page. Falsified before this was written: across all 77 corpus documents this
+    condition holds on exactly that one page (loop/falsification/it-001.json). A page
+    with no text layer cannot fire (`chars` is empty), so scans still read as empty.
+    """
+    chars = page.chars
+    return bool(chars) and all(_is_watermark(c) for c in chars)
+
+
 def read_words(page: Any, page_number: int) -> list[Word]:
     """Extract watermark-free words from a pdfplumber page, in bottom-left coordinates.
 
     Returns an empty list for a page with no text layer (a scan). That is a legitimate
     result, and the caller must abstain rather than invent anything.
+
+    The size filter is conditional per page (`REALDOOR_WATERMARK_SANITY=0` to make it
+    unconditional again): a page it would empty entirely is read unfiltered instead --
+    see `_filter_refutes_itself` for the bound and the measurement behind it.
     """
     height = float(page.height)
     body = page.filter(lambda obj: not _is_watermark(obj))
+    if _watermark_sanity_enabled() and _filter_refutes_itself(page):
+        body = page
     words: list[Word] = []
     for w in body.extract_words(
         extra_attrs=["size", "fontname"], use_text_flow=False, return_chars=True
@@ -973,6 +1014,24 @@ def _columns_enabled() -> bool:
     return os.environ.get("REALDOOR_COLUMNS", "").strip() != "0"
 
 
+def _header_cell_enabled() -> bool:
+    """Is the header-cell column reader switched on? ON by default; `0` switches it off.
+
+    Guards exactly one branch in `_scan_page` -- the call to
+    `columns.header_cell_value`, which reads the single run beneath a vocabulary label
+    that is itself a cell of one of the page's own column-header rows. The branch also
+    sits inside `_columns_enabled()`, so `REALDOOR_COLUMNS=0` keeps its standing promise
+    that `core.columns` is never imported. With `REALDOOR_HEADER_CELL=0` the branch never
+    runs and this module's output is bit-identical to what it was before the rule
+    existed (loop iteration it-002; falsified over all 77 corpus documents first --
+    loop/falsification/it-002.json). Read through a function rather than captured at
+    import so a test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_HEADER_CELL", "").strip() != "0"
+
+
 def infer_document_type(pdf_path: str | Path) -> str:
     """Derive the document type from the pack's file naming convention."""
     stem = Path(pdf_path).stem
@@ -1158,6 +1217,28 @@ def _scan_page(
 
                 recovered = columns.column_value(
                     lines, run, column_right, field_name, convention, is_exact, label_words,
+                    header_words,
+                )
+                if recovered is not None:
+                    resolved = recovered
+            # ------------------------------------------------------------------------
+            # A label that is itself a printed header-row cell licenses its column
+            # (`REALDOOR_HEADER_CELL=0` to disable) -- see `core.columns.header_cell_value`
+            # ------------------------------------------------------------------------
+            # Same abstention-only gate, placed directly after the row reader above so
+            # it is consulted exactly when that reader found nothing -- the ordering the
+            # falsification sweep measured (loop/falsification/it-002.json: fired on
+            # 2 of 77 documents, zero conflicts). Like every branch in this chain, it
+            # converts abstentions or does nothing.
+            if (
+                _columns_enabled()
+                and _header_cell_enabled()
+                and (resolved is None or resolved.get("certainty") == "abstain")
+            ):
+                from core import columns
+
+                recovered = columns.header_cell_value(
+                    lines, run, field_name, convention, is_exact, label_words,
                     header_words,
                 )
                 if recovered is not None:

@@ -135,22 +135,27 @@ def test_every_field_has_a_real_box_or_no_value_at_all(client, session):
 # ── 못 읽었을 때의 모양 ───────────────────────────────────────────────────
 @pytest.mark.parametrize("file_name,document_type", [
     # up_023 (side-by-side) used to belong here. It is now read by `_side_by_side_value`.
-    # up_024 (earnings table) stays, and is *meant* to stay: its overtime row means the
-    # GROSS PAY column holds two numbers, so no rule may pick one. See test below.
+    # up_024 (earnings table) used to abstain on all five. Its two singleton columns
+    # (EMPLOYEE, PAY DATE) are now read by `columns.header_cell_value` (loop it-002);
+    # the two-number columns still abstain -- see the table-row test below. What this
+    # test pins is the SHAPE of the fields we still cannot read: explicit abstentions
+    # with notes, never a shorter list.
     ("up_024_pay_stub_table.pdf", "pay_stub"),
 ])
-def test_a_document_we_cannot_read_abstains_explicitly(client, session, file_name, document_type):
+def test_fields_we_cannot_read_abstain_explicitly(client, session, file_name, document_type):
     """빈 목록이 아니라 **기권한 필드 목록**이 와야 한다.
 
-    화면이 "아무것도 확신할 수 없었다"고 말하려면 말할 대상이 있어야 한다. 필드가
+    화면이 "이 필드는 확신할 수 없었다"고 말하려면 말할 대상이 있어야 한다. 필드가
     통째로 없으면 화면은 빈 카드를 그리고, 그건 버그처럼 보인다.
     """
     body = post(client, session, file_name, document_type).json()
-    assert body["read_nothing"] is True
-    assert body["located_count"] == 0
     assert len(body["fields"]) == len(EXPECTED_FIELDS[document_type])
-    assert all(f["certainty"] == "abstain" for f in body["fields"])
-    assert all(f["notes"] for f in body["fields"])
+    abstained = [f for f in body["fields"] if f["certainty"] == "abstain"]
+    assert abstained, "이 문서에는 아직 못 읽는 필드가 남아 있어야 한다"
+    for field in abstained:
+        assert field["value"] is None
+        assert field["bbox"] is None
+        assert field["notes"]
 
 
 # ── 배치 인지: 읽되, 애매하면 절대 읽지 않는다 ───────────────────────────
@@ -177,16 +182,27 @@ def test_a_table_row_never_pairs_a_header_with_a_neighbouring_number(client, ses
 
     up_024 의 GROSS PAY 열에는 숫자가 둘(정규 1120.00, 초과근무 210.00) 있다. 어느 쪽도
     '그 문서의 총지급액'이 아니다 -- 실제 총액은 1330.00 이다. 규칙이 하나를 고르면 그건
-    맞춘 게 아니라 우연이고, 다음 문서에서 틀린다. 그래서 표 배치는 풀지 않고 기권한다.
+    맞춘 게 아니라 우연이고, 다음 문서에서 틀린다. REGULAR HOURS 와 HOURLY RATE 열도
+    데이터 행이 둘이라 마찬가지다. 그래서 이 세 열은 여전히 기권한다.
+
+    loop it-002 이후 이 문서의 **한 값짜리** 열 둘(EMPLOYEE, PAY DATE)은
+    `columns.header_cell_value` 가 읽는다 -- 후보가 하나뿐이면 읽고, 둘이면 절대
+    고르지 않는다는 같은 규칙의 양면이고, 이 테스트는 이제 그 경계 자체를 고정한다.
+    측정 근거: loop/falsification/it-002.json (77개 문서 스윕, 충돌 0).
 
     이 테스트는 '아직 못 읽는다'는 기록이 아니라 **읽어서는 안 된다**는 요구사항이다.
     """
     body = post(client, session, "up_024_pay_stub_table.pdf", "pay_stub").json()
-    for field in body["fields"]:
-        assert field["certainty"] == "abstain", (
-            f"표 배치에서 {field['field']} 에 값을 만들어냈다: {field['value']!r} — "
+    got = {f["field"]: f for f in body["fields"]}
+    for name in ("gross_pay", "regular_hours", "hourly_rate"):
+        assert got[name]["certainty"] == "abstain", (
+            f"표 배치에서 {name} 에 값을 만들어냈다: {got[name]['value']!r} — "
             "열 안에 후보가 둘인데 하나를 골랐다는 뜻이다"
         )
+    assert got["person_name"]["value"] == "Jane Roe"
+    assert got["person_name"]["certainty"] == "low"
+    assert got["pay_date"]["value"] == "2026-07-07"
+    assert got["pay_date"]["certainty"] == "low"
 
 
 def test_prose_that_opens_with_a_label_is_not_read_as_a_value(client, session):

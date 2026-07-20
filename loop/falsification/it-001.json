@@ -1,0 +1,27 @@
+{
+  "predicate": "loop/falsify/it-001.py",
+  "run_at": "2026-07-20T06:53:31+00:00",
+  "documents_swept": 77,
+  "docs_fired": [
+    "confirm::ca_dlse_paystub_hourly.pdf"
+  ],
+  "firing_count": 1,
+  "firings": [
+    {
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf",
+      "field": "(page reader -- the rule alters visibility, not one field)",
+      "value": "all 630 chars on page 1 report size >= 20.0 (min 27.3, max 48.6)",
+      "page": 1,
+      "bbox": null,
+      "emitted_with_rule": {
+        "regular_hours": 40,
+        "gross_pay": 774.0,
+        "net_pay": 560.71
+      }
+    }
+  ],
+  "conflicts": [],
+  "target_fired": true,
+  "verdict": "pass"
+}
