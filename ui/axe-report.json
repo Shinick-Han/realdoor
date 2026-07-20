@@ -10,7 +10,7 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-19T11:48:53.615Z",
+ "generated_at": "2026-07-20T08:25:16.626Z",
  "screens_per_origin": 7,
  "total_violations": 0,
  "violations_by_impact": {},
@@ -95,80 +95,80 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(4)"
+          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(2) > .mono"
+          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(2) > .num"
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(4)"
+          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .mono"
+          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .num"
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(4)"
+          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .mono"
+          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .num"
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
        ]
       }
      ],
-     "rules_passed": 35
+     "rules_passed": 37
     },
     {
      "screen": "step2-correct",
@@ -343,80 +343,80 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(4)"
+          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(2) > .mono"
+          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(2) > .num"
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(4)"
+          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .mono"
+          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .num"
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(4)"
+          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .mono"
+          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .num"
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
        ]
       }
      ],
-     "rules_passed": 35
+     "rules_passed": 37
     },
     {
      "screen": "step2-correct",
@@ -591,62 +591,62 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(2) > .mono"
+          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(2) > .num"
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .mono"
+          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .num"
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .mono"
+          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .num"
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
        ]
       }
      ],
-     "rules_passed": 35
+     "rules_passed": 37
     },
     {
      "screen": "step2-correct",
@@ -821,62 +821,62 @@
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(2) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(2) > .mono"
+          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr:nth-child(2) > .num"
+          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(3) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .mono"
+          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(3) > .num"
+          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "table[aria-labelledby=\"evidence-caption-HH-001-D01\"] > tbody > tr:nth-child(4) > td:nth-child(5)"
+          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .mono"
+          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr:nth-child(4) > .num"
+          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
        ]
       }
      ],
-     "rules_passed": 35
+     "rules_passed": 37
     },
     {
      "screen": "step2-correct",

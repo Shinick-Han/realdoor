@@ -38,7 +38,7 @@
 
     // ── index.html: 머리말·고지·브랜드 ──────────────────────────────────────
     "Skip to main content": "본문으로 건너뛰기",
-    "Ready, not eligible.": "준비 상태를 말합니다. 자격은 말하지 않습니다.",
+    "Get your paperwork ready. A person decides the rest.": "서류를 준비하세요. 나머지는 사람이 결정합니다.",
     "This service reports document readiness only. It does not decide eligibility, and nothing on this screen means approved, denied, or ineligible. A qualified housing professional makes that determination.":
       "이 서비스는 서류의 준비 상태만 알려 드립니다. 자격은 판정하지 않습니다. 이 화면의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판단은 공인 주택 전문가가 합니다.",
     "Household": "세대",
