@@ -1,11 +1,13 @@
 {
-  "iteration": 0,
+  "iteration": 7,
   "target": null,
-  "run_at": "2026-07-20T13:02:29+00:00",
-  "head": "e4933bec8f2dab3e5e9bdb86d723b0eb8200eb8a",
+  "run_at": "2026-07-20T14:24:40+00:00",
+  "head": "7be5ec9f19ef0014076f42f758a3c641c92ab3f4",
   "accepted_commit": "e4933bec8f2dab3e5e9bdb86d723b0eb8200eb8a",
-  "verdict": "PASS",
-  "failed_gates": [],
+  "verdict": "REJECTED_GATE",
+  "failed_gates": [
+    "G6"
+  ],
   "gates": [
     {
       "gate": "G1",
@@ -42,7 +44,7 @@
       "gate": "G4",
       "pass": true,
       "detail": {
-        "passed": 1418,
+        "passed": 1464,
         "failed": 0,
         "baseline_passed": 1418
       }
@@ -51,7 +53,9 @@
       "gate": "G5",
       "pass": true,
       "detail": {
-        "flags_off": [],
+        "flags_off": [
+          "REALDOOR_OCR_SKIP_SATISFIED"
+        ],
         "compared_against": "e4933bec8f2dab3e5e9bdb86d723b0eb8200eb8a",
         "documents_compared": 77,
         "identical": true,
@@ -61,18 +65,28 @@
     },
     {
       "gate": "G6",
-      "pass": true,
+      "pass": false,
       "detail": {
-        "allowlist": [],
-        "changed": [
-          "loop/baseline.json",
-          "loop/falsify/it-007.py",
-          "loop/proposals/it-007.md"
+        "allowlist": [
+          "core/extract.py",
+          "core/test_ocr_skip.py"
         ],
-        "outside_allowlist": [],
+        "changed": [
+          "core/test_ocr_skip.py",
+          "loop/baseline.json",
+          "loop/falsification/it-007.json",
+          "loop/falsify/it-007.py",
+          "loop/measurements/it-000.json",
+          "loop/measurements/it-007.json",
+          "loop/proposals/it-007.md",
+          "ui/tools/_axe_live_editor.mjs"
+        ],
+        "outside_allowlist": [
+          "ui/tools/_axe_live_editor.mjs"
+        ],
         "forbidden_touched": [],
         "cache_paths_exempted": 0,
-        "preexisting_dirt_exempted": 60
+        "preexisting_dirt_exempted": 68
       }
     },
     {
@@ -107,7 +121,7 @@
       "abstained": 100
     },
     "pytest": {
-      "passed": 1418,
+      "passed": 1464,
       "failed": 0,
       "exit_code": 0
     }
@@ -139,8 +153,13 @@
   "field_flips_observed": [],
   "flag_off_identical": true,
   "diff_files": [
+    "core/test_ocr_skip.py",
     "loop/baseline.json",
+    "loop/falsification/it-007.json",
     "loop/falsify/it-007.py",
-    "loop/proposals/it-007.md"
+    "loop/measurements/it-000.json",
+    "loop/measurements/it-007.json",
+    "loop/proposals/it-007.md",
+    "ui/tools/_axe_live_editor.mjs"
   ]
 }

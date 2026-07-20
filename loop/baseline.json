@@ -1,5 +1,5 @@
 {
-  "accepted_commit": "98a1b65e64c3cae451ca40c9b7b34d2087226bd6",
+  "accepted_commit": "e4933bec8f2dab3e5e9bdb86d723b0eb8200eb8a",
   "updated": "2026-07-20T12:25:00+00:00",
   "generated_by": "loop/tools/build_field_state.py",
   "pack": {
@@ -107,7 +107,15 @@
     "ui/tools/_rec_team.mjs",
     "ui/tools/_rec_tech.mjs",
     "ui/tools/_rec_tech2.mjs",
-    "ui/tools/_shots_variant.mjs"
+    "ui/tools/_shots_variant.mjs",
+    "api/region.py",
+    "api/store.py",
+    "api/upload.py",
+    "api/app.py",
+    "ui/dist/app.js",
+    "ui/dist/app.css",
+    "ui/dist/i18n.js",
+    "ui/dist/index.html"
   ],
   "field_state_census": {
     "confirm": {

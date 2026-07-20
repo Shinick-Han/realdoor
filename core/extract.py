@@ -1050,6 +1050,28 @@ def _ocr_words_enabled() -> bool:
     return os.environ.get("REALDOOR_OCR_WORDS", "").strip() != "0"
 
 
+def _ocr_skip_satisfied_enabled() -> bool:
+    """Is the satisfied-skip for the OCR-words pass on? ON by default; `0` switches it off.
+
+    Guards a pure performance conduct in `extract_document` (loop iteration it-007;
+    falsified over all 77 corpus documents first -- loop/falsification/it-007.json):
+    OCR-derived words can only ever fill fields the text pass left abstaining -- the
+    it-003 injection gate's own design -- and the only fields any OCR consumer can ask
+    for are the blank expected fields in `verified.VERIFIABLE_FIELDS` ∪ {gross_pay,
+    net_pay}. When the text pass leaves none of those blank, the OCR-words pass
+    (discovery, rendering, recognition) is skipped entirely; when any is blank, the
+    same collection calls run after the text pass instead of during it -- deferred,
+    not different. Output is byte-identical in both branches by structure, not by
+    threshold. With `REALDOOR_OCR_SKIP_SATISFIED=0` the eager per-page collection runs
+    in its original place and this module's output is bit-identical to what it was
+    before the flag existed. Read through a function rather than captured at import so
+    a test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OCR_SKIP_SATISFIED", "").strip() != "0"
+
+
 def _ocr_band_role_enabled() -> bool:
     """Is the OCR band-role completion switched on? ON by default; `0` switches it off.
 
@@ -2317,14 +2339,17 @@ def extract_document(
         # `core/ocr_words.py` for the licensing rule and the guards.
         ocr_by_page: list[list[Word]] = []
         found: dict[str, dict[str, Any]] = {}
+        collect_ocr = _ocr_words_enabled() and _arithmetic_enabled()
+        defer_ocr = collect_ocr and _ocr_skip_satisfied_enabled()
         for page_number, page in enumerate(pdf.pages, start=1):
             words = read_words(page, page_number)
             all_words.extend(words)
             words_by_page.append(words)
             # Collected only when something can consume them: the identity paths below
             # are the sole consumers and live under `_arithmetic_enabled()`, so with
-            # arithmetic off the OCR pass would be paid for nothing.
-            if _ocr_words_enabled() and _arithmetic_enabled():
+            # arithmetic off the OCR pass would be paid for nothing. With the it-007
+            # skip on, collection moves past the text pass -- see the block below.
+            if collect_ocr and not defer_ocr:
                 from core import ocr_words
 
                 ocr_by_page.append(
@@ -2337,6 +2362,41 @@ def extract_document(
             )
             for name, value in page_fields.items():
                 found.setdefault(name, value)
+
+        # ------------------------------------------------------------------------------
+        # it-007 (`REALDOOR_OCR_SKIP_SATISFIED`, on by default; `=0` restores the eager
+        # collection above byte-for-byte). OCR-derived words can only ever fill fields
+        # the text pass left abstaining -- that is the it-003 injection gate's own
+        # design -- and the only fields any consumer below can ask for are the blank
+        # expected fields in `verified.VERIFIABLE_FIELDS` ∪ {gross_pay, net_pay}
+        # (`wanted`, `shredded_wanted` and `band_wanted` all derive from that same
+        # blank test). So when the text pass has settled every one of those, the OCR
+        # pass -- discovery, rendering, recognition -- is dead work and is skipped
+        # whole; `core.ocr_words` is never imported, the same discipline as
+        # `REALDOOR_OCR_WORDS=0`. When any is still blank, the exact calls the eager
+        # loop would have made run here instead, in the same page order -- deferred,
+        # not different (`region_ocr_words` is a pure function of its arguments).
+        # Structurally output-identical, not a tuned threshold; falsified over all 77
+        # corpus documents first: the skip fires on 46 and the extraction JSON is
+        # byte-identical on every one -- loop/falsification/it-007.json.
+        if defer_ocr:
+            from core import verified as _verified
+
+            def _ocr_consumable_blank(name: str) -> bool:
+                if (name not in _verified.VERIFIABLE_FIELDS
+                        and name not in ("gross_pay", "net_pay")):
+                    return False
+                existing = found.get(name)
+                return existing is None or existing.get("certainty") == "abstain"
+
+            if any(_ocr_consumable_blank(n) for n in EXPECTED_FIELDS.get(doc_type, ())):
+                from core import ocr_words
+
+                ocr_by_page = [
+                    ocr_words.region_ocr_words(render_source, page, page_number, words)
+                    for page_number, (page, words)
+                    in enumerate(zip(pdf.pages, words_by_page), start=1)
+                ]
 
     # ----------------------------------------------------------------------------------
     # Arithmetic verification (on by default, `REALDOOR_ARITHMETIC=0` to disable)
