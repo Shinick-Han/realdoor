@@ -86,6 +86,7 @@ from typing import Any, Sequence
 
 from core.extract import (
     SIDE_BY_SIDE_MIN_GAP,
+    VALUE_Y_WINDOW,
     Word,
     LineBoxConvention,
     _build_value_field,
@@ -498,6 +499,243 @@ def _attribute_axis(
         if len(named) != 1:
             return None  # the axis word names no cell here, or more than one. Abstain.
         return named[0]
+    return None
+
+
+# --------------------------------------------------------------------------------------
+# An hours block the page titles itself, with a REGULAR row inside it
+# --------------------------------------------------------------------------------------
+# The CA DLSE piece-rate stub prints its hours as a titled block rather than a labelled
+# field or a headed matrix::
+#
+#     Total Hours in Pay Period      <- the block's own title
+#       Regular:      40.00          <- the row
+#       Overtime:      0.00
+#       Double time:   0.00
+#
+# "REGULAR" alone is deliberately not in any label vocabulary -- regular *what*? On the
+# bonita check the word sits in a row whose RATE column holds a monthly 6,333.00, and a
+# bare-REGULAR rule would read it. What resolves it here is the page's own block title:
+# a caption that says in as many words that everything beneath it is *hours in the pay
+# period*. Two printed axes -- the title names the quantity, the row word names the
+# earnings class -- and neither alone reads anything, which is the same shape as
+# `table_cell_value` and the same reason it is safe.
+#
+# The refusals, each with the hazard it answers:
+#
+#   * the title must pass `looks_like_a_label` and contain both HOURS and PAY PERIOD --
+#     measured across all 77 corpus documents, every prose sentence containing those
+#     words ("overtime hours worked during the pay period.") fails the length gate, and
+#     il_dol's `Hours This Period` header does not say PAY;
+#   * the REGULAR row must share x-extent with the title and sit within
+#     `HEADER_SEARCH_BAND` beneath it -- il_dol's `Regular` client rows sit 300pt of x
+#     away from anything resembling a title;
+#   * exactly one REGULAR row, exactly one run to its right, past
+#     `SIDE_BY_SIDE_MIN_GAP` -- bonita's REGULAR row carries five values and is refused
+#     on count alone;
+#   * the value must parse as hours and pass the same physical ceiling
+#     `core.verified.FALLBACK_HOURS_BOUND` rests on: no pay period below "annual" spans
+#     more than a calendar month, so 744 = 31 days x 24 hours is the most hours a period
+#     can physically contain. bonita's 6,333.00 dies here even before the count refusal.
+#
+# Falsification, measured before this was written: across all 77 corpus documents the
+# title test matches exactly one run -- `Total Hours in Pay Period` on the piece-rate
+# stub -- and the only REGULAR row beneath such a title is that document's `Regular:
+# 40.00`, which its truth records as the regular_hours value.
+
+#: 31 days x 24 hours: the most hours a sub-annual pay period can physically contain.
+#: Same number and same argument as `core.verified.FALLBACK_HOURS_BOUND`; restated here
+#: rather than imported because `core.verified` must never be imported when
+#: `REALDOOR_ARITHMETIC=0`, and this module runs under a different flag.
+MAX_PERIOD_HOURS = 744.0
+
+#: The two words a block title must print to name the quantity beneath it as this
+#: field's. Substring tests against `normalize_label` output, so case and punctuation
+#: never matter.
+HOURS_BLOCK_TITLE_WORDS = ("HOURS", "PAY PERIOD")
+HOURS_BLOCK_ROW = "REGULAR"
+
+
+def hours_block_value(
+    lines: Sequence[Sequence[Word]],
+    convention: LineBoxConvention,
+) -> dict[str, Any] | None:
+    """`regular_hours` from a REGULAR row under a printed hours-block title, or None.
+
+    Same blank-only page-level gate as `table_cell_value`: called only when every
+    label-anchored rule left the field without a value, so it converts abstentions or
+    does nothing.
+    """
+    from core.extract import looks_like_a_label
+
+    titles: list[list[Word]] = []
+    for line in lines:
+        for run in _split_runs(line):
+            normalized = normalize_label(_join_run(run))
+            if looks_like_a_label(_join_run(run)) and all(
+                word in normalized for word in HOURS_BLOCK_TITLE_WORDS
+            ):
+                titles.append(run)
+
+    for title in titles:
+        page = title[0].page
+        rows: list[tuple[list[Word], Sequence[Word]]] = []
+        for line in lines:
+            if not line or line[0].page != page:
+                continue
+            delta = title[0].baseline - line[0].baseline
+            if not (0 < delta <= HEADER_SEARCH_BAND):
+                continue
+            for run in _split_runs(line):
+                if normalize_label(_join_run(run)) == HOURS_BLOCK_ROW and _x_overlap(
+                    _span(run), _span(title)
+                ):
+                    rows.append((run, line))
+        if len(rows) != 1:
+            continue  # no row, or two -- the page has not said which is the one
+        row_run, row_line = rows[0]
+        row_end = max(w.x1 for w in row_run)
+        right = [w for w in row_line if w.x0 >= row_end]
+        value_runs = _split_runs(right) if right else []
+        if len(value_runs) != 1:
+            continue  # two things beside the row word; nothing printed says which
+        run = value_runs[0]
+        if run[0].x0 - row_end < SIDE_BY_SIDE_MIN_GAP:
+            continue  # a word space, not a column: this is prose
+        field = _build_value_field(
+            run, "regular_hours", convention, True,
+            f"value read from a {HOURS_BLOCK_ROW.title()!r} row beneath the block title "
+            f"{_join_run(title)!r}, the page's own statement that everything in the "
+            f"block is hours in the pay period",
+        )
+        if field is None:
+            continue
+        try:
+            hours = float(field["value"])
+        except (TypeError, ValueError):
+            continue
+        if not (0 < hours <= MAX_PERIOD_HOURS):
+            continue  # more hours than a calendar month holds: not a period's hours
+        # No label of this field's own names it -- cap like the table-cell rule.
+        field["certainty"] = "low"
+        return field
+    return None
+
+
+# --------------------------------------------------------------------------------------
+# The earnings table's own END DATE column
+# --------------------------------------------------------------------------------------
+# The bonita certificated check prints no label the vocabulary knows for the period end.
+# What it prints instead is a table that names the field with two axes at once::
+#
+#     EARNINGS - COMPENSATION                                   <- the section's own title
+#     BASIS | DESCRIPTION | END DATE | RATE | UNITS | AMOUNT    <- the header row
+#     C M   | REGULAR     | 9/30/2018| 6,333.00 | 23.00 | ...   <- the data row
+#
+# "END DATE" alone is exactly the kind of context-dependent compound the synonym table
+# refuses to carry -- the end date *of what*? An employment-verification form prints
+# "End Date" about the job itself, a benefit statement about coverage. What resolves it
+# here is the other printed axis: the column belongs to a table the page itself titles
+# EARNINGS, and the end date of an earnings row is the end of the period those earnings
+# cover. Neither axis alone reads anything: EARNINGS without the header names no column,
+# and END DATE without the EARNINGS title stays exactly as unmapped as it is today.
+#
+# Every test is a refusal, each with the hazard it answers:
+#
+#   * the header row must hold two or more caption cells, one of them END DATE -- a lone
+#     "End Date:" form caption is not a column header and never fires this rule;
+#   * a line within `VALUE_Y_WINDOW` above the header row must print the word EARNINGS --
+#     the axis that tells a pay period's end from employment's end. An employment-history
+#     table titled anything else is refused here;
+#   * candidates live within `HEADER_SEARCH_BAND` below the header, the module's one
+#     standing definition of how far a header's authority reaches. The hazard is on the
+#     same page: bonita prints `AS OF DATE 8/31/2018` 259pt further down, overlapping the
+#     END DATE cell's x-band -- a different date that has nothing to do with the earnings
+#     table. The band is what keeps the column from claiming it;
+#   * a candidate must share x-extent with the END DATE cell and with no other header
+#     cell, the same uniqueness `_attribute_axis` asks;
+#   * every date found under the cell must parse and all must agree -- a table whose
+#     earnings rows end on different dates has not said which one is the period's end;
+#   * and the value still goes through `parse_value("pay_period_end", ...)` inside
+#     `_build_value_field`, so a non-date under the cell abstains as always.
+#
+# Falsification, measured before this was written: across all 77 corpus documents (pack
+# 24, uploads 26, wording hold-out 7, external 6, confirmation 14), a run normalizing to
+# END DATE occurs exactly once -- this header cell on bonita. No document exists in any
+# corpus where this rule could fire against a truth that says otherwise.
+
+#: The header cell this rule reads, and the section word that licenses it. Closed and
+#: hand-written, like every other vocabulary in this repository.
+END_DATE_HEADER = "END DATE"
+EARNINGS_SECTION_WORD = "EARNINGS"
+
+
+def earnings_end_date_value(
+    lines: Sequence[Sequence[Word]],
+    convention: LineBoxConvention,
+) -> dict[str, Any] | None:
+    """`pay_period_end` from an EARNINGS table's own END DATE column, or None.
+
+    Called only when every label-anchored rule left the field blank -- same page-level
+    gate as `table_cell_value`, so there is no path by which this can replace, move or
+    re-box a value something else found.
+    """
+    for line in lines:
+        cells = [run for run in _split_runs(line) if _is_header_cell(run)]
+        if len(cells) < 2:
+            continue
+        end_cells = [c for c in cells if normalize_label(_join_run(c)) == END_DATE_HEADER]
+        if len(end_cells) != 1:
+            continue
+        end_cell = end_cells[0]
+        header_baseline = line[0].baseline
+        page = line[0].page
+
+        # The printed section word, directly above the header row.
+        near, far = VALUE_Y_WINDOW
+        titled = any(
+            EARNINGS_SECTION_WORD in normalize_label(_join_run(run)).split()
+            for other in lines
+            if other and other[0].page == page
+            and near <= (other[0].baseline - header_baseline) <= far
+            for run in _split_runs(other)
+        )
+        if not titled:
+            continue
+
+        # Every run under the cell, within the header's reach, that is x-owned by this
+        # cell and no other.
+        values: list[list[Word]] = []
+        for other in lines:
+            if not other or other[0].page != page:
+                continue
+            delta = header_baseline - other[0].baseline
+            if not (0 < delta <= HEADER_SEARCH_BAND):
+                continue
+            for run in _split_runs(other):
+                hits = [c for c in cells if _x_overlap(_span(run), _span(c))]
+                if len(hits) == 1 and hits[0] is end_cell:
+                    values.append(run)
+        if not values:
+            return None
+
+        fields = [
+            _build_value_field(
+                run, "pay_period_end", convention, True,
+                f"value read from the {END_DATE_HEADER!r} column of a table the page "
+                f"titles with the word {EARNINGS_SECTION_WORD!r}; the end date of an "
+                f"earnings row is the end of the period the earnings cover",
+            )
+            for run in values
+        ]
+        if any(f is None for f in fields):
+            return None  # something non-date sits in the column; the page is not plain
+        if len({f["value"] for f in fields}) != 1:
+            return None  # rows end on different dates; nothing printed says which is ours
+        field = fields[0]
+        # No label of this field's own names it -- cap like the table-cell rule.
+        field["certainty"] = "low"
+        return field
     return None
 
 

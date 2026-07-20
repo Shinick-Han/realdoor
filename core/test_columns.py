@@ -491,3 +491,168 @@ def test_the_recovered_fields_are_abstentions_with_the_flag_off(flag_off) -> Non
     assert utep["regular_hours"]["certainty"] == "abstain"
     assert les["regular_hours"]["certainty"] == "abstain"
     assert les["gross_pay"]["certainty"] == "abstain"
+
+
+# ────────────────────────────────────── the EARNINGS table's own END DATE column
+
+
+def _w(text, x0, x1, baseline, size=7.3, bold=False, page=1):
+    return ex.Word(
+        text=text, x0=x0, x1=x1, baseline=baseline,
+        glyph_bottom=baseline - 0.2 * size, glyph_top=baseline + 0.8 * size,
+        size=size, bold=bold, page=page,
+    )
+
+
+def _bonita_like(*, titled=True, extra=()):
+    """The bonita layout, reduced: a titled EARNINGS block over a headed table row."""
+    words = [
+        _w("BASIS", 14.0, 31.0, 640.0),
+        _w("DESCRIPTION", 60.0, 100.0, 640.0),
+        _w("END", 118.4, 131.0, 640.0),
+        _w("DATE", 133.0, 148.8, 640.0),
+        _w("RATE", 162.0, 177.3, 640.0),
+        _w("AMOUNT", 227.5, 255.9, 640.0),
+        _w("9/30/2018", 118.7, 150.3, 631.0),
+    ]
+    if titled:
+        words += [
+            _w("EARNINGS", 2.2, 40.0, 649.0),
+            _w("-", 43.0, 45.0, 649.0),
+            _w("COMPENSATION", 47.0, 88.5, 649.0),
+        ]
+    return list(words) + list(extra)
+
+
+class TestEarningsEndDateColumn:
+    """`pay_period_end` from an END DATE header cell inside a page-titled EARNINGS table.
+    "END DATE" alone is the kind of compound the synonym table refuses (the end date of
+    *what*?), so the section word is a hard requirement, not decoration."""
+
+    CONVENTION = ex.LineBoxConvention()
+
+    def _run(self, words):
+        return col.earnings_end_date_value(ex.group_lines(words), self.CONVENTION)
+
+    def test_the_bonita_shape_is_read(self) -> None:
+        got = self._run(_bonita_like())
+        assert got is not None
+        assert got["value"] == "2018-09-30"
+        assert got["certainty"] == "low"
+        assert "END DATE" in got["notes"] and "EARNINGS" in got["notes"]
+
+    def test_without_the_earnings_title_nothing_is_read(self) -> None:
+        """The same table under any other section title could be an employment history,
+        and its END DATE would be the end of the job, not of the pay period."""
+        assert self._run(_bonita_like(titled=False)) is None
+
+    def test_disagreeing_dates_under_the_cell_refuse(self) -> None:
+        extra = [_w("9/15/2018", 118.7, 150.3, 620.0)]
+        assert self._run(_bonita_like(extra=extra)) is None
+
+    def test_agreeing_dates_under_the_cell_are_one_answer(self) -> None:
+        extra = [_w("9/30/2018", 118.7, 150.3, 620.0)]
+        got = self._run(_bonita_like(extra=extra))
+        assert got is not None and got["value"] == "2018-09-30"
+
+    def test_a_non_date_in_the_column_refuses(self) -> None:
+        extra = [_w("PENDING", 118.7, 150.3, 620.0)]
+        assert self._run(_bonita_like(extra=extra)) is None
+
+    def test_a_far_away_date_is_outside_the_headers_reach(self) -> None:
+        """bonita's own hazard: `AS OF DATE 8/31/2018` sits 259pt below the header in the
+        same x-band. `HEADER_SEARCH_BAND` is what keeps the column from claiming it."""
+        extra = [_w("8/31/2018", 118.7, 150.3, 640.0 - col.HEADER_SEARCH_BAND - 10.0)]
+        got = self._run(_bonita_like(extra=extra))
+        assert got is not None and got["value"] == "2018-09-30"
+
+    def test_a_lone_form_caption_is_not_a_header_row(self) -> None:
+        """`End Date:` beside a fill-in blank must never fire this rule: one caption is
+        not a row that names columns."""
+        words = [
+            _w("EARNINGS", 100.0, 140.0, 649.0),
+            _w("End", 100.0, 113.0, 640.0),
+            _w("Date:", 115.0, 133.0, 640.0),
+            _w("6/30/2018", 160.0, 195.0, 631.0),
+        ]
+        assert self._run(words) is None
+
+    def test_bonita_end_to_end(self, flag_on) -> None:
+        got = _fields(CONFIRM / "bonita_certificated_check_sample.pdf", "pay_stub")
+        assert got["pay_period_end"]["value"] == "2018-09-30"
+        assert got["pay_period_end"]["certainty"] == "low"
+
+    def test_bonita_abstains_with_the_flag_off(self, flag_off) -> None:
+        got = _fields(CONFIRM / "bonita_certificated_check_sample.pdf", "pay_stub")
+        assert got["pay_period_end"]["certainty"] == "abstain"
+
+
+# ─────────────────────────────────────── a titled hours block with a REGULAR row
+
+
+def _hours_block(*, title=True, value="40.00", second_run=None, gap_x0=490.0, extra=()):
+    """The CA DLSE piece-rate layout, reduced: `Total Hours in Pay Period` over
+    `Regular: <value>`."""
+    words = []
+    if title:
+        words += [
+            _w("Total", 401.4, 419.0, 595.4, size=7.7, bold=True),
+            _w("Hours", 421.0, 441.0, 595.4, size=7.7, bold=True),
+            _w("in", 443.0, 449.0, 595.4, size=7.7, bold=True),
+            _w("Pay", 451.0, 464.0, 595.4, size=7.7, bold=True),
+            _w("Period", 466.0, 481.6, 595.4, size=7.7, bold=True),
+        ]
+    words += [
+        _w("Regular:", 430.6, 456.5, 586.0, size=7.7, bold=True),
+        _w(value, gap_x0, gap_x0 + 17.0, 586.0, size=7.7),
+    ]
+    if second_run is not None:
+        words.append(_w(second_run, gap_x0 + 40.0, gap_x0 + 57.0, 586.0, size=7.7))
+    return words + list(extra)
+
+
+class TestHoursBlock:
+    """`regular_hours` from a REGULAR row under a printed hours-block title. Bare REGULAR
+    stays out of every vocabulary; the page's own title is what names the quantity."""
+
+    CONVENTION = ex.LineBoxConvention()
+
+    def _run(self, words):
+        return col.hours_block_value(ex.group_lines(words), self.CONVENTION)
+
+    def test_the_piecerate_shape_is_read(self) -> None:
+        got = self._run(_hours_block())
+        assert got is not None
+        assert got["value"] == 40
+        assert got["certainty"] == "low"
+        assert "Total Hours in Pay Period" in got["notes"]
+
+    def test_without_the_title_nothing_is_read(self) -> None:
+        assert self._run(_hours_block(title=False)) is None
+
+    def test_more_hours_than_a_month_holds_refuses(self) -> None:
+        """The bonita hazard in this rule's terms: a REGULAR row whose number is a monthly
+        amount, not hours. 744 = 31 days x 24 hours is a physical ceiling, not a knob."""
+        assert self._run(_hours_block(value="6333.00")) is None
+
+    def test_two_runs_beside_the_row_refuse(self) -> None:
+        assert self._run(_hours_block(second_run="15.00")) is None
+
+    def test_a_word_space_is_prose_not_a_column(self) -> None:
+        assert self._run(_hours_block(gap_x0=460.0)) is None
+
+    def test_two_regular_rows_refuse(self) -> None:
+        extra = [
+            _w("Regular:", 430.6, 456.5, 576.0, size=7.7, bold=True),
+            _w("38.00", 490.0, 507.0, 576.0, size=7.7),
+        ]
+        assert self._run(_hours_block(extra=extra)) is None
+
+    def test_piecerate_end_to_end(self, flag_on) -> None:
+        got = _fields(CONFIRM / "ca_dlse_paystub_piecerate.pdf", "pay_stub")
+        assert got["regular_hours"]["value"] == 40
+        assert got["regular_hours"]["certainty"] == "low"
+
+    def test_piecerate_abstains_with_the_flag_off(self, flag_off) -> None:
+        got = _fields(CONFIRM / "ca_dlse_paystub_piecerate.pdf", "pay_stub")
+        assert got["regular_hours"]["certainty"] == "abstain"

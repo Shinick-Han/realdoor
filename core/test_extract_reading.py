@@ -420,11 +420,30 @@ class TestAPrintedConjunctionNamesTwoFields:
         assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
         assert "pay_period_end" not in got
 
-    def test_the_il_dol_two_digit_year_refuses_the_split(self) -> None:
-        """The document that motivated the rule is also one it must abstain on today: the
-        right half `8/27/05` prints no century, so neither endpoint is emitted -- see the
-        note above `_DATE_FORMATS` for the measurement behind that."""
+    def test_the_il_dol_fully_printed_half_is_read_and_the_two_digit_half_is_not(self) -> None:
+        """il_dol's span, reduced: `8/21/2005 to 8/27/05`. The left half prints all eight
+        of its digits and is read; the right half prints no century, and no century is
+        invented for it -- it stays an abstention, exactly as the note above
+        `_DATE_FORMATS` promises. The right half being date-*shaped* is what licenses
+        reading the left at all: it is the proof the run is a span of two dates."""
         got = read(self._span_line("8/21/2005 to 8/27/05"))
+        assert got["pay_period_start"]["value"] == "2005-08-21"
+        assert got["pay_period_start"]["certainty"] == "low"
+        assert "stays abstained" in (got["pay_period_start"]["notes"] or "")
+        assert "pay_period_end" not in got
+
+    def test_a_masked_far_half_licenses_the_printed_near_half(self) -> None:
+        """Same one-sided reading with the mask instead of a two-digit year: the masked
+        half is date-shaped (the page printed a date and redacted its year), so the fully
+        printed half is read and the masked half stays exactly as unread as before."""
+        got = read(self._span_line("1/5/2020 to 1/13/XX"))
+        assert got["pay_period_start"]["value"] == "2020-01-05"
+        assert "pay_period_end" not in got
+
+    def test_a_prose_left_half_kills_the_reading_even_with_a_good_right_half(self) -> None:
+        """`prior to 8/27/2005` must not become a period end: the left side is not even
+        date-shaped, so nothing printed says the run is a span of two dates."""
+        got = read(self._span_line("prior to 8/27/2005"))
         assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
         assert "pay_period_end" not in got
 
