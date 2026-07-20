@@ -1,0 +1,1122 @@
+{
+ "manifest_version": 1,
+ "name": "filled-forms corpus (blank forms completed with invented values)",
+ "created": "2026-07-20",
+ "purpose": "The corpus's real blank forms, filled with invented identities and values by scripts/make_filled_forms.py. Layout borrowed from the publishing agencies; every value invented; truth written at fill time, so it is true by construction. The blanks tested the refusal side only; these test whether values on foreign layouts are read.",
+ "generator": "scripts/make_filled_forms.py",
+ "truth_discipline": {
+  "statement": "Truth by construction: every entry in `expected` is a string this generator placed on the page (or its scoreable core -- see per-document expected_note), recorded in the same run that wrote the PDF. Nothing was transcribed after the fact.",
+  "identities": "All invented. No real person; employers fictional; amounts plausible; formats varied the way real filler-humans vary them.",
+  "marked_only_rule": "A value that exists only as a graphical mark (drawn circle, checkbox state) is recorded under marked_only and is NOT scored: crediting a text reader for the word under a mark would credit menu-reading.",
+  "ambiguous_rule": "A field whose meaning on a given form is genuinely ambiguous in the pay-stub vocabulary is excluded with its reason rather than forced into either bucket."
+ },
+ "field_vocabulary": [
+  "person_name",
+  "pay_date",
+  "pay_period_start",
+  "pay_period_end",
+  "pay_frequency",
+  "regular_hours",
+  "hourly_rate",
+  "gross_pay",
+  "net_pay",
+  "document_date",
+  "employer_name"
+ ],
+ "roles": {
+  "dev": [
+   "seattle_housing_employment_verification_filled.pdf",
+   "wa_dshs_14252_employment_verification_filled.pdf",
+   "orangeusd_sample_paystub_filled.pdf"
+  ],
+  "sealed": [
+   "mnhousing_employment_verification_filled.pdf",
+   "kcha_section8_doc21_filled.pdf"
+  ],
+  "statement": "The sealed documents are generated and their truth recorded, but they are EXCLUDED from every measurement run and every number reported in this exercise. They are held for one future measurement at the owner's call, after which they retire (a hold-out is spent the first time it is used). scripts/measure_filled_forms.py verifies they exist and match their sha256 without ever extracting them."
+ },
+ "documents": [
+  {
+   "file_name": "seattle_housing_employment_verification_filled.pdf",
+   "source_file": "seattle_housing_employment_verification_blank.pdf",
+   "source_sha256": "b91010b54361c3c8c3a38436bfa6c83c7fdb8cff071a693b68aeff7d3c51b2af",
+   "sha256": "a9a6022f50fdf363e05a006023ccf5e6e4335bc33c7f6be0439b46d0657bb0e8",
+   "bytes": 140700,
+   "pages": 1,
+   "kind": "filled_employment_verification",
+   "role": "dev",
+   "technique": "overlay",
+   "technique_detail": "flat page; values drawn at the blank ruled lines, 8-10pt to match the form's own Arial captions; circle-one answered with a drawn ellipse, exactly as a pen would",
+   "expected": {
+    "person_name": "Marisol Vega",
+    "hourly_rate": "19.75",
+    "regular_hours": "32",
+    "employer_name": "Cascade Fresh Foods LLC",
+    "document_date": "06/12/2026"
+   },
+   "expect_absent": [
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "gross_pay",
+    "net_pay"
+   ],
+   "marked_only": {
+    "pay_frequency": {
+     "value_by_mark": "hourly",
+     "mark": "drawn ellipse around the menu word 'hourly'",
+     "why_not_expected": "the value exists only as a graphical circle; a text reader emitting 'hourly' would be reading the menu, not the mark, and must not be credited"
+    }
+   },
+   "ambiguous": {},
+   "deliberately_blank": [
+    "Head of Household SS#",
+    "Social Security Number",
+    "Unit #",
+    "Last Day of Employment",
+    "Shift Differential Rate",
+    "Commissions, bonuses, tips",
+    "anticipated rate change",
+    "layoff period",
+    "Additional remarks",
+    "Fax #",
+    "YTD through-dates"
+   ],
+   "fills": [
+    {
+     "page": 1,
+     "anchor": "Head of Household Name:",
+     "text": "Marisol Vega",
+     "x": 348.9,
+     "y": 91.1,
+     "size": 10,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Date:",
+     "text": "06/12/2026",
+     "x": 371.1,
+     "y": 197.3,
+     "size": 10,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "(Name & address of employer)",
+     "text": "Cascade Fresh Foods LLC",
+     "x": 125,
+     "y": 211.9,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "(Name & address of employer)",
+     "text": "2217 Rainier Ave S",
+     "x": 125,
+     "y": 226.9,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "(Name & address of employer)",
+     "text": "Seattle, WA 98144",
+     "x": 125,
+     "y": 241.9,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Household Member Name",
+     "text": "Marisol Vega",
+     "x": 120,
+     "y": 269.2,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Signature of Household Member",
+     "text": "Marisol Vega",
+     "x": 150,
+     "y": 331.0,
+     "size": 10,
+     "font": "heit"
+    },
+    {
+     "page": 1,
+     "anchor": "Signature of Household Member",
+     "text": "06/12/2026",
+     "x": 480,
+     "y": 331.0,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Employee Name:",
+     "text": "Marisol Vega",
+     "x": 138.3,
+     "y": 492.9,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Job Title:",
+     "text": "Prep Cook",
+     "x": 349.1,
+     "y": 492.9,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Employed:",
+     "text": "3/14/2022",
+     "x": 242.5,
+     "y": 515.9,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Current Wages/Salary: $",
+     "text": "19.75",
+     "x": 145.9,
+     "y": 531.5,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Average # of regular hours per week:",
+     "text": "32",
+     "x": 190.6,
+     "y": 549.9,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Year-to-date earnings: $",
+     "text": "21,335.40",
+     "x": 344.3,
+     "y": 549.9,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Overtime Rate:",
+     "text": "29.63",
+     "x": 137.8,
+     "y": 565.6,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Average # of overtime hours per week:",
+     "text": "4",
+     "x": 398.3,
+     "y": 565.6,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Employer’s Signature",
+     "text": "Daniel Okafor",
+     "x": 120,
+     "y": 656.5,
+     "size": 10,
+     "font": "heit"
+    },
+    {
+     "page": 1,
+     "anchor": "Employer’s Printed Name",
+     "text": "Daniel Okafor",
+     "x": 330,
+     "y": 656.5,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Employer’s Printed Name",
+     "text": "6/16/2026",
+     "x": 500,
+     "y": 656.5,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Employer (Company) Name and Address",
+     "text": "Cascade Fresh Foods LLC, 2217 Rainier Ave S, Seattle, WA 98144",
+     "x": 150,
+     "y": 686.3,
+     "size": 8,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Phone #",
+     "text": "(206) 555-0142",
+     "x": 100,
+     "y": 716.0,
+     "size": 8,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "eMail",
+     "text": "payroll@cascadefresh.example.com",
+     "x": 440,
+     "y": 716.0,
+     "size": 8,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "mark": "ellipse",
+     "around": "Yes",
+     "occ": 0
+    },
+    {
+     "page": 1,
+     "mark": "ellipse",
+     "around": "hourly",
+     "occ": 0
+    }
+   ],
+   "note": "TRAPS RETAINED FROM THE BLANK: the seven-word frequency menu is still printed (one word now circled in ink); 'Seattle Housing Authority' is still the publisher logo, not the employer; FAX (206) 256-7026 is still the agency's fax. NEW TRAPS BY CONSTRUCTION: Year-to-date earnings 21,335.40 is the most gross-pay-shaped number on the page and gross_pay is absent; Overtime Rate 29.63 is a second per-hour rate next to the real 19.75."
+  },
+  {
+   "file_name": "wa_dshs_14252_employment_verification_filled.pdf",
+   "source_file": "wa_dshs_14252_employment_verification.pdf",
+   "source_sha256": "cc00dbff9dd47c4383de232b8088438b2c8b4518885059e27ebffde091d39209",
+   "sha256": "f316846f136dc176359e4801a208714f25a2fdac2bad2193c0c7228737129bdd",
+   "bytes": 201435,
+   "pages": 1,
+   "kind": "filled_employment_verification",
+   "role": "dev",
+   "technique": "acroform",
+   "technique_detail": "real AcroForm (72 widgets) filled through its own form fields with appearance streams regenerated; checkboxes/radios set via their on-states. Field values therefore live in widget annotations, NOT in the page content stream.",
+   "expected": {
+    "person_name": "Terrence Boyd",
+    "hourly_rate": "$17.10",
+    "regular_hours": "38",
+    "employer_name": "Harbor Ridge Landscaping",
+    "document_date": "07/02/2026"
+   },
+   "expect_absent": [
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "net_pay"
+   ],
+   "marked_only": {
+    "pay_frequency": {
+     "value_by_mark": "Every two weeks",
+     "mark": "AcroForm checkbox 'Every two weeks' set to its on-state",
+     "why_not_expected": "the value is a checkbox state; the five frequency words are all still printed, so emitting one of them is menu-reading unless the mark itself was read"
+    }
+   },
+   "ambiguous": {
+    "gross_pay": "the only income figure on the form is 1,283.15 for 'July 1-15', a part-month total typed into the current-month widget; it is neither a pay-period gross nor a full-month gross, so calling any answer right or wrong would manufacture a result"
+   },
+   "deliberately_blank": [
+    "SOCIAL SECURITY NUMBER OPTIONAL",
+    "DSHS PHONE NUMBER",
+    "If yes, Ended when?",
+    "If yes, Ended why?",
+    "work-study details",
+    "WHEN WILL YOUR POSITION END",
+    "last-three-months gross grid (unfillable digitally: its cells share one field name and mirror a single value -- see widget_text comment)",
+    "tips/commissions/bonuses/overtime amounts",
+    "work schedule grid",
+    "When does coverage begin?",
+    "What is employee portion of premiums?",
+    "employer signature (Signature-type field, left unsigned)"
+   ],
+   "fills": [
+    {
+     "page": 1,
+     "widget": "CASE  CLIENT ID NUMBER",
+     "text": "4471250"
+    },
+    {
+     "page": 1,
+     "widget": "DATE",
+     "text": "07/02/2026"
+    },
+    {
+     "page": 1,
+     "widget": "EMPLOYEES SIGNATURE",
+     "text": "Terrence Boyd"
+    },
+    {
+     "page": 1,
+     "widget": "Employees Signature Date for authorization to release information",
+     "text": "06/28/2026"
+    },
+    {
+     "page": 1,
+     "widget": "EMPLOYEES NAME",
+     "text": "Terrence Boyd"
+    },
+    {
+     "page": 1,
+     "widget": "EMPLOYERS NAME",
+     "text": "Harbor Ridge Landscaping"
+    },
+    {
+     "page": 1,
+     "widget": "EMPLOYEES JOB TITLE",
+     "text": "Grounds Crew"
+    },
+    {
+     "page": 1,
+     "widget": "EMPLOYERS ADDRESS",
+     "text": "1408 SE Mill Plain Blvd, Vancouver, WA 98683"
+    },
+    {
+     "page": 1,
+     "widget": "Is this a new job",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "DATE EMPLOYEE STARTED WORK",
+     "text": "02/03/2025"
+    },
+    {
+     "page": 1,
+     "widget": "DATE FIRST CHECK WAS RECEIVED",
+     "text": "02/21/2025"
+    },
+    {
+     "page": 1,
+     "widget": "AVERAGE HOURS PER WEEK",
+     "text": "38"
+    },
+    {
+     "page": 1,
+     "widget": "RATE OF PAY OR SALARY HOURLY DAILY OR PIECE RATE",
+     "text": "$17.10 hourly"
+    },
+    {
+     "page": 1,
+     "widget": "No, job has not ended",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "Every two weeks",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "No, this job is not work study",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "Actual gross income Current MONTH 1",
+     "text": "July 1-15"
+    },
+    {
+     "page": 1,
+     "widget": "Actual gross income Current MONTH 1 $",
+     "text": "1,283.15"
+    },
+    {
+     "page": 1,
+     "widget": "No tips",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "No commissions",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "No bonuses",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "Yes overtime",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "Is Health Insurance available",
+     "mark": "checked",
+     "widget_index": 0
+    },
+    {
+     "page": 1,
+     "widget": "If yes is employee enrolled in the health plan",
+     "mark": "checked",
+     "widget_index": 1
+    },
+    {
+     "page": 1,
+     "widget": "DATE of Employer / Representative's Signature",
+     "text": "07/02/2026"
+    },
+    {
+     "page": 1,
+     "widget": "EMPLOYERREPRESENTATIVES PRINTED NAME AND TITLE",
+     "text": "Gail Munson, Office Manager"
+    },
+    {
+     "page": 1,
+     "widget": "PHONE NUMBER",
+     "text": "(360) 555-0177"
+    }
+   ],
+   "note": "TRAPS RETAINED: the five-frequency checkbox menu is still printed; DSHS PO BOX and fax 888-338-7410 are still agency identity. NEW BY CONSTRUCTION: 'DATE EMPLOYEE STARTED WORK' 02/03/2025 and 'DATE FIRST CHECK WAS RECEIVED' 02/21/2025 are date-shaped non-pay-dates. STRUCTURAL: every filled value lives in a widget annotation; the page content stream is byte-identical to the blank form, so a content-stream reader sees the blank document.",
+   "expected_note": "hourly_rate: the exact string typed into the rate widget is '$17.10 hourly' (an employer states the basis because the caption asks for it); the scoreable value is $17.10. person_name: 'Terrence Boyd' also appears in the signature widget. document_date: the form's own top-right DATE widget."
+  },
+  {
+   "file_name": "orangeusd_sample_paystub_filled.pdf",
+   "source_file": "orangeusd_sample_paystub.pdf",
+   "source_sha256": "4315c7f5b0cd89149db637b23fa156a57e88a17bc999e9cd3b7c38edd2c80b2e",
+   "sha256": "0c8b9bbdd1907c10307e1c4ab39ecf804acb8fa0cd4e4f02588d254be4856697",
+   "bytes": 206585,
+   "pages": 1,
+   "kind": "filled_pay_stub",
+   "role": "dev",
+   "technique": "overlay",
+   "technique_detail": "flat page; the empty stub template's cells written at the template's own 6-7pt cell sizes, under the template's own captions; the explainer key below the stub is untouched",
+   "expected": {
+    "person_name": "DELGADO, RUTH A",
+    "employer_name": "CANYON GLEN UNIFIED",
+    "pay_date": "10/31/2025",
+    "pay_period_end": "10/31/2025",
+    "gross_pay": "4,812.00",
+    "net_pay": "4,166.12"
+   },
+   "expect_absent": [
+    "pay_period_start",
+    "pay_frequency",
+    "hourly_rate",
+    "regular_hours",
+    "document_date"
+   ],
+   "marked_only": {},
+   "ambiguous": {},
+   "deliberately_blank": [
+    "Important Message",
+    "Federal/State marital status and exemptions",
+    "Pre-Tax Retirement block",
+    "Advance Earned Income Credit",
+    "ESA Gross Advance",
+    "second and later earnings rows"
+   ],
+   "fills": [
+    {
+     "page": 1,
+     "anchor": "Employee Name",
+     "text": "DELGADO, RUTH A",
+     "x": 30,
+     "y": 84.8,
+     "size": 6.5,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "District Name",
+     "text": "CANYON GLEN UNIFIED",
+     "x": 213,
+     "y": 84.8,
+     "size": 6.5,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Check Number",
+     "text": "00458213",
+     "x": 517,
+     "y": 84.8,
+     "size": 6.5,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Employee ID",
+     "text": "204871",
+     "x": 42,
+     "y": 104.4,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Pay Site",
+     "text": "012",
+     "x": 108,
+     "y": 104.4,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Sequence Number",
+     "text": "0044",
+     "x": 158,
+     "y": 104.4,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Payroll Number",
+     "text": "10",
+     "x": 40,
+     "y": 124.5,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Payroll Issue Date",
+     "text": "10/31/2025",
+     "x": 94,
+     "y": 124.3,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Payroll Ending Date",
+     "text": "10/31/2025",
+     "x": 155,
+     "y": 124.3,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Description",
+     "text": "REGULAR EARNINGS",
+     "x": 34,
+     "y": 197.3,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Rate of Pay",
+     "text": "4,812.00",
+     "x": 103,
+     "y": 197.3,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Hours/Units",
+     "text": "21.00",
+     "x": 168,
+     "y": 197.3,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Description",
+     "text": "4,812.00",
+     "x": 224,
+     "y": 197.3,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Description",
+     "text": "STRS RETIREMENT",
+     "x": 34,
+     "y": 338.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Description",
+     "text": "553.38",
+     "x": 106,
+     "y": 338.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Description",
+     "text": "UNION DUES",
+     "x": 166,
+     "y": 338.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Description",
+     "text": "92.50",
+     "x": 228,
+     "y": 338.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Gross Pay",
+     "text": "4,812.00",
+     "x": 101,
+     "y": 415.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Gross Pay",
+     "text": "553.38",
+     "x": 168,
+     "y": 415.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Gross Pay",
+     "text": "92.50",
+     "x": 292,
+     "y": 415.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Gross Pay",
+     "text": "0.00",
+     "x": 352,
+     "y": 415.7,
+     "size": 6,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "NET PAY",
+     "text": "4,166.12",
+     "x": 538,
+     "y": 415.4,
+     "size": 8,
+     "font": "helv"
+    }
+   ],
+   "note": "This is the bonita trap rebuilt by construction, on a layout we did not draw: 'Rate of Pay' 4,812.00 is a MONTHLY salary rate (equal to gross), so hourly_rate is absent and 4,812.00 is its natural wrong answer; 'Hours/Units' 21.00 is working DAYS, so regular_hours is absent and 21.00 is its natural wrong answer. Only an END date is given (issue = ending date, a monthly certificated stub), so pay_period_start is absent. The template's own printed zeros (FEDERAL 0.00 etc.) remain; deductions here are pre-tax/other, and 4,812.00 - 553.38 - 92.50 = 4,166.12 exactly."
+  },
+  {
+   "file_name": "mnhousing_employment_verification_filled.pdf",
+   "source_file": "mnhousing_employment_verification_blank.pdf",
+   "source_sha256": "d131c99b55fd1386bd6975ef0b044a9a835a9108c2492507835269548aad599e",
+   "sha256": "338655444fad519c4ce2db15be280ff00b4b44ea9a598a928ccc30c7899b60d4",
+   "bytes": 155267,
+   "pages": 1,
+   "kind": "filled_employment_verification",
+   "role": "sealed",
+   "technique": "overlay",
+   "technique_detail": "flat page; employer-section blanks written at the form's own 9-10pt size; circle-one answered with a drawn ellipse; Yes/No answered by writing X on the printed underscore line",
+   "expected": {
+    "person_name": "Aisha Renner",
+    "gross_pay": "2,105.00",
+    "regular_hours": "40",
+    "employer_name": "Cedar Loop Insurance Services",
+    "document_date": "1/9/2026"
+   },
+   "expect_absent": [
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "net_pay",
+    "hourly_rate"
+   ],
+   "marked_only": {
+    "pay_frequency": {
+     "value_by_mark": "semi-monthly",
+     "mark": "drawn ellipse around the first menu's 'semi-monthly'",
+     "why_not_expected": "graphical circle over a printed fourteen-word menu; emitting the word without reading the mark is menu-reading"
+    }
+   },
+   "ambiguous": {},
+   "deliberately_blank": [
+    "FROM block",
+    "Email / Contact lines",
+    "Unit Number",
+    "Shift Differential Rate",
+    "shift differential hours",
+    "Commissions, bonuses, tips",
+    "YTD earnings and date-range skeleton",
+    "rate-change line",
+    "seasonal/retirement Yes-No pairs",
+    "Additional remarks"
+   ],
+   "fills": [
+    {
+     "page": 1,
+     "anchor": "TO:",
+     "text": "Cedar Loop Insurance Services",
+     "x": 95,
+     "y": 78.8,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "TO:",
+     "text": "88 Sibley St NW",
+     "x": 95,
+     "y": 96.8,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "TO:",
+     "text": "St. Cloud, MN 56301",
+     "x": 95,
+     "y": 114.8,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Applicant/Tenant Name",
+     "text": "Aisha Renner",
+     "x": 100,
+     "y": 131.0,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Signature of Applicant/Tenant",
+     "text": "Aisha Renner",
+     "x": 100,
+     "y": 274.0,
+     "size": 10,
+     "font": "heit"
+    },
+    {
+     "page": 1,
+     "anchor": "Signature of Applicant/Tenant",
+     "text": "1/6/2026",
+     "x": 500,
+     "y": 274.0,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Employee Name:",
+     "text": "Aisha Renner",
+     "x": 106.2,
+     "y": 334.8,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Job Title:",
+     "text": "Customer Service Representative",
+     "x": 353.6,
+     "y": 334.8,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Presently Employed:",
+     "text": "X",
+     "x": 142.3,
+     "y": 356.4,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Date First Employed",
+     "text": "11/04/2019",
+     "x": 254.8,
+     "y": 356.4,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Current gross wages/salary:",
+     "text": "2,105.00",
+     "x": 150.9,
+     "y": 378.1,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Average # of regular hours per week:",
+     "text": "40",
+     "x": 176.5,
+     "y": 399.8,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Overtime Rate:",
+     "text": "23.68",
+     "x": 105.0,
+     "y": 421.4,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "not included in regular hours):",
+     "text": "0",
+     "x": 493.3,
+     "y": 421.4,
+     "size": 8.0,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Signature:",
+     "text": "Lorna Prentiss",
+     "x": 200,
+     "y": 614.0,
+     "size": 10,
+     "font": "heit"
+    },
+    {
+     "page": 1,
+     "anchor": "Print your name:",
+     "text": "Lorna Prentiss",
+     "x": 200,
+     "y": 626.8,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Title:",
+     "text": "HR Generalist",
+     "x": 200,
+     "y": 639.8,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Company Name",
+     "text": "Cedar Loop Insurance Services",
+     "x": 200,
+     "y": 652.8,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Address",
+     "text": "88 Sibley St NW, St. Cloud, MN 56301",
+     "x": 200,
+     "y": 665.7,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Date:",
+     "text": "1/9/2026",
+     "x": 420.9,
+     "y": 616.0,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "anchor": "Tel. #:",
+     "text": "(320) 555-0164",
+     "x": 420.9,
+     "y": 628.8,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 1,
+     "mark": "ellipse",
+     "around": "semi-monthly",
+     "occ": 0
+    }
+   ],
+   "note": "SEALED. Generated and recorded here; never extracted by this exercise's measurement runs. TRAPS: overtime rate 23.68 is the only $/hour on the page; the second frequency menu (commissions line) stays uncircled; the YTD date-range skeleton '__/__/__ through __/__/__' stays empty.",
+   "expected_note": "gross_pay: 'Current gross wages/salary $2,105.00' with 'semi-monthly' circled -- the amount is the gross wages of one semi-monthly period, the closest thing to gross pay this form can state. hourly_rate is ABSENT by construction: the only per-hour figure on the page is the 23.68 OVERTIME rate. document_date: the employer signature-block 'Date: 1/9/2026' (the date the form itself was completed)."
+  },
+  {
+   "file_name": "kcha_section8_doc21_filled.pdf",
+   "source_file": "kcha_section8_doc21.pdf",
+   "source_sha256": "8e82d99b38b4e7d9bd2b33eff91268e1eeb7ec7edfd2f3a9f5ddd3bf408336e5",
+   "sha256": "2d6d11e53e4dc146a75a18fa30fbda38586fb07748924b5a366443bf15268918",
+   "bytes": 1542635,
+   "pages": 15,
+   "kind": "housing_packet_partially_completed",
+   "role": "sealed",
+   "technique": "overlay",
+   "technique_detail": "flat pages; only the recertification form's PART III income page (page 8 of 15) is completed, the way a resident returns a packet -- income-type checkmark, one income-chart row, and employer block C; the other 14 pages untouched",
+   "expected": {
+    "person_name": "Denise Okafor",
+    "employer_name": "Pacific Rim Catering"
+   },
+   "expect_absent": [
+    "pay_date",
+    "pay_period_start",
+    "pay_period_end",
+    "regular_hours",
+    "hourly_rate",
+    "net_pay",
+    "document_date"
+   ],
+   "marked_only": {
+    "pay_frequency": {
+     "value_by_mark": "monthly",
+     "mark": "X written in the income chart's PER MONTH column",
+     "why_not_expected": "the frequency is stated by which column the X sits under -- a geometric mark, not a printed frequency word with a value"
+    }
+   },
+   "ambiguous": {
+    "gross_pay": "the 1,987.20 in GROSS AMT OF INCOME is a household member's monthly income on an application chart, not the gross pay of a pay period document; calling either answer right or wrong would manufacture a result"
+   },
+   "deliberately_blank": [
+    "all of pages 1-7 and 9-15",
+    "PART III question checkboxes B(1)-(7)",
+    "student table",
+    "second family-member income rows",
+    "second employer column"
+   ],
+   "fills": [
+    {
+     "page": 8,
+     "anchor": "EMPLOYMENT/WAGES",
+     "text": "X (on the blank line before the caption)",
+     "x": 26.3,
+     "y": 487.5,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "income chart row 1",
+     "text": "Denise Okafor",
+     "x": 39.8,
+     "y": 591.0,
+     "size": 7.5,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "income chart row 1",
+     "text": "Wages - Pacific Rim Catering",
+     "x": 180.6,
+     "y": 591.0,
+     "size": 7.5,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "income chart row 1",
+     "text": "1,987.20",
+     "x": 292.7,
+     "y": 591.0,
+     "size": 7.5,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "income chart row 1",
+     "text": "X",
+     "x": 496.4,
+     "y": 591.0,
+     "size": 7.5,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "PERSON EMPLOYED",
+     "text": "Denise Okafor",
+     "x": 190,
+     "y": 684.9,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "EMPLOYER'S NAME",
+     "text": "Pacific Rim Catering",
+     "x": 190,
+     "y": 701.2,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "ADDRESS",
+     "text": "301 S Jackson St",
+     "x": 190,
+     "y": 717.9,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "CITY, STATE, ZIP",
+     "text": "Seattle, WA 98104",
+     "x": 190,
+     "y": 734.5,
+     "size": 9,
+     "font": "helv"
+    },
+    {
+     "page": 8,
+     "anchor": "TELEPHONE #",
+     "text": "(206) 555-0119",
+     "x": 190,
+     "y": 751.3,
+     "size": 9,
+     "font": "helv"
+    }
+   ],
+   "note": "SEALED. Generated and recorded here; never extracted by this exercise's measurement runs. The one X on the EMPLOYMENT/WAGES line and one filled chart row are exactly how these packets come back: nearly blank, with the load-bearing values buried on one page."
+  }
+ ],
+ "not_filled": [
+  {
+   "file_name": "md_labor_paystatement_template_instructions.pdf",
+   "why": "judged not fillable on inspection: three pages of prose instructing employers how to complete Maryland's pay-statement template; the template itself is not in the PDF, and no page carries a blank position a filler could write into. A 'filled' version would require authoring the layout ourselves, which is exactly what this corpus exists to avoid (borrowed layout, invented content -- here there is no layout to borrow)."
+  }
+ ]
+}
