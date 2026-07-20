@@ -1939,8 +1939,14 @@
   function documentSummary(doc) {
     var stale = doc.days_until_stale;
     var staleText;
+    /* R26: an abstention is a redirect, not a verdict. "The window cannot be applied"
+     * stopped there on this screen, while the step the reader could act on was four
+     * steps away. The action sentence is a SEPARATE text node so the existing sentence
+     * stays its own i18n dictionary key, character for character. */
+    var staleAction = null;
     if (stale === null || stale === undefined) {
       staleText = "The 60-day window cannot be applied — the date is not precise enough to use without inventing a day.";
+      staleAction = "If you know the exact date, enter it on step 2. Or ask for a copy that shows the full date. Step 5 lists this as an open item.";
     } else if (stale < 0) {
       staleText = "Outside the 60-day window by " + Math.abs(stale) + " day(s).";
     } else {
@@ -1961,7 +1967,8 @@
     return h("dl", { class: "kv" }, [
       h("dt", { text: "File" }), h("dd", { class: "mono", text: doc.file_name }),
       h("dt", { text: "Document date" }), h("dd", { text: doc.document_date || "not stated" }),
-      h("dt", { text: "Still current?" }), h("dd", null, [currencyChip, " ", staleText]),
+      h("dt", { text: "Still current?" }), h("dd", null, [currencyChip, " ", staleText,
+        staleAction ? " " : null, staleAction]),
       h("dt", { text: "Rule" }), h("dd", null, [ruleRef(doc.stale_rule_id)]),
       h("dt", { text: "Read via" }), h("dd", { text: (doc.source || "unknown").replace(/_/g, " ") }),
       h("dt", { text: "Page size" }),

@@ -542,6 +542,10 @@
     "the renter uploads a document dated on or after 2026-05-19":
       "세입자가 2026-05-19 이후 날짜의 서류를 올리면 됩니다",
 
+    // R26: 1단계 문서 요약의 날짜 기권 — 확인에서 멈추지 않고 다음 걸음을 준다.
+    "If you know the exact date, enter it on step 2. Or ask for a copy that shows the full date. Step 5 lists this as an open item.":
+      "정확한 날짜를 아시면 2단계에서 입력해 주세요. 아니면 날짜가 다 적힌 사본을 요청하세요. 5단계에 남은 항목으로 올라 있습니다.",
+
     // 체크리스트 항목 이름과 세입자가 할 일 (서버 데이터이지만 고정 문자열이다)
     "Application summary": "신청 요약서",
     "Recent pay stubs": "최근 급여명세서",
