@@ -566,6 +566,8 @@
     "how the yearly income figure was worked out": "연 소득 금액이 산출된 방법",
     "what is missing or out of date": "없거나 기한이 지난 것",
     "Take your packet": "신청 서류 묶음 받기",
+    "This packet is the file you hand to the housing office. Inside is a cover sheet a person can read, plus records in machine form that their systems can check. You do not need to open the technical files.":
+      "이 서류 묶음은 주택 사무소에 직접 건네는 파일입니다. 안에는 사람이 읽을 수 있는 표지 한 장과, 사무소 시스템이 확인할 수 있는 기계용 기록이 함께 들어 있습니다. 기술 파일은 열어 볼 필요가 없습니다.",
     "Nothing is sent anywhere.": "어디로도 전송되지 않습니다.",
     "This button writes a file to your own device and nothing else. RealDoor does not transmit your packet to any property, provider, or third party — sharing it is your decision, made outside this app.":
       "이 버튼은 당신의 기기에 파일 하나를 쓸 뿐입니다. RealDoor 는 서류 묶음을 어떤 임대인·기관·제3자에게도 보내지 않습니다. 공유할지 말지는 이 앱 바깥에서 당신이 정합니다.",
