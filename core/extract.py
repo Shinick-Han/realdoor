@@ -1050,6 +1050,61 @@ def _ocr_words_enabled() -> bool:
     return os.environ.get("REALDOOR_OCR_WORDS", "").strip() != "0"
 
 
+def _ocr_band_role_enabled() -> bool:
+    """Is the OCR band-role completion switched on? ON by default; `0` switches it off.
+
+    Guards the `band_role` keyword of `core.verified.verify_page` -- two completions of
+    the identity chain that run ONLY on pages carrying words injected by
+    `core.ocr_words`: a `x * 1 = x` coincidence stops hiding a deductions+net band from
+    the existing net rule, and `regular_hours` is emitted from the anchored row that
+    prints the word REGULAR under a printed HOURS header instead of from the whole
+    hours column (loop iteration it-004; falsified over all 77 corpus documents first
+    -- loop/falsification/it-004.json). With `REALDOOR_OCR_BAND_ROLE=0` the keyword is
+    never passed true, so this module's output is bit-identical to what it was before
+    the completion existed. Read through a function rather than captured at import so a
+    test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OCR_BAND_ROLE", "").strip() != "0"
+
+
+def _ocr_single_row_enabled() -> bool:
+    """Is the single-row anchor switched on? ON by default; `0` switches it off.
+
+    Guards the `single_row` keyword of `core.verified.verify_page` -- on pages
+    carrying `core.ocr_words` injections, a single-current-period-row column may
+    anchor when a non-degenerate row product closes on an amount the page reprints
+    x-aligned as the column's own printed total (loop iteration it-006; falsified
+    over all 77 corpus documents first -- loop/falsification/it-006.json). With
+    `REALDOOR_OCR_SINGLE_ROW=0` the keyword is never passed true, so this module's
+    output is bit-identical to what it was before the rule existed. Read through a
+    function rather than captured at import so a test can flip the environment
+    variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OCR_SINGLE_ROW", "").strip() != "0"
+
+
+def _ocr_total_band_enabled() -> bool:
+    """Is the labeled-total-band reader switched on? ON by default; `0` switches it off.
+
+    Guards `core.total_band` -- a four-cell printed band (TOTAL GROSS | TOTAL TAXES |
+    TOTAL DEDUCTIONS | NET PAY) read off pages that carry `core.ocr_words` injections,
+    emitted only when the band's own arithmetic closes, with an instance-conflict
+    guard for documents that print several disagreeing stub instances (loop iteration
+    it-005; falsified over all 77 corpus documents first --
+    loop/falsification/it-005.json). With `REALDOOR_OCR_TOTAL_BAND=0` the module is
+    never imported and this module's output is bit-identical to what it was before
+    the module existed. Read through a function rather than captured at import so a
+    test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OCR_TOTAL_BAND", "").strip() != "0"
+
+
 def infer_document_type(pdf_path: str | Path) -> str:
     """Derive the document type from the pack's file naming convention."""
     stem = Path(pdf_path).stem
@@ -2318,8 +2373,13 @@ def extract_document(
                 # `core/ocr_words.py`). With no injected words this is the exact call
                 # that always ran.
                 page_words = [*words, *injected] if injected else words
+                # `band_role` (it-004) and `single_row` (it-006) complete the chain
+                # on OCR-injected pages only; a page with no injected words takes
+                # the exact call that always ran, whatever the flags say.
                 answers, proposals = verified.verify_page(
-                    page_words, doc_type, found, convention, wanted
+                    page_words, doc_type, found, convention, wanted,
+                    band_role=bool(injected) and _ocr_band_role_enabled(),
+                    single_row=bool(injected) and _ocr_single_row_enabled(),
                 )
                 for name, value in answers.items():
                     if _blank(name):
@@ -2353,6 +2413,48 @@ def extract_document(
                 ).items():
                     if _blank(name):
                         found[name] = _with_ocr_provenance(value, injected)
+
+        # A labeled total band over the page's own printed header cells -- see
+        # `core/total_band.py` for the identity and the refusals. OCR-injected pages
+        # only; same blank-only gate. The two-step fill is the instance-conflict
+        # guard: every page's candidates are collected first and `reconcile`
+        # withdraws all of them when any two pages disagree, so `found.setdefault`'s
+        # page order is never what decides between disagreeing stub instances.
+        # ("gross_pay", "net_pay") is `core.total_band.EMITTABLE`, restated so the
+        # module stays unimported until a blank actually asks for it.
+        band_wanted = [
+            name
+            for name in EXPECTED_FIELDS.get(doc_type, ())
+            if name in ("gross_pay", "net_pay") and _blank(name)
+        ]
+        if band_wanted and _ocr_total_band_enabled() and any(ocr_by_page):
+            from core import total_band
+
+            existing_gross = found.get("gross_pay")
+            known_gross = (
+                existing_gross.get("value")
+                if existing_gross and existing_gross.get("certainty") != "abstain"
+                else None
+            )
+            page_results: list[tuple[dict[str, dict[str, Any]], list[Word]]] = []
+            for words, injected in zip(words_by_page, ocr_by_page):
+                if not injected:
+                    continue
+                got = total_band.recover(
+                    [*words, *injected], convention, band_wanted,
+                    known_gross=known_gross,
+                )
+                if got:
+                    page_results.append((got, injected))
+            for name, value in total_band.reconcile(
+                [got for got, _ in page_results]
+            ).items():
+                if not _blank(name):
+                    continue
+                for got, injected in page_results:
+                    if got.get(name) is value:
+                        found[name] = _with_ocr_provenance(value, injected)
+                        break
 
     fields: list[dict[str, Any]] = []
     has_text_layer = bool(all_words)

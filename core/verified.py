@@ -400,6 +400,161 @@ def _adjacent_values(
 
 
 # --------------------------------------------------------------------------------------
+# Band-role completions -- OCR-injected pages only (`REALDOOR_OCR_BAND_ROLE`, it-004)
+# --------------------------------------------------------------------------------------
+
+#: The two anchor-only strings of the band-role completions. Closed, exact-match after
+#: `normalize_label` -- fuzzy-matching OCR label text is a wrong-anchor surface (a
+#: misread caption electing a wrong row), so it is exact or nothing. Neither string
+#: ever becomes a field; each only picks one row / one column inside an identity that
+#: already closed.
+_BAND_ROLE_ROW_WORD = "REGULAR"
+_BAND_ROLE_HOURS_HEADER = "HOURS"
+
+
+def _degenerate(product: ar.RowProduct) -> bool:
+    """`x * 1 = x` is the multiplicative identity, not a rate-times-hours identity.
+
+    Every number beside a printed 1 satisfies it, so it cannot testify that its line
+    is an earnings row. Measured on the osu statement (loop/proposals/it-004.md,
+    section 2): a form-field `1` beside the deductions figure formed
+    `1666.94 x 1 = 1666.94` and hid the deductions+net band from `_bands` behind the
+    earnings-line exclusion.
+    """
+    return product.rate.value == 1.0 or product.hours.value == 1.0
+
+
+def _is_alpha_run(run: Sequence[Word]) -> bool:
+    """A header-shaped run: some letters, no digits (the `core.shredded` definition)."""
+    text = _join_run(run)
+    return any(c.isalpha() for c in text) and not any(c.isdigit() for c in text)
+
+
+def _named_regular_hours(
+    words: Sequence[Word],
+    item: Anchored,
+    hours_values: set[float],
+    rate_values: set[float],
+) -> set[float]:
+    """The hours factors of anchored rows that print the word REGULAR, admitted only
+    under a printed column header that is exactly HOURS. Empty set = refuse.
+
+    Two printed names inside an already-closed identity: the row is picked by the word
+    REGULAR on its own baseline (word-level -- OCR fuses `HOURLY REGULAR EARNINGS`
+    into one run, but the words keep their own boxes), and the column is picked by the
+    nearest alphabetic run above it that shares x-extent with it, which must normalize
+    to exactly HOURS -- nearest-and-exact needs no distance constant, and a qualified
+    header (lcc's `Hours or Units`) refuses by its own wording, which is exactly what
+    that document's truth demands. The hours and rate value sets must be disjoint or
+    nothing is emitted: a value sitting in both columns has no unambiguous factor.
+    """
+    if not hours_values or (set(hours_values) & set(rate_values)):
+        return set()
+    seen: dict[int, ar.NumberToken] = {}
+    for product in item.products:
+        for token in (product.rate, product.hours):
+            if token.value in hours_values:
+                seen[id(token)] = token
+    hours_tokens = list(seen.values())
+    if not hours_tokens:
+        return set()
+    span0 = min(t.x0 for t in hours_tokens)
+    span1 = max(t.x1 for t in hours_tokens)
+    top = max(t.baseline for t in hours_tokens)
+    page = hours_tokens[0].page
+
+    best: tuple[float, list[list[Word]]] | None = None
+    for line in group_lines(words):
+        if not line or line[0].page != page:
+            continue
+        dy = line[0].baseline - top
+        if dy <= ar.BASELINE_TOLERANCE:
+            continue
+        overlapping = [
+            run for run in _split_runs(line)
+            if _is_alpha_run(run)
+            and not (max(w.x1 for w in run) <= span0 or span1 <= min(w.x0 for w in run))
+        ]
+        if not overlapping:
+            continue
+        if best is None or dy < best[0]:
+            best = (dy, overlapping)
+    if best is None or len(best[1]) != 1:
+        return set()
+    if normalize_label(_join_run(best[1][0])) != _BAND_ROLE_HOURS_HEADER:
+        return set()
+
+    named: set[float] = set()
+    for product in item.products:
+        if product.hours.value in hours_values:
+            hours_factor = product.hours
+        elif product.rate.value in hours_values:
+            hours_factor = product.rate
+        else:
+            continue
+        row = [
+            w for w in words
+            if w.page == product.amount.page
+            and abs(w.baseline - product.amount.baseline) <= ar.BASELINE_TOLERANCE
+        ]
+        if any(normalize_label(w.text) == _BAND_ROLE_ROW_WORD for w in row):
+            named.add(hours_factor.value)
+    return named
+
+
+def _single_row_runs(
+    tokens: Sequence[ar.NumberToken], bound: float
+) -> list[Anchored]:
+    """One-member anchored runs for a single-current-period-row column (it-006).
+
+    A table with one current-period row still prints its total; what it cannot give
+    is a multi-member sum, so `_anchored_runs`'s `_nonzero >= 2` guard rightly stays.
+    What licenses a one-member run instead: a non-degenerate row product
+    `rate x hours = amount` (hours within the physical bound, factors and amount
+    non-overlapping, amount printed with its cents) closing on an amount the page
+    REPRINTS as another cents-form token on a DIFFERENT line, x-aligned with it on
+    either edge -- the column's own printed total. Two independent printings must
+    agree to the cent AND a printed product must close over one of them; a digit
+    flip in either member breaks the pair (measured on lcc, where the two printings
+    of the YTD amount differ -- `'$4,209.35'` vs `'$4,209.38'` -- and are refused by
+    exactly this equality). A same-baseline twin (osu's Current = YTD columns) is
+    the second column, not a total, and is refused by the different-line rule.
+    """
+    out: list[Anchored] = []
+    seen: set[tuple[int, int]] = set()
+    for product in ar.find_row_products(tokens):
+        if _degenerate(product):
+            continue  # the multiplicative identity anchors nothing (it-004)
+        if not (0 < product.hours.value <= bound):
+            continue
+        if (_overlaps(product.hours, product.amount)
+                or _overlaps(product.rate, product.amount)
+                or _overlaps(product.rate, product.hours)):
+            continue
+        if product.amount.decimals != 2:
+            continue  # money prints its cents (the L3 cents-form refusal)
+        for token in tokens:
+            if id(token) == id(product.amount) or token.page != product.amount.page:
+                continue
+            if token.decimals != 2:
+                continue
+            if abs(token.value - product.amount.value) > 1e-9:
+                continue
+            if abs(token.baseline - product.amount.baseline) <= ar.BASELINE_TOLERANCE:
+                continue
+            if not (abs(token.x0 - product.amount.x0) <= VALUE_X_TOLERANCE
+                    or abs(token.x1 - product.amount.x1) <= VALUE_X_TOLERANCE):
+                continue
+            key = (id(product.amount), id(token))
+            if key in seen:
+                continue  # both factor orientations name the same pair
+            seen.add(key)
+            out.append(Anchored(run=(product.amount,), total=token,
+                                products=(product,)))
+    return out
+
+
+# --------------------------------------------------------------------------------------
 # Combination
 # --------------------------------------------------------------------------------------
 
@@ -415,8 +570,28 @@ def verify_page(
     found: dict[str, dict[str, Any]],
     convention: Any,
     wanted: Sequence[str],
+    *,
+    band_role: bool = False,
+    single_row: bool = False,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """(answers, proposals) for one page. Never overwrites anything already in `found`.
+
+    `band_role` (default off -- every text-path call is exactly what it always was)
+    switches on the two it-004 completions for pages that carry OCR-injected words:
+    a degenerate `x * 1 = x` product no longer hides a deductions+net band from the
+    band search, and `regular_hours` candidates come from the REGULAR-named anchored
+    row under a printed HOURS header instead of from the whole hours column. See
+    `_degenerate` and `_named_regular_hours`; `core.extract` passes the keyword only
+    when `REALDOOR_OCR_BAND_ROLE` is on AND the page actually received injections.
+
+    `single_row` (default off, same page scoping under `REALDOOR_OCR_SINGLE_ROW`,
+    it-006) additionally admits the one-member anchored runs of `_single_row_runs`:
+    a single-current-period-row column whose amount a non-degenerate product closes
+    on AND the page reprints x-aligned as the column's own printed total. The
+    pseudo-runs join `anchored` whole: their lines enter the band exclusion, their
+    factor columns never resolve (two rows are needed to tell hours from rate, so a
+    single row can never emit either factor), and S3 weighs their totals like any
+    other gross candidate.
 
     The two are returned separately so the caller can take every page's *answers* before any
     page's *proposal*. They are not interchangeable and the ordering matters on real documents:
@@ -440,6 +615,8 @@ def verify_page(
         return {}, {}
     bound, bound_reason = hours_bound(found)
     anchored = _anchored_runs(tokens, bound)
+    if single_row:
+        anchored = [*anchored, *_single_row_runs(tokens, bound)]
 
     candidates: dict[str, list[Candidate]] = {name: [] for name in wanted}
 
@@ -450,7 +627,15 @@ def verify_page(
     # and neither can the net. A document whose gross the label path already read still has to
     # supply that number here, or the bounds below would be vacuous on exactly the documents we
     # know most about.
-    anchored_lines = {p.amount.baseline for a in anchored for p in a.products}
+    # The lines the band search must avoid, because an anchoring product marks them as
+    # earnings rows. Under `band_role` a degenerate product does not count (see
+    # `_degenerate`); everywhere else this is exactly the set it always was.
+    anchored_lines = {
+        p.amount.baseline
+        for a in anchored
+        for p in a.products
+        if not (band_role and _degenerate(p))
+    }
     gross_token: ar.NumberToken | None = None
     gross_candidates: list[Candidate] = []
     for item in anchored:
@@ -517,7 +702,21 @@ def verify_page(
             "the two factors were told apart by measurement: the hours on these lines add up "
             "to a printed total and the rates do not"
         )
-        for name, values in (("regular_hours", hours_values), ("hourly_rate", rate_values)):
+        # Under `band_role`, hours candidates are the REGULAR-named row's factor or
+        # nothing -- see `_named_regular_hours`. Otherwise the whole column stands as
+        # candidates, exactly as before (and S3 abstains when it holds several values).
+        if band_role:
+            hours_emittable = _named_regular_hours(words, item, hours_values, rate_values)
+            hours_detail = detail + (
+                "; emitted from the anchored row that prints the word REGULAR, under a "
+                "printed column header that is exactly HOURS and nothing more"
+            )
+        else:
+            hours_emittable, hours_detail = hours_values, detail
+        for name, values, name_detail in (
+            ("regular_hours", hours_emittable, hours_detail),
+            ("hourly_rate", rate_values, detail),
+        ):
             if name not in candidates:
                 continue
             for value in values:
@@ -530,7 +729,7 @@ def verify_page(
                         token=token,
                         supports=["S1"],
                         identities={"row_product"} | ({"column_sum"} if name == "regular_hours" else set()),
-                        detail=detail,
+                        detail=name_detail,
                     )
                 )
 

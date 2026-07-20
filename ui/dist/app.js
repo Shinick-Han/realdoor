@@ -1728,6 +1728,40 @@
       });
   }
 
+  /* The upload's date line, when no usable date was read.
+   *
+   * It used to stop at the confession — "✕ Unreadable · no date we could read on this
+   * document" — which is a verdict with no way forward, and for a statement dated to the
+   * month it also named the wrong problem: the document was read fine (up_011 reads 4 of
+   * 4 fields), what cannot be worked out is the 60-day window, because that needs a day.
+   * This is the same honesty split step 1's "Still current?" row already makes for pack
+   * documents; the machine `state` on the view is untouched, and each sentence is its
+   * own text node so the i18n layer can carry it. */
+  function uploadDateNotice(view) {
+    var monthOnly = (view.fields || []).some(function (f) {
+      return /^\d{4}-\d{2}$/.test(String(f.value === null || f.value === undefined ? "" : f.value));
+    });
+    if (monthOnly) {
+      return [
+        h("span", { class: "chip chip--undatable" }, [
+          h("span", { "aria-hidden": "true", text: "? " }), "No day in the date"
+        ]),
+        " ",
+        "The date shows a month but no day, so we cannot count the 60-day window from it.",
+        " ",
+        "Ask " + issuerWords(view.document_type) + " for a copy dated to the day, or tell " +
+        "the person who reviews it the exact date."
+      ];
+    }
+    return [
+      stateChip(view.state), " ",
+      "no date we could read on this document.",
+      " ",
+      "Ask " + issuerWords(view.document_type) + " for a copy that shows the date, or " +
+      "hand this one to a person to read."
+    ];
+  }
+
   function renderUploadResult() {
     var host = byId("upload-result-host");
     if (!host) return;
@@ -1763,10 +1797,9 @@
         h("dt", { text: "Fields we could read" }),
         h("dd", { text: view.located_count + " of " + view.field_count }),
         h("dt", { text: "Document date" }),
-        h("dd", null, [
-          stateChip(view.state), " ",
-          view.document_date || "no date we could read on this document"
-        ])
+        h("dd", null, view.document_date
+          ? [stateChip(view.state), " ", view.document_date]
+          : uploadDateNotice(view))
       ])
     ]);
 
@@ -1939,8 +1972,14 @@
   function documentSummary(doc) {
     var stale = doc.days_until_stale;
     var staleText;
+    /* R26: an abstention is a redirect, not a verdict. "The window cannot be applied"
+     * stopped there on this screen, while the step the reader could act on was four
+     * steps away. The action sentence is a SEPARATE text node so the existing sentence
+     * stays its own i18n dictionary key, character for character. */
+    var staleAction = null;
     if (stale === null || stale === undefined) {
       staleText = "The 60-day window cannot be applied — the date is not precise enough to use without inventing a day.";
+      staleAction = "If you know the exact date, enter it on step 2. Or ask for a copy that shows the full date. Step 5 lists this as an open item.";
     } else if (stale < 0) {
       staleText = "Outside the 60-day window by " + Math.abs(stale) + " day(s).";
     } else {
@@ -1961,7 +2000,8 @@
     return h("dl", { class: "kv" }, [
       h("dt", { text: "File" }), h("dd", { class: "mono", text: doc.file_name }),
       h("dt", { text: "Document date" }), h("dd", { text: doc.document_date || "not stated" }),
-      h("dt", { text: "Still current?" }), h("dd", null, [currencyChip, " ", staleText]),
+      h("dt", { text: "Still current?" }), h("dd", null, [currencyChip, " ", staleText,
+        staleAction ? " " : null, staleAction]),
       h("dt", { text: "Rule" }), h("dd", null, [ruleRef(doc.stale_rule_id)]),
       h("dt", { text: "Read via" }), h("dd", { text: (doc.source || "unknown").replace(/_/g, " ") }),
       h("dt", { text: "Page size" }),
@@ -2578,10 +2618,18 @@
        * words, next to the name, and told what to do — because their name is the first
        * thing worth fixing. This says it where the name is; the "Low" cell still stands, and
        * nothing is hidden. */
+      /* The tail names the way to act on the doubt, and the way differs by table. The
+       * confirmable (household) table has the fix control on this very row. The upload
+       * table has no such control — an upload joins no household — so telling its reader
+       * to "fix it here" pointed at a control that does not exist. There the honest next
+       * step is the page image beside the row and the person who will read it. */
       var nameNote = (field.field === "person_name" && field.certainty === "low")
         ? h("p", { class: "hint value-uncertain-note" }, [
             "We may not have read your name correctly. It reads “" + plain(field.value) +
-            "”, but we are not sure. Check this row first, and fix it here if it is wrong."
+            "”, but we are not sure. " + (opts.confirmable
+              ? "Check this row first, and fix it here if it is wrong."
+              : "Check it against the page shown here. If it is wrong, the person who " +
+                "reviews this document goes by the page, not by our reading.")
           ])
         : null;
       var valueCell;
@@ -3308,12 +3356,26 @@
         ])
       : null;
 
+    /* A question about the reader's own figures, asked while nothing is open, abstains —
+     * rightly. But "What would resolve it: supply the documents" names the cure without
+     * naming the control, and the control is one step away. R26: the abstention stays
+     * exactly as it is; this adds where to go. Only when no file is open — an abstention
+     * with a household open already carries its own resolve line. */
+    var noFileGuidance = (response.abstained && !response.refused && !unrouted && !state.householdId)
+      ? h("p", null, [
+          h("strong", { text: "What you can do: " }),
+          "no file is open, so there was nothing to answer from. Step 1 reads a document " +
+          "you upload, or opens a prepared example file. Then ask again."
+        ])
+      : null;
+
     host.appendChild(h("div", { class: "callout " + flavour }, [
       h("h3", { id: "ask-answer-heading", tabindex: "-1", text: headline }),
       h("p", { class: "status-line", text: "Question asked: " + question }),
       said && said.headline ? h("p", { class: "answer-lead", text: said.headline }) : null,
       h("p", { text: body }),
       unroutedGuidance,
+      noFileGuidance,
       /* The three things this service can actually answer, named. The old body listed them
        * inside a 60-word sentence about what it reports "instead"; a list is what a person
        * scanning for their next move can use, and every line here is a question the ask box
@@ -3906,6 +3968,58 @@
   }
 
   // ── panel 4: the calculation ────────────────────────────────────────────────────
+  /** The plain action for the abstention that withheld a calculation figure, read off the
+   *  report's own abstentions[] so this screen cannot invent a next step of its own.
+   *  Positional pairing with the plain layer, exactly as the rail does it. */
+  function calcAbstentionAction(names) {
+    var absts = (state.report && state.report.abstentions) || [];
+    for (var i = 0; i < absts.length; i++) {
+      if (names.indexOf(String(absts[i].about)) === -1) continue;
+      var said = plainForAbstention(i, absts[i]);
+      if (said && said.action) return said.action;
+      if (absts[i].what_would_resolve_it) return "Resolved by: " + absts[i].what_would_resolve_it;
+    }
+    return null;
+  }
+
+  /* R26: an abstention is a redirect, not a verdict. Two calc-panel states used to end
+   * cold on this screen. A line whose figure could not be worked out showed
+   * "Formula: abstained · Result: —" and said nothing else — the machine's word in the
+   * formula slot, no sentence, no next step, while the open item it belongs to sat on
+   * step 5. And a total line whose household size is outside the frozen table said only
+   * "no comparison is made". Both keep every machine string they had; this block adds
+   * the sentence and the action, taken from the report's own plain layer.
+   *
+   * Deliberately narrow: a COMPONENT line with a result and no threshold is the normal
+   * case (only the total is compared) and gets nothing. The keyboard journey's exact
+   * comparison phrases are untouched. */
+  function calcWithheldNotice(calc) {
+    var noFigure = calc.result === null || calc.result === undefined;
+    var totalLine = calc.name === "annualized_income";
+    var noThreshold = calc.threshold === null || calc.threshold === undefined;
+    var comparisonHeld = totalLine && calc.comparison === "no_frozen_threshold";
+    if (!noFigure && !comparisonHeld) return null;
+    var parts = [];
+    if (noFigure) {
+      parts.push(h("p", { text:
+        "We could not work out this figure, so no amount is shown." +
+        (totalLine && !noThreshold
+          ? " The income limit itself is on file — what is missing is a yearly figure to set against it."
+          : "") }));
+    } else {
+      parts.push(h("p", { text:
+        "We could not compare this figure with a limit. We do not hold a limit for a household of this size." }));
+    }
+    var action = calcAbstentionAction(totalLine
+      ? ["annualized_income", "threshold_comparison", "frozen_60_percent_threshold"]
+      : [calc.name]);
+    parts.push(h("p", { class: "do-this", style: { marginBottom: "0" } }, [
+      h("span", { class: "do-this__label", text: "What you can do: " }),
+      action || "Work through the open items on step 5. Each one says what to send."
+    ]));
+    return h("div", { class: "callout callout--warn" }, parts);
+  }
+
   function renderCalc() {
     var root = byId("calc-body");
     clear(root);
@@ -3967,6 +4081,7 @@
          * total line adds them, and equals a single component only when there is one. Said
          * here in a sentence rather than left for the reader to deduce. */
         CALC_BLURB[calc.name] ? h("p", { class: "hint", text: CALC_BLURB[calc.name] }) : null,
+        calcWithheldNotice(calc),
         inputs,
         h("h4", { text: "Formula" }),
         h("code", { class: "formula", text: calc.formula }),
@@ -4191,7 +4306,13 @@
       host.appendChild(h("p", { class: "hint" }, [
         "We cannot line this household up against another region. The figures above are not " +
         "compared against a frozen limit for a household size we hold, and HUD does not publish " +
-        "these limits for households of more than eight people. We will not estimate one."
+        "these limits for households of more than eight people. We will not estimate one.",
+        // R26: the refusal to estimate stays exactly as loud; the person who CAN settle
+        // it is named beside it, as a separate text node so each sentence keeps its own
+        // i18n dictionary key.
+        " ",
+        "Ask your housing worker for the published limit for your household size. They " +
+        "hold the tables this page will not guess from."
       ]));
       return;
     }

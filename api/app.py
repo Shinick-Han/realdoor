@@ -600,7 +600,12 @@ def _packet_summary_html(rep: dict, originals: dict) -> str:
                     standing = (f"applicant confirmed: not shown on this document"
                                 f" (checked{when}; machine note kept on file: {note})")
                 else:
-                    standing = f"not read &mdash; the machine took no value here ({note})"
+                    # R26: 표지의 독자는 검토자이고, "기계가 값을 얻지 못했다"에서 멈추면
+                    # 검토자의 다음 행동이 없다. 부재 확인 가지(위)는 "신청자가 이미
+                    # 확인했다"를 싣고, 이 가지는 "신청자에게 무엇을 요청할지"를 싣는다.
+                    standing = (f"not read &mdash; the machine took no value here ({note}). "
+                                "If the review needs this value, ask the applicant for a "
+                                "copy of the document that shows it")
                 shown = "&mdash;"
             else:
                 page = f.get("page")

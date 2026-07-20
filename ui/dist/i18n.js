@@ -542,6 +542,91 @@
     "the renter uploads a document dated on or after 2026-05-19":
       "세입자가 2026-05-19 이후 날짜의 서류를 올리면 됩니다",
 
+    /* ── R26 감사: 기권 응답의 "무엇이 있으면 풀리는지" 문장들 ─────────────────
+     * 기권은 재안내이지 판정이 아니다. 그런데 기권 다음 걸음을 말하는 resolve 문장이
+     * 한국어 토글에서 영어로 남아 있었다 — 토글이 섬기는 바로 그 사람에게 다음 걸음이
+     * 사라지는 셈이다. 아래는 situations.py / answer_rules.py / abstain.py 의 resolve
+     * 문장 전부다. 숫자·날짜가 박힌 것은 아래 RULES 에서 정규식으로 잡는다. */
+    "supply the source document for any other figure so it can be cited or refused":
+      "다른 수치가 적힌 원본 서류를 내 주세요. 그러면 그 서류를 인용하거나, 쓸 수 없는 이유를 말씀드립니다",
+    "contact the property's management office or the local housing agency for current availability":
+      "지금 비어 있는 집은 그 건물의 관리사무소나 지역 주택 기관에 문의해 주세요",
+    "point the value at the page and box it came from, or withdraw it and re-extract":
+      "그 값이 나온 페이지와 위치를 짚어 주거나, 값을 거두고 다시 읽으면 됩니다",
+    "a human confirms which figure is the recurring one, or the employer reissues a stub whose components add up to its stated total":
+      "어느 금액이 정기 급여인지 사람이 확인해 주거나, 항목 합계가 총액과 맞는 명세서를 고용주가 다시 발급하면 됩니다",
+    "ask about a documented income amount, a required document, or a frozen threshold instead":
+      "대신 서류에 적힌 소득 금액, 필요한 서류, 또는 동결된 기준액에 대해 물어보세요",
+    "re-extract the field so its box lies inside the declared page, or drop the value and mark it for human entry":
+      "근거 상자가 선언된 페이지 안에 들어오도록 값을 다시 읽거나, 값을 버리고 사람이 입력하도록 표시하면 됩니다",
+    "upload an employer-issued letter, or bank deposits, platform records or a 1099 covering the same period":
+      "고용주가 발급한 증명서를 올리거나, 같은 기간의 은행 입금 내역·플랫폼 기록·1099 를 올리면 됩니다",
+    "re-run the request, or ask a housing professional":
+      "요청을 다시 실행하시거나, 주택 전문가에게 물어보세요",
+    "a housing professional answers this": "주택 전문가가 답해 줍니다",
+    "the renter confirms the pay frequency, or uploads a stub that states it":
+      "세입자가 급여 주기를 확인해 주거나, 급여 주기가 적힌 명세서를 올리면 됩니다",
+    "a housing professional maps this frequency to an annual multiplier":
+      "주택 전문가가 이 급여 주기를 연간 배수로 바꿔 주면 됩니다",
+    "the renter confirms the amount, or re-uploads a legible document":
+      "세입자가 금액을 확인해 주거나, 읽을 수 있는 서류를 다시 올리면 됩니다",
+    "the renter confirms the value against the page":
+      "세입자가 그 값을 문서와 대조해 확인해 주면 됩니다",
+    "the renter confirms the value against the page image":
+      "세입자가 그 값을 문서 이미지와 대조해 확인해 주면 됩니다",
+    "a reviewer confirms the corrected amount against the page image before relying on it":
+      "검토자가 정정된 금액을 문서 이미지와 대조해 확인한 뒤에 쓰면 됩니다",
+    "the renter or employer confirms which stub reflects recurring pay":
+      "어느 명세서가 정기 급여를 나타내는지 세입자 또는 고용주가 확인해 주면 됩니다",
+    "a housing professional supplies the limit for this household size from the current HUD MTSP tables":
+      "주택 전문가가 현행 HUD MTSP 표에서 이 세대원 수의 상한을 제공해 주면 됩니다",
+    "the renter confirms the household size": "세대원 수를 확인해 주시면 됩니다",
+    "resolve the income abstentions listed above": "위에 나열된 소득 관련 미확정 항목이 풀리면 됩니다",
+    "the renter re-uploads a text-layer copy, or OCR is applied":
+      "글자가 살아 있는 사본을 다시 올리시거나, OCR 로 읽으면 됩니다",
+    "the renter confirms the income inputs": "세입자가 소득 입력값을 확인해 주면 됩니다",
+    "supply the missing input": "빠진 입력값을 채워 주시면 됩니다",
+
+    // R26: 기권 제목. 예전 제목("no answer given")의 사전 키만 있어서 새 제목이 영어로 남았다.
+    "Abstained — no value given": "말하지 않았습니다 — 값을 내지 않았습니다",
+
+    // R26: 질문 화면이 비교 enum 토큰 하나만 받았을 때 쓰는 평문 세 문장 (COMPARISON_PLAIN).
+    "Your yearly income figure is at or below the income limit for your household size. That is a comparison of two numbers — it is not a decision about you.":
+      "당신의 연 소득 금액이 세대원 수 기준 소득 상한 이하입니다. 이것은 두 숫자를 견준 것일 뿐, 당신에 대한 판단이 아닙니다.",
+    "Your yearly income figure is above the income limit for your household size. That is a comparison of two numbers — it is not a decision about you, and it is not a refusal. A qualified housing worker decides, using checks this service does not hold.":
+      "당신의 연 소득 금액이 세대원 수 기준 소득 상한을 넘습니다. 이것은 두 숫자를 견준 것일 뿐, 당신에 대한 판단도 거절도 아닙니다. 이 서비스가 갖고 있지 않은 확인을 거쳐, 공인 주택 담당자가 판단합니다.",
+    "This service holds no published limit for a household of that size, so it makes no comparison. A housing worker can tell you which limit applies.":
+      "이 서비스에는 그 세대원 수에 대한 공표된 상한이 없어서 비교하지 않습니다. 어떤 상한이 적용되는지는 주택 담당자가 알려 줄 수 있습니다.",
+
+    // R26: 파일이 안 열린 채 물은 질문의 기권 — 다음 걸음(1단계)을 함께 준다.
+    "no file is open, so there was nothing to answer from. Step 1 reads a document you upload, or opens a prepared example file. Then ask again.":
+      "열려 있는 파일이 없어서, 답할 근거가 없었습니다. 1단계에서 직접 올린 문서를 읽거나 준비된 예시 파일을 열 수 있습니다. 그런 다음 다시 물어보세요.",
+
+    // R26: 1단계 문서 요약의 날짜 기권 — 확인에서 멈추지 않고 다음 걸음을 준다.
+    "If you know the exact date, enter it on step 2. Or ask for a copy that shows the full date. Step 5 lists this as an open item.":
+      "정확한 날짜를 아시면 2단계에서 입력해 주세요. 아니면 날짜가 다 적힌 사본을 요청하세요. 5단계에 남은 항목으로 올라 있습니다.",
+
+    // R26: 업로드 패널의 날짜 기권.
+    "The date shows a month but no day, so we cannot count the 60-day window from it.":
+      "날짜에 월까지만 있고 일(日)이 없어서, 거기서부터 60일 기간을 셀 수 없습니다.",
+    "no date we could read on this document.": "이 문서에서 읽어낼 수 있는 날짜가 없습니다.",
+
+    // R26: 4단계 계산 기권 — 수치가 나오지 않았거나 비교가 이루어지지 않았을 때.
+    "We could not work out this figure, so no amount is shown.":
+      "이 수치를 계산해 내지 못해서, 금액이 표시되지 않습니다.",
+    "We could not work out this figure, so no amount is shown. The income limit itself is on file — what is missing is a yearly figure to set against it.":
+      "이 수치를 계산해 내지 못해서, 금액이 표시되지 않습니다. 소득 상한 자체는 파일에 있습니다 — 빠진 것은 그 옆에 놓을 연 소득 금액입니다.",
+    "We could not compare this figure with a limit. We do not hold a limit for a household of this size.":
+      "이 수치를 상한과 비교하지 못했습니다. 이 세대원 수에 대한 상한을 저희가 갖고 있지 않습니다.",
+    "Work through the open items on step 5. Each one says what to send.":
+      "5단계의 남은 항목을 하나씩 처리해 주세요. 무엇을 보내면 되는지 각 항목에 적혀 있습니다.",
+
+    // R26: 지역 비교 패널 — 추정 거부는 그대로 두고, 풀 수 있는 사람을 이름으로 댄다.
+    "We cannot line this household up against another region. The figures above are not compared against a frozen limit for a household size we hold, and HUD does not publish these limits for households of more than eight people. We will not estimate one.":
+      "이 세대를 다른 지역과 나란히 놓을 수 없습니다. 위의 수치는 저희가 가진 세대원 수 상한과 비교된 것이 아니고, HUD 는 8인 초과 세대에 대해 이 상한을 공표하지 않습니다. 저희가 추정하지는 않습니다.",
+    "Ask your housing worker for the published limit for your household size. They hold the tables this page will not guess from.":
+      "세대원 수에 해당하는 공표된 상한은 주택 담당자에게 물어보세요 — 이 페이지가 짐작하지 않는 그 표를, 담당자는 갖고 있습니다.",
+
     // 체크리스트 항목 이름과 세입자가 할 일 (서버 데이터이지만 고정 문자열이다)
     "Application summary": "신청 요약서",
     "Recent pay stubs": "최근 급여명세서",
@@ -1636,6 +1721,42 @@
         return "성함을 정확히 읽지 못했을 수 있습니다. “" + m[1] + "”로 읽었지만 확신하지 못합니다. " +
                "이 행을 먼저 확인하시고, 틀렸으면 여기서 바로잡아 주세요.";
       }],
+    // R26: U8 문장의 업로드 변형 — 업로드 표에는 고칠 컨트롤이 없어서 꼬리가 다르다.
+    [/^We may not have read your name correctly\. It reads “(.+?)”, but we are not sure\. Check it against the page shown here\. If it is wrong, the person who reviews this document goes by the page, not by our reading\.$/,
+      function (m) {
+        return "성함을 정확히 읽지 못했을 수 있습니다. “" + m[1] + "”로 읽었지만 확신하지 못합니다. " +
+               "여기 보이는 페이지와 대조해 확인해 주세요. 틀렸더라도, 이 문서를 검토하는 사람은 " +
+               "저희의 판독이 아니라 페이지를 기준으로 봅니다.";
+      }],
+    // R26: 업로드 패널의 날짜 기권 다음 걸음 — 발급처가 문장 안에 끼워진다.
+    [/^Ask (.+?) for a copy dated to the day, or tell the person who reviews it the exact date\.$/,
+      function (m) {
+        return (lookup(m[1]) || m[1]) + "에 일(日)까지 적힌 사본을 요청하시거나, 검토하는 사람에게 " +
+               "정확한 날짜를 알려 주세요.";
+      }],
+    [/^Ask (.+?) for a copy that shows the date, or hand this one to a person to read\.$/,
+      function (m) {
+        return (lookup(m[1]) || m[1]) + "에 날짜가 보이는 사본을 요청하시거나, 이 문서를 사람에게 " +
+               "건네 읽게 해 주세요.";
+      }],
+    // R26: 숫자·날짜가 박힌 resolve 문장들.
+    [/^a reviewer supplies the published 60% limit for household size (\d+), with its source$/,
+      function (m) {
+        return "검토자가 세대원 " + m[1] + "인에 대한 공표된 60% 상한을 출처와 함께 제공하면 됩니다";
+      }],
+    [/^ask the employer for a letter dated on or after (\d{4}-\d{2}-\d{2}) and upload it$/,
+      function (m) {
+        return "고용주에게 " + m[1] + " 이후 날짜의 증명서를 받아 올리면 됩니다";
+      }],
+    [/^supply the documents for the household in question$/, function () {
+      return "해당 세대의 서류를 내 주시면 됩니다";
+    }],
+    [/^supply the documents for (\S+)$/, function (m) {
+      return m[1] + " 의 서류를 내 주시면 됩니다";
+    }],
+    [/^ask about a household size from (\d+) to (\d+)$/, function (m) {
+      return "세대원 수 " + m[1] + "명에서 " + m[2] + "명 사이에 대해 물어보시면 됩니다";
+    }],
     [/^Reasons this needs review \((\d+)\)$/, function (m) {
       return "검토가 필요한 이유 (" + m[1] + ")";
     }],
