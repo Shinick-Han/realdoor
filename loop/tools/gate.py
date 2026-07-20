@@ -25,6 +25,16 @@ Without `--target` (the baseline self-check): G7 requires the observed flip set 
 **empty**. On an unchanged tree nothing may move, and a gate that cannot say so on a
 known-good tree is not a gate. This is the mode the day-0 verification runs.
 
+AND A THIRD OUTCOME THE GATE OWES ITS READER
+--------------------------------------------
+G7's iteration test only means something if the target's fields are keys `field_state`
+enumerates. When they are not, "the target's fields moved" is empty by construction and
+the gate returns FAIL for a change that may have been perfect -- which is what happened in
+it-008, it-009 and it-010, each closed by a human override. So G7 now separates "the
+target did not move" (an iteration verdict, FAIL, exit 1) from "the gate cannot see the
+target" (a GATE DEFECT, exit 2, offending keys named). See `_registry_defect`. Exit codes:
+0 pass, 1 rejected on substance, 2 the gate could not judge.
+
 THE THREE FOOTGUNS THIS FILE IS BUILT AROUND (design section 9.5)
 -----------------------------------------------------------------
 1. `.cache/extractions` is deleted before every measurement pass. Its key
@@ -209,8 +219,12 @@ def evaluate(args) -> dict[str, Any]:
     scratch = cl.LOOP / "worktmp"
     results: list[dict[str, Any]] = []
 
-    def gate(name: str, condition: bool, detail: Any) -> None:
-        results.append({"gate": name, "pass": bool(condition), "detail": detail})
+    def gate(name: str, condition: bool, detail: Any, defect: str | None = None) -> None:
+        row = {"gate": name, "pass": bool(condition), "detail": detail}
+        if defect:
+            # Not an iteration verdict. See `_registry_defect`.
+            row["gate_defect"] = defect
+        results.append(row)
 
     # --- the measurement pass -----------------------------------------------------
     clear_cache()
@@ -272,11 +286,21 @@ def evaluate(args) -> dict[str, Any]:
     if args.target:
         item = _backlog_item(args.target)
         target_fields = set(item.get("fields", [])) if item else set()
+        registry = set(before) | set(after)
         hit = sorted(set(flips) & target_fields)
+        defect, defect_detail = _registry_defect(args.target, item, target_fields,
+                                                 predicted, registry)
         g7 = {"mode": "iteration", "target": args.target, "predicted": sorted(predicted),
               "observed": flips, "unpredicted": unpredicted,
-              "target_fields_flipped": hit}
-        gate("G7", not unpredicted and bool(hit), g7)
+              "target_fields_flipped": hit,
+              "registry_fields": len(registry), **defect_detail}
+        if defect:
+            # A gate that cannot see the target may not pronounce on the iteration. It
+            # says so, names the keys, and fails -- so the registry gets extended rather
+            # than the gate overridden.
+            gate("G7", False, g7, defect=defect)
+        else:
+            gate("G7", not unpredicted and bool(hit), g7)
     else:
         g7 = {"mode": "baseline self-check", "observed": flips,
               "requirement": "the unchanged tree must flip nothing"}
@@ -334,14 +358,24 @@ def evaluate(args) -> dict[str, Any]:
 
     order = {f"G{i}": i for i in range(1, 8)}
     results.sort(key=lambda r: order[r["gate"]])
+
+    # A gate that could not see what it was asked to judge has not judged. If some OTHER
+    # gate failed on substance, the iteration is rejected on that substance and the defect
+    # is reported alongside; if the defect is the only thing wrong, there is no iteration
+    # verdict to give and the run says exactly that.
+    defects = [r for r in results if r.get("gate_defect")]
+    substantive = [r for r in results if not r["pass"] and not r.get("gate_defect")]
+    verdict = "REJECTED_GATE" if substantive else ("GATE_DEFECT" if defects else "PASS")
+
     return {
         "iteration": args.iteration,
         "target": args.target,
         "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "head": bfs.head_sha(),
         "accepted_commit": baseline["accepted_commit"],
-        "verdict": "PASS" if all(r["pass"] for r in results) else "REJECTED_GATE",
+        "verdict": verdict,
         "failed_gates": [r["gate"] for r in results if not r["pass"]],
+        "gate_defects": [{"gate": r["gate"], "defect": r["gate_defect"]} for r in defects],
         "gates": results,
         "measurements": {
             "pack": {"correct": verify_pack["exact_match"], "of": verify_pack["fields_total"],
@@ -354,11 +388,79 @@ def evaluate(args) -> dict[str, Any]:
                         "wrong": confirm["wrong"], "abstained": confirm["abstained"]},
             "pytest": pytest_result,
         },
+        # G3 and G7 are only as trustworthy as the baseline they diff against. If that
+        # baseline was built from a working tree, it defines the accepted state as whatever
+        # was on disk that day, and these two gates are comparing against unaccepted work.
+        # The gate does not fail on it -- the override exists for deliberate exceptions --
+        # but it never lets the fact go unsaid.
+        "baseline_provenance": baseline.get(
+            "provenance", {"note": "baseline predates provenance recording"}),
         "field_state_census": census["field_state_census"],
         "field_flips_observed": flips,
         "flag_off_identical": g5["identical"],
         "diff_files": considered,
     }
+
+
+def _registry_defect(target: str, item: dict | None, target_fields: set[str],
+                     predicted: set[str], registry: set[str]) -> tuple[str | None, dict]:
+    """Can G7 see this target at all? If not, that is a defect in the gate, not a verdict.
+
+    G7's iteration test is "observed flips are a subset of the predicted set, AND the
+    target's own fields actually moved". The second half silently assumes every target
+    field is a key `field_state` enumerates. When it is not, `observed & target_fields` is
+    empty *by construction*: the gate returns FAIL for a change that may have worked
+    perfectly, and the only way forward is for a human to override the table by reading
+    harness output instead.
+
+    That happened three iterations running -- it-008, it-009, it-010, each of which
+    recorded the override honestly in its report, and each of which filed the same
+    instrument gap. Those three targets lived in `testdata/filled/`, which `field_state`
+    did not enumerate; it does now, along with `testdata/scenarios/`. But "now" is not
+    "forever": the next corpus will arrive the same way. So the structural hole is closed
+    here rather than the instance of it.
+
+    Three outcomes, distinguished:
+
+        target fields moved as predicted  -> PASS       (an iteration verdict)
+        target fields did not move        -> FAIL       (an iteration verdict)
+        the gate cannot see the target    -> GATE_DEFECT (no iteration verdict exists)
+
+    A defect is reported with the offending keys named, so the next person extends
+    `build_field_state.py` instead of arguing with the table. It still exits non-zero --
+    an unseeable target must never read as a pass -- but with its own exit code and its
+    own verdict word, so "the gate is broken" can never be filed as "the change failed".
+
+    Three ways to be unseeable, all of them the same defect at bottom:
+      * the backlog has no such item -- nothing to check against;
+      * the item declares no fields at all -- "observed & {}" can never be non-empty, so
+        the test is unsatisfiable before any measurement is taken (the it-009 case);
+      * a target or predicted key names no field in the registry -- the corpus it lives in
+        is not enumerated (the it-008 / it-010 case).
+    """
+    if item is None:
+        return (f"backlog has no item {target}; G7 has nothing to test against",
+                {"registry_defect": "no such backlog item"})
+    if not target_fields:
+        return (f"backlog item {target} declares no fields, so \"the target's fields "
+                f"moved\" is unsatisfiable before anything is measured",
+                {"registry_defect": "target declares no fields"})
+
+    unknown_target = sorted(target_fields - registry)
+    unknown_predicted = sorted(predicted - registry)
+    if unknown_target or unknown_predicted:
+        named = unknown_target + [k for k in unknown_predicted if k not in unknown_target]
+        return (
+            f"{len(named)} key(s) name no field the registry enumerates, so G7 cannot "
+            f"observe them: {', '.join(named[:8])}"
+            + (" ..." if len(named) > 8 else "")
+            + ". Extend loop/tools/build_field_state.py to cover their corpus; do not "
+              "override this gate.",
+            {"registry_defect": "keys outside the registry",
+             "target_fields_not_in_registry": unknown_target,
+             "predicted_not_in_registry": unknown_predicted},
+        )
+    return None, {}
 
 
 def _backlog_item(target: str) -> dict | None:
@@ -392,8 +494,10 @@ def main(argv: list[str]) -> int:
     print(f"gate  it-{args.iteration:03d}  target={args.target or '(baseline self-check)'}")
     print("=" * 74)
     for row in report["gates"]:
-        mark = "PASS" if row["pass"] else "FAIL"
+        mark = "PASS" if row["pass"] else ("DEFECT" if row.get("gate_defect") else "FAIL")
         print(f"  {row['gate']}  {mark}")
+        if row.get("gate_defect"):
+            print(f"        GATE DEFECT: {row['gate_defect']}")
         if not row["pass"]:
             print("        " + json.dumps(row["detail"], ensure_ascii=False)[:900])
     m = report["measurements"]
@@ -404,10 +508,25 @@ def main(argv: list[str]) -> int:
     print(f"  confirm  {m['confirm']['correct']}/{m['confirm']['of']}  wrong {m['confirm']['wrong']}")
     print(f"  pytest   {m['pytest']['passed']} passed, {m['pytest']['failed']} failed")
     print(f"  flips    {report['field_flips_observed'] or 'none'}")
+    prov = report["baseline_provenance"]
+    if prov.get("extraction_tree_clean") is False:
+        print(f"  WARNING: the baseline G3/G7 diff against was built from a DIRTY tree "
+              f"({len(prov.get('extraction_tree_dirt', []))} path(s)); it may define "
+              f"unaccepted work as correct")
+    elif "built_from_commit" not in prov:
+        print("  WARNING: the baseline records no provenance; what commit it describes "
+              "cannot be checked")
     print(f"\nVERDICT: {report['verdict']}"
           + (f"  failed: {', '.join(report['failed_gates'])}" if report["failed_gates"] else ""))
+    if report["gate_defects"]:
+        print("\nThis is a defect in the GATE, not a verdict on the iteration: the gate "
+              "could not\nsee what it was asked to judge. Extend the registry "
+              "(loop/tools/build_field_state.py)\nso the next run can answer. Do not "
+              "override.")
     print(f"wrote {out}")
-    return 0 if report["verdict"] == "PASS" else 1
+    # 0 pass, 1 rejected on substance, 2 the gate could not judge -- three states, three
+    # codes, so a caller can never read "the gate is broken" as "the change failed".
+    return {"PASS": 0, "REJECTED_GATE": 1, "GATE_DEFECT": 2}[report["verdict"]]
 
 
 if __name__ == "__main__":

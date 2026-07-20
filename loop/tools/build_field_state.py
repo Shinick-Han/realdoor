@@ -10,6 +10,14 @@ neighbour's.
     python loop/tools/build_field_state.py            # measure and write loop/baseline.json
     python loop/tools/build_field_state.py --print    # measure and print, write nothing
 
+WHAT COMMIT A BASELINE DESCRIBES
+--------------------------------
+The one it was built from, and this module refuses to write one when it cannot say so
+honestly: if any extraction-bearing path is dirty (modified *or untracked*) it stops
+before measuring. See `extraction_tree_dirt` for the incident that put that check here.
+Every baseline records its own provenance -- the sha, the cleanliness verdict, and whether
+an override was used -- so the claim can be checked rather than assumed.
+
 WHERE `correct` COMES FROM
 --------------------------
 Not from here. Every corpus is scored by the repository's own harness functions, imported:
@@ -19,6 +27,8 @@ Not from here. Every corpus is scored by the repository's own harness functions,
     holdout    using the same score_extraction.normalize() comparison
     external   the loop that IS scripts/measure_external_holdout._tally, ditto
     confirm    measure_confirm_set._matches(), imported outright
+    filled     measure_filled_forms._matches() + its REACHABLE/DOCUMENT_TYPE, imported
+    scenarios  measure_scenario_sets._matches() + its _stratum, on its own partition
 
 and then every corpus is **reconciled**: this module re-runs the harness's own tally and
 asserts that the number of `correct` entries it produced equals the harness's `correct`,
@@ -36,6 +46,27 @@ G1 (wrong == 0) but invisible to a field-level flip diff. So this module writes 
 sibling map `absent_state` (`absent` / `invented`) over those fields, and G3/G7 watch it
 too. That is an addition to the design, not a change to it: `field_state` keeps exactly
 the keys and values section B specifies.
+
+THE TWO CORPORA ADDED AFTER DAY 0, AND THE SEAL
+-----------------------------------------------
+`testdata/filled/` and `testdata/scenarios/` were built after this census was first taken,
+so for three iterations (it-008, it-009, it-010) a target living in one of them made G7's
+"target fields flipped" set structurally empty: the gate reported FAIL and a human
+overrode it by reading harness output. An override that becomes routine is a gate nobody
+believes. Both corpora are enumerated here now.
+
+Neither adds a word to the state vocabulary. In particular `scenarios` carries
+`latent_fields` -- values the pixels show and the text layer does not -- and those land on
+the existing `image_only` by the ordinary `appears_in_text` test, which is exactly what
+that word already means. Fields the harnesses score neither way (`marked_only`,
+`ambiguous`, and anything outside `EXPECTED_FIELDS`) are left out for the same reason
+`confirm` leaves out its unreachable fields: nothing looks for them, no change to `core/`
+could move them, so they are not extraction state and a flip in them cannot exist.
+
+**The seal is inviolable.** `filled/` seals 2 of its 5 documents and `scenarios/` seals 8
+of its 50 sets; a hold-out is spent the first time it is opened, and this module never
+opens one -- not to extract, not even to read a text layer for the `image_only` test.
+`_dev_records` decides the split, and refuses to guess: see its docstring.
 """
 from __future__ import annotations
 
@@ -256,6 +287,212 @@ def _confirm_state(manifest, texts):
 
 
 # =====================================================================================
+# the sealed corpora: telling dev from sealed, or stopping
+# =====================================================================================
+
+
+def _dev_records(manifest: dict[str, Any], records: list[dict[str, Any]],
+                 ident_of, label: str) -> tuple[list[dict], list[dict]]:
+    """Split a sealed corpus's manifest into (dev, sealed). Never guesses.
+
+    `field_state` must cover the dev portion and *only* the dev portion: a hold-out is
+    spent the first time it is opened, and classifying a sealed item would require opening
+    it. So the split has to be exactly right, and "exactly right" cannot mean "whatever
+    records happened to carry role='dev'" -- a typo'd or absent role would then silently
+    shrink the registry, which is precisely the failure this file exists to prevent.
+
+    Both manifests state the split twice, independently: a `role` on each record, and a
+    `roles` roster naming the dev and sealed members. This function requires the two to
+    agree, member for member, and raises otherwise. A missing roster, an unknown role, a
+    record no roster names, a roster entry no record matches, or any disagreement between
+    the two is fatal. It is never resolved by preferring one source over the other.
+    """
+    roster = manifest.get("roles")
+    if not isinstance(roster, dict) or not {"dev", "sealed"} <= set(roster):
+        raise SystemExit(
+            f"{label}: the manifest carries no dev/sealed roster, so this module cannot "
+            f"tell a sealed hold-out from a dev document. Refusing to build a registry "
+            f"that might silently omit dev fields or silently open a seal."
+        )
+    listed = {"dev": set(roster["dev"]), "sealed": set(roster["sealed"])}
+    split: dict[str, list[dict]] = {"dev": [], "sealed": []}
+    problems: list[str] = []
+
+    for record in records:
+        ident = ident_of(record)
+        role = record.get("role")
+        if role not in ("dev", "sealed"):
+            problems.append(f"{ident}: role={role!r} is neither 'dev' nor 'sealed'")
+            continue
+        rostered = "dev" if ident in listed["dev"] else (
+            "sealed" if ident in listed["sealed"] else None)
+        if rostered is None:
+            problems.append(f"{ident}: role={role!r} but the roles roster does not name it")
+        elif rostered != role:
+            problems.append(f"{ident}: record says role={role!r}, roster says {rostered!r}")
+        else:
+            split[role].append(record)
+
+    for role in ("dev", "sealed"):
+        unmatched = listed[role] - {ident_of(r) for r in split[role]}
+        if unmatched:
+            problems.append(f"roster lists {role} {sorted(unmatched)} but no record matched")
+    if problems:
+        raise SystemExit(
+            f"{label}: cannot tell sealed from dev, so no registry is written:\n  "
+            + "\n  ".join(problems)
+        )
+    return split["dev"], split["sealed"]
+
+
+def _filled_state():
+    """filled dev three: measure_filled_forms' own `_matches`, REACHABLE and DOCUMENT_TYPE."""
+    import measure_filled_forms as mff  # type: ignore  # noqa: E402
+    from core import extract as ex  # noqa: E402
+
+    truth = json.loads(mff.TRUTH.read_text(encoding="utf-8"))
+    dev, sealed = _dev_records(truth, truth["documents"], lambda r: r["file_name"], "filled")
+
+    state: dict[str, str] = {}
+    absent: dict[str, str] = {}
+    per_doc: dict[str, int] = {}
+
+    for record in dev:
+        doc = record["file_name"]
+        path = mff.RAW_DIR / doc
+        # Dev only. The sealed two are not opened here at all -- not even for page_text.
+        text = cl.page_text(path)
+        view = ex.extract_document(
+            path, document_type=mff.DOCUMENT_TYPE, fallback_mapper=ex.synonym_mapper
+        )
+        got = {f["field"]: f for f in view["fields"]}
+        hits = 0
+        for name, expected in record.get("expected", {}).items():
+            if name not in mff.REACHABLE:
+                # The harness's `unreachable_expected` bucket: outside
+                # EXPECTED_FIELDS['pay_stub'], scored neither way, not extraction state.
+                continue
+            field = got.get(name)
+            is_correct = (
+                field is not None
+                and field["certainty"] != "abstain"
+                and mff._matches(name, expected, field["value"])
+            )
+            hits += int(is_correct)
+            state[cl.key("filled", doc, name)] = cl.classify(name, expected, is_correct, text)
+        for name in record.get("expect_absent", []):
+            if name not in mff.REACHABLE:
+                continue
+            field = got.get(name)
+            clean = field is None or field["certainty"] == "abstain"
+            absent[cl.key("filled", doc, name)] = "absent" if clean else "invented"
+        per_doc[doc] = hits
+
+    harness = mff.tally()
+    totals = {
+        "correct": harness["correct"], "wrong": harness["wrong"],
+        "of": harness["fields_total"], "abstained": harness["abstained"],
+        "documents_measured": harness["documents_measured"],
+        "unreachable_expected": harness["unreachable_expected"],
+        "unreachable_absent": harness["unreachable_absent"],
+        "sealed_excluded": sorted(r["file_name"] for r in sealed),
+        "sealed_intact": all(s["intact"] for s in harness["sealed_excluded"]),
+    }
+    mine = {"correct": sum(per_doc.values()), "per_doc": per_doc,
+            "measured_fields": len(state) + len(absent)}
+    return state, mine, totals, absent, harness
+
+
+#: The seven counters measure_scenario_sets keeps per stratum. Reconciling all seven, per
+#: stratum, is stricter than reconciling one grand total: a classifier that moved a field
+#: from `abstained` to `latent_abstained` would still reconcile on a sum.
+_SCENARIO_BUCKETS = ("correct", "wrong", "abstained", "absent_held",
+                     "latent_correct", "latent_wrong", "latent_abstained")
+
+
+def _scenario_state():
+    """scenarios dev 42 sets: measure_scenario_sets' own partition, `_matches` and `_stratum`.
+
+    The partition is the subtle part and is reproduced from the harness rather than from
+    the manifest. `measure_scenario_sets.tally` walks every field in
+    `EXPECTED_FIELDS[document_type]` and decides by fall-through -- truth, then latent,
+    then unscored, then *everything else is expect_absent*. The manifest also carries an
+    explicit `expect_absent` list, and the two agree on all 154 dev documents, but the
+    harness's fall-through is the authority because the harness is what the gate's numbers
+    have to reconcile against.
+    """
+    import measure_scenario_sets as mss  # type: ignore  # noqa: E402
+    from core import extract as ex  # noqa: E402
+
+    truth = json.loads(mss.TRUTH.read_text(encoding="utf-8"))
+    dev, sealed = _dev_records(truth, truth["sets"], lambda r: r["id"], "scenarios")
+
+    state: dict[str, str] = {}
+    absent: dict[str, str] = {}
+    mine = {name: dict.fromkeys(_SCENARIO_BUCKETS, 0)
+            for name in ("real", "generator", "acroform")}
+
+    for row in dev:
+        for doc in row["documents"]:
+            path = mss.SCEN_DIR / doc["file_name"]
+            text = cl.page_text(path)
+            view = ex.extract_document(
+                path, document_type=doc["document_type"],
+                document_id=doc["document_id"], fallback_mapper=ex.synonym_mapper,
+            )
+            got = {f["field"]: f for f in view["fields"]}
+            bucket = mine[mss._stratum(doc)]
+            reachable = ex.EXPECTED_FIELDS.get(doc["document_type"], ())
+            expected_map = {f["field"]: f["value"] for f in doc["truth_fields"]
+                            if f["field"] in reachable}
+            latent_map = {f["field"]: f["value"] for f in doc["latent_fields"]
+                          if f["field"] in reachable}
+            unscored = dict(doc.get("marked_only", {}))
+            unscored.update(doc.get("ambiguous", {}))
+
+            for name in reachable:
+                field = got.get(name)
+                answered = field is not None and field["certainty"] != "abstain"
+                full_key = cl.key("scenarios", doc["file_name"], name)
+                if name in expected_map:
+                    is_correct = answered and mss._matches(name, expected_map[name],
+                                                           field["value"])
+                    bucket["correct" if is_correct else
+                           ("abstained" if not answered else "wrong")] += 1
+                    state[full_key] = cl.classify(name, expected_map[name], is_correct, text)
+                elif name in latent_map:
+                    is_correct = answered and mss._matches(name, latent_map[name],
+                                                           field["value"])
+                    bucket["latent_correct" if is_correct else
+                           ("latent_abstained" if not answered else "latent_wrong")] += 1
+                    # Not correct and not in the text layer -> `image_only`, the word that
+                    # already means exactly this. No vocabulary is added for latency.
+                    state[full_key] = cl.classify(name, latent_map[name], is_correct, text)
+                elif name in unscored:
+                    continue  # marked_only / ambiguous: scored neither way by the harness
+                else:
+                    absent[full_key] = "absent" if not answered else "invented"
+                    # The harness counts an invention here into the SAME `wrong` counter
+                    # it uses for a wrong expected value; mirror that or the reconciliation
+                    # would disagree for a reason that is not a classifier bug.
+                    bucket["absent_held" if not answered else "wrong"] += 1
+
+    harness = mss.tally(ex.synonym_mapper)
+    head = harness["extraction_headline"]
+    totals = {
+        "correct": head["correct"], "wrong": head["wrong"],
+        "of": head["correct"] + head["wrong"] + head["abstained"],
+        "abstained": head["abstained"], "absent_held": head["absent_held"],
+        "headline_note": head["note"],
+        "sets_measured": harness["sets_measured"],
+        "strata": harness["extraction_strata"],
+        "sealed_excluded": sorted(r["id"] for r in sealed),
+        "sealed_intact": harness["sealed_intact"],
+    }
+    return state, mine, totals, absent, harness
+
+
+# =====================================================================================
 # reconciliation -- the assert this file exists for
 # =====================================================================================
 
@@ -283,6 +520,20 @@ def _reconcile(problems: list[str], corpus: str, mine: dict, harness_totals: dic
                 problems.append(
                     f"{corpus}::{row['file']}: field_state has {got} correct, harness "
                     f"reports {row[per_doc_key]}"
+                )
+
+
+def _reconcile_strata(problems: list[str], mine: dict[str, dict[str, int]],
+                      harness_strata: dict[str, dict[str, int]]) -> None:
+    """scenarios: all seven counters, in all three strata, or it is a classifier bug."""
+    for stratum, counts in sorted(harness_strata.items()):
+        for name in _SCENARIO_BUCKETS:
+            got = mine.get(stratum, {}).get(name)
+            if got != counts[name]:
+                problems.append(
+                    f"scenarios[{stratum}].{name}: field_state has {got}, the harness "
+                    f"reports {counts[name]}. The classifier is wrong; do not adjust "
+                    f"the total."
                 )
 
 
@@ -330,6 +581,22 @@ def measure(quiet: bool = False) -> dict[str, Any]:
     absent_state.update(absent)
     corpora["confirm"] = totals
     _reconcile(problems, "confirm", mine, totals, harness["per_document"])
+
+    if not quiet:
+        print("scoring filled (dev only; the seal is not opened) ...", file=sys.stderr)
+    state, mine, totals, absent, harness = _filled_state()
+    field_state.update(state)
+    absent_state.update(absent)
+    corpora["filled"] = totals
+    _reconcile(problems, "filled", mine, totals, harness["per_document"])
+
+    if not quiet:
+        print("scoring scenarios (dev only; the seal is not opened) ...", file=sys.stderr)
+    state, mine, totals, absent, harness = _scenario_state()
+    field_state.update(state)
+    absent_state.update(absent)
+    corpora["scenarios"] = totals
+    _reconcile_strata(problems, mine, harness["extraction_strata"])
 
     census: dict[str, Counter] = {}
     for full_key, value in field_state.items():
@@ -381,6 +648,38 @@ def preexisting_dirty() -> list[str]:
     )
 
 
+#: Trees whose contents decide what an extraction returns. `pack/` is here for its gold and
+#: its documents; `logic/` because the scenario harness measures the reasoning layer too.
+EXTRACTION_BEARING = ("core/", "api/", "eval/", "logic/", "ocr/", "scripts/", "pack/")
+
+
+def extraction_tree_dirt() -> list[str]:
+    """Modified *or untracked* files under the paths that decide extraction's output.
+
+    A baseline is the definition of the accepted state: every later gate compares against
+    it and trusts it absolutely. Building one from a working tree therefore launders
+    whatever happens to be sitting in that tree into the accepted state, with nobody having
+    accepted it -- and the gate that would have caught the change can no longer see it,
+    because the change is now the baseline.
+
+    Measured, not hypothetical: the 04:16 rebuild in this session ran while another
+    workstream's AcroForm reader sat untracked in `core/` with its flag defaulting on. The
+    baseline it wrote recorded `person_name` on the wa_dshs carrier and six acroform
+    employment letters as `correct` -- fields that abstain on committed master. An
+    unaccepted change had become the definition of correct.
+
+    Untracked counts as dirt, deliberately, and is the case that actually bit: the file in
+    question was new, so a `git diff` would have called the tree spotless.
+    """
+    out = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all", "--", *EXTRACTION_BEARING],
+        cwd=str(cl.ROOT), capture_output=True, text=True,
+    ).stdout
+    return sorted(
+        line[3:].strip().replace("\\", "/") for line in out.splitlines() if line.strip()
+    )
+
+
 def head_sha() -> str:
     return subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=str(cl.ROOT), capture_output=True, text=True
@@ -397,6 +696,19 @@ def main(argv: list[str]) -> int:
                              "what moves is which paths git calls dirty.")
     parser.add_argument("--no-pytest", action="store_true",
                         help="skip the pytest leg (the census does not depend on it)")
+    parser.add_argument("--keep-dirty", action="store_true",
+                        help="carry the existing baseline.preexisting_dirty forward "
+                             "verbatim instead of re-reading it from git. Use this when "
+                             "rebuilding the census while OTHER workstreams have edits in "
+                             "flight: re-reading would silently enrol their files as day-0 "
+                             "dirt, i.e. exempt from G6 forever, without anyone having "
+                             "verified them. G6 noise is documented in the iteration "
+                             "report (the it-007 convention), never exempted by default.")
+    parser.add_argument("--allow-dirty-tree", action="store_true",
+                        help="write a baseline even though extraction-bearing paths are "
+                             "dirty. A deliberate exception only; the override and the "
+                             "exact dirty paths are recorded inside the baseline it "
+                             "writes, so a later reader sees what was measured.")
     args = parser.parse_args(argv)
 
     if args.refresh_dirty:
@@ -409,6 +721,25 @@ def main(argv: list[str]) -> int:
         for path in baseline["preexisting_dirty"]:
             print(f"  {path}")
         return 0
+
+    # Checked BEFORE the measurement, not after: an hour of extraction that may not be
+    # allowed to be written is an hour wasted, and a tired operator is exactly who reaches
+    # for the override.
+    dirt = extraction_tree_dirt()
+    if dirt and not args.allow_dirty_tree and not args.only_print:
+        print(
+            f"REFUSING to write a baseline: {len(dirt)} extraction-bearing path(s) are "
+            f"dirty.\nA baseline built from a working tree defines the accepted state as "
+            f"whatever happens\nto be sitting on disk, and every later gate then trusts "
+            f"it. Commit or stash first.\n",
+            file=sys.stderr,
+        )
+        for path in dirt:
+            print(f"  {path}", file=sys.stderr)
+        print("\nIf this is a deliberate exception, pass --allow-dirty-tree; the "
+              "override and these\npaths are then recorded inside the baseline itself.",
+              file=sys.stderr)
+        return 1
 
     # The extraction cache keys on source *content* and never on flag state; a stale hit
     # would make this census a measurement of an older tree.
@@ -440,17 +771,40 @@ def main(argv: list[str]) -> int:
     if args.only_print:
         return 0
 
+    if args.keep_dirty:
+        previous = json.loads(cl.BASELINE_PATH.read_text(encoding="utf-8"))
+        dirty = previous.get("preexisting_dirty", [])
+        print(f"--keep-dirty: carrying {len(dirty)} day-0 paths forward unchanged")
+    else:
+        dirty = preexisting_dirty()
+
     baseline = {
         "accepted_commit": head_sha(),
         "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "generated_by": "loop/tools/build_field_state.py",
+        # Provenance, so a later reader can CHECK the claim instead of assuming it: which
+        # commit this census measured, and whether the extraction-bearing trees were
+        # verified clean at the time. `built_from_commit` equals `accepted_commit` on every
+        # honest run; they are written separately so that a run which somehow disagreed
+        # would say so rather than hide it behind one field.
+        "provenance": {
+            "built_from_commit": head_sha(),
+            "extraction_tree_clean": not dirt,
+            "extraction_tree_dirt": dirt,
+            "dirty_tree_override_used": bool(dirt and args.allow_dirty_tree),
+            "paths_checked": list(EXTRACTION_BEARING),
+            "note": "a baseline built from uncommitted work is worse than no baseline, "
+                    "because every later gate silently trusts it",
+        },
         "pack": result["corpora"]["pack"],
         "uploads": result["corpora"]["uploads"],
         "holdout": result["corpora"]["holdout"],
         "external": result["corpora"]["external"],
         "confirm": result["corpora"]["confirm"],
+        "filled": result["corpora"]["filled"],
+        "scenarios": result["corpora"]["scenarios"],
         "pytest": pytest_result,
-        "preexisting_dirty": preexisting_dirty(),
+        "preexisting_dirty": dirty,
         "field_state_census": result["field_state_census"],
         "field_state": result["field_state"],
         "absent_state": result["absent_state"],

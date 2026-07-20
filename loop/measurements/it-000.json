@@ -1,13 +1,15 @@
 {
   "iteration": 0,
   "target": null,
-  "run_at": "2026-07-20T18:21:09+00:00",
-  "head": "e5354633c1a03c7db8fec2935680ece3a61a3990",
-  "accepted_commit": "b173e7bf678c3d1c7726338c71f88d17acd16064",
+  "run_at": "2026-07-20T20:07:07+00:00",
+  "head": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+  "accepted_commit": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
   "verdict": "REJECTED_GATE",
   "failed_gates": [
+    "G5",
     "G6"
   ],
+  "gate_defects": [],
   "gates": [
     {
       "gate": "G1",
@@ -37,28 +39,30 @@
       "pass": true,
       "detail": {
         "regressions": [],
-        "fields_compared": 538
+        "fields_compared": 1340
       }
     },
     {
       "gate": "G4",
       "pass": true,
       "detail": {
-        "passed": 1588,
+        "passed": 1646,
         "failed": 0,
-        "baseline_passed": 1540
+        "baseline_passed": 1644
       }
     },
     {
       "gate": "G5",
-      "pass": true,
+      "pass": false,
       "detail": {
         "flags_off": [],
-        "compared_against": "b173e7bf678c3d1c7726338c71f88d17acd16064",
+        "compared_against": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
         "documents_compared": 77,
-        "identical": true,
-        "documents_differing": [],
-        "documents_differing_total": 0
+        "identical": false,
+        "documents_differing": [
+          "external::ext_unc.pdf"
+        ],
+        "documents_differing_total": 1
       }
     },
     {
@@ -67,18 +71,19 @@
       "detail": {
         "allowlist": [],
         "changed": [
-          "eval/score_extraction.py",
-          "eval/test_harness.py",
-          "loop/falsify/it-011.py",
-          "loop/proposals/it-011.md"
+          "core/extract.py",
+          "loop/baseline.json",
+          "loop/falsification/it-013.json",
+          "loop/falsify/it-013.py",
+          "loop/measurements/it-000.json",
+          "loop/tools/build_field_state.py",
+          "loop/tools/gate.py",
+          "loop/tools/test_gate_registry.py"
         ],
         "outside_allowlist": [
-          "eval/score_extraction.py",
-          "eval/test_harness.py"
+          "core/extract.py"
         ],
-        "forbidden_touched": [
-          "eval/score_extraction.py"
-        ],
+        "forbidden_touched": [],
         "cache_paths_exempted": 0,
         "preexisting_dirt_exempted": 59
       }
@@ -115,14 +120,30 @@
       "abstained": 100
     },
     "pytest": {
-      "passed": 1588,
+      "passed": 1646,
       "failed": 0,
       "exit_code": 0
     }
   },
+  "baseline_provenance": {
+    "built_from_commit": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+    "extraction_tree_clean": true,
+    "extraction_tree_dirt": [],
+    "dirty_tree_override_used": false,
+    "paths_checked": [
+      "core/",
+      "api/",
+      "eval/",
+      "logic/",
+      "ocr/",
+      "scripts/",
+      "pack/"
+    ],
+    "note": "a baseline built from uncommitted work is worse than no baseline, because every later gate silently trusts it"
+  },
   "field_state_census": {
     "confirm": {
-      "blocked_contract": 2,
+      "abstain": 2,
       "correct": 26,
       "image_only": 13,
       "masked": 5
@@ -131,12 +152,22 @@
       "abstain": 5,
       "correct": 23
     },
+    "filled": {
+      "abstain": 5,
+      "correct": 5,
+      "image_only": 1
+    },
     "holdout": {
       "abstain": 10,
       "correct": 24
     },
     "pack": {
       "correct": 159
+    },
+    "scenarios": {
+      "abstain": 378,
+      "correct": 278,
+      "image_only": 50
     },
     "uploads": {
       "abstain": 8,
@@ -145,11 +176,15 @@
     }
   },
   "field_flips_observed": [],
-  "flag_off_identical": true,
+  "flag_off_identical": false,
   "diff_files": [
-    "eval/score_extraction.py",
-    "eval/test_harness.py",
-    "loop/falsify/it-011.py",
-    "loop/proposals/it-011.md"
+    "core/extract.py",
+    "loop/baseline.json",
+    "loop/falsification/it-013.json",
+    "loop/falsify/it-013.py",
+    "loop/measurements/it-000.json",
+    "loop/tools/build_field_state.py",
+    "loop/tools/gate.py",
+    "loop/tools/test_gate_registry.py"
   ]
 }
