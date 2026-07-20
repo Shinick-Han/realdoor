@@ -80,7 +80,16 @@ QUESTION_SIZE_PATTERN = re.compile(
     rf"|\bfamily\s+of\s+{_SIZE_TOKEN}\b"
     rf"|\bsize\s+{_SIZE_TOKEN}\b"
     rf"|\b{_SIZE_TOKEN}[-\s]person\b"
-    rf"|\b{_SIZE_TOKEN}\s+(?:people|persons|occupants)\b",
+    rf"|\b{_SIZE_TOKEN}\s+(?:people|persons|occupants)\b"
+    # Korean size phrases. The Korean layer translates every answer this module gives,
+    # but the size extraction only spoke English, so "1인 가구의 소득 한도" nominated the
+    # right intent and then abstained for want of the size printed in the question
+    # itself. The alternation is deliberately minimal and digit-anchored: a digit, then
+    # 인/명 (counter), then a household word — so 승인/확인/개인, which contain 인 with no
+    # leading digit, can never match, and a bare digit never matches (the same rule the
+    # English half enforces with its size words).
+    rf"|(\d{{1,2}})\s*인\s*(?:가구|세대|가족)"
+    rf"|(?:가구|세대|가족)\s*원?\s*(\d{{1,2}})\s*명",
     re.IGNORECASE,
 )
 
