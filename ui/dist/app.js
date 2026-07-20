@@ -2286,19 +2286,39 @@
 
     var confirmable = Boolean(opts.confirmable);
 
+    /* On a phone the confirmable table is 727px inside a ~340px scroller, and the action a
+     * renter came to take — the Confirm button in the third column — starts past the right
+     * edge, reachable only by discovering a sideways drag inside the table. WCAG lets a
+     * table scroll inside its own container (that is what keeps reflow at 35/35), but a
+     * control nobody can find is not an available control.
+     *
+     * So the confirmable table carries `data-label` on every cell and a `--stack` class,
+     * and below 640px the CSS turns each row into a labelled card: field, value, the
+     * Confirm button and the rest stack vertically, in DOM order, with nothing off-screen.
+     * The desktop table is unchanged. Because CSS `display` can drop a table's implicit
+     * roles when the cells stop being table cells, the roles are made explicit here so the
+     * stacked view is still announced as a table row by row. */
+    function cell(attrs, label, children) {
+      var a = attrs ? Object.create(null) : {};
+      if (attrs) Object.keys(attrs).forEach(function (k) { a[k] = attrs[k]; });
+      a.role = "cell";
+      if (label) a["data-label"] = label;
+      return h("td", a, children);
+    }
+
     var rows = renterFields(doc).map(function (field) {
       var isActive = activeField === field.field;
       var valueCell;
       if (confirmable) {
-        valueCell = h("td", null, [valueBox(doc, field, tableId)]);
+        valueCell = cell(null, "Value", [valueBox(doc, field, tableId)]);
       } else if (field.value === null || field.value === undefined) {
-        valueCell = h("td", { class: "abstain-cell" }, ["Not read — a person must supply this"]);
+        valueCell = cell({ class: "abstain-cell" }, "Value", ["Not read — a person must supply this"]);
       } else {
-        valueCell = h("td", { text: plain(field.value) });
+        valueCell = cell(null, "Value", [document.createTextNode(plain(field.value))]);
       }
 
-      return h("tr", { class: isActive ? "is-active" : null }, [
-        h("th", { scope: "row" }, [
+      return h("tr", { role: "row", class: isActive ? "is-active" : null }, [
+        h("th", { scope: "row", role: "rowheader", "data-label": "Field" }, [
           field.bbox
             ? h("button", {
                 type: "button",
@@ -2315,13 +2335,13 @@
             : h("span", { text: field.field })
         ]),
         valueCell,
-        confirmable ? h("td", null, [confirmControl(doc, field, tableId)]) : null,
-        h("td", { text: EVIDENCE_WORDS[field.evidence_kind] || field.evidence_kind }),
-        h("td", { text: CERTAINTY_WORDS[field.certainty] || field.certainty }),
-        h("td", { class: "mono", text: field.source_text === null ? "—" : String(field.source_text) }),
-        h("td", { class: "num", text: field.page }),
+        confirmable ? cell(null, "Is this right?", [confirmControl(doc, field, tableId)]) : null,
+        cell(null, "How we got it", [document.createTextNode(EVIDENCE_WORDS[field.evidence_kind] || field.evidence_kind)]),
+        cell(null, "Certainty", [document.createTextNode(CERTAINTY_WORDS[field.certainty] || field.certainty)]),
+        cell({ class: "mono" }, "Text on the page", [document.createTextNode(field.source_text === null ? "—" : String(field.source_text))]),
+        cell({ class: "num" }, "Page", [document.createTextNode(String(field.page))]),
         showBoxes
-          ? h("td", { class: "mono num", text: field.bbox ? field.bbox.map(function (n) { return Number(n).toFixed(2); }).join(", ") : "no box" })
+          ? cell({ class: "mono num" }, "Box (pt)", [document.createTextNode(field.bbox ? field.bbox.map(function (n) { return Number(n).toFixed(2); }).join(", ") : "no box")])
           : null
       ]);
     });
@@ -2349,18 +2369,24 @@
       ]),
       toggle,
       h("div", { class: "table-scroll" }, [
-      h("table", { "aria-labelledby": captionId }, [
-        h("thead", null, [h("tr", null, [
-          h("th", { scope: "col", text: "Field" }),
-          h("th", { scope: "col", text: "Value" }),
-          confirmable ? h("th", { scope: "col", text: "Is this right?" }) : null,
-          h("th", { scope: "col", text: "How we got it" }),
-          h("th", { scope: "col", text: "Certainty" }),
-          h("th", { scope: "col", text: "Text on the page" }),
-          h("th", { scope: "col", class: "num", text: "Page" }),
-          showBoxes ? h("th", { scope: "col", class: "num", text: "Box (pt)" }) : null
+      h("table", {
+        "aria-labelledby": captionId, role: "table",
+        // Only the confirmable table stacks on a phone — it is the one with an action to
+        // reach. The read-only tables carry no control a renter must find, so they keep the
+        // scroll-in-place behaviour and are left alone.
+        class: "evidence-table" + (confirmable ? " evidence-table--stack" : "")
+      }, [
+        h("thead", { role: "rowgroup" }, [h("tr", { role: "row" }, [
+          h("th", { scope: "col", role: "columnheader", text: "Field" }),
+          h("th", { scope: "col", role: "columnheader", text: "Value" }),
+          confirmable ? h("th", { scope: "col", role: "columnheader", text: "Is this right?" }) : null,
+          h("th", { scope: "col", role: "columnheader", text: "How we got it" }),
+          h("th", { scope: "col", role: "columnheader", text: "Certainty" }),
+          h("th", { scope: "col", role: "columnheader", text: "Text on the page" }),
+          h("th", { scope: "col", role: "columnheader", class: "num", text: "Page" }),
+          showBoxes ? h("th", { scope: "col", role: "columnheader", class: "num", text: "Box (pt)" }) : null
         ])]),
-        h("tbody", null, rows)
+        h("tbody", { role: "rowgroup" }, rows)
       ])
       ]),
       quarantineNote(doc)

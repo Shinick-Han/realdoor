@@ -53,12 +53,13 @@
     },
     {
       "id": "U5",
-      "status": "OPEN",
+      "status": "DONE",
       "harm": 5,
       "title": "On a phone the Confirm column is off-screen",
       "evidence": "At 390px the values table is 907px inside a 332px container. Visible columns are Field and Value; the 'Is this right? / Confirm' column starts at x=364 and is reachable only by discovering a horizontal drag inside the table.",
       "fix": "At narrow widths the row must present its action without horizontal discovery.",
-      "constraint": "Reflow must stay 35/35 - the table's own overflow-x container is what keeps the page from scrolling sideways."
+      "constraint": "Reflow must stay 35/35 - the table's own overflow-x container is what keeps the page from scrolling sideways.",
+      "done_note": "Verified live at 390px. Before: confirm column started at x=356 inside a 346px scroller, reachable only by horizontal drag. After: the confirmable table (.evidence-table--stack) turns each row into a labelled card below 640px; the first Confirm button now sits at x=11, fully visible, with 0 horizontal drag inside the scroller and 0 page-level horizontal scroll. Desktop layout unchanged (CSS scoped to max-width:640px). Table semantics preserved with explicit ARIA roles (table/rowgroup/row/columnheader/rowheader/cell) so display:block does not strip them; each cell carries data-label for the stacked view. Read-only tables untouched. axe at 390px adds no new violation (the one 'region' finding is pre-existing and identical at 1280px). Gates: axe 0, reflow 35/35, keyboard 31/31, pytest 1237."
     },
     {
       "id": "U6",

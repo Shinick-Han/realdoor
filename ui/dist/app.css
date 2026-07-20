@@ -729,6 +729,63 @@ th { background: #edf1f5; font-weight: 600; }
 caption { text-align: left; font-weight: 600; padding: .3rem 0; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
+/* ── 좁은 화면에서 확인 표는 행이 카드로 쌓인다 ──────────────────────────────
+   문제: 390px 에서 값 확인 표는 340px 스크롤러 안에 727px 로 들어가, 사람이 하러 온
+   행동(3번째 열의 Confirm 버튼)이 오른쪽 화면 밖(x≈356)에서 시작한다. 표 안 가로
+   스크롤은 SC 1.4.10 이 허용하지만(그래서 reflow 는 35/35 로 유지된다), 아무도 못 찾는
+   컨트롤은 있는 컨트롤이 아니다.
+
+   그래서 확인 표(.evidence-table--stack)만 640px 이하에서 각 행을 라벨 붙은 카드로
+   바꾼다: Field·Value·Confirm·나머지가 DOM 순서 그대로 세로로 쌓이고, 화면 밖으로
+   나가는 것이 없다. 데스크탑 표는 그대로다. display:block 이 표의 암묵적 역할을 지울 수
+   있으므로 role 을 마크업에서 명시해 두었고(app.js), 쌓인 화면도 여전히 표로 읽힌다.
+
+   읽기 전용 표는 손대지 않는다 — 찾아야 할 행동이 없으므로 스크롤 방식을 그대로 둔다. */
+@media (max-width: 640px) {
+  .evidence-table--stack thead {
+    /* 헤더 행은 숨기되 접근성 트리에서 빼지는 않는다. 각 셀이 data-label 로 자기 열
+       이름을 스스로 들고 있으므로 시각적으로는 필요 없다. */
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0);
+    white-space: nowrap; border: 0;
+  }
+  .evidence-table--stack,
+  .evidence-table--stack tbody,
+  .evidence-table--stack tr,
+  .evidence-table--stack td,
+  .evidence-table--stack th { display: block; width: auto; }
+  .evidence-table--stack tr {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: .75rem;
+    padding: .3rem .6rem .5rem;
+  }
+  .evidence-table--stack tr.is-active { border-color: var(--accent); }
+  .evidence-table--stack td,
+  .evidence-table--stack th[scope="row"] {
+    border: none;
+    padding: .35rem 0;
+    text-align: left;
+  }
+  /* 숫자 열도 카드 안에서는 왼쪽 정렬이 라벨과 나란해 읽기 좋다. */
+  .evidence-table--stack td.num { text-align: left; }
+  /* 각 셀 앞에 그 셀이 무엇인지 라벨을 붙인다 — 헤더 행이 사라진 자리를 대신한다. */
+  .evidence-table--stack td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 600;
+    font-size: .8rem;
+    color: var(--ink-soft);
+    margin-bottom: .1rem;
+  }
+  /* Field(행 헤더)는 카드의 제목 줄이다. */
+  .evidence-table--stack th[scope="row"] { font-size: 1rem; padding-top: .1rem; }
+  /* 값 입력칸은 카드 폭을 꽉 채운다 — 좁은 화면에서 min-width 로 표를 넓히지 않는다. */
+  .evidence-table--stack .value-box { min-width: 0; }
+}
+
 code, .mono { font-family: var(--mono); font-size: .9em; }
 .formula {
   font-family: var(--mono);
