@@ -1069,6 +1069,24 @@ def _ocr_band_role_enabled() -> bool:
     return os.environ.get("REALDOOR_OCR_BAND_ROLE", "").strip() != "0"
 
 
+def _ocr_single_row_enabled() -> bool:
+    """Is the single-row anchor switched on? ON by default; `0` switches it off.
+
+    Guards the `single_row` keyword of `core.verified.verify_page` -- on pages
+    carrying `core.ocr_words` injections, a single-current-period-row column may
+    anchor when a non-degenerate row product closes on an amount the page reprints
+    x-aligned as the column's own printed total (loop iteration it-006; falsified
+    over all 77 corpus documents first -- loop/falsification/it-006.json). With
+    `REALDOOR_OCR_SINGLE_ROW=0` the keyword is never passed true, so this module's
+    output is bit-identical to what it was before the rule existed. Read through a
+    function rather than captured at import so a test can flip the environment
+    variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OCR_SINGLE_ROW", "").strip() != "0"
+
+
 def _ocr_total_band_enabled() -> bool:
     """Is the labeled-total-band reader switched on? ON by default; `0` switches it off.
 
@@ -2355,12 +2373,13 @@ def extract_document(
                 # `core/ocr_words.py`). With no injected words this is the exact call
                 # that always ran.
                 page_words = [*words, *injected] if injected else words
-                # `band_role` completes the chain on OCR-injected pages only (loop
-                # iteration it-004); a page with no injected words takes the exact
-                # call that always ran, whatever the flag says.
+                # `band_role` (it-004) and `single_row` (it-006) complete the chain
+                # on OCR-injected pages only; a page with no injected words takes
+                # the exact call that always ran, whatever the flags say.
                 answers, proposals = verified.verify_page(
                     page_words, doc_type, found, convention, wanted,
                     band_role=bool(injected) and _ocr_band_role_enabled(),
+                    single_row=bool(injected) and _ocr_single_row_enabled(),
                 )
                 for name, value in answers.items():
                     if _blank(name):

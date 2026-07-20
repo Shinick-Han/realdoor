@@ -230,12 +230,13 @@
         "confirm::lcc_understanding_your_paycheck.pdf::net_pay"
       ],
       "category": "image_only",
-      "status": "OPEN",
-      "attempts": 0,
+      "status": "DONE",
+      "attempts": 1,
       "prior_attempts": [],
       "expected_yield": 0,
       "root_cause_note": "Design section A.4: identities close on paper (31.00 x 10.51 = 325.81 exact; 325.81 - 61.36 = 264.45; deduction column sums to 61.36) but the earnings table has ONE current-period row, so the >=2-member column-sum guard refuses the anchor. The document's own traps: truth lists regular_hours AND hourly_rate in expect_absent (emitting 31.00/10.51 is a scored WRONG), misread labels at 96 dpi ('TotalPersonalDeductlons'), Total Employer Contributions 113.20 adjacent to the band.",
-      "design_note": "Design section F it-D, flag REALDOOR_OCR_SINGLE_ROW. Highest risk; honest expectation is 'attempt once, accept NO_SAFE_RULE readily'. Expected yield recorded as 0 for that reason; best case 2."
+      "design_note": "Design section F it-D, flag REALDOOR_OCR_SINGLE_ROW. Highest risk; honest expectation is 'attempt once, accept NO_SAFE_RULE readily'. Expected yield recorded as 0 for that reason; best case 2.",
+      "closed_note": "gross_pay recovered (+1) by the single-row anchor (flag REALDOOR_OCR_SINGLE_ROW, OCR-injected pages only; license: printed total closed by an arithmetic identity -- 31.00 x $10.510000 = $325.81 exact on lcc p3's crops, with the column's own printed total `Total: $325.81` x-aligned beneath: two independent cent-exact printings plus a closing product). net_pay stays image_only, measured, not assumed: at the injection layer's NATIVE 96-116 dpi the evidence fragments -- p1 (where the 61.36 + 264.45 = 325.81 band lives) loses the hours token and the current gross, p3 has the anchor but no band member; no page co-locates the two, and cross-page evidence joining was weighed and refused (an identity is licensed by one page's own printing). The document's misread family is pinned as must-stay-abstained tests: '5113.20' ($ read as digit, parses as money), '$4,209.35' vs '$4,209.38' across renderings, 'Sap 15, 2017', Banner ID X00123458; expect_absent rate/hours refused structurally (one row cannot resolve factor columns). Falsified over all 77 first: fired on the target only, zero conflicts. Predicted 1, observed 1 (loop/measurements/it-006.json)."
     },
     {
       "id": "T13",

@@ -502,6 +502,58 @@ def _named_regular_hours(
     return named
 
 
+def _single_row_runs(
+    tokens: Sequence[ar.NumberToken], bound: float
+) -> list[Anchored]:
+    """One-member anchored runs for a single-current-period-row column (it-006).
+
+    A table with one current-period row still prints its total; what it cannot give
+    is a multi-member sum, so `_anchored_runs`'s `_nonzero >= 2` guard rightly stays.
+    What licenses a one-member run instead: a non-degenerate row product
+    `rate x hours = amount` (hours within the physical bound, factors and amount
+    non-overlapping, amount printed with its cents) closing on an amount the page
+    REPRINTS as another cents-form token on a DIFFERENT line, x-aligned with it on
+    either edge -- the column's own printed total. Two independent printings must
+    agree to the cent AND a printed product must close over one of them; a digit
+    flip in either member breaks the pair (measured on lcc, where the two printings
+    of the YTD amount differ -- `'$4,209.35'` vs `'$4,209.38'` -- and are refused by
+    exactly this equality). A same-baseline twin (osu's Current = YTD columns) is
+    the second column, not a total, and is refused by the different-line rule.
+    """
+    out: list[Anchored] = []
+    seen: set[tuple[int, int]] = set()
+    for product in ar.find_row_products(tokens):
+        if _degenerate(product):
+            continue  # the multiplicative identity anchors nothing (it-004)
+        if not (0 < product.hours.value <= bound):
+            continue
+        if (_overlaps(product.hours, product.amount)
+                or _overlaps(product.rate, product.amount)
+                or _overlaps(product.rate, product.hours)):
+            continue
+        if product.amount.decimals != 2:
+            continue  # money prints its cents (the L3 cents-form refusal)
+        for token in tokens:
+            if id(token) == id(product.amount) or token.page != product.amount.page:
+                continue
+            if token.decimals != 2:
+                continue
+            if abs(token.value - product.amount.value) > 1e-9:
+                continue
+            if abs(token.baseline - product.amount.baseline) <= ar.BASELINE_TOLERANCE:
+                continue
+            if not (abs(token.x0 - product.amount.x0) <= VALUE_X_TOLERANCE
+                    or abs(token.x1 - product.amount.x1) <= VALUE_X_TOLERANCE):
+                continue
+            key = (id(product.amount), id(token))
+            if key in seen:
+                continue  # both factor orientations name the same pair
+            seen.add(key)
+            out.append(Anchored(run=(product.amount,), total=token,
+                                products=(product,)))
+    return out
+
+
 # --------------------------------------------------------------------------------------
 # Combination
 # --------------------------------------------------------------------------------------
@@ -520,6 +572,7 @@ def verify_page(
     wanted: Sequence[str],
     *,
     band_role: bool = False,
+    single_row: bool = False,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """(answers, proposals) for one page. Never overwrites anything already in `found`.
 
@@ -530,6 +583,15 @@ def verify_page(
     row under a printed HOURS header instead of from the whole hours column. See
     `_degenerate` and `_named_regular_hours`; `core.extract` passes the keyword only
     when `REALDOOR_OCR_BAND_ROLE` is on AND the page actually received injections.
+
+    `single_row` (default off, same page scoping under `REALDOOR_OCR_SINGLE_ROW`,
+    it-006) additionally admits the one-member anchored runs of `_single_row_runs`:
+    a single-current-period-row column whose amount a non-degenerate product closes
+    on AND the page reprints x-aligned as the column's own printed total. The
+    pseudo-runs join `anchored` whole: their lines enter the band exclusion, their
+    factor columns never resolve (two rows are needed to tell hours from rate, so a
+    single row can never emit either factor), and S3 weighs their totals like any
+    other gross candidate.
 
     The two are returned separately so the caller can take every page's *answers* before any
     page's *proposal*. They are not interchangeable and the ordering matters on real documents:
@@ -553,6 +615,8 @@ def verify_page(
         return {}, {}
     bound, bound_reason = hours_bound(found)
     anchored = _anchored_runs(tokens, bound)
+    if single_row:
+        anchored = [*anchored, *_single_row_runs(tokens, bound)]
 
     candidates: dict[str, list[Candidate]] = {name: [] for name in wanted}
 

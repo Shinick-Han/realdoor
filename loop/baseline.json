@@ -1,6 +1,6 @@
 {
-  "accepted_commit": "9e9f8b943074304d5731dcbd184630c4d9a1eb54",
-  "updated": "2026-07-20T11:48:04+00:00",
+  "accepted_commit": "98a1b65e64c3cae451ca40c9b7b34d2087226bd6",
+  "updated": "2026-07-20T12:25:00+00:00",
   "generated_by": "loop/tools/build_field_state.py",
   "pack": {
     "correct": 159,
@@ -35,23 +35,22 @@
     "abstained": 21
   },
   "confirm": {
-    "correct": 25,
+    "correct": 26,
     "wrong": 0,
     "of": 126,
-    "abstained": 101,
+    "abstained": 100,
     "unreachable_expected": 8,
     "unreachable_absent": 20
   },
   "pytest": {
-    "passed": 1397,
+    "passed": 1418,
     "failed": 0,
     "exit_code": 0
   },
   "preexisting_dirty": [
     "core/extract.py",
-    "core/test_ocr_words.py",
-    "core/test_total_band.py",
-    "core/total_band.py",
+    "core/test_ocr_single_row.py",
+    "core/verified.py",
     "testdata/confirm_raw/bonita_certificated_check_sample.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_hourly.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_piecerate.pdf",
@@ -113,8 +112,8 @@
   "field_state_census": {
     "confirm": {
       "blocked_contract": 2,
-      "correct": 25,
-      "image_only": 14,
+      "correct": 26,
+      "image_only": 13,
       "masked": 5
     },
     "external": {
@@ -165,7 +164,7 @@
     "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_date": "blocked_contract",
     "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_period_end": "blocked_contract",
     "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_period_start": "correct",
-    "confirm::lcc_understanding_your_paycheck.pdf::gross_pay": "image_only",
+    "confirm::lcc_understanding_your_paycheck.pdf::gross_pay": "correct",
     "confirm::lcc_understanding_your_paycheck.pdf::net_pay": "image_only",
     "confirm::lcc_understanding_your_paycheck.pdf::pay_date": "image_only",
     "confirm::lcc_understanding_your_paycheck.pdf::pay_period_end": "image_only",

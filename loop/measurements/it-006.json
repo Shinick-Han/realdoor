@@ -1,7 +1,7 @@
 {
-  "iteration": 0,
-  "target": null,
-  "run_at": "2026-07-20T12:08:42+00:00",
+  "iteration": 6,
+  "target": "T12",
+  "run_at": "2026-07-20T12:20:00+00:00",
   "head": "98a1b65e64c3cae451ca40c9b7b34d2087226bd6",
   "accepted_commit": "98a1b65e64c3cae451ca40c9b7b34d2087226bd6",
   "verdict": "PASS",
@@ -42,7 +42,7 @@
       "gate": "G4",
       "pass": true,
       "detail": {
-        "passed": 1398,
+        "passed": 1417,
         "failed": 0,
         "baseline_passed": 1397
       }
@@ -51,7 +51,9 @@
       "gate": "G5",
       "pass": true,
       "detail": {
-        "flags_off": [],
+        "flags_off": [
+          "REALDOOR_OCR_SINGLE_ROW"
+        ],
         "compared_against": "98a1b65e64c3cae451ca40c9b7b34d2087226bd6",
         "documents_compared": 77,
         "identical": true,
@@ -63,11 +65,18 @@
       "gate": "G6",
       "pass": true,
       "detail": {
-        "allowlist": [],
+        "allowlist": [
+          "core/extract.py",
+          "core/test_ocr_single_row.py",
+          "core/verified.py"
+        ],
         "changed": [
+          "core/test_ocr_single_row.py",
+          "core/verified.py",
           "loop/baseline.json",
           "loop/falsification/it-006.json",
           "loop/falsify/it-006.py",
+          "loop/measurements/it-000.json",
           "loop/proposals/it-006.md"
         ],
         "outside_allowlist": [],
@@ -80,9 +89,18 @@
       "gate": "G7",
       "pass": true,
       "detail": {
-        "mode": "baseline self-check",
-        "observed": [],
-        "requirement": "the unchanged tree must flip nothing"
+        "mode": "iteration",
+        "target": "T12",
+        "predicted": [
+          "confirm::lcc_understanding_your_paycheck.pdf::gross_pay"
+        ],
+        "observed": [
+          "confirm::lcc_understanding_your_paycheck.pdf::gross_pay"
+        ],
+        "unpredicted": [],
+        "target_fields_flipped": [
+          "confirm::lcc_understanding_your_paycheck.pdf::gross_pay"
+        ]
       }
     }
   ],
@@ -102,13 +120,13 @@
       "abstained": 21
     },
     "confirm": {
-      "correct": 25,
+      "correct": 26,
       "of": 126,
       "wrong": 0,
-      "abstained": 101
+      "abstained": 100
     },
     "pytest": {
-      "passed": 1398,
+      "passed": 1417,
       "failed": 0,
       "exit_code": 0
     }
@@ -116,8 +134,8 @@
   "field_state_census": {
     "confirm": {
       "blocked_contract": 2,
-      "correct": 25,
-      "image_only": 14,
+      "correct": 26,
+      "image_only": 13,
       "masked": 5
     },
     "external": {
@@ -137,12 +155,17 @@
       "image_only": 31
     }
   },
-  "field_flips_observed": [],
+  "field_flips_observed": [
+    "confirm::lcc_understanding_your_paycheck.pdf::gross_pay"
+  ],
   "flag_off_identical": true,
   "diff_files": [
+    "core/test_ocr_single_row.py",
+    "core/verified.py",
     "loop/baseline.json",
     "loop/falsification/it-006.json",
     "loop/falsify/it-006.py",
+    "loop/measurements/it-000.json",
     "loop/proposals/it-006.md"
   ]
 }
