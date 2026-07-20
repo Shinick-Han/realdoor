@@ -212,12 +212,13 @@
         "confirm::hi_ags_pay_statement_example_2021.pdf::net_pay"
       ],
       "category": "image_only",
-      "status": "OPEN",
-      "attempts": 0,
+      "status": "DONE",
+      "attempts": 1,
       "prior_attempts": [],
       "expected_yield": 2,
       "root_cause_note": "Design section A.1: the earnings-column total misreads as '2.328.01' (comma->period) so no anchored run forms; the summary band 444.00+372.63+1,511.38=2,328.01 is a labeled ROW (TOTAL GROSS / TOTAL DEDUCTIONS / NET PAY), a form verified.py has no rule for. Three stub instances on the document disagree (p1 truth vs p2 before/after pair); nothing printed selects an instance.",
-      "design_note": "Design section F it-C, flag REALDOOR_OCR_TOTAL_BAND: labeled band via anchor-only strings (shredded _ROW_LABELS precedent) + instance-conflict guard (hazard 5: same-field candidates from different regions that disagree => withdraw all). Best-case only; FED TAXABLE adjacency; one attempt, NO_SAFE_RULE acceptable."
+      "design_note": "Design section F it-C, flag REALDOOR_OCR_TOTAL_BAND: labeled band via anchor-only strings (shredded _ROW_LABELS precedent) + instance-conflict guard (hazard 5: same-field candidates from different regions that disagree => withdraw all). Best-case only; FED TAXABLE adjacency; one attempt, NO_SAFE_RULE acceptable.",
+      "closed_note": "Both fields recovered by the labeled total band (new module core/total_band.py, flag REALDOOR_OCR_TOTAL_BAND, OCR-injected pages only; license: printed total closed by an arithmetic identity -- 444.00 + 372.63 + 1,511.38 = 2,328.01 exact under the four printed header cells, anchor-only strings per the shredded._ROW_LABELS precedent). The deliverable guard shipped and is exercised: p2's merged dual-instance stream prints TOTAL TAXES / TOTAL DEDUCTIONS / NET PAY twice each and refuses the page (within-page half, measured live); cross-page disagreement withdraws everything (reconcile, pinned by test). Recorded honestly: p1 emits because p2 refuses -- nothing printed selects the truth instance (design blunt-review 5's residual). Falsified over all 77 first: fired on the target only, zero conflicts. Predicted 2, observed 2 (loop/measurements/it-005.json). One G4 stumble: the it-003 pin asserting hi_ags emits nothing was updated (flag pinned off), not removed -- see reports/it-005.md operator note."
     },
     {
       "id": "T12",

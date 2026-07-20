@@ -1,0 +1,35 @@
+{
+  "predicate": "loop/falsify/it-005.py",
+  "run_at": "2026-07-20T11:10:15+00:00",
+  "documents_swept": 77,
+  "docs_fired": [
+    "confirm::hi_ags_pay_statement_example_2021.pdf"
+  ],
+  "firing_count": 1,
+  "firings": [
+    {
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf",
+      "field": "gross_pay, net_pay",
+      "value": {
+        "gross_pay": {
+          "without_rule": null,
+          "with_rule": 2328.01
+        },
+        "net_pay": {
+          "without_rule": null,
+          "with_rule": 1511.38
+        }
+      },
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "gross_pay": 2328.01,
+        "net_pay": 1511.38
+      }
+    }
+  ],
+  "conflicts": [],
+  "target_fired": true,
+  "verdict": "pass"
+}
