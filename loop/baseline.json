@@ -1,12 +1,12 @@
 {
   "accepted_commit": "c45064647e2f3f496b5f0492b534d232677f5982",
-  "updated": "2026-07-20T06:39:39+00:00",
+  "updated": "2026-07-20T00:00:00Z",
   "generated_by": "loop/tools/build_field_state.py",
   "pack": {
     "correct": 159,
     "wrong": 0,
     "of": 159,
-    "iou_mean": 0.9677,
+    "iou_mean": 0.967727,
     "iou_over_05": 159,
     "iou_evaluated": 159,
     "abstained": 0,
@@ -35,15 +35,15 @@
     "abstained": 21
   },
   "confirm": {
-    "correct": 12,
+    "correct": 15,
     "wrong": 0,
     "of": 126,
-    "abstained": 114,
+    "abstained": 111,
     "unreachable_expected": 8,
     "unreachable_absent": 20
   },
   "pytest": {
-    "passed": 1245,
+    "passed": 1253,
     "failed": 0,
     "exit_code": 0
   },
@@ -112,9 +112,9 @@
   ],
   "field_state_census": {
     "confirm": {
-      "abstain": 5,
+      "abstain": 2,
       "blocked_contract": 2,
-      "correct": 12,
+      "correct": 15,
       "image_only": 22,
       "masked": 5
     },
@@ -141,13 +141,13 @@
     "confirm::bonita_certificated_check_sample.pdf::pay_date": "correct",
     "confirm::bonita_certificated_check_sample.pdf::pay_period_end": "correct",
     "confirm::bonita_certificated_check_sample.pdf::person_name": "correct",
-    "confirm::ca_dlse_paystub_hourly.pdf::gross_pay": "abstain",
+    "confirm::ca_dlse_paystub_hourly.pdf::gross_pay": "correct",
     "confirm::ca_dlse_paystub_hourly.pdf::hourly_rate": "abstain",
-    "confirm::ca_dlse_paystub_hourly.pdf::net_pay": "abstain",
+    "confirm::ca_dlse_paystub_hourly.pdf::net_pay": "correct",
     "confirm::ca_dlse_paystub_hourly.pdf::pay_period_end": "masked",
     "confirm::ca_dlse_paystub_hourly.pdf::pay_period_start": "masked",
     "confirm::ca_dlse_paystub_hourly.pdf::person_name": "abstain",
-    "confirm::ca_dlse_paystub_hourly.pdf::regular_hours": "abstain",
+    "confirm::ca_dlse_paystub_hourly.pdf::regular_hours": "correct",
     "confirm::ca_dlse_paystub_piecerate.pdf::gross_pay": "correct",
     "confirm::ca_dlse_paystub_piecerate.pdf::net_pay": "correct",
     "confirm::ca_dlse_paystub_piecerate.pdf::pay_date": "masked",

@@ -185,14 +185,55 @@ def _is_watermark(obj: dict) -> bool:
     return float(obj.get("size", 0.0) or 0.0) >= WATERMARK_MIN_SIZE
 
 
+def _watermark_sanity_enabled() -> bool:
+    """`REALDOOR_WATERMARK_SANITY=0` restores the unconditional size filter exactly.
+
+    Same convention as `REALDOOR_ARITHMETIC` / `REALDOOR_COLUMNS`: on by default, and
+    with the flag at `0` nothing below `_filter_refutes_itself` ever runs, so
+    `read_words` is bit-identical to what it was before the flag existed. Read through
+    a function rather than captured at import so a test can flip the environment
+    variable and see the change -- same reasoning as `_arithmetic_enabled`.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_WATERMARK_SANITY", "").strip() != "0"
+
+
+def _filter_refutes_itself(page: Any) -> bool:
+    """True when the watermark size filter would delete the page's entire text layer.
+
+    A watermark is an overlay ON a body -- the two coexist on a page by definition, and
+    `WATERMARK_MIN_SIZE` works because the pack prints a big-over-small contrast: the
+    diagonal banner is the only text above 20 pt. A page on which EVERY printed char
+    sits at or above the threshold prints no such contrast, so classifying all of it as
+    watermark refutes itself: it leaves nothing for the supposed watermark to overlay.
+
+    Measured, not hypothetical: `ca_dlse_paystub_hourly.pdf` is a 1756x1176 pt page
+    whose text matrix draws every one of its 630 chars at 27.3-48.6 pt -- large in
+    absolute points because the page is large, not because a watermark covers it. The
+    unconditional filter returned 0 of its 96 words and the extractor was blind to the
+    whole page. Falsified before this was written: across all 77 corpus documents this
+    condition holds on exactly that one page (loop/falsification/it-001.json). A page
+    with no text layer cannot fire (`chars` is empty), so scans still read as empty.
+    """
+    chars = page.chars
+    return bool(chars) and all(_is_watermark(c) for c in chars)
+
+
 def read_words(page: Any, page_number: int) -> list[Word]:
     """Extract watermark-free words from a pdfplumber page, in bottom-left coordinates.
 
     Returns an empty list for a page with no text layer (a scan). That is a legitimate
     result, and the caller must abstain rather than invent anything.
+
+    The size filter is conditional per page (`REALDOOR_WATERMARK_SANITY=0` to make it
+    unconditional again): a page it would empty entirely is read unfiltered instead --
+    see `_filter_refutes_itself` for the bound and the measurement behind it.
     """
     height = float(page.height)
     body = page.filter(lambda obj: not _is_watermark(obj))
+    if _watermark_sanity_enabled() and _filter_refutes_itself(page):
+        body = page
     words: list[Word] = []
     for w in body.extract_words(
         extra_attrs=["size", "fontname"], use_text_flow=False, return_chars=True

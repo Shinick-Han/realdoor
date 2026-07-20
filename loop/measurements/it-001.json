@@ -1,0 +1,177 @@
+{
+  "iteration": 1,
+  "target": "T1",
+  "run_at": "2026-07-20T07:02:29+00:00",
+  "head": "22c7e4737509913252ea4c75fd2dee6e5ed201d9",
+  "accepted_commit": "c45064647e2f3f496b5f0492b534d232677f5982",
+  "verdict": "PASS",
+  "failed_gates": [],
+  "gates": [
+    {
+      "gate": "G1",
+      "pass": true,
+      "detail": {
+        "pack": 0,
+        "external": 0,
+        "confirm": 0
+      }
+    },
+    {
+      "gate": "G2",
+      "pass": true,
+      "detail": {
+        "correct": 159,
+        "correct_required": 159,
+        "abstained": 0,
+        "abstained_required": 0,
+        "iou_over_05": 159,
+        "iou_over_05_required": 159,
+        "iou_mean": 0.967727,
+        "iou_mean_floor": 0.9672
+      }
+    },
+    {
+      "gate": "G3",
+      "pass": true,
+      "detail": {
+        "regressions": [],
+        "fields_compared": 538
+      }
+    },
+    {
+      "gate": "G4",
+      "pass": true,
+      "detail": {
+        "passed": 1253,
+        "failed": 0,
+        "baseline_passed": 1245
+      }
+    },
+    {
+      "gate": "G5",
+      "pass": true,
+      "detail": {
+        "flags_off": [
+          "REALDOOR_WATERMARK_SANITY"
+        ],
+        "compared_against": "c45064647e2f3f496b5f0492b534d232677f5982",
+        "documents_compared": 77,
+        "identical": true,
+        "documents_differing": [],
+        "documents_differing_total": 0
+      }
+    },
+    {
+      "gate": "G6",
+      "pass": true,
+      "detail": {
+        "allowlist": [
+          "core/extract.py",
+          "core/test_extract_reading.py"
+        ],
+        "changed": [
+          "core/extract.py",
+          "core/test_extract_reading.py",
+          "loop/falsification/it-001.json",
+          "loop/falsify/it-001.py",
+          "loop/measurements/it-001.json",
+          "loop/proposals/it-001.md"
+        ],
+        "outside_allowlist": [],
+        "forbidden_touched": [],
+        "cache_paths_exempted": 24,
+        "preexisting_dirt_exempted": 61
+      }
+    },
+    {
+      "gate": "G7",
+      "pass": true,
+      "detail": {
+        "mode": "iteration",
+        "target": "T1",
+        "predicted": [
+          "confirm::ca_dlse_paystub_hourly.pdf::gross_pay",
+          "confirm::ca_dlse_paystub_hourly.pdf::net_pay",
+          "confirm::ca_dlse_paystub_hourly.pdf::regular_hours"
+        ],
+        "observed": [
+          "confirm::ca_dlse_paystub_hourly.pdf::gross_pay",
+          "confirm::ca_dlse_paystub_hourly.pdf::net_pay",
+          "confirm::ca_dlse_paystub_hourly.pdf::regular_hours"
+        ],
+        "unpredicted": [],
+        "target_fields_flipped": [
+          "confirm::ca_dlse_paystub_hourly.pdf::gross_pay",
+          "confirm::ca_dlse_paystub_hourly.pdf::net_pay",
+          "confirm::ca_dlse_paystub_hourly.pdf::regular_hours"
+        ]
+      }
+    }
+  ],
+  "measurements": {
+    "pack": {
+      "correct": 159,
+      "of": 159,
+      "wrong": 0,
+      "abstained": 0,
+      "iou_mean": 0.967727,
+      "iou_over_05": 159
+    },
+    "external": {
+      "correct": 23,
+      "of": 44,
+      "wrong": 0,
+      "abstained": 21
+    },
+    "confirm": {
+      "correct": 15,
+      "of": 126,
+      "wrong": 0,
+      "abstained": 111
+    },
+    "pytest": {
+      "passed": 1253,
+      "failed": 0,
+      "exit_code": 0
+    }
+  },
+  "field_state_census": {
+    "confirm": {
+      "abstain": 2,
+      "blocked_contract": 2,
+      "correct": 15,
+      "image_only": 22,
+      "masked": 5
+    },
+    "external": {
+      "abstain": 5,
+      "correct": 23
+    },
+    "holdout": {
+      "abstain": 10,
+      "correct": 24
+    },
+    "pack": {
+      "correct": 159
+    },
+    "uploads": {
+      "abstain": 10,
+      "correct": 134,
+      "image_only": 31
+    }
+  },
+  "field_flips_observed": [
+    "confirm::ca_dlse_paystub_hourly.pdf::gross_pay",
+    "confirm::ca_dlse_paystub_hourly.pdf::net_pay",
+    "confirm::ca_dlse_paystub_hourly.pdf::regular_hours"
+  ],
+  "flag_off_identical": true,
+  "diff_files": [
+    "core/extract.py",
+    "core/test_extract_reading.py",
+    "loop/falsification/it-001.json",
+    "loop/falsify/it-001.py",
+    "loop/measurements/it-001.json",
+    "loop/proposals/it-001.md"
+  ]
+}

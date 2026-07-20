@@ -2,7 +2,15 @@
   "seeded_from": "extraction-loop-design.md section 7, in the priority order it gives",
   "seeded_at_commit": "60edef4958254178cb433254b6c92ed7b527d65c",
   "selection_rule": "highest expected field yield first, ties broken by lowest attempt count (design section C). With this seed that means T1 first.",
-  "status_values": ["OPEN", "IN_PROGRESS", "DONE", "NO_SAFE_RULE", "BLOCKED_CONTRACT", "MASKED_OUT", "IMAGE_ONLY_OUT_OF_SCOPE"],
+  "status_values": [
+    "OPEN",
+    "IN_PROGRESS",
+    "DONE",
+    "NO_SAFE_RULE",
+    "BLOCKED_CONTRACT",
+    "MASKED_OUT",
+    "IMAGE_ONLY_OUT_OF_SCOPE"
+  ],
   "note": "Every `fields` list below was re-derived from loop/baseline.json's field_state on day 0, not copied from the design. All seven agree with design section 0.1 exactly: 5 ca_dlse abstains, 5 external abstains, 2 il_dol blocked, 5 masked, 22 image-only (hi_ags 6, ou 7, osu 3, lcc 6).",
   "items": [
     {
@@ -18,20 +26,23 @@
         "confirm::ca_dlse_paystub_hourly.pdf::net_pay"
       ],
       "category": "reader_loss",
-      "status": "OPEN",
-      "attempts": 0,
+      "status": "DONE",
+      "attempts": 1,
       "prior_attempts": [],
       "expected_yield": 5,
       "root_cause_note": "read_words returns 0 words for a page on which raw pdfplumber sees 96 words / 630 chars. The PDF's font descriptor has a malformed FontBBox, so every char on the page reports a bogus size of 27.3-48.6pt, and read_words filters size >= WATERMARK_MIN_SIZE (20.0) as watermark. The extractor is blind to the entire page; nothing downstream ever runs.",
       "design_note": "Design section 8.1: ONE unit of work, not five. Five partial fixes around a blind reader are exactly the page-specific patching constraint 2 forbids. Candidate licenses for P2 to weigh: a physical bound (a 'watermark' classification that removes EVERY char on a page is self-refuting -- a watermark is by definition distinguishable from the body it overlays) or measured glyph-box height in place of declared font size. The falsification sweep must additionally prove real >=20pt content elsewhere in the corpus (pack headings, actual watermarks) is still handled -- that is the named hazard. The proposal must still predict all five flips individually; G7 holds it to that. It must also predict that this document's two masked-year fields (pay_period_start/end) stay abstained -- a flip there would mean the change invented a century, and is a G7 anomaly.",
-      "design_risk": "Design section 9.2: T1 changes how every page is read, so predicting zero incidental flips across 77 documents is a strong claim. Expect one REVIEW round-trip here; it is the likeliest place the loop burns its second expensive call."
+      "design_risk": "Design section 9.2: T1 changes how every page is read, so predicting zero incidental flips across 77 documents is a strong claim. Expect one REVIEW round-trip here; it is the likeliest place the loop burns its second expensive call.",
+      "closed_note": "3 of 5 fields recovered (regular_hours, gross_pay, net_pay). person_name and hourly_rate were measured to stay abstain with the page readable: they sit under a 29pt non-bold header row the header path does not recognise. That is a label/geometry cause, not reader loss, so it is a separate target rather than a patch inside this one."
     },
     {
       "id": "T2",
       "title": "ext_les pay_period_start: printed compound label `Pay Begin Date`",
       "corpus": "external",
       "doc": "ext_les.pdf",
-      "fields": ["external::ext_les.pdf::pay_period_start"],
+      "fields": [
+        "external::ext_les.pdf::pay_period_start"
+      ],
       "category": "label_vocabulary",
       "status": "OPEN",
       "attempts": 0,
@@ -45,7 +56,9 @@
       "title": "ext_unc regular_hours: row word plus header columns",
       "corpus": "external",
       "doc": "ext_unc.pdf",
-      "fields": ["external::ext_unc.pdf::regular_hours"],
+      "fields": [
+        "external::ext_unc.pdf::regular_hours"
+      ],
       "category": "column_geometry",
       "status": "OPEN",
       "attempts": 0,
@@ -116,8 +129,15 @@
       "title": "22 image-only fields in four hybrid documents",
       "corpus": "confirm",
       "doc": "hi_ags_pay_statement_example_2021.pdf | ou_sample_check_stub.pdf | osu_sample_earnings_statement.pdf | lcc_understanding_your_paycheck.pdf",
-      "fields": ["see loop/baseline.json field_state, the 22 confirm entries valued image_only"],
-      "field_counts": {"hi_ags_pay_statement_example_2021.pdf": 6, "ou_sample_check_stub.pdf": 7, "osu_sample_earnings_statement.pdf": 3, "lcc_understanding_your_paycheck.pdf": 6},
+      "fields": [
+        "see loop/baseline.json field_state, the 22 confirm entries valued image_only"
+      ],
+      "field_counts": {
+        "hi_ags_pay_statement_example_2021.pdf": 6,
+        "ou_sample_check_stub.pdf": 7,
+        "osu_sample_earnings_statement.pdf": 3,
+        "lcc_understanding_your_paycheck.pdf": 6
+      },
       "category": "image_only",
       "status": "IMAGE_ONLY_OUT_OF_SCOPE",
       "attempts": 0,
@@ -126,6 +146,21 @@
       "closed_on": "day 0, zero iterations spent",
       "root_cause_note": "The four documents are hybrid, not scans: they carry large text layers (2.3k-10.3k chars of explanatory prose) with the actual pay stub embedded as a raster image. The 22 values exist only in those pixels. Measured image resolutions: hi_ags/ou/osu ~150-200 dpi (OCR-viable), lcc ~96-116 dpi (marginal).",
       "design_note": "Design section 8.3 gives the five go/no-go inputs a future OCR effort must obtain before starting -- root cause of the existing 0/7, the recoverability upper bound measured offline, a verification story compatible with zero-wrong (do the embedded stubs print closable identities?), the bbox mapping from image pixels to PDF points at IoU>0.5, and the determinism cost of a nondeterministic dependency. Decision rule: start only if (1) is understood, (2) is >= ~two-thirds clean and (3) closes identities on at least the ou/osu-class documents. Otherwise IMAGE_ONLY is the honest boundary of a text-layer extractor."
+    },
+    {
+      "id": "T8",
+      "title": "ca_dlse_hourly: header row at 29pt non-bold is not recognised",
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf",
+      "fields": [
+        "person_name",
+        "hourly_rate"
+      ],
+      "category": "label_typography",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "With the page now readable, both fields still abstain. Printed header row 'EMPLOYEE  SOCIAL SECURITY NO.  PAY RATE  PAY PERIOD' is 29pt non-bold; the header path does not recognise its cells at that typography."
     }
   ]
 }
