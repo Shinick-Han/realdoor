@@ -45,6 +45,10 @@ html { -webkit-text-size-adjust: 100%; }
    the whole page above it. */
 html { scroll-padding-bottom: var(--dock-scroll-clearance); }
 
+/* Page 2's section links are sticky at the top of the viewport, so anything the page
+   scrolls to must come to rest below that strip, not under it. */
+html { scroll-padding-top: 3.2rem; }
+
 /* …with one exemption, and it is the reason typing in the question box used to drag the
    page to the bottom of the document.
 
@@ -185,7 +189,7 @@ a:hover { text-decoration-thickness: 2px; }
    prepared example is. It is not made quiet enough to miss: the button inside it is a
    full .action--lead, because one obvious click is the requirement. */
 .example-offer {
-  margin: 1.6rem 0 0;
+  margin: 1.2rem 0 0;
   padding: 1rem clamp(.8rem, 2vw, 1.2rem) 1.1rem;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -290,8 +294,8 @@ main:focus { outline: none; }
   border: 1px solid var(--line);
   border-top: 4px solid var(--accent);
   border-radius: var(--radius);
-  padding: 1.2rem clamp(.8rem, 2vw, 1.6rem) 1.4rem;
-  margin-top: 1rem;
+  padding: 1.1rem clamp(.8rem, 2vw, 1.6rem) 1.1rem;
+  margin-top: .6rem;
 }
 .ask-anywhere h2 { font-size: 1.3rem; margin-top: 0; }
 .ask-anywhere > .aside-note { max-width: 72ch; }
@@ -373,36 +377,110 @@ main:focus { outline: none; }
 
 .lede { color: var(--ink-soft); max-width: 72ch; font-size: 1.02rem; }
 
-/* ── step indicator (USWDS): reports progress, never navigates ─────── */
-.step-indicator { margin: 0 0 .8rem; }
-.step-indicator__segments {
+/* ── the two-page rail: real navigation, quietly drawn ───────────────
+   The six-segment step indicator is gone with the six steps. Two pages need no progress
+   bar; they need a way across. Type, not coloured bars: the current page is bold with an
+   accent underline, the other is a plain link — the variant-B move of carrying hierarchy
+   in weight and space rather than in boxes. */
+.page-rail { margin: 0 0 .5rem; }
+.page-rail__list {
   display: flex;
   flex-wrap: wrap;
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: .25rem .6rem;
-  counter-reset: seg;
+  gap: .2rem 1.6rem;
 }
-.segment {
-  flex: 1 1 7rem;
-  min-width: 6rem;
-  border-top: 6px solid var(--line);
-  padding-top: .35rem;
-  font-size: .82rem;
-  color: var(--ink-soft);
-  counter-increment: seg;
+.page-rail__link {
+  font: inherit;
+  font-size: .95rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: .15rem .1rem .3rem;
+  color: var(--accent);
+  cursor: pointer;
 }
-.segment__label::before {
-  content: counter(seg) ". ";
-  font-variant-numeric: tabular-nums;
+.page-rail__link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.page-rail__link[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+  cursor: default;
 }
-.segment--complete { border-top-color: var(--accent); color: var(--ink); }
-.segment--current  { border-top-color: var(--focus); color: var(--ink); font-weight: 700; }
-.segment--todo     { border-top-color: var(--line); }
-@media (max-width: 700px) {
-  .segment { flex-basis: 45%; }
+
+/* ── page 2's in-page wayfinding: jump links, sticky on the way down ──
+   Merging three screens must not produce blind scrolling: the section links stay in
+   reach at the top of the viewport while the page scrolls under them. Sticky, not
+   fixed — it is in the flow, costs its height once, and never covers content. */
+.section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem 1.4rem;
+  padding: .5rem .2rem;
+  margin: 0 0 1.2rem;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
 }
+.section-nav a {
+  font-size: .9rem;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* One frame per nesting level: the sections of page 2 are separated by space and a
+   hairline, never by nested boxes. */
+.ready-section { margin: 0 0 2.4rem; }
+.ready-section > h2 { margin-top: 0; }
+.ready-section > h2:focus { outline: none; }
+.ready-section > h2:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.ready-section + .ready-section { border-top: 1px solid var(--line); padding-top: 1.6rem; }
+
+/* ── the summary-first fold ──────────────────────────────────────────
+   Same disclosure grammar as details.tech, one size up: this holds a section's full
+   working, not a code. The unfolded page carries the answer; this carries the record. */
+details.fold { margin: 1.1rem 0; }
+details.fold > summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: .95rem;
+  width: fit-content;
+  padding: .2rem 0;
+}
+details.fold > summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+details.fold[open] { border-left: 3px solid var(--line); padding-left: 1rem; }
+details.fold > :not(summary) { margin-top: .8rem; }
+
+/* The calculation's answer, before its working. The figure is the largest number on the
+   page because it is the one the page exists to produce. */
+.calc-lead { margin: 0 0 1.2rem; }
+.calc-lead__figure { font-size: 1.35rem; margin-bottom: .4rem; }
+
+/* The tally line above the folded check-answers list. */
+.tally-lead { max-width: 72ch; }
+
+/* ── the downstream moment: what a correction did, in place ──────────
+   It appears directly under the table whose row was corrected. It keeps the callout
+   grammar (a coloured rule, not a box) so it reads as a consequence of the row above
+   it, not as a new panel. */
+.downstream-note { margin-top: 1rem; }
+
+/* ── recorded questions, folded under the ask box ────────────────────── */
+details.recorded-questions { margin: 0 0 .2rem; }
+details.recorded-questions > summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  width: fit-content;
+  padding: .2rem 0;
+}
+details.recorded-questions > summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+details.recorded-questions[open] { border-left: 3px solid var(--line); padding-left: 1rem; }
+details.recorded-questions > :not(summary) { margin-top: .6rem; }
 
 /* ── error summary: top of main, above the H1, links to each item ──── */
 .error-summary {
@@ -569,8 +647,8 @@ details.tech > * { margin-top: .4rem; }
   flex-wrap: wrap;
   gap: .6rem;
   align-items: center;
-  margin-top: 2rem;
-  padding-top: 1.1rem;
+  margin-top: 1.4rem;
+  padding-top: .9rem;
   border-top: 2px solid var(--line);
 }
 .step-nav:empty { display: none; }

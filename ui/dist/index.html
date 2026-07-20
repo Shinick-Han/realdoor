@@ -49,43 +49,41 @@
 <div class="layout">
   <main id="main" tabindex="-1">
 
-    <!-- Error summary sits at the very top of the main container, above the step
-         indicator and above the H1, and links to each offending item by id. Its wording
-         is the same string as the inline message, character for character. -->
+    <!-- Error summary sits at the very top of the main container, above the page rail
+         and above the H1, and links to each offending item by id. Its wording is the
+         same string as the inline message, character for character. -->
     <div id="error-summary-host"></div>
 
-    <!-- Non-navigable step indicator. It contains no links and no buttons: it reports
-         progress and nothing else. Back/Next at the foot of each screen is the navigation. -->
-    <div id="step-indicator-host"></div>
+    <!-- The two-page rail. It IS the navigation now: the renter flow was six ordered
+         step-screens and is now two pages, and with two of them there is no sequence
+         left to protect — either page makes sense from the other. The owner's call:
+         six screens were too big an obstacle. The rail is a nav with two links, the
+         current one marked aria-current="page"; it is not an ARIA tab widget, because
+         these are two pages of one flow, not two panels of one screen. -->
+    <div id="page-rail-host"></div>
 
-    <!-- ── step 1: the first screen ─────────────────────────────────────────────────
-         There used to be a landing screen in front of this one. It carried four things:
-         a heading, a paragraph, the household picker, and two blocks of walkthrough
-         instructions ("Before you start", "What happens, in order"). The instructions were
-         about the demo rather than about the product, and they are now on the "How this
-         works" page, which is where a judge reads that kind of thing. The paragraph said
-         what the standing notice in the header already says on every screen, so it is not
-         repeated here. The picker moved down into this step; the one sentence of the old
-         paragraph the header does *not* carry — what the service actually does with the
-         documents — opens the lede below. The step numbers are unchanged: this was step 1
-         before and it is step 1 now.
+    <!-- ── page 1: the renter's file ────────────────────────────────────────────────
+         Everything about the renter's own documents happens here, in place: the unified
+         opener (upload, or one press into a prepared example), the evidence page with
+         its tags, and every row action — Confirm, "This is wrong — fix it", drag-to-read,
+         the absence check. When an inline correction commits, the downstream before/after
+         summary appears as a callout right under that document's table: what used to be
+         screen 2's whole job is now a moment on this page, where the row is.
     -->
-    <section class="screen" id="screen-1" aria-labelledby="h-1">
-      <p class="step-caption" id="cap-1">Step 1 of 6</p>
-      <h1 id="h-1" tabindex="-1">Check the values we read from your documents</h1>
-      <p class="lede">RealDoor reads a document you give it and shows you where on the page every
-      value came from. Each value is shown together with the box it was read from; choose a field
-      name to light up its box. Nothing here is inferred about the person.</p>
+    <!-- No "Page 1 of 2" caption above the H1: the rail directly above already names the
+         current page and marks it aria-current, and the router's announcement carries
+         "Page 1 of 2" to the live region. Saying it a third time was the six-step
+         layout's habit, kept past its reason. -->
+    <section class="screen" id="screen-file" aria-labelledby="h-file">
+      <h1 id="h-file" tabindex="-1">Check the values we read from your documents</h1>
+      <p class="lede">RealDoor reads a document you give it. It shows you where on the page every
+      value came from; choose a field name to light up its box. If a value is wrong, fix it on
+      its row — the numbers that depend on it are worked out again, in place.</p>
 
       <!-- ── the front door ──────────────────────────────────────────────────────────
-           Upload comes first, and this is the point of the screen rather than a detail of
-           its layout. What used to be here was a picker listing six prepared households,
-           with the upload panel below it — so the first thing this product said about
-           itself was "choose one of these six records", which is a demo affordance and not
-           what the thing is. A person arriving with their own paperwork has exactly one
-           file, theirs, and no use for a list of other people's.
-
-           Nothing is loaded until they say so. Steps 2 to 6 each say plainly that they are
+           Upload comes first, and this is the point of the page rather than a detail of
+           its layout. A person arriving with their own paperwork has exactly one file,
+           theirs. Nothing is loaded until they say so; page 2 says plainly that it is
            waiting on a document rather than showing an empty table with nobody in it. -->
       <div id="upload-body"></div>
 
@@ -97,12 +95,12 @@
            immediately. app.js fills #example-open with ONE opener wired to the select
            below it — the button names whatever the select shows (default: the README
            walkthrough's household), so the two can never disagree. #start-over-host is
-           the lighter door to the session reset step 6 also offers: same machinery,
+           the lighter door to the session reset page 2 also offers: same machinery,
            with one confirming step. -->
       <section class="example-offer" aria-labelledby="example-offer-heading">
         <h2 id="example-offer-heading">Or open a prepared example file</h2>
         <p>If you would rather look around first, this copy carries six made-up household files.
-        They belong to nobody. Everything the six steps do — the evidence boxes, the corrections,
+        They belong to nobody. Everything both pages do — the evidence boxes, the corrections,
         the checklist, the packet — works the same on them as on a document of your own.</p>
         <div id="example-open"></div>
         <div class="household-picker">
@@ -113,117 +111,104 @@
         <div id="start-over-host"></div>
       </section>
 
-      <!-- The pointer to the household that actually shows the checklist doing work. It was
-           under the process list on the landing screen; that list is now on the judges' page,
-           and this sentence is for the renter, so it stays on the first screen they meet. -->
+      <!-- The pointer to the household that actually shows the checklist doing work. -->
       <div id="landing-hint"></div>
 
       <div id="documents-body"></div>
-      <div class="step-nav" id="nav-1"></div>
+      <div class="step-nav" id="nav-file"></div>
     </section>
 
-    <!-- ── step 2 ───────────────────────────────────────────────────────────────── -->
-    <section class="screen" id="screen-2" aria-labelledby="h-2" hidden>
-      <p class="step-caption" id="cap-2">Step 2 of 6</p>
-      <h1 id="h-2" tabindex="-1">Correct a value we read wrong</h1>
-      <p class="lede" data-i18n-block="lede-correct">Change a value the system read, and watch the numbers underneath it move — or
-      watch the system explain why your correction was <em>not</em> used.</p>
-      <div id="correct-body"></div>
-      <div class="step-nav" id="nav-2"></div>
-    </section>
+    <!-- ── page 2: readiness and handoff ────────────────────────────────────────────
+         Three sections, top to bottom: the calculation, the checklist, and the
+         check-answers tally with the packet. Each section leads with its answer in a
+         line or two; the full working folds behind a disclosure. What is OPEN — an
+         abstention, a review reason, a figure we could not compute — never folds
+         (contracts/ROLE_UI.md rule 4); what is settled folds so the page stays short.
+         The jump links below the heading are the wayfinding: on a phone this page must
+         not become blind scrolling. -->
+    <section class="screen" id="screen-ready" aria-labelledby="h-ready">
+      <h1 id="h-ready" tabindex="-1">See what your file adds up to, then take your packet</h1>
+      <p class="lede">Three things, in order. First, the yearly figure we worked out, and the
+      frozen limit it is compared against. Then the checklist: what is present, what is missing,
+      what is out of date. Last, the packet you hand to the housing office. A comparison is not
+      a determination.</p>
 
-    <!-- ── step 3 ───────────────────────────────────────────────────────────────── -->
-    <section class="screen" id="screen-3" aria-labelledby="h-3" hidden>
-      <p class="step-caption" id="cap-3">Step 3 of 6</p>
-      <h1 id="h-3" tabindex="-1">Ask what a housing rule says</h1>
-      <p class="lede">Every answer carries its rule id, the authority behind it, the date it took
-      effect, and where in the source it is written.</p>
-      <div id="ask-body"></div>
-      <div class="step-nav" id="nav-3"></div>
-    </section>
+      <div id="ready-notice-host"></div>
 
-    <!-- ── step 4 ───────────────────────────────────────────────────────────────── -->
-    <section class="screen" id="screen-4" aria-labelledby="h-4" hidden>
-      <p class="step-caption" id="cap-4">Step 4 of 6</p>
-      <h1 id="h-4" tabindex="-1">See how your yearly income figure was worked out</h1>
-      <p class="lede">Inputs, formula, result, threshold, comparison, effective date. A comparison
-      is not a determination.</p>
-      <div id="calc-body"></div>
-      <div class="step-nav" id="nav-4"></div>
-    </section>
+      <nav class="section-nav" id="ready-sections-nav" aria-label="On this page">
+        <a href="#sec-calc">The calculation</a>
+        <a href="#sec-checklist">Missing or expired</a>
+        <a href="#sec-packet">Your packet</a>
+      </nav>
 
-    <!-- ── step 5 ───────────────────────────────────────────────────────────────── -->
-    <section class="screen" id="screen-5" aria-labelledby="h-5" hidden>
-      <p class="step-caption" id="cap-5">Step 5 of 6</p>
-      <h1 id="h-5" tabindex="-1">See what is missing or out of date</h1>
-      <p class="lede">What is present, what is missing, what has expired, and what could not be
-      dated — with the one thing you can do about each.</p>
-      <div id="checklist-body"></div>
-      <div class="step-nav" id="nav-5"></div>
-    </section>
+      <section class="ready-section" id="sec-calc" aria-labelledby="h-sec-calc">
+        <h2 id="h-sec-calc" tabindex="-1">How your yearly figure was worked out</h2>
+        <div id="calc-body"></div>
+      </section>
 
-    <!-- ── step 6: check answers, then the packet ───────────────────────────────── -->
-    <section class="screen" id="screen-6" aria-labelledby="h-6" hidden>
-      <p class="step-caption" id="cap-6">Step 6 of 6</p>
-      <h1 id="h-6" tabindex="-1">Check what we found, then take your packet</h1>
-      <p class="lede">This is everything the earlier steps produced, in one place. Change anything
-      that is wrong before you download it.</p>
-      <div id="summary-body"></div>
-      <div id="packet-body"></div>
-      <div class="step-nav" id="nav-6"></div>
+      <section class="ready-section" id="sec-checklist" aria-labelledby="h-sec-checklist">
+        <h2 id="h-sec-checklist" tabindex="-1">What is missing or out of date</h2>
+        <div id="checklist-body"></div>
+      </section>
+
+      <section class="ready-section" id="sec-packet" aria-labelledby="h-sec-packet">
+        <h2 id="h-sec-packet" tabindex="-1">Check what we found, then take your packet</h2>
+        <div id="summary-body"></div>
+        <div id="packet-body"></div>
+      </section>
+
+      <div class="step-nav" id="nav-ready"></div>
     </section>
 
     <!-- ── secondary route: judge-facing material, one level of disclosure ───────── -->
     <section class="screen" id="screen-how" aria-labelledby="h-how" hidden>
-      <p class="step-caption" id="cap-how">Not part of the renter's six steps</p>
+      <p class="step-caption" id="cap-how">Not part of the renter's walkthrough</p>
       <h1 id="h-how" tabindex="-1">How this works, and how we tested it</h1>
       <p class="lede">This page is for anyone checking the service rather than using it. Every
       control below can be triggered here and its actual response shown — a disclaimer is not a
       control. Underneath are our own measurements, printed as they came out.</p>
 
-      <!-- Both blocks below stood on a landing screen in front of step 1, where they were the
-           first thing a renter met. They are demo instructions — how long the walkthrough
-           takes, what is already loaded, and a table of contents for the six steps — which is
-           material for someone checking the service, not for someone using it. They are moved
-           here rather than deleted: every sentence in them was on screen before and is still
-           on record, and this is the page a judge reads. -->
       <div class="summary-box" role="region" aria-labelledby="trust-heading">
         <h2 id="trust-heading">Before you start</h2>
-        <p id="trust-line">This walkthrough takes about ten minutes. The documents for the household
-        you choose above are already loaded, so you can go straight through it without uploading
-        anything. Step 1 also lets you read a synthetic document of your own, held in memory for
-        this session only. Nothing is sent anywhere. You can stop at any step and your work stays
-        on this device.</p>
+        <p id="trust-line">This walkthrough takes about ten minutes. The prepared example files are
+        already loaded, so you can go straight through it without uploading anything. Page 1 also
+        lets you read a synthetic document of your own, held in memory for this session only.
+        Nothing is sent anywhere. You can stop at any point and your work stays on this device.</p>
       </div>
 
       <h2>What happens, in order</h2>
-      <p>The six steps of the walkthrough, in the order they are presented. The walkthrough starts
-      on step 1, so this list is a description of it rather than a gate in front of it.</p>
+      <p>The renter's walkthrough is two pages, in the order they are presented. It opens on
+      page 1, so this list is a description of it rather than a gate in front of it. It used to
+      be six ordered step-screens; the owner's call was that six screens were too big an obstacle,
+      so the same work now lives on two pages and nothing was dropped.</p>
       <ol class="process-list" id="process-list"></ol>
 
       <div class="summary-box" role="region" aria-labelledby="mapping-heading">
         <h2 id="mapping-heading">Where the challenge's six acceptance steps live</h2>
-        <p>The challenge brief specifies a six-step acceptance demo. Our numbered walkthrough is
+        <p>The challenge brief specifies a six-step acceptance demo. Our walkthrough is two pages
         written for the renter, not for that list, so the two do not line up one to one. This is
-        the mapping.</p>
+        the mapping, and every acceptance step remains individually demonstrable.</p>
         <ul id="mapping-list">
-          <li><strong>1. Upload documents, show extraction evidence</strong> — walkthrough step 1.
-          The household's documents are pre-loaded, and the panel at the top of that step reads a
-          synthetic document you upload yourself. Either way every value carries the box on the
-          page it came from. An uploaded document is read on its own and is not added to the
-          household, because working out whose document it is and what it replaces would mean
-          guessing.</li>
-          <li><strong>2. Edit one field, show downstream values update</strong> — walkthrough
-          step 2.</li>
-          <li><strong>3. Ask a rule question, show an authoritative citation</strong> —
-          walkthrough step 3.</li>
-          <li><strong>4. Deterministic calculation with effective dates</strong> — walkthrough
-          step 4.</li>
-          <li><strong>5. Identify missing or expired items, export a packet</strong> — walkthrough
-          steps 5 and 6. We split it because reviewing what is open and taking the packet are two
-          different decisions for the renter.</li>
+          <li><strong>1. Upload documents, show extraction evidence</strong> — page 1. The
+          upload panel is the front door, and one press opens a prepared example instead; either
+          way every value carries the box on the page it came from. An uploaded document is read
+          on its own; the session's uploads together form a file of their own that both pages
+          can walk.</li>
+          <li><strong>2. Edit one field, show downstream values update</strong> — page 1.
+          “This is wrong — fix it” opens an editor on the row itself; when the correction
+          commits, the before/after summary — the recomputed figure, the threshold move, or the
+          recorded-but-not-used explanation — appears in place under that document's table.</li>
+          <li><strong>3. Ask a rule question, show an authoritative citation</strong> — the ask
+          box pinned at the foot of every page. Its answers carry the rule id, authority,
+          effective date and source; the recorded questions, including the eligibility refusal,
+          are in the “Recorded questions” list under the same box.</li>
+          <li><strong>4. Deterministic calculation with effective dates</strong> — page 2,
+          “How your yearly figure was worked out”.</li>
+          <li><strong>5. Identify missing or expired items, export a packet</strong> — page 2,
+          “What is missing or out of date” and then “Check what we found, then take your
+          packet”, top to bottom on the same page.</li>
           <li><strong>6. Run the refusal, prompt-injection and session-deletion tests</strong> —
-          <em>this page, immediately below.</em> It is not numbered in the walkthrough because it
+          <em>this page, immediately below.</em> It is not part of the walkthrough because it
           is not a task the renter performs. Both the adversarial suite and the static
           no-decision guard exercise these paths on every run.</li>
         </ul>
@@ -231,7 +216,7 @@
 
       <!-- Sentences that used to sit on the renter's screens. They explain why the product is
            built the way it is, which is a question a judge asks and a renter never does; on the
-           six steps they were noise. Moved here, not deleted: every claim below was on the
+           renter's pages they were noise. Moved here, not deleted: every claim below was on the
            renter's screen before and is still on record. -->
       <div class="summary-box" role="region" aria-labelledby="design-heading">
         <h2 id="design-heading">Why the screens are worded the way they are</h2>
@@ -255,6 +240,11 @@
         with its citation; no document, no extracted field and no household record is part of that
         computation. This line used to sit above the ask box on every screen, where it explained the
         machinery to a renter who only wanted to ask a question.</p>
+        <p><strong>What folds and what may not.</strong> On page 2 each section leads with its
+        answer and folds its full working — inputs, formulas, rule citations, the satisfied
+        checklist items — behind a disclosure. Abstentions, review reasons and any figure we could
+        not compute never fold: what is settled collapses, what is open stays loud with its next
+        step. That is the same rule the packet follows.</p>
       </div>
 
       <div class="summary-box" role="region" aria-labelledby="data-heading">
@@ -282,25 +272,32 @@
 
     <!-- ── ask a rule question, from wherever you are ───────────────────────────────
          Not a `.screen`: it is never hidden and never navigated to, so it is on show on
-         every step and on the judges' page as well. It used to live inside step 3 only,
-         which put the one free-text control in this service three clicks from the first
-         thing anyone saw.
+         both pages and on the judges' page as well.
 
          It sits at the foot of main rather than in the right-hand rail for three reasons.
          The rail is committed to one subject — what the system is unsure about — and a
          question box is not that. An answer arrives with citation cards, which need the
          main column's width and would be unreadable in an 18rem rail. And at 320px the
-         rail stacks under main anyway, so a rail insert would compete for the narrowest
-         screen's space while a full-width band below the step does not.
+         rail stacks under main anyway.
+
+         The recorded questions live here too, in the expandable list below the box:
+         they used to be a screen of their own (old step 3), and a screen whose one job
+         is holding buttons for a control that already follows you was a screen too many.
+         Nothing that screen demonstrated is unreachable: the graded questions, the
+         session-bound withholding and the eligibility refusal all live in the list.
 
          Answers render into #ask-answer below, which is part of this section: whichever
-         screen you asked from, the answer appears here, and focus moves to its heading. -->
+         page you asked from, the answer appears here, and focus moves to its heading. -->
     <section class="ask-anywhere" id="ask-anywhere" aria-labelledby="ask-anywhere-heading">
       <h2 id="ask-anywhere-heading">Ask about a housing rule</h2>
-      <p class="aside-note">You can ask from any step, in your own words. The answer opens
-      below this box, with the rule id, the authority behind it and the date it took effect.
-      Step 3 holds the recorded questions and explains what a citation carries.</p>
+      <p class="aside-note">You can ask from either page, in your own words. The answer opens
+      below, with the rule id, the authority behind it and the date it took effect. The
+      recorded questions this copy can always answer are in the list underneath.</p>
       <div id="ask-box-body"></div>
+      <details class="recorded-questions" id="recorded-questions">
+        <summary>Recorded questions</summary>
+        <div id="ask-recorded-body"></div>
+      </details>
       <div id="ask-answer"></div>
     </section>
 
@@ -309,7 +306,7 @@
   <aside class="open-questions" aria-labelledby="open-questions-heading">
     <h2 id="open-questions-heading">What this system is unsure about</h2>
     <p class="aside-note">Anything we could not read, or could not be sure of, is listed here — on
-    every screen, whichever step you are on.</p>
+    every screen, whichever page you are on.</p>
     <div id="open-questions-body"></div>
   </aside>
 </div>

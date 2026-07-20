@@ -1347,7 +1347,134 @@
       "항목 이름을 고르면 문서 위의 근거 위치가 강조됩니다.",
     "No file chosen": "고른 파일 없음",
     "Two formulas, reported together with the gap between them. A per-string grade is not defensible and is not produced. SMOG needs 30 sentences to be used as defined; screens below that are marked as extrapolated. WCAG 2.2 SC 3.1.5 Reading Level is Level AAA and is not required at AA -- we adopt it voluntarily and do not claim AA obliges it.":
-      "공식 두 개를, 둘 사이의 차이와 함께 보고합니다. 문장 하나하나에 등급을 매기는 것은 근거를 댈 수 없어 내지 않습니다. SMOG 는 정의대로 쓰려면 문장 30 개가 필요하므로, 그보다 짧은 화면은 외삽값으로 표시합니다. WCAG 2.2 SC 3.1.5 읽기 수준은 AAA 등급이고 AA 에서는 요구되지 않습니다 — 저희가 자발적으로 채택한 것이며, AA 가 이를 의무로 삼는다고 주장하지 않습니다."
+      "공식 두 개를, 둘 사이의 차이와 함께 보고합니다. 문장 하나하나에 등급을 매기는 것은 근거를 댈 수 없어 내지 않습니다. SMOG 는 정의대로 쓰려면 문장 30 개가 필요하므로, 그보다 짧은 화면은 외삽값으로 표시합니다. WCAG 2.2 SC 3.1.5 읽기 수준은 AAA 등급이고 AA 에서는 요구되지 않습니다 — 저희가 자발적으로 채택한 것이며, AA 가 이를 의무로 삼는다고 주장하지 않습니다.",
+
+    /* ── 2페이지 재구성 (6단계 → 2페이지) ──────────────────────────────────────
+     * 세입자 흐름이 여섯 단계 화면에서 두 페이지로 합쳐졌다. 옛 키는 지우지 않는다 —
+     * 키가 안 맞으면 영어로 남는 구조라 해가 없고, 지우면 되돌리기 어렵다. 아래는
+     * 새 화면 구조가 만든 문장들이다. */
+
+    // 페이지 캡션·레일·이동
+    "Page 1 of 2": "2페이지 중 1페이지",
+    "Page 2 of 2": "2페이지 중 2페이지",
+    "Ready to hand over": "건네줄 준비",
+    "Pages": "페이지",
+    "Continue to page 2: what it adds up to, and your packet":
+      "2페이지로 계속: 합산 결과와 신청 서류 묶음",
+    "Back to page 1: your documents": "1페이지로 돌아가기: 내 서류",
+    "Change on page 1": "1페이지에서 바꾸기",
+    "Go to page 1": "1페이지로 가기",
+    "No document has been read yet, so this page has nothing of yours to show.":
+      "아직 읽은 문서가 없어서, 이 페이지에 보여 드릴 당신의 것이 없습니다.",
+    "— the file made of your uploads.": "— 올리신 문서로 만든 파일입니다.",
+
+    // 1페이지 도입문과 예시 안내
+    "RealDoor reads a document you give it. It shows you where on the page every value came from; choose a field name to light up its box. If a value is wrong, fix it on its row — the numbers that depend on it are worked out again, in place.":
+      "RealDoor 는 당신이 준 문서를 읽습니다. 각 값이 문서의 어느 위치에서 나왔는지 보여 드리고, 항목 이름을 고르면 그 상자가 켜집니다. 값이 틀렸으면 그 행에서 바로 고치세요 — 그 값에 기대는 숫자들이 그 자리에서 다시 계산됩니다.",
+    "If you would rather look around first, this copy carries six made-up household files. They belong to nobody. Everything both pages do — the evidence boxes, the corrections, the checklist, the packet — works the same on them as on a document of your own.":
+      "먼저 둘러보고 싶으시면, 이 사본에는 지어낸 세대 파일 여섯 개가 들어 있습니다. 누구의 것도 아닙니다. 두 페이지가 하는 모든 것 — 근거 상자, 정정, 점검 목록, 서류 묶음 — 은 당신의 문서에서와 똑같이 그것들에서도 작동합니다.",
+    "See each value we read and the box it came from. Confirm it, or fix it on its row and watch the numbers move in place.":
+      "읽어낸 각 값과 그 값이 나온 상자를 봅니다. 확인하거나, 그 행에서 바로 고치고 숫자가 그 자리에서 움직이는 것을 봅니다.",
+    "The yearly figure and the frozen limit it is compared against, the checklist of what is still open, then the packet you hand to the housing office.":
+      "연 소득 금액과 그 비교 대상인 동결된 상한, 아직 남은 것의 점검 목록, 그리고 주택 사무소에 건네실 서류 묶음입니다.",
+
+    // 2페이지 제목·도입문·구획
+    "See what your file adds up to, then take your packet":
+      "파일이 얼마로 합산되는지 보고, 신청 서류 묶음을 받으세요",
+    "Three things, in order. First, the yearly figure we worked out, and the frozen limit it is compared against. Then the checklist: what is present, what is missing, what is out of date. Last, the packet you hand to the housing office. A comparison is not a determination.":
+      "세 가지가 순서대로 있습니다. 먼저, 저희가 계산한 연 소득 금액과 그 비교 대상인 동결된 상한입니다. 다음은 점검 목록입니다: 무엇이 있고, 무엇이 없고, 무엇의 기한이 지났는지요. 마지막은 주택 사무소에 건네실 서류 묶음입니다. 비교는 판정이 아닙니다.",
+    "How your yearly figure was worked out": "연 소득 금액이 어떻게 산출되었는지",
+    "On this page": "이 페이지 안에서",
+    "a year.": "— 한 해로 합산한 금액입니다.",
+    "no threshold applies": "적용되는 기준액 없음",
+    "Show the full working — every input, formula and rule":
+      "전체 계산 과정 펼치기 — 모든 입력값·계산식·규칙",
+    "The same household, in another HUD region": "같은 세대를 다른 HUD 지역에서 보면",
+    "Check each answer, row by row": "답을 한 줄씩 확인하기",
+    "What is inside, and who it is for": "안에 무엇이 들어 있고, 누구를 위한 것인지",
+    "Check the rows below before you download, and change anything that is wrong.":
+      "내려받기 전에 아래 줄들을 확인하시고, 틀린 것은 바꾸세요.",
+    "Nothing is missing. Every required item is present and current.":
+      "빠진 것이 없습니다. 필요한 항목이 전부 있고, 전부 유효합니다.",
+
+    // 오류 요약과 남은 항목 (단계 → 페이지)
+    "There is one open item on this page": "이 페이지에 남은 항목이 하나 있습니다",
+    "One thing here needs a person to look at it": "여기, 사람이 봐야 할 것이 하나 있습니다",
+    "“One thing here needs a person to look at it”": "“여기, 사람이 봐야 할 것이 하나 있습니다”",
+
+    // 행 안에서의 정정과 그 하류 요약 (옛 2단계의 몫)
+    "Your correction was used — here is what moved": "정정이 쓰였습니다 — 무엇이 움직였는지 보여 드립니다",
+    "The corrected value flowed into the calculation. Nothing was hidden and no eligibility outcome follows from it. Page 2 shows the full working.":
+      "정정한 값이 계산에 반영되었습니다. 숨긴 것은 없으며, 여기서 자격에 대한 어떤 결론도 따라 나오지 않습니다. 전체 계산 과정은 2페이지에 있습니다.",
+    "below the documents, in the system's own words.": "(서류 아래)에 시스템 자신의 말로 적혀 있습니다.",
+    "Close this summary": "이 요약 닫기",
+    "Corrections this copy can replay": "이 사본이 재생할 수 있는 정정",
+    "Without a server, the app can only replay corrections the pipeline actually ran. Both of these are real pipeline output: press one and the before-and-after summary appears under the row it names. Point the app at the API to edit any field.":
+      "서버가 없으면 이 앱은 파이프라인이 실제로 실행한 정정만 재생할 수 있습니다. 아래 둘 다 실제 파이프라인 출력입니다: 하나를 누르면 그 정정이 가리키는 행 아래에 전·후 요약이 나타납니다. 아무 항목이나 고치려면 앱을 API 에 연결하세요.",
+    "If you know the exact date, fix it on the date row below. Or ask for a copy that shows the full date. Page 2 lists this as an open item.":
+      "정확한 날짜를 아시면 아래 날짜 행에서 바로 고쳐 주세요. 아니면 날짜가 다 적힌 사본을 요청하세요. 2페이지에 남은 항목으로 올라 있습니다.",
+    "Work through the open items in the checklist below. Each one says what to send.":
+      "아래 점검 목록의 남은 항목을 하나씩 처리해 주세요. 무엇을 보내면 되는지 각 항목에 적혀 있습니다.",
+
+    // 질문 상자와 기록된 질문 (옛 3단계의 몫)
+    "You can ask from either page, in your own words. The answer opens below, with the rule id, the authority behind it and the date it took effect. The recorded questions this copy can always answer are in the list underneath.":
+      "어느 페이지에서든 자기 말로 물어보실 수 있습니다. 답변은 아래에 열리며, 규칙 id, 그 근거가 되는 기관, 시행일이 함께 붙습니다. 이 사본이 언제나 답할 수 있는 기록된 질문은 그 아래 목록에 있습니다.",
+    "Questions this copy has an answer on record for. Press one and the answer opens below, in the same place a typed question's answer does.":
+      "이 사본에 답이 기록되어 있는 질문들입니다. 하나를 누르면 답변이 아래에, 직접 입력한 질문의 답변과 같은 자리에 열립니다.",
+    "The rest name nobody — what a rule says, and what this service does when a document tries to give it an instruction — and those are answered the same way whoever is asking. They are worth pressing with an empty desk.":
+      "나머지는 누구도 지목하지 않습니다 — 규칙이 무엇이라 말하는지, 그리고 문서가 소프트웨어에 명령을 심으려 할 때 이 서비스가 어떻게 하는지 — 그래서 누가 묻든 같은 답이 나옵니다. 빈 책상으로도 눌러 볼 가치가 있습니다.",
+    "Page 1 opens a prepared example in one press, or reads a document of your own.":
+      "1페이지에서 준비된 예시를 한 번에 열거나, 직접 가져온 문서를 읽을 수 있습니다.",
+    "questions about the rules. The recorded questions under the ask box list examples — what the frozen income limit is, how a year of income is added up, or what is still missing or out of date.":
+      "규칙에 관한 질문입니다. 질문 상자 아래의 기록된 질문에 예가 있습니다 — 동결된 소득 상한이 얼마인지, 1년치 소득을 어떻게 합산하는지, 또는 아직 없거나 기한이 지난 것이 무엇인지입니다.",
+    "If that is not what you meant, ask again in different words, or use a recorded question from the list under the ask box.":
+      "뜻하신 바가 아니라면 다른 표현으로 다시 물어보시거나, 질문 상자 아래 목록의 기록된 질문을 쓰세요.",
+    "Without a server, the questions this build did record can still be asked from the Recorded questions list under the box, and their answers open here.":
+      "서버가 없어도, 이 빌드가 기록해 둔 질문들은 상자 아래 '기록된 질문' 목록에서 그대로 물어볼 수 있고, 그 답변은 여기에 열립니다.",
+    "no file is open, so there was nothing to answer from. Page 1 reads a document you upload, or opens a prepared example file. Then ask again.":
+      "열려 있는 파일이 없어서, 답할 근거가 없었습니다. 1페이지에서 직접 올린 문서를 읽거나 준비된 예시 파일을 열 수 있습니다. 그런 다음 다시 물어보세요.",
+    "Then open http://127.0.0.1:8077 and ask again from the box at the foot of the page.":
+      "그런 다음 http://127.0.0.1:8077 을 열고, 페이지 아래의 질문 상자에서 다시 물어보세요.",
+    "Then open http://127.0.0.1:8077 and return to page 1.":
+      "그런 다음 http://127.0.0.1:8077 을 열고 1페이지로 돌아오세요.",
+
+    // 빈 책상 안내 (2페이지 공용)
+    "This page reads whatever file is open, and none is — so there is nothing here to be right or wrong about. This is not an empty result, it is an empty desk.":
+      "이 페이지는 열려 있는 파일을 읽는데, 지금은 아무것도 열려 있지 않습니다 — 그래서 여기에는 맞고 틀릴 것이 없습니다. 이것은 빈 결과가 아니라 빈 책상입니다.",
+    "Page 1 does both of the things that change that: it reads a PDF you choose, and it opens one of the six prepared example files.":
+      "그것을 바꾸는 두 가지가 모두 1페이지에 있습니다: 직접 고른 PDF 를 읽는 것과, 준비된 예시 파일 여섯 개 중 하나를 여는 것입니다.",
+    "This page reads whatever file is open, and none is. The documents you uploaded on page 1 are kept together as a file of your own — open it and this page reads them.":
+      "이 페이지는 열려 있는 파일을 읽는데, 지금은 아무것도 열려 있지 않습니다. 1페이지에서 올리신 문서들은 하나의 파일로 함께 보관되어 있습니다 — 그 파일을 열면 이 페이지가 그것을 읽습니다.",
+
+    // 올리기 패널 (단계 → 페이지)
+    "Walk both pages with your own documents": "당신의 문서로 두 페이지를 걸어 보세요",
+    "Everything you upload in this session is kept together as one file. Open it and both pages read your documents — you can fix values, see the numbers, check the list, and take the packet.":
+      "이번 세션에서 올리신 것은 전부 하나의 파일로 함께 보관됩니다. 그 파일을 열면 두 페이지가 당신의 문서를 읽습니다 — 값을 고치고, 숫자를 보고, 목록을 점검하고, 서류 묶음을 받을 수 있습니다.",
+    "Everything you upload in this session is kept together as one file of your own. You can open that file from the list on page 1 and walk both pages with it. Deleting the session removes all of it.":
+      "이번 세션에서 올리신 문서는 전부 하나의 파일로 함께 보관됩니다. 1페이지의 목록에서 그 파일을 열어 두 페이지를 걸어 볼 수 있습니다. 세션을 삭제하면 전부 사라집니다.",
+    "This session already holds 6 uploaded documents, and they all stay in this session's memory. That is the ceiling. You can open the file made of the ones you have, or delete the session at the end of page 2 and start again.":
+      "이 세션에는 이미 올리신 문서 6장이 있고, 전부 이 세션의 메모리에 있습니다. 그것이 상한입니다. 지금 있는 것으로 만들어진 파일을 열거나, 2페이지 끝에서 세션을 삭제하고 다시 시작하실 수 있습니다.",
+
+    // 판정 화면(심사위원용)의 새 안내문
+    "Not part of the renter's walkthrough": "세입자의 진행 과정에는 포함되지 않는 화면",
+    "This walkthrough takes about ten minutes. The prepared example files are already loaded, so you can go straight through it without uploading anything. Page 1 also lets you read a synthetic document of your own, held in memory for this session only. Nothing is sent anywhere. You can stop at any point and your work stays on this device.":
+      "이 과정은 약 10분 걸립니다. 준비된 예시 파일은 이미 불러와 있어서, 아무것도 올리지 않고 그대로 끝까지 진행하실 수 있습니다. 1페이지에서는 직접 만드신 합성 문서를 올려 읽어 볼 수도 있습니다. 그 문서는 이번 세션의 메모리에만 있습니다. 어디로도 전송되지 않습니다. 어느 지점에서든 멈출 수 있고 작업 내용은 이 기기에 남습니다.",
+    "The renter's walkthrough is two pages, in the order they are presented. It opens on page 1, so this list is a description of it rather than a gate in front of it. It used to be six ordered step-screens; the owner's call was that six screens were too big an obstacle, so the same work now lives on two pages and nothing was dropped.":
+      "세입자의 진행 과정은 두 페이지이며, 제시되는 순서대로 적었습니다. 1페이지에서 바로 시작하므로, 이 목록은 앞을 막는 관문이 아니라 설명입니다. 원래는 여섯 단계 화면이었는데, 여섯 화면은 너무 큰 장애물이라는 오너의 결정에 따라 같은 일이 이제 두 페이지에 있으며, 빠진 것은 없습니다.",
+    "The challenge brief specifies a six-step acceptance demo. Our walkthrough is two pages written for the renter, not for that list, so the two do not line up one to one. This is the mapping, and every acceptance step remains individually demonstrable.":
+      "과제 설명서는 6단계 수용 데모를 요구합니다. 우리의 진행 과정은 그 목록이 아니라 세입자를 위해 쓴 두 페이지라서, 둘은 1대1로 맞아떨어지지 않습니다. 아래가 그 대응표이며, 각 수용 단계는 여전히 하나씩 따로 시연할 수 있습니다.",
+    "— page 1. The upload panel is the front door, and one press opens a prepared example instead; either way every value carries the box on the page it came from. An uploaded document is read on its own; the session's uploads together form a file of their own that both pages can walk.":
+      "— 1페이지. 올리기 패널이 정문이고, 한 번의 누름으로 준비된 예시를 대신 열 수도 있습니다. 어느 쪽이든 모든 값은 그것이 나온 문서상의 근거 위치를 달고 있습니다. 올리신 문서는 그 문서 하나만 놓고 읽으며, 세션의 업로드들은 함께 자기 파일을 이루어 두 페이지를 걸을 수 있습니다.",
+    "— page 1. “This is wrong — fix it” opens an editor on the row itself; when the correction commits, the before/after summary — the recomputed figure, the threshold move, or the recorded-but-not-used explanation — appears in place under that document's table.":
+      "— 1페이지. “잘못 읽었어요 — 고치기”가 행 자체에 편집기를 엽니다. 정정이 반영되면 전·후 요약 — 다시 계산된 금액, 기준액의 이동, 또는 기록만 되고 쓰이지 않은 이유 — 이 그 문서의 표 아래, 바로 그 자리에 나타납니다.",
+    "— the ask box pinned at the foot of every page. Its answers carry the rule id, authority, effective date and source; the recorded questions, including the eligibility refusal, are in the “Recorded questions” list under the same box.":
+      "— 모든 페이지 아래에 고정된 질문 상자입니다. 그 답변에는 규칙 id, 근거 기관, 시행일, 출처가 붙습니다. 자격 거부 시연을 포함한 기록된 질문은 같은 상자 아래 “기록된 질문” 목록에 있습니다.",
+    "— page 2, “How your yearly figure was worked out”.":
+      "— 2페이지, “연 소득 금액이 어떻게 산출되었는지”.",
+    "— page 2, “What is missing or out of date” and then “Check what we found, then take your packet”, top to bottom on the same page.":
+      "— 2페이지, “무엇이 없거나 기한이 지났는지”에 이어 “찾아낸 내용을 확인하고, 신청 서류 묶음을 받으세요”가 같은 페이지에 위에서 아래로 이어집니다.",
+    "It is not part of the walkthrough because it is not a task the renter performs. Both the adversarial suite and the static no-decision guard exercise these paths on every run.":
+      "세입자가 수행하는 일이 아니기 때문에 진행 과정에 넣지 않았습니다. 적대적 시험 묶음과 정적 무판정 가드가 매 실행마다 이 경로들을 통과시킵니다."
   };
 
   // ── 평문 계층(api/plain.py)의 조립 부품 ────────────────────────────────────
@@ -1666,7 +1793,17 @@
     }],
     [/^PDF page (\d+)$/, function (m) { return "PDF " + m[1] + "쪽"; }],
 
-    // 진행 안내와 이동
+    // 진행 안내와 이동 (2페이지 구조)
+    [/^Page (\d+) of 2\.\s*(.*)$/, function (m) {
+      return "2페이지 중 " + m[1] + "페이지. " + (lookup(m[2]) || m[2]);
+    }],
+    // 페이지 레일의 링크: "1. Your documents" 처럼 번호가 같은 텍스트 노드에 붙는다.
+    [/^([12])\. (.+)$/, function (m) {
+      var name = lookup(m[2]);
+      return name === null ? null : m[1] + ". " + name;
+    }],
+    [/^Go to page (\d+)$/, function (m) { return m[1] + "페이지로 가기"; }],
+    // (옛 6단계 이동 문구 — 화면에서는 사라졌지만, 지우는 것은 "추가만"이 아니다)
     [/^Step (\d+) of 6\.\s*(.*)$/, function (m) {
       return "6단계 중 " + m[1] + "단계. " + (lookup(m[2]) || m[2]);
     }],
@@ -1678,6 +1815,27 @@
     [/^to see this item in context$/, function () { return "— 이 항목을 맥락 속에서 보기"; }],
 
     // 남은 항목 개수
+    [/^There are (\d+) open items on this page$/, function (m) {
+      return "이 페이지에 남은 항목이 " + m[1] + "개 있습니다";
+    }],
+    [/^(\d+) things here need a person to look at them$/, function (m) {
+      return "여기, 사람이 봐야 할 것이 " + m[1] + "개 있습니다";
+    }],
+    // 2페이지의 요약 우선 접기와 집계 문장
+    [/^Present \((\d+)\) — show these items$/, function (m) {
+      return "있음 (" + m[1] + ") — 항목 펼치기";
+    }],
+    [/^(\d+) thing\(s\) still open — each one is listed above with what to do about it\.\s*$/, function (m) {
+      return "아직 남은 것이 " + m[1] + "건 있습니다 — 각각 무엇을 하면 되는지 위에 적혀 있습니다. ";
+    }],
+    [/^About (.+)$/, function (m) {
+      var name = lookup(m[1]);
+      return name === null ? null : name + "에 대하여";
+    }],
+    [/^Frozen 60% threshold: (.+) · effective date (.+) · frozen event date (.+)$/, function (m) {
+      return "동결된 60% 기준액: " + (lookup(m[1]) || m[1]) + " · 시행일 " + m[2] +
+             " · 동결 기준일 " + m[3];
+    }],
     [/^There are (\d+) open items on this step$/, function (m) {
       return "이 단계에 남은 항목이 " + m[1] + "개 있습니다";
     }],

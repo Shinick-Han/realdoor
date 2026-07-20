@@ -700,7 +700,7 @@ class Store:
                 f"This session already holds {MAX_SESSION_UPLOADS} uploaded documents, "
                 f"and they all stay in this session's memory. That is the ceiling. "
                 f"You can open the file made of the ones you have, or delete the "
-                f"session on step 6 and start again.",
+                f"session at the end of page 2 and start again.",
             )
         view = upload_mod.read_upload(data, file_name, document_type)
         # 업로드들이 한 파일로 모이려면 같은 household_id 를 말해야 한다. 이 키는 팩
