@@ -75,6 +75,54 @@
 
     "Correct a value we read wrong": "잘못 읽은 값을 바로잡으세요",
 
+    // U10: 제품의 핵심 약속이 한국어 토글에서 영어로 남아 있었다. 우선순위대로 옮긴다 —
+    // 머리말 선언문 먼저, 그다음 세입자용 약속 문장들. 인용문(규칙·출처 원문)과
+    // 심사위원용 설계 근거(screen-how)는 그대로 영어로 둔다.
+    "We get your file to the person who decides, complete the first time you hand it over. What we cannot tell you is the outcome — and no software can, because that decision needs checks that are not in these documents. Nothing on this screen means approved, denied, or ineligible; a qualified housing professional decides that.":
+      "저희는 판단하는 사람에게 당신의 파일을, 처음 건네드릴 때 온전한 상태로 전달합니다. 저희가 말씀드릴 수 없는 것은 그 결과입니다 — 어떤 소프트웨어도 말할 수 없습니다. 그 판단에는 이 서류에 없는 확인들이 필요하기 때문입니다. 이 화면의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판단은 공인 주택 전문가가 합니다.",
+    "Anything we could not read, or could not be sure of, is listed here — on every screen, whichever step you are on.":
+      "저희가 읽지 못했거나 확신하지 못한 것은 무엇이든 여기에 나열됩니다 — 어느 단계에 계시든 모든 화면에서요.",
+    "RealDoor reads a document you give it and shows you where on the page every value came from. Each value is shown together with the box it was read from; choose a field name to light up its box. Nothing here is inferred about the person.":
+      "RealDoor 는 당신이 준 문서를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여 드립니다. 각 값은 그것을 읽어낸 상자와 함께 표시됩니다. 항목 이름을 고르면 그 상자가 켜집니다. 여기에서 사람에 대해 추측한 것은 없습니다.",
+    "Choose a PDF and RealDoor reads it, then shows you every value it took out of it and the box on the page each one came from. It is read on its own: nothing else has to be open first, and reading it changes nothing anywhere else.":
+      "PDF 를 고르시면 RealDoor 가 읽고, 거기서 뽑아낸 모든 값과 각 값이 나온 문서상의 상자를 보여 드립니다. 이 문서는 따로 읽힙니다: 먼저 열려 있어야 할 것이 없고, 읽어도 다른 어떤 것도 바뀌지 않습니다.",
+    "Every box below already holds what we read off this page. If a value is right, choose Confirm and leave the box alone. If it is wrong, change the box and choose the same button — that records a correction instead. Confirming does not change the value or any number below it; it records that you read it.":
+      "아래의 모든 칸에는 저희가 이 페이지에서 읽어낸 내용이 이미 들어 있습니다. 값이 맞으면 확인을 누르고 칸은 그대로 두세요. 틀렸으면 칸을 고치고 같은 버튼을 누르세요 — 그러면 대신 정정으로 기록됩니다. 확인은 값이나 그 아래 어떤 숫자도 바꾸지 않습니다. 당신이 그것을 읽었다는 사실을 기록할 뿐입니다.",
+    "If you would rather look around first, this copy carries six made-up household files. They belong to nobody. Everything the six steps do — the evidence boxes, the corrections, the checklist, the packet — works the same on them as on a document of your own.":
+      "먼저 둘러보고 싶으시면, 이 사본에는 지어낸 세대 파일 여섯 개가 들어 있습니다. 누구의 것도 아닙니다. 여섯 단계가 하는 모든 것 — 근거 상자, 정정, 점검 목록, 서류 묶음 — 은 당신의 문서에서와 똑같이 그것들에서도 작동합니다.",
+    "It also states how many values you checked and lists the actions taken in this session, with the rule versions that applied. That log holds no document contents and none of the values themselves.":
+      "또한 당신이 확인한 값이 몇 개인지 밝히고, 이번 세션에서 이루어진 작업을 적용된 규칙 버전과 함께 나열합니다. 그 기록에는 문서 내용도, 값 자체도 담기지 않습니다.",
+    "Nothing is waiting on you.": "당신을 기다리는 것은 없습니다.",
+
+    // U12: 어디로도 라우팅되지 않은 질문 — 막다른 기권이 아니라 다음 걸음을 준다.
+    "This isn't one this tool can answer — here is where to take it":
+      "이건 이 도구가 답할 수 있는 질문이 아닙니다 — 어디로 가져가면 되는지 알려 드립니다",
+    "This tool only answers questions about the housing-income rules: the frozen income limits, how income is added up over a year, and what a document needs. Yours is not one of those. That is fine to ask — it is just not something this tool can look up.":
+      "이 도구는 주택 소득 규칙에 관한 질문만 답합니다: 동결된 소득 상한, 1년치 소득을 어떻게 합산하는지, 그리고 서류에 무엇이 필요한지입니다. 물으신 것은 그중 하나가 아닙니다. 물으셔도 괜찮습니다 — 다만 이 도구가 찾아볼 수 있는 것이 아닐 뿐입니다.",
+    "Where a question like this belongs:": "이런 질문이 가야 할 곳:",
+    "your property manager or a housing worker can answer it. This tool cannot.":
+      "관리사무소나 주택 담당자가 답해 줄 수 있습니다. 이 도구는 답할 수 없습니다.",
+    "What you can ask here:": "여기서 물어볼 수 있는 것:",
+    "questions about the rules. Step 3 lists them — for example, what the frozen income limit is, how a year of income is added up, or what is still missing or out of date.":
+      "규칙에 관한 질문입니다. 3단계에 목록이 있습니다 — 예를 들어, 동결된 소득 상한이 얼마인지, 1년치 소득을 어떻게 합산하는지, 또는 아직 없거나 기한이 지난 것이 무엇인지입니다.",
+
+    // U9: 계산 패널이 무엇인지 한 줄로. 소득원이 하나뿐이면 두 패널이 같은 식을 보이므로.
+    "This is your wage income on its own: one pay period, times the number of pay periods in a year.":
+      "이것은 급여 소득만 따로 본 것입니다: 한 지급 주기를, 1년 안의 지급 횟수만큼 곱한 값입니다.",
+    "This is your gig income on its own.": "이것은 긱(gig) 소득만 따로 본 것입니다.",
+    "This is your whole yearly income: every income line above, added together. With one income source it matches that line; with more than one, it is their sum.":
+      "이것은 한 해 전체 소득입니다: 위의 모든 소득 항목을 더한 값입니다. 소득원이 하나면 그 항목과 같고, 둘 이상이면 그것들의 합입니다.",
+
+    // U4: 문서가 소프트웨어에 명령을 심으려 한 경우의 안내. 공격 문구는 신청자의 값이
+    // 아니므로 값 표에서 빼고, 대신 여기서 "당신에 대한 것이 아니라 문서에 대한 사실"이라고
+    // 설명한다. 원문(격리된 텍스트)은 기술 세부정보에 그대로 남는다.
+    "Something in this document tried to give the software an instruction":
+      "이 문서 안의 무언가가 소프트웨어에 명령을 주려 했습니다",
+    "We filed it as text and never ran it. It changed none of your values and none of the figures on this file. There is nothing for you to do about it, and it is not held against you — it is a fact about the document, not about you.":
+      "저희는 그것을 글자로만 보관하고 실행하지 않았습니다. 당신의 어떤 값도, 이 파일의 어떤 수치도 바꾸지 않았습니다. 당신이 하실 일은 없고, 불리하게 작용하지도 않습니다 — 이것은 당신이 아니라 문서에 대한 사실입니다.",
+    "Captured as quarantined data under rule CH-SAFETY-001, which is cited on this report because of it. The text is stored and carried into the packet so a reviewer can see it; it never reaches the calculation.":
+      "규칙 CH-SAFETY-001 에 따라 격리된 데이터로 포착했으며, 그 때문에 이 리포트에 해당 규칙이 인용됩니다. 이 글자는 검토자가 볼 수 있도록 보관되어 패킷에 실리지만, 계산에는 결코 도달하지 않습니다.",
+
     "Ask what a housing rule says": "주택 규칙이 뭐라고 하는지 물어보세요",
     "Every answer carries its rule id, the authority behind it, the date it took effect, and where in the source it is written.":
       "모든 답변에는 규칙 id, 그 근거가 되는 기관, 시행일, 그리고 원문의 어디에 적혀 있는지가 함께 붙습니다.",
@@ -227,6 +275,8 @@
     "not stated": "적혀 있지 않음",
     "no date": "날짜 없음",
     "Currency": "유효 기간",
+    "Still current?": "아직 유효한가요?",
+    "No day in the date": "날짜에 일(日)이 없음",
     "Read via": "읽은 방법",
     "text layer": "텍스트 레이어",
     "Page size": "페이지 크기",
@@ -253,8 +303,8 @@
 
     // ── app.js: 정정 화면 ───────────────────────────────────────────────────
     "Your correction is recorded, and it may still not be used": "정정은 기록되지만, 그래도 쓰이지 않을 수 있습니다",
-    "A correction changes what the file says. It does not automatically change the annualized amount: if the corrected figure no longer agrees with the hours and rate printed on the same document, that document stops settling what the recurring pay is, and the system says so instead of quietly using the new number.":
-      "정정은 파일에 적힌 내용을 바꿉니다. 그렇다고 연환산 금액이 자동으로 바뀌지는 않습니다. 정정한 숫자가 같은 문서에 인쇄된 근무시간·시급과 더 이상 맞지 않으면, 그 문서는 정기 급여가 얼마인지를 확정해 주지 못하게 됩니다. 이때 시스템은 새 숫자를 조용히 쓰지 않고 그 사실을 말합니다.",
+    "A correction changes what the file says. It does not always change your yearly income figure. Here is why: if your new figure no longer matches the hours and pay rate printed on the same document, that document can no longer show what your regular pay is. When that happens the system tells you, instead of quietly using the new number.":
+      "정정은 파일에 적힌 내용을 바꿉니다. 그렇다고 연 소득 금액이 늘 바뀌는 것은 아닙니다. 이유는 이렇습니다: 정정한 숫자가 같은 문서에 인쇄된 근무시간·시급과 더 이상 맞지 않으면, 그 문서는 정기 급여가 얼마인지를 더는 보여줄 수 없습니다. 그럴 때 시스템은 새 숫자를 조용히 쓰지 않고 그 사실을 알려 드립니다.",
     "Recorded corrections available offline": "오프라인에서 쓸 수 있는 기록된 정정",
     "Without a server the app can only replay corrections the pipeline actually ran. Both of these are real pipeline output. Point the app at the API to edit any field.":
       "서버가 없으면 이 앱은 파이프라인이 실제로 실행한 정정만 재생할 수 있습니다. 아래 둘 다 실제 파이프라인 출력입니다. 아무 항목이나 고치려면 앱을 API 에 연결하세요.",
@@ -346,7 +396,20 @@
     "No recorded answer for that wording": "그 표현으로 기록된 답변이 없습니다",
     "Offline, this app can only replay questions the pipeline actually answered. It will not improvise an answer about a housing rule. Choose one of the recorded questions, or start the API for free-form questions.":
       "오프라인에서는 파이프라인이 실제로 답한 질문만 재생할 수 있습니다. 주택 규칙에 대한 답을 지어내지 않습니다. 기록된 질문 중 하나를 고르거나, 자유롭게 묻고 싶으면 API 를 실행하세요.",
-    "Refused, on purpose": "의도적으로 거부했습니다",
+    // U3: "거부"는 신청자에게 문이 닫히는 말로 읽힌다. 실제로 일어난 일은 더 좁다 —
+    // 판단을 그 일을 하는 사람에게 넘긴 것이다. 거부 자체는 그대로다.
+    "Only a person can decide that — here is what we can tell you":
+      "그 판단은 사람만 할 수 있습니다 — 저희가 알려 드릴 수 있는 것은 이렇습니다",
+    "We cannot tell you whether you will get this home, and we will not guess. A housing worker decides that. It takes checks this service does not hold: proof of who lives with you, your income confirmed by an outside source, and status checks that are not in your file.":
+      "이 집을 얻으시게 될지는 저희가 말씀드릴 수 없고, 짐작하지도 않습니다. 그 판단은 주택 담당자가 합니다. 그러려면 이 서비스가 갖고 있지 않은 확인이 필요합니다 — 누가 함께 사는지에 대한 증빙, 외부 기관이 확인한 소득, 그리고 파일에 없는 신분 확인입니다.",
+    "Here is what we can tell you from your documents:": "서류에서 저희가 알려 드릴 수 있는 것은 이렇습니다:",
+    "What your income adds up to over a year.": "소득이 1년 동안 얼마로 합산되는지.",
+    "The income limit for a household your size.": "세대 인원수에 해당하는 소득 상한.",
+    "How those two numbers compare.": "그 두 수치가 서로 어떻게 견주어지는지.",
+    "What is still missing or out of date.": "아직 없거나 기한이 지난 것이 무엇인지.",
+    "Those are facts about paperwork and arithmetic, not about you. Our job is to hand the person who decides a complete file, so they can decide the first time they read it.":
+      "이것들은 서류와 계산에 대한 사실이지, 당신에 대한 사실이 아닙니다. 저희가 할 일은 판단하는 사람에게 온전한 파일을 건네어, 그가 처음 읽을 때 판단할 수 있게 하는 것입니다.",
+    "The precise wording this service sends: ": "이 서비스가 보내는 정확한 문구: ",
     "Abstained — no answer given": "답하지 않았습니다 — 답을 내지 않았습니다",
     "Answer": "답변",
     "No answer is given for this question.": "이 질문에는 답을 내지 않습니다.",
@@ -358,16 +421,14 @@
     // gloss 는 API 가 보내는 영어 조각이라 아래 따로 옮긴다 — 옮기지 못한 것은
     // 영어로 남고, 그게 지어내는 것보다 낫다.
     "Answer, from how we read your question": "답변 — 질문을 이렇게 읽고 드린 답입니다",
-    "How we read your question.": "질문을 이렇게 읽었습니다.",
-    "You did not use one of the wordings this service recognises exactly, so it worked out what you were most likely asking and answered that.":
-      "이 서비스가 정확히 알아듣는 표현이 아니어서, 무엇을 물으신 것인지 헤아려 그 질문에 답했습니다.",
-    "We read it as a question about": "다음에 대한 질문으로 읽었습니다:",
-    "We cannot put that reading into a short phrase here.":
-      "그 해석을 여기에 짧은 말로 옮기지는 못합니다.",
+    // U2: 해석 안내는 이제 답 아래 한 줄이다. 답이 먼저, 우리의 라우팅 이야기는 나중.
+    "We read your question as one about": "질문을 다음에 대한 것으로 읽었습니다:",
+    "We answered our best reading of your wording, not an exact match.":
+      "표현이 정확히 일치하지 않아, 헤아린 최선의 읽기에 답했습니다.",
     "Your wording also sat close to several other questions this service answers, and it could not tell them apart. Take this as our best attempt at your question rather than a settled answer to it.":
       "게다가 이 표현은 이 서비스가 답하는 다른 몇 가지 질문과도 가까워서, 그것들과 구분하지 못했습니다. 확정된 답이 아니라 질문에 대한 최선의 시도로 읽어 주세요.",
-    "If that is not what you meant, ask again in different words, or use one of the recorded questions on step 3, where the wording is fixed and nothing has to be worked out.":
-      "뜻하신 바가 아니라면 다른 표현으로 다시 물어보시거나, 3단계의 기록된 질문을 쓰세요. 그쪽은 표현이 정해져 있어 헤아릴 것이 없습니다.",
+    "If that is not what you meant, ask again in different words, or use a recorded question on step 3.":
+      "뜻하신 바가 아니라면 다른 표현으로 다시 물어보시거나, 3단계의 기록된 질문을 쓰세요.",
     "Ask again in different words": "다른 표현으로 다시 묻기",
     // Technical details 안. 값(경로 이름·의도 이름)은 .mono 라서 번역되지 않는다.
     "Routed by:": "어느 층이 잡았는지:",
@@ -1466,7 +1527,35 @@
         return "서로 다른 검사 " + m[1] + "건이 이 한 항목을 제기했습니다. 각 검사는 " +
                "기술 세부사항에 전부 나열되어 있습니다.";
       }],
-    [/^Abstentions \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
+    // U6: 영어 제목이 이 한국어를 따라 "Things we did not say" 로 바뀌었다. 한국어는 그대로.
+    [/^Things we did not say \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
+    // U10: "이 문서에 N개 값이 남았습니다" 카드 본문. N 과 항목 이름은 그대로 둔다.
+    [/^You have (\d+) value\(s\) left on this document that only the machine has read: (.+)\. Confirming them together records that you compared each one against the page shown above and found it right\. It changes none of the values\. Anything you are unsure about, leave — you can confirm the others one at a time\.$/,
+      function (m) {
+        return "이 문서에는 기계만 읽은 값이 " + m[1] + "개 남아 있습니다: " + m[2] + ". 이것들을 함께 " +
+               "확인하면, 위에 표시된 페이지와 하나하나 대조해 맞다고 확인하셨다는 사실이 기록됩니다. " +
+               "값은 하나도 바뀌지 않습니다. 확실하지 않은 것은 남겨 두세요 — 나머지는 하나씩 확인하실 수 있습니다.";
+      }],
+    // U10: 확인 카운터. 강조 부분(숫자 보간)과 꼬리 문장을 각각 옮긴다.
+    [/^(\d+) of (\d+) read values checked by you\.\s*$/, function (m) {
+      return "읽어낸 값 " + m[2] + "개 중 " + m[1] + "개를 당신이 확인했습니다. ";
+    }],
+    [/^Checking is optional and nothing here is wrong\. Whatever you leave unchecked still travels with your file, marked as read by the machine but not yet confirmed by you, and a person can review it either way\.( (\d+) value\(s\) could not be read at all — those need a person to supply them\.)?$/,
+      function (m) {
+        var base = "확인은 선택 사항이고, 여기에 잘못된 것은 없습니다. 확인하지 않고 두신 것도 " +
+                   "기계가 읽었지만 아직 당신이 확인하지는 않은 것으로 표시되어 파일과 함께 그대로 " +
+                   "전달되며, 사람이 어느 쪽이든 검토할 수 있습니다.";
+        if (m[2]) {
+          base += " " + m[2] + "개 값은 전혀 읽을 수 없었습니다 — 그것들은 사람이 채워 넣어야 합니다.";
+        }
+        return base;
+      }],
+    // U8: 이름을 자신 있게 읽지 못했을 때, 이름이 있는 자리에 문장으로 알린다.
+    [/^We may not have read your name correctly\. It reads “(.+?)”, but we are not sure\. Check this row first, and fix it here if it is wrong\.$/,
+      function (m) {
+        return "성함을 정확히 읽지 못했을 수 있습니다. “" + m[1] + "”로 읽었지만 확신하지 못합니다. " +
+               "이 행을 먼저 확인하시고, 틀렸으면 여기서 바로잡아 주세요.";
+      }],
     [/^Reasons this needs review \((\d+)\)$/, function (m) {
       return "검토가 필요한 이유 (" + m[1] + ")";
     }],
@@ -1517,7 +1606,7 @@
         return lookup(label) || label;
       }).join(", ");
     }],
-    [/^(\d+) abstention\(s\) and (\d+) reason\(s\) this needs review\. All of them are listed in full under “What this system is unsure about”, and all of them travel with your packet\.$/,
+    [/^(\d+) thing\(s\) we did not say and (\d+) reason\(s\) this needs review\. All of them are listed in full under “What this system is unsure about”, and all of them travel with your packet\.$/,
       function (m) {
         return "말하지 않은 것 " + m[1] + "건과 검토가 필요한 이유 " + m[2] + "건. 모두 “이 시스템이 확신하지 못하는 것”" +
                "아래에 빠짐없이 나열되어 있으며, 모두 서류 묶음에 함께 실립니다.";
@@ -1582,8 +1671,9 @@
     [/^Loaded (\S+)\. (.+)$/, function (m) {
       return m[1] + " 을 불러왔습니다. " + (lookup(m[2]) || m[2]);
     }],
-    [/^Refused, on purpose\. (.+)$/, function (m) {
-      return "의도적으로 거부했습니다. " + (lookup(m[1]) || m[1]);
+    [/^Only a person can decide that — here is what we can tell you\. (.+)$/, function (m) {
+      return "그 판단은 사람만 할 수 있습니다 — 저희가 알려 드릴 수 있는 것은 이렇습니다. " +
+             (lookup(m[1]) || m[1]);
     }],
     [/^Abstained — no answer given\. (.+)$/, function (m) {
       return "답하지 않았습니다 — 답을 내지 않았습니다. " + (lookup(m[1]) || m[1]);
@@ -1935,6 +2025,9 @@
       ]
     },
     "footer-privacy": {
+      // U10: 저장된 en 이 실제 HTML 보다 한 문장("?fixtures ...") 길어서 대조가 어긋났고,
+      // 그 때문에 이 문단은 한국어 토글에서도 계속 영어로 남아 있었다. 화면의 실제 문단에
+      // 맞춰 en 과 ko 를 그 문장 앞에서 끝낸다(그 정보는 "How this works" 에도 있다).
       en: "No external fonts, scripts, images, or analytics. Every request this page makes goes to the " +
           "address in the bar above it and nowhere else; opened as a file, it makes none at all. That is a " +
           "promise about this page, not about the whole system: when the question classifier is switched on, " +
@@ -1942,9 +2035,7 @@
           "can promise structurally is narrower and harder: no document, no extracted field and no household " +
           "record is ever part of that request. Before your sentence is sent we replace the identifier shapes " +
           "we can recognise, such as an email address, a phone number or a street address. We cannot " +
-          "recognise all of them, so a name you type is sent as you typed it. The data " +
-          "source is named at the top of the page, and you can force the offline one by adding " +
-          "?fixtures to the URL.",
+          "recognise all of them, so a name you type is sent as you typed it.",
       // 영어의 논지 순서를 그대로 지킨다: ① 페이지는 외부로 나가지 않는다 → ② 그러나 그것은
       // 이 페이지에 대한 약속일 뿐이다 → ③ 대신 좁고 단단한 약속(문서·필드·세대 기록은 절대
       // 나가지 않는다) → ④ 식별자 치환은 하되 완전하지 않다.
@@ -1958,10 +2049,19 @@
         "구조로 약속할 수 있는 것은 그보다 좁고 그만큼 단단합니다. 어떤 문서도, 추출된 어떤 항목도, " +
         "세대 기록도 그 요청에 결코 실리지 않습니다. 문장을 보내기 전에 저희가 알아볼 수 있는 " +
         "식별자 형태 — 이메일 주소, 전화번호, 도로명 주소 같은 것 — 는 바꿔 넣습니다. 그러나 모두 " +
-        "알아볼 수는 없습니다. 직접 타이핑하신 이름은 적으신 그대로 나갑니다. 데이터 출처는 화면 맨 " +
-        "위에 적혀 있고, URL 에 ",
-        ["code", "?fixtures"],
-        " 를 붙이면 오프라인 출처를 강제할 수 있습니다."
+        "알아볼 수는 없습니다. 직접 타이핑하신 이름은 적으신 그대로 나갑니다."
+      ]
+    },
+    // U9: 긴 푸터 문단이 "기술 세부사항" 뒤로 접혔고, 그 앞에 한 줄 요약이 남았다.
+    "footer-privacy-lead": {
+      en: "This page sends nothing to outside servers on its own. When the question " +
+          "classifier is switched on, your typed question — and only that — goes to a model " +
+          "provider so it can pick a topic; no document, no extracted field and no household " +
+          "record ever does.",
+      ko: [
+        "이 화면은 스스로 외부 서버로 아무것도 보내지 않습니다. 질문 분류기가 켜져 있으면, " +
+        "직접 타이핑하신 질문 — 오직 그것만 — 이 주제를 고르기 위해 모델 제공자에게 갑니다. " +
+        "어떤 문서도, 추출된 어떤 항목도, 세대 기록도 결코 가지 않습니다."
       ]
     }
   };

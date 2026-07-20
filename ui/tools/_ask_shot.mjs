@@ -1,0 +1,24 @@
+import { chromium } from "playwright";
+const base = process.argv[2], out = process.argv[3], q = process.argv[4];
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
+const page = await ctx.newPage();
+await page.goto(base, { waitUntil: "load" });
+await page.waitForTimeout(1800);
+await page.evaluate(() => { const s=document.getElementById("household-select");
+  if (s && s.options.length>1){ s.value=s.options[1].value; s.dispatchEvent(new Event("change",{bubbles:true})); } });
+await page.waitForTimeout(2500);
+const box = page.locator('#ask-dock textarea, #ask-dock input[type=text]').first();
+await box.fill(q);
+await page.locator('#ask-dock button').first().click();
+await page.waitForTimeout(3000);
+const el = page.locator('#ask-answer-heading').first();
+await el.scrollIntoViewIfNeeded().catch(()=>{});
+await page.waitForTimeout(600);
+await page.screenshot({ path: out });
+const txt = await page.evaluate(() => {
+  const h=document.getElementById('ask-answer-heading');
+  return h ? h.closest('.callout').innerText.slice(0,900) : 'no answer node';
+});
+console.log(txt);
+await b.close();
