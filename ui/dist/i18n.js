@@ -611,6 +611,22 @@
       "날짜에 월까지만 있고 일(日)이 없어서, 거기서부터 60일 기간을 셀 수 없습니다.",
     "no date we could read on this document.": "이 문서에서 읽어낼 수 있는 날짜가 없습니다.",
 
+    // R26: 4단계 계산 기권 — 수치가 나오지 않았거나 비교가 이루어지지 않았을 때.
+    "We could not work out this figure, so no amount is shown.":
+      "이 수치를 계산해 내지 못해서, 금액이 표시되지 않습니다.",
+    "We could not work out this figure, so no amount is shown. The income limit itself is on file — what is missing is a yearly figure to set against it.":
+      "이 수치를 계산해 내지 못해서, 금액이 표시되지 않습니다. 소득 상한 자체는 파일에 있습니다 — 빠진 것은 그 옆에 놓을 연 소득 금액입니다.",
+    "We could not compare this figure with a limit. We do not hold a limit for a household of this size.":
+      "이 수치를 상한과 비교하지 못했습니다. 이 세대원 수에 대한 상한을 저희가 갖고 있지 않습니다.",
+    "Work through the open items on step 5. Each one says what to send.":
+      "5단계의 남은 항목을 하나씩 처리해 주세요. 무엇을 보내면 되는지 각 항목에 적혀 있습니다.",
+
+    // R26: 지역 비교 패널 — 추정 거부는 그대로 두고, 풀 수 있는 사람을 이름으로 댄다.
+    "We cannot line this household up against another region. The figures above are not compared against a frozen limit for a household size we hold, and HUD does not publish these limits for households of more than eight people. We will not estimate one.":
+      "이 세대를 다른 지역과 나란히 놓을 수 없습니다. 위의 수치는 저희가 가진 세대원 수 상한과 비교된 것이 아니고, HUD 는 8인 초과 세대에 대해 이 상한을 공표하지 않습니다. 저희가 추정하지는 않습니다.",
+    "Ask your housing worker for the published limit for your household size. They hold the tables this page will not guess from.":
+      "세대원 수에 해당하는 공표된 상한은 주택 담당자에게 물어보세요 — 이 페이지가 짐작하지 않는 그 표를, 담당자는 갖고 있습니다.",
+
     // 체크리스트 항목 이름과 세입자가 할 일 (서버 데이터이지만 고정 문자열이다)
     "Application summary": "신청 요약서",
     "Recent pay stubs": "최근 급여명세서",

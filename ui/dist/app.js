@@ -3968,6 +3968,58 @@
   }
 
   // ── panel 4: the calculation ────────────────────────────────────────────────────
+  /** The plain action for the abstention that withheld a calculation figure, read off the
+   *  report's own abstentions[] so this screen cannot invent a next step of its own.
+   *  Positional pairing with the plain layer, exactly as the rail does it. */
+  function calcAbstentionAction(names) {
+    var absts = (state.report && state.report.abstentions) || [];
+    for (var i = 0; i < absts.length; i++) {
+      if (names.indexOf(String(absts[i].about)) === -1) continue;
+      var said = plainForAbstention(i, absts[i]);
+      if (said && said.action) return said.action;
+      if (absts[i].what_would_resolve_it) return "Resolved by: " + absts[i].what_would_resolve_it;
+    }
+    return null;
+  }
+
+  /* R26: an abstention is a redirect, not a verdict. Two calc-panel states used to end
+   * cold on this screen. A line whose figure could not be worked out showed
+   * "Formula: abstained · Result: —" and said nothing else — the machine's word in the
+   * formula slot, no sentence, no next step, while the open item it belongs to sat on
+   * step 5. And a total line whose household size is outside the frozen table said only
+   * "no comparison is made". Both keep every machine string they had; this block adds
+   * the sentence and the action, taken from the report's own plain layer.
+   *
+   * Deliberately narrow: a COMPONENT line with a result and no threshold is the normal
+   * case (only the total is compared) and gets nothing. The keyboard journey's exact
+   * comparison phrases are untouched. */
+  function calcWithheldNotice(calc) {
+    var noFigure = calc.result === null || calc.result === undefined;
+    var totalLine = calc.name === "annualized_income";
+    var noThreshold = calc.threshold === null || calc.threshold === undefined;
+    var comparisonHeld = totalLine && calc.comparison === "no_frozen_threshold";
+    if (!noFigure && !comparisonHeld) return null;
+    var parts = [];
+    if (noFigure) {
+      parts.push(h("p", { text:
+        "We could not work out this figure, so no amount is shown." +
+        (totalLine && !noThreshold
+          ? " The income limit itself is on file — what is missing is a yearly figure to set against it."
+          : "") }));
+    } else {
+      parts.push(h("p", { text:
+        "We could not compare this figure with a limit. We do not hold a limit for a household of this size." }));
+    }
+    var action = calcAbstentionAction(totalLine
+      ? ["annualized_income", "threshold_comparison", "frozen_60_percent_threshold"]
+      : [calc.name]);
+    parts.push(h("p", { class: "do-this", style: { marginBottom: "0" } }, [
+      h("span", { class: "do-this__label", text: "What you can do: " }),
+      action || "Work through the open items on step 5. Each one says what to send."
+    ]));
+    return h("div", { class: "callout callout--warn" }, parts);
+  }
+
   function renderCalc() {
     var root = byId("calc-body");
     clear(root);
@@ -4029,6 +4081,7 @@
          * total line adds them, and equals a single component only when there is one. Said
          * here in a sentence rather than left for the reader to deduce. */
         CALC_BLURB[calc.name] ? h("p", { class: "hint", text: CALC_BLURB[calc.name] }) : null,
+        calcWithheldNotice(calc),
         inputs,
         h("h4", { text: "Formula" }),
         h("code", { class: "formula", text: calc.formula }),
@@ -4253,7 +4306,13 @@
       host.appendChild(h("p", { class: "hint" }, [
         "We cannot line this household up against another region. The figures above are not " +
         "compared against a frozen limit for a household size we hold, and HUD does not publish " +
-        "these limits for households of more than eight people. We will not estimate one."
+        "these limits for households of more than eight people. We will not estimate one.",
+        // R26: the refusal to estimate stays exactly as loud; the person who CAN settle
+        // it is named beside it, as a separate text node so each sentence keeps its own
+        // i18n dictionary key.
+        " ",
+        "Ask your housing worker for the published limit for your household size. They " +
+        "hold the tables this page will not guess from."
       ]));
       return;
     }
