@@ -373,6 +373,13 @@ LABEL_SYNONYMS: dict[str, dict[str, str]] = {
         # PeopleSoft calls the payment an "advice" and dates it accordingly; the phrase is
         # the whole entry, so it names one thing and cannot be read as "the date of what?".
         "ADVICE DATE": "pay_date",
+        # il_dol runs the words together as one compound, `Paydate:`. A single word that
+        # names one thing -- unlike bare "DATE", which could date anything on the page.
+        "PAYDATE": "pay_date",
+        # The date a paycheck is issued is the date it pays. bonita prints `ISSUE DATE` in
+        # its header strip with the value directly beneath it at the same x, and the
+        # compound cannot be read as the date of anything but the payment itself.
+        "ISSUE DATE": "pay_date",
         "PERIOD COVERED": "pay_period_start",
         "PERIOD BEGINNING": "pay_period_start",
         "PERIOD BEGIN": "pay_period_start",
@@ -791,6 +798,16 @@ _DATE_FORMATS = (
     "%B %d, %Y",
     "%b %d, %Y",
 )
+# Two-digit years (`%m/%d/%y` -- il_dol prints `8/27/05` and `9/2/05`) were added here
+# once and dropped the same day, and the reason is worth keeping. Month-first is a
+# documented convention over two numbers the page does print; a two-digit year's century
+# is a number the page does NOT print, and strptime's pivot (00-68 -> 20xx) invents it.
+# That is the masked-year failure (`1/7/XX`) in a milder costume. The repository's own
+# scorer agrees: `eval/score_extraction.py` deliberately reads only four-digit years, so
+# a truth transcription of `8/27/05` is unparsable to it and any ISO date we emit for
+# that page scores as a WRONG value -- measured on the confirmation set, where the format
+# turned il_dol's two correctly-located dates into two wrong answers before it was
+# removed. Such dates stay abstentions.
 
 
 def _parse_date(raw: str) -> tuple[str, bool]:
@@ -1145,6 +1162,26 @@ def _scan_page(
                 )
                 if recovered is not None:
                     resolved = recovered
+            # ------------------------------------------------------------------------
+            # A printed conjunction names two fields at once -- see `_period_span_fields`
+            # ------------------------------------------------------------------------
+            # Same abstention-only gate as the column branch above: only a field the
+            # whole chain left without a value may be filled, and the companion
+            # `pay_period_end` is likewise only ever written over a blank or an
+            # abstention, never over a value another label produced.
+            if field_name == "pay_period_start" and (
+                resolved is None or resolved.get("certainty") == "abstain"
+            ):
+                span = _period_span_fields(
+                    line, label_runs, index, column_right, convention, is_exact,
+                    header_words,
+                )
+                if span is not None:
+                    start_field, end_field = span
+                    resolved = start_field
+                    existing_end = found.get("pay_period_end")
+                    if existing_end is None or existing_end.get("certainty") == "abstain":
+                        found["pay_period_end"] = end_field
             if resolved is not None:
                 found[field_name] = resolved
     return unmapped
@@ -1718,6 +1755,31 @@ def _side_by_side_value(
     so like every other test here it turns readings into abstentions or abstentions into
     readings, never one value into another.
     """
+    run = _side_by_side_run(line, label_runs, index, column_right, field_name, header_words)
+    if run is None:
+        return None
+    return _build_value_field(
+        run, field_name, convention, is_exact,
+        "value read from the same line as its label, in the column to its right",
+        header_words=header_words,
+    )
+
+
+def _side_by_side_run(
+    line: Sequence[Word],
+    label_runs: Sequence[Sequence[Word]],
+    index: int,
+    column_right: float,
+    field_name: str,
+    header_words: frozenset[int] = frozenset(),
+) -> list[Word] | None:
+    """The single run in the cell to a label's right, or None. See `_side_by_side_value`.
+
+    Split out so that `_period_span_fields` can locate the run under exactly the same
+    refusals -- one candidate, no label in the way, a column gap, a caption closing the
+    cell -- and then read it under a different parse. The geometry question and the parse
+    question are separate, and only the geometry lives here.
+    """
     label_run = label_runs[index]
     label_end = max(w.x1 for w in label_run)
     label_words = {id(w) for run in label_runs for w in run}
@@ -1741,11 +1803,87 @@ def _side_by_side_value(
     run = runs[0]
     if run[0].x0 - label_end < SIDE_BY_SIDE_MIN_GAP:
         return None
+    return run
 
-    return _build_value_field(
-        run, field_name, convention, is_exact,
-        "value read from the same line as its label, in the column to its right",
-        header_words=header_words,
+
+def _period_span_fields(
+    line: Sequence[Word],
+    label_runs: Sequence[Sequence[Word]],
+    index: int,
+    column_right: float,
+    convention: LineBoxConvention,
+    is_exact: bool,
+    header_words: frozenset[int] = frozenset(),
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """`<date> to <date>` beside a pay-period label: both endpoints, or None.
+
+    il_dol prints `Pay Period:  8/21/2005 to 8/27/05` -- one label, one run, two dates
+    joined by the page's own printed word "to". The old chain located that run and then
+    abstained because the whole string is not a date, which threw away the *shape* of an
+    answer the page states in full.
+
+    What licenses the split is the conjunction plus a double parse, not position. The run
+    must contain exactly one standalone word `to`; the words on each side must
+    *independently* parse as dates through the unchanged `_parse_date`; and only then is
+    the left half the period start and the right half the period end. Each requirement is
+    a refusal with a concrete failure behind it:
+
+    * more than one `to`, or a `to` at either edge, is prose ("due to processing"), and
+      prose abstains;
+    * a half that does not parse kills the whole reading -- there is no "one good half".
+      The CA DLSE stubs print `1/7/XX to 1/13/XX` with the year masked, and emitting an
+      ISO date for either half would mean inventing the year. Both halves fail
+      `_parse_date` there, so the split never happens. il_dol itself falls to the same
+      refusal today: its right half, `8/27/05`, prints a two-digit year, and the note
+      above `_DATE_FORMATS` records why those stay unread -- so on the document that
+      motivated this rule the split correctly abstains rather than invent a century;
+    * the run itself is located by `_side_by_side_run`, so every refusal that rule makes
+      (two runs in the cell, a caption in the way, a word space instead of a column gap)
+      is inherited unchanged.
+
+    Both fields come back `certainty="low"`: the halves are dates only under the same
+    US-convention caveat the slash formats already carry, and the pairing rests on one
+    printed word. Each field's box is drawn around its own half's glyphs, so the overlay
+    points at exactly the words that produced each value.
+    """
+    run = _side_by_side_run(
+        line, label_runs, index, column_right, "pay_period_start", header_words
+    )
+    if run is None:
+        return None
+    separators = [i for i, w in enumerate(run) if w.text.lower() == "to"]
+    if len(separators) != 1:
+        return None
+    left, right = list(run[: separators[0]]), list(run[separators[0] + 1 :])
+    if not left or not right:
+        return None
+    try:
+        start_value, _ = _parse_date(_join_run(left))
+        end_value, _ = _parse_date(_join_run(right))
+    except ParseError:
+        return None
+
+    note = (
+        "the run beside the label is two dates joined by the page's own printed word "
+        "'to'; this half is the {} of that printed span"
+    )
+    if not is_exact:
+        note += " | label resolved by a non-exact mapper"
+
+    def _half(words: list[Word], field_name: str, value: str, side: str) -> dict[str, Any]:
+        return _extracted_field(
+            field_name,
+            value,
+            words[0].page,
+            _run_box(words, convention),
+            "low",
+            _join_run(words),
+            note.format(side),
+        )
+
+    return (
+        _half(left, "pay_period_start", start_value, "start"),
+        _half(right, "pay_period_end", end_value, "end"),
     )
 
 

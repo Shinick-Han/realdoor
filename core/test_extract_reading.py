@@ -348,6 +348,102 @@ class TestDatesAsTheyArePrinted:
             with pytest.raises(ParseError):
                 parse_value("pay_date", text)
 
+    def test_a_two_digit_year_is_refused_because_the_century_is_not_printed(self) -> None:
+        """il_dol prints `9/2/05`. Reading it as 2005 rests on a pivot (00-68 -> 20xx) the
+        page states nowhere -- the masked-year failure in a milder costume -- and the
+        repository's own scorer deliberately reads only four-digit years, so the format
+        was added once, measured as two wrong values on the confirmation set, and removed.
+        See the note above `_DATE_FORMATS`."""
+        for text in ("9/2/05", "8/27/05", "12/31/99"):
+            with pytest.raises(ParseError):
+                parse_value("pay_date", text)
+
+    def test_a_masked_year_is_refused_because_the_year_is_not_printed(self) -> None:
+        """The CA DLSE stubs print `1/7/XX`. Emitting an ISO date would mean inventing a
+        year, which is the failure this project exists to avoid."""
+        for text in ("1/7/XX", "1/13/XX", "1/20/xx"):
+            with pytest.raises(ParseError):
+                parse_value("pay_period_start", text)
+
+
+# ======================================================================================
+# A printed conjunction can name two fields at once -- see `_period_span_fields`
+# ======================================================================================
+# il_dol prints `Pay Period:  8/21/2005 to 8/27/05`: one label, one run, two dates joined
+# by the page's own printed word "to". The split is licensed by that word plus a double
+# parse -- both halves must independently parse as dates -- never by position.
+
+
+class TestAPrintedConjunctionNamesTwoFields:
+    @staticmethod
+    def _span_line(right_text: str = "1/5/2020 to 1/11/2020"):
+        """`PAY PERIOD` with a single run to its right, in the pack's own label type."""
+        words = [
+            word("PAY", 100.0, 118.0, 500.0, bold=True),
+            word("PERIOD", 120.0, 152.0, 500.0, bold=True),
+        ]
+        x = 200.0
+        for token in right_text.split(" "):
+            width = 5.0 * len(token)
+            words.append(word(token, x, x + width, 500.0))
+            x += width + 3.0
+        return words
+
+    def test_both_halves_of_a_printed_span_are_read(self) -> None:
+        got = read(self._span_line())
+        assert got["pay_period_start"]["value"] == "2020-01-05"
+        assert got["pay_period_end"]["value"] == "2020-01-11"
+        for name in ("pay_period_start", "pay_period_end"):
+            assert got[name]["certainty"] == "low"
+            assert "printed word 'to'" in (got[name]["notes"] or "")
+
+    def test_each_half_gets_its_own_box(self) -> None:
+        """The overlay must point at the words that produced each value, not at the whole
+        run for both."""
+        got = read(self._span_line())
+        start_box = got["pay_period_start"]["bbox"]
+        end_box = got["pay_period_end"]["bbox"]
+        assert start_box[2] < end_box[0], "the two boxes overlap; each half owns its glyphs"
+        assert got["pay_period_start"]["source_text"] == "1/5/2020"
+        assert got["pay_period_end"]["source_text"] == "1/11/2020"
+
+    def test_one_unparsable_half_kills_the_whole_reading(self) -> None:
+        """There is no "one good half": a bad half is evidence the run is not a date span."""
+        got = read(self._span_line("1/5/2020 to soon"))
+        assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
+        assert "pay_period_end" not in got
+
+    def test_masked_years_stay_abstained(self) -> None:
+        """The CA DLSE layout, reduced: `1/7/XX to 1/13/XX`. Both halves fail `_parse_date`,
+        so the split never happens and no year is invented."""
+        got = read(self._span_line("1/7/XX to 1/13/XX"))
+        assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
+        assert "pay_period_end" not in got
+
+    def test_the_il_dol_two_digit_year_refuses_the_split(self) -> None:
+        """The document that motivated the rule is also one it must abstain on today: the
+        right half `8/27/05` prints no century, so neither endpoint is emitted -- see the
+        note above `_DATE_FORMATS` for the measurement behind that."""
+        got = read(self._span_line("8/21/2005 to 8/27/05"))
+        assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
+        assert "pay_period_end" not in got
+
+    def test_two_printed_conjunctions_are_prose_not_a_span(self) -> None:
+        got = read(self._span_line("1/5/2020 to 1/11/2020 to 1/12/2020"))
+        assert got.get("pay_period_start", {}).get("certainty", "abstain") == "abstain"
+
+    def test_an_existing_period_end_is_never_overwritten(self) -> None:
+        """The companion field only ever fills a blank. A `THROUGH` label that already
+        resolved its own value outranks the span's right half -- the label sits above the
+        span here so it resolves first, and the span must leave it alone."""
+        words = [
+            word("THROUGH", 100.0, 140.0, 600.0, bold=True),
+            word("2020-01-12", 100.0, 145.0, 585.0),
+        ] + self._span_line()
+        got = read(words)
+        assert got["pay_period_end"]["value"] == "2020-01-12"
+        assert got["pay_period_start"]["value"] == "2020-01-05"
+
 
 class TestALabelIsNeverAValue:
     def test_the_next_row_s_label_is_not_read_as_this_row_s_value(self) -> None:
@@ -552,6 +648,36 @@ class TestTheToleranceIsScopedToTypedFields:
         got = {f["field"]: f for f in view["fields"]}
         answered = [name for name, f in got.items() if f["certainty"] != "abstain"]
         assert answered == [], f"invented {answered} on a page that carries none of them"
+
+
+# ======================================================================================
+# Two more names for the pay date, each a single-meaning compound
+# ======================================================================================
+
+
+class TestPayDateCompounds:
+    def test_the_two_compounds_map_to_pay_date(self) -> None:
+        """`PAYDATE` is il_dol's one-word spelling; `ISSUE DATE` is bonita's header-strip
+        caption. Each names one thing -- unlike bare "DATE", which could date anything on
+        the page and stays out of the tables for that reason."""
+        assert synonym_mapper("pay_stub", "Paydate:") == "pay_date"
+        assert synonym_mapper("pay_stub", "ISSUE DATE") == "pay_date"
+
+    def test_bare_date_is_still_not_a_label(self) -> None:
+        assert synonym_mapper("pay_stub", "DATE") is None
+
+    def test_bonita_reads_its_issue_date(self) -> None:
+        """bonita prints `ISSUE DATE` with `9/30/2018` beneath it at the same x, and the
+        truth file transcribed 09-30-2018 before this synonym existed."""
+        from core import extract as ex
+
+        path = CONFIRM / "bonita_certificated_check_sample.pdf"
+        if not path.exists():
+            pytest.skip("confirmation-set PDFs are not in the tree")
+        view = ex.extract_document(path, document_type="pay_stub")
+        got = {f["field"]: f for f in view["fields"]}
+        assert got["pay_date"]["value"] == "2018-09-30"
+        assert got["pay_date"]["certainty"] == "low"
 
 
 def _run_standalone() -> int:
