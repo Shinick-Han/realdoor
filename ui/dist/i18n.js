@@ -1225,6 +1225,65 @@
     "Documents with scanned or photographed parts can take up to a minute to read — plain documents are quick.":
       "스캔하거나 사진으로 찍은 부분이 있는 문서는 읽는 데 1분까지 걸릴 수 있습니다 — 일반 문서는 금방 읽힙니다.",
 
+    // ── app.js + api/nominate.py: 종류 지명 — 기계가 인쇄된 제목에서 지명하고,
+    //    사람이 확인한다. 근거 문장(RULES 쪽)은 필수이지 장식이 아니다. ─────────
+    "Read the kind off the page (usual)": "종류를 페이지에서 읽기 (기본)",
+    "Choose the kind of document yourself (optional)": "문서 종류를 직접 고르기 (선택)",
+    "You usually do not have to answer: the page itself prints what it is at the top, and we read the kind from those printed words, then show you the words we used. If the page does not announce itself, we ask here instead of guessing.":
+      "보통은 답하실 필요가 없습니다: 페이지가 맨 위에 스스로 무엇인지 인쇄하고 있어서, 저희는 그 인쇄된 글자에서 종류를 읽고, 어떤 글자를 근거로 삼았는지 보여 드립니다. 페이지가 스스로 밝히지 않으면 짐작하는 대신 여기서 여쭤봅니다.",
+    // 지명 배너의 머리말. 뒤에 <strong>종류</strong>가 별도 노드로 이어지므로,
+    // 한국어는 콜론으로 끝나는 명사구가 어순을 지킨다.
+    "We read this as a": "기계가 읽은 이 문서의 종류:",
+    "You did not have to choose, and nothing is locked in.":
+      "직접 고르실 필요가 없었고, 아직 확정된 것도 없습니다.",
+    "Not right? Change the kind": "아닌가요? 종류 바꾸기",
+    "Read it again as": "이 종류로 다시 읽기",
+    "Read this document again": "이 문서 다시 읽기",
+    "The page did not announce what kind of document it is. Choose the kind, then read it again.":
+      "페이지가 어떤 종류의 문서인지 스스로 밝히지 않았습니다. 종류를 고른 뒤 다시 읽어 주세요.",
+    "The file is no longer held by the page. Choose it again above.":
+      "화면이 그 파일을 더 이상 들고 있지 않습니다. 위에서 다시 골라 주세요.",
+    // 서버(api/upload.py::_NOT_ANNOUNCED)의 세 가지 "묻기로 함" 사유.
+    "This page has no text we can read for a title — it looks like a scan — so the page does not announce what it is. Choose the kind of document below and we will read it that way.":
+      "이 페이지에는 제목으로 읽을 글자가 없습니다 — 스캔본으로 보입니다 — 그래서 페이지가 스스로 무엇인지 밝히지 못합니다. 아래에서 문서 종류를 골라 주시면 그 종류로 읽겠습니다.",
+    "The page did not announce what it is: nothing printed at the top of it matches a kind of document we know. Choose the kind of document below and we will read it that way.":
+      "페이지가 스스로 무엇인지 밝히지 않았습니다: 맨 위에 인쇄된 어떤 글자도 저희가 아는 문서 종류와 일치하지 않습니다. 아래에서 문서 종류를 골라 주시면 그 종류로 읽겠습니다.",
+    "The page prints titles for more than one kind of document, and choosing between them would be a guess. Choose the kind of document below and we will read it that way.":
+      "페이지에 서로 다른 종류의 제목이 함께 인쇄되어 있어, 그중 하나를 고르는 것은 짐작이 됩니다. 아래에서 문서 종류를 골라 주시면 그 종류로 읽겠습니다.",
+
+    // ── app.js: 단계별 읽기 표시 (실제 단계 이름; 속도는 표시用 페이싱) ────────
+    "Reading the text on the page…": "페이지의 글자를 읽는 중…",
+    "Read. Drawing what was found…": "읽었습니다. 찾은 값을 그리는 중…",
+    "No text on the page — the text pass came back empty.":
+      "페이지에 글자가 없습니다 — 텍스트 읽기가 빈손으로 돌아왔습니다.",
+    "Read the text on the page. Drawing each value where it was found…":
+      "페이지의 글자를 읽었습니다. 각 값을 찾은 자리에 그리는 중…",
+
+    // ── app.js: 올린 문서 한 장 지우기 ────────────────────────────────────────
+    "Remove this document": "이 문서 지우기",
+    "Remove this document from the session?": "이 문서를 세션에서 지울까요?",
+    "This removes only this document from your session. Your corrections and confirmations on other documents stay.":
+      "이 문서 하나만 세션에서 지워집니다. 다른 문서에 하신 정정과 확인은 그대로 남습니다.",
+    "Yes — remove it": "네 — 지웁니다",
+    "Keep it": "그대로 둡니다",
+    "The document was removed. No uploaded documents are left, so the file made of them is gone from the list.":
+      "문서를 지웠습니다. 올린 문서가 하나도 남지 않아, 그 문서들로 이루어진 파일도 목록에서 사라졌습니다.",
+
+    // ── app.js: 월 단위 날짜의 정직한 삼분법 — 다음 걸음 문장(정적) ───────────
+    "Page 2 still lists this as an open item, because the day itself is not on the page. If you know the exact date, fix it on the date row below.":
+      "날짜의 일(日)이 페이지에 없으므로 2페이지는 이것을 여전히 미해결 항목으로 둡니다. 정확한 날짜를 아신다면 아래 날짜 행에서 고쳐 주세요.",
+    "Ask for a recent copy dated to the day. Page 2 lists this as an open item.":
+      "일(日)까지 적힌 최근 사본을 요청하세요. 2페이지에 미해결 항목으로 올라 있습니다.",
+
+    // ── app.js: HH-003/HH-006 — READY 배너 옆의 "없음" 카드가 왜 모순이 아닌지 ──
+    "Why the ready banner can stand beside this card. The letter has one job here: to show where your wage comes from. The two pay stubs in your file already do that job, and they agree with each other. The challenge's own answer key marks this file ready with the letter still missing. We still list the letter as missing, because hiding a gap is worse than showing one.":
+      "'검토 준비됨' 배너가 이 카드 옆에 설 수 있는 이유. 이 자리에서 재직증명서가 할 일은 하나입니다: 임금의 출처를 보여 주는 것. 제출된 급여명세서 두 장이 이미 그 일을 하고 있고, 두 장은 서로 일치합니다. 과제의 공식 정답지도 이 편지가 없는 채로 이 파일을 준비됨으로 표시합니다. 그래도 저희는 이 편지를 없음으로 계속 올려 둡니다. 빈자리를 숨기는 것이 보여 주는 것보다 나쁘기 때문입니다.",
+
+    // ── index.html: 운영자 대시보드가 없는 이유 (심사위원용 화면) ─────────────
+    "There is no operator dashboard, deliberately": "운영자 대시보드는 일부러 없습니다",
+    "An operator-side “who is ready” list is a ranking by another name: the moment applicants appear as rows on one screen, their order — readiness, date, anything — becomes a queue someone reads as priority, and ranking is what the brief forbids. So this product has no such screen, and its operator-side output is exactly one thing: the packet the renter hands over, one file at a time, on the renter's own initiative. The office sees a household when, and only because, that household chose to be seen.":
+      "운영자 쪽의 “누가 준비됐는가” 목록은 이름만 다른 순위표입니다: 신청자들이 한 화면에 행으로 나타나는 순간 그 순서는 — 준비 상태든 날짜든 무엇이든 — 누군가가 우선순위로 읽는 줄이 되고, 순위 매기기는 브리프가 금지한 바로 그것입니다. 그래서 이 제품에는 그런 화면이 없고, 운영자 쪽으로 나가는 산출물은 정확히 하나입니다: 세입자가 스스로, 한 번에 한 파일씩 건네는 서류 묶음. 사무소는 세대가 보이기로 선택했을 때, 오직 그 이유로만 그 세대를 봅니다.",
+
     // ── app.js: 빈 상태 두 갈래 (R26: 기권은 안내이지 판정이 아니다) ─────────
     "There is no document to show yet": "아직 보여드릴 문서가 없습니다",
     "This step reads whatever file is open, and none is — so there is nothing here to be right or wrong about. This is not an empty result, it is an empty desk.":
@@ -2387,7 +2446,54 @@
       function (m) {
         return "이번 세션에서 하신 일이 모두 지워집니다: 올린 문서 " + m[1] + "건, 정정 " +
                m[2] + "건, 확인 " + m[3] + "건. 준비된 예시 파일들은 건드리지 않습니다.";
-      }]
+      }],
+
+    // ══ 종류 지명: 근거 문장 — 일치한 인쇄 문구는 데이터라 옮기지 않는다 ═══════
+    [/^Because the page prints “(.+)” at the top \(page (\d+)\)\.$/, function (m) {
+      return "페이지 " + m[2] + " 맨 위에 “" + m[1] + "”(이)라고 인쇄되어 있기 때문입니다.";
+    }],
+    // api/store.py 가 limits 에 싣는 지명 근거 줄.
+    [/^The kind of document was not chosen by you: the page prints “(.+)” at the top, and that is the whole reason it was read as this kind\. If the page is about that kind of document rather than being one, change the kind and read it again\.$/,
+      function (m) {
+        return "문서 종류는 직접 고르신 것이 아닙니다: 페이지 맨 위에 “" + m[1] + "”(이)라고 " +
+               "인쇄되어 있고, 그것이 이 종류로 읽은 이유의 전부입니다. 이 페이지가 그 종류의 " +
+               "문서가 아니라 그 종류에 관한 문서라면, 종류를 바꿔 다시 읽어 주세요.";
+      }],
+
+    // ══ 단계별 읽기: 개수가 박힌 단계 문장들 ═══════════════════════════════════
+    [/^Read the scanned areas instead \((\d+) region\(s\) came back readable\)\. Drawing each one…$/,
+      function (m) {
+        return "대신 스캔된 영역을 읽었습니다 (읽을 수 있었던 영역 " + m[1] + "곳). 하나씩 그리는 중…";
+      }],
+    [/^Reading the scanned areas: (\d+) regions\.$/, function (m) {
+      return "스캔된 영역을 읽는 중: " + m[1] + "곳.";
+    }],
+    [/^Done — (\d+) of (\d+) fields read, each drawn where it was found\.$/, function (m) {
+      return "끝 — " + m[2] + "개 항목 중 " + m[1] + "개를 읽어, 각각 찾은 자리에 그렸습니다.";
+    }],
+    [/^Done reading\. (\d+) of (\d+) fields are on screen with their boxes\.$/, function (m) {
+      return "읽기가 끝났습니다. " + m[2] + "개 항목 중 " + m[1] + "개가 근거 상자와 함께 화면에 있습니다.";
+    }],
+
+    // ══ 문서 한 장 지우기: 남은 개수가 박힌 안내 ═══════════════════════════════
+    [/^The document was removed\. (\d+) uploaded document\(s\) remain in this session\.$/,
+      function (m) {
+        return "문서를 지웠습니다. 이 세션에 올린 문서가 " + m[1] + "건 남아 있습니다.";
+      }],
+
+    // ══ 월 단위 날짜의 정직한 삼분법 (달 이름이 문장에 박힌다) ═════════════════
+    [/^Current — any day in ([A-Z][a-z]+ \d{4}) falls inside the 60-day window\. The exact day is still not recorded\.$/,
+      function (m) {
+        return "유효 — " + koDate(m[1]) + "의 어느 날이든 60일 창 안에 듭니다. 정확한 일(日)은 " +
+               "여전히 기록되어 있지 않습니다.";
+      }],
+    [/^Out of date — every day in ([A-Z][a-z]+ \d{4}) falls outside the 60-day window\.$/,
+      function (m) {
+        return "기한 지남 — " + koDate(m[1]) + "의 모든 날이 60일 창 밖에 있습니다.";
+      }],
+    [/^Ask (.+?) for a recent copy dated to the day\.$/, function (m) {
+      return (lookup(m[1]) || m[1]) + "에 일(日)까지 적힌 최근 사본을 요청하세요.";
+    }]
   ];
 
   /** 성적표 요약 한 조각. app.js::measureSummary 가 만드는 네 가지 모양을 되받는다. */

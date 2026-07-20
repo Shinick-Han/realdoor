@@ -1304,3 +1304,11 @@ body{ line-height:1.62; }
 @media (prefers-reduced-motion: reduce) {
   .evidence-box .box-tag { transition: none; }
 }
+
+/* ── upload panel: staged reveal ──────────────────────────────────────────────
+ * A box whose field has not had its turn in the reveal yet. visibility, not
+ * display: placeTags measures real pixels, and display:none measures nothing.
+ * Rows use the `hidden` attribute instead — a held row should not be read by
+ * assistive tech before it has "arrived". The reveal paces genuine results only;
+ * see app.js::runStagedReveal for the real-vs-pacing contract. */
+.evidence-box.reveal-hold { visibility: hidden; }

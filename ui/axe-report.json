@@ -10,7 +10,7 @@
   "wcag22aa"
  ],
  "page": "ui/dist/index.html",
- "generated_at": "2026-07-20T15:08:50.488Z",
+ "generated_at": "2026-07-20T17:09:34.593Z",
  "screens_per_origin": 6,
  "total_violations": 0,
  "violations_by_impact": {},
@@ -91,37 +91,37 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -171,73 +171,73 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -317,73 +317,73 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_start\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_start\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_end\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_end\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(5) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_frequency\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_frequency\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(6) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"regular_hours\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"regular_hours\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(7) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"hourly_rate\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"hourly_rate\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -395,25 +395,25 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -577,37 +577,37 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -657,73 +657,73 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -803,73 +803,73 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_start\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_start\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_end\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_end\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(5) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_frequency\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_frequency\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(6) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"regular_hours\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"regular_hours\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(7) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"hourly_rate\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"hourly_rate\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -881,25 +881,25 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -1063,19 +1063,19 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -1125,73 +1125,73 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -1271,37 +1271,37 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_start\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_end\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_frequency\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"regular_hours\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"hourly_rate\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -1313,25 +1313,25 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -1495,19 +1495,19 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -1557,73 +1557,73 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"household_size\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"address\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"How we got it\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"How we got it\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > td[data-label=\"Certainty\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > td[data-label=\"Certainty\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"application_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }
@@ -1703,37 +1703,37 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(2) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_date\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(3) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_start\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(4) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_period_end\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(5) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"pay_frequency\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(6) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"regular_hours\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(7) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"hourly_rate\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
@@ -1745,25 +1745,25 @@
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(8) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"gross_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .mono[data-label=\"Text on the page\"][role=\"cell\"]"
          ],
          "reason": "Element's background color could not be determined because it's partially obscured by another element"
         },
         {
          "target": [
-          "tr[role=\"row\"]:nth-child(9) > .num[data-label=\"Page\"][role=\"cell\"]"
+          "tr[data-field=\"net_pay\"][role=\"row\"] > .num[data-label=\"Page\"][role=\"cell\"]"
          ],
          "reason": "Element content is too short to determine if it is actual text content"
         }

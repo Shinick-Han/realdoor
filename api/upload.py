@@ -16,7 +16,9 @@ upload.py — 사용자가 올린 한 장의 PDF를 근거와 함께 읽는다.
 * **문서 종류를 파일 이름에서 추측하지 않는다.** `core.extract.infer_document_type` 의
   정규식은 팩의 명명 규칙(`hh-001_d01_pay_stub`)에 묶여 있어서, 임의의 파일 이름은
   전부 `unknown` 이 된다. `unknown` 은 오류를 내지 않고 **빈 필드 목록**을 낸다 —
-  조용한 실패다. 그래서 종류는 호출자가 **명시적으로** 준다. 못 고르면 업로드도 안 된다.
+  조용한 실패다. 그래서 종류는 두 경로로만 정해진다: 사람이 명시적으로 주거나,
+  페이지가 **스스로 인쇄한 제목**에서 지명된다(`api/nominate.py` — 닫힌 표, 완전
+  일치, 근거 동봉). 둘 다 아니면 업로드는 이유를 말하고 사람에게 묻는다.
 * **디스크에 쓰지 않는다.** 올린 바이트는 세션 안(메모리)에만 있고 세션이 사라지면
   같이 사라진다. `.cache/extractions` 는 팩 문서용 캐시이며 업로드는 거기 들어가지 않는다.
   "isolated or ephemeral processing" 이 약속이 아니라 구조가 되는 지점이다.
@@ -107,23 +109,13 @@ def supported_document_types() -> list[str]:
     return sorted(EXPECTED_FIELDS.keys())
 
 
-def validate(data: bytes, file_name: str, content_type: str | None,
-             document_type: str | None) -> str:
-    """받아들일 수 있는 업로드인지 확인하고, 정규화된 문서 종류를 돌려준다."""
-    if not document_type:
-        raise UploadRejected(
-            "document_type_required",
-            "Choose what kind of document this is. We cannot tell from the file name: "
-            "our reader only recognises the pack's own naming convention, and anything "
-            "else is read as an unknown type, which produces no fields at all.",
-        )
-    doc_type = str(document_type).strip().lower()
-    if doc_type not in EXPECTED_FIELDS:
-        raise UploadRejected(
-            "document_type_unsupported",
-            f"We do not know how to read a document of type {doc_type!r}. "
-            f"We can read: {', '.join(supported_document_types())}.",
-        )
+def validate_bytes(data: bytes, content_type: str | None) -> None:
+    """바이트 자체의 검사만 — 종류를 아직 모르는 단계에서도 돌 수 있어야 한다.
+
+    지명(api/nominate.py)은 PDF 를 실제로 열어 읽으므로, 그 전에 여기서 빈 파일·
+    크기 상한·매직바이트를 걸러야 한다. `validate` 에서 쪼개 낸 것이고 검사 내용과
+    순서는 한 글자도 다르지 않다 — 종류 검사보다 먼저 도는 것만 달라졌다.
+    """
     if not data:
         raise UploadRejected("empty_file", "That file is empty.")
     if len(data) > MAX_UPLOAD_BYTES:
@@ -145,7 +137,67 @@ def validate(data: bytes, file_name: str, content_type: str | None,
             "That file is not a PDF. Its first bytes are not a PDF header, whatever its "
             "name or type says.",
         )
+
+
+def validate(data: bytes, file_name: str, content_type: str | None,
+             document_type: str | None) -> str:
+    """받아들일 수 있는 업로드인지 확인하고, 정규화된 문서 종류를 돌려준다."""
+    if not document_type:
+        raise UploadRejected(
+            "document_type_required",
+            "Choose what kind of document this is. We cannot tell from the file name: "
+            "our reader only recognises the pack's own naming convention, and anything "
+            "else is read as an unknown type, which produces no fields at all.",
+        )
+    doc_type = str(document_type).strip().lower()
+    if doc_type not in EXPECTED_FIELDS:
+        raise UploadRejected(
+            "document_type_unsupported",
+            f"We do not know how to read a document of type {doc_type!r}. "
+            f"We can read: {', '.join(supported_document_types())}.",
+        )
+    validate_bytes(data, content_type)
     return doc_type
+
+
+#: 지명 실패의 이유별 문장. 세 문장 모두 같은 다음 걸음("choose the kind")으로
+#: 끝난다 — 지명이 없는 업로드는 오류가 아니라 오늘까지의 동작(사람에게 묻기)이다.
+_NOT_ANNOUNCED = {
+    "no_text_layer": (
+        "This page has no text we can read for a title — it looks like a scan — so the "
+        "page does not announce what it is. Choose the kind of document below and we "
+        "will read it that way."
+    ),
+    "no_title_match": (
+        "The page did not announce what it is: nothing printed at the top of it matches "
+        "a kind of document we know. Choose the kind of document below and we will read "
+        "it that way."
+    ),
+    "conflicting_titles": (
+        "The page prints titles for more than one kind of document, and choosing "
+        "between them would be a guess. Choose the kind of document below and we will "
+        "read it that way."
+    ),
+}
+
+
+def nominate_or_ask(data: bytes) -> dict[str, Any]:
+    """문서 종류를 인쇄된 제목에서 지명한다. 못 하면 **이유를 말하고 묻는다**.
+
+    반환되는 지명에는 근거(일치한 인쇄 문구 + 페이지/좌표)가 붙어 있다. 근거 없는
+    지명은 이 함수의 반환형에 존재하지 않는다 — 화면의 근거 문장이 선택이 아니라
+    필수인 이유이고, 보이는 오지명(한 클릭에 고칠 수 있는)과 조용한 오지명을
+    가르는 선이다. 지명 규칙 전체와 그 위험은 api/nominate.py 에 있다.
+    """
+    from api import nominate as nominate_mod
+
+    nomination, reason = nominate_mod.nominate(data)
+    if nomination is None:
+        raise UploadRejected(
+            "type_not_announced",
+            _NOT_ANNOUNCED.get(reason, _NOT_ANNOUNCED["no_title_match"]),
+        )
+    return nomination
 
 
 def has_text_layer(data: bytes) -> bool:
@@ -214,6 +266,13 @@ def read_upload(data: bytes, file_name: str, document_type: str,
     view["read_nothing"] = not located
     view["model_named_fields"] = [f.get("field") for f in model_named]
     view["model_named_count"] = len(model_named)
+    # 리포트가 싣는 것과 같은 동결 기준일(logic/readiness.py 도 같은 상수를 싣는다).
+    # 업로드 패널은 세대 리포트 없이 홀로 서므로, 월 단위 날짜의 정직한 삼분법
+    # (달 전체가 60일 창 안/밖/걸침 — ui/dist/app.js::monthWindowPosition)을 화면이
+    # 계산하려면 기준일이 뷰에 실려 있어야 한다. 문서의 기계 상태는 그대로다.
+    from logic.constants import REFERENCE_DATE
+
+    view["reference_date"] = REFERENCE_DATE.isoformat()
     # 화면이 이 한계를 그대로 옮겨 적을 수 있도록 서버가 말한다. 추출은 필드 사이의
     # 산술을 하지 않는다 — 시급×시간 ≠ 총액인 명세서도 총액을 high 로 읽는다. 그 모순은
     # 세대 단위 계산(logic/income.py)에서만 드러나고, 업로드는 세대에 합류하지 않는다.

@@ -304,6 +304,9 @@ EVENT_WORDS = {
     "field_region_marked": "The renter pointed at the place on the page this value comes from",
     "question_asked": "A rule question was asked",
     "packet_exported": "A packet was exported by the renter",
+    # 문서 하나를 세션에서 걷어낸 기록. 여기에도 값은 없다 — 문서 id 만 남고,
+    # 파일 이름도 내용도 남지 않는다(브리프: "not raw document contents").
+    "document_removed": "An uploaded document was removed from this session by the renter",
 }
 
 
@@ -684,7 +687,8 @@ class Store:
 
     # ── 업로드 (인수 데모 1단계: 문서를 올리고 추출 근거를 보인다) ─────────
     def add_upload(self, s: Session, data: bytes, file_name: str,
-                   document_type: str) -> dict[str, Any]:
+                   document_type: str,
+                   nomination: dict[str, Any] | None = None) -> dict[str, Any]:
         """올린 문서를 읽어 **세션 메모리에만** 담는다. 디스크에 닿지 않는다."""
         from api import upload as upload_mod
 
@@ -706,6 +710,18 @@ class Store:
         # 업로드들이 한 파일로 모이려면 같은 household_id 를 말해야 한다. 이 키는 팩
         # 세대의 id 공간(HH-xxx)과 겹치지 않으므로 팩 세대는 이 문서를 절대 줍지 않는다.
         view["household_id"] = UPLOADS_HOUSEHOLD_ID
+        if nomination is not None:
+            # 종류가 사람의 선택이 아니라 페이지의 인쇄된 제목에서 지명됐다. 근거
+            # (일치한 문구 + 페이지/좌표)를 응답에 그대로 싣는다 — 근거 없는 지명을
+            # 화면이 보여 줄 방법이 없어야 하고, 그래서 근거는 여기서도 분리 불가다.
+            view["nomination"] = dict(nomination)
+            view["limits"].insert(0, (
+                "The kind of document was not chosen by you: the page prints "
+                f"“{nomination.get('matched_text', '')}” at the top, and that "
+                "is the whole reason it was read as this kind. If the page is about "
+                "that kind of document rather than being one, change the kind and "
+                "read it again."
+            ))
         uid = view["upload_id"]
         s.uploads[uid] = view
         s.upload_bytes[uid] = data
@@ -714,6 +730,35 @@ class Store:
         s.log("document_uploaded", document_type=document_type,
               extraction_path=view["extraction_path"])
         return view
+
+    def remove_upload(self, s: Session, upload_id: str) -> bool:
+        """올린 문서 한 장을 세션에서 걷어낸다. **그 문서의 것만, 전부.**
+
+        같이 사라져야 하는 것: 뷰, 원본 바이트, 그 문서에 걸린 정정 스냅샷과 부재
+        확인. 남겨 두면 (a) 같은 id 가 재사용될 일은 없지만(uuid) 죽은 키가 세션이
+        사는 동안 메모리에 쌓이고, (b) 무엇보다 "걷어냈다" 는 말이 거짓이 된다 —
+        삭제 후 세션 어디에도 남지 않는 것은 세션 삭제(§delete)와 같은 규율이다.
+
+        다른 문서의 정정·확인은 키가 (document_id, field) 단위라 원리적으로 닿지
+        않는다. 리포트·체크리스트·패킷은 항상 재계산이므로(설계 원칙 3) 다음
+        조회부터 남은 문서만으로 나오고, 마지막 한 장이 걷히면 households() 가
+        업로드 파일 행 자체를 만들지 않는다 — 파일이 목록에서 사라지는 것은 별도
+        코드가 아니라 그 구조의 귀결이다.
+
+        팩 문서는 걷어낼 수 없다. 팩은 세대의 측정된 산물이고, 세입자의 것은
+        세입자가 올린 것뿐이다 — 그래서 이 함수는 s.uploads 만 본다.
+        """
+        if upload_id not in s.uploads:
+            return False
+        s.uploads.pop(upload_id, None)
+        s.upload_bytes.pop(upload_id, None)
+        for table in (s.corrections, s.originals, s.absences):
+            for key in [k for k in table if k[0] == upload_id]:
+                table.pop(key, None)
+        # 값 없는 이벤트: 동작과 문서 id 만. 파일 이름도, 종류도, 내용도 남기지
+        # 않는다 — 무엇이 있었는지가 아니라 무슨 일이 있었는지의 기록이다.
+        s.log("document_removed", document_id=upload_id)
+        return True
 
     def undo_correction(self, s: Session, document_id: str, field_name: str) -> bool:
         """한 필드의 **사람 표시를 걷어낸다** — 그 필드를 추출 상태로, 다른 필드는 그대로.

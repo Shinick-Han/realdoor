@@ -66,9 +66,14 @@ def test_a_file_named_anything_else_has_no_inferable_type():
     assert infer_document_type(UPLOADS / "up_003_pay_stub_john_doe.pdf") == "unknown"
 
 
-def test_upload_without_a_document_type_is_refused(client, session):
+def test_upload_without_a_document_type_nominates_from_the_page(client, session):
+    """예전 계약(422 거절)의 교체. 종류를 안 주면 이제 서버가 페이지에 인쇄된
+    제목에서 지명한다 — 근거와 함께. 지명 규칙과 실패 방향은 api/test_nominate.py."""
     r = post(client, session, "up_003_pay_stub_john_doe.pdf", document_type=None)
-    assert r.status_code == 422  # FastAPI: 필수 폼 필드 누락
+    assert r.status_code == 200
+    body = r.json()
+    assert body["document_type"] == "pay_stub"
+    assert body["nomination"]["matched_text"] == "Earnings Statement"
 
 
 def test_an_unsupported_type_says_so_instead_of_reading_nothing(client, session):

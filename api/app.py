@@ -409,15 +409,21 @@ def upload_types() -> dict:
 
 @app.post("/api/upload")
 async def upload(file: UploadFile = File(...),
-                 document_type: str = Form(...),
+                 document_type: str = Form(""),
                  content_length: int | None = Header(default=None),
                  x_session_id: str | None = Header(default=None)) -> dict:
     """올린 PDF 한 장을 읽고 **근거와 함께** 돌려준다.
 
-    `document_type` 은 선택이 아니라 필수다. 파일 이름으로는 종류를 알 수 없고
-    (`core.extract.infer_document_type` 은 팩 명명 규칙 밖에서 항상 `unknown` 을 낸다),
-    `unknown` 은 오류가 아니라 **빈 필드 목록**을 내므로 조용히 실패한다. 그 실패를
-    사용자에게 떠넘기지 않으려면 여기서 막아야 한다.
+    `document_type` 은 이제 선택이다. 비워서 보내면 서버가 페이지에 **인쇄된
+    제목**에서 종류를 지명하고(`api/nominate.py` — 닫힌 표, 완전 일치), 지명은
+    근거(일치한 인쇄 문구 + 페이지/좌표)와 함께 `nomination` 으로 응답에 실린다.
+    화면은 그 근거를 보여 주고 한 클릭으로 바꿀 수 있게 한다 — 기계가 인쇄된
+    증거에서 지명하고, 사람이 확인한다.
+
+    페이지가 자신을 선언하지 않으면(스캔본, 표에 없는 제목, 서로 다른 제목이
+    함께 인쇄됨) 400 `type_not_announced` 로 거절하고 사람에게 묻는다 — 오늘까지의
+    동작이 그대로 남는 자리다. 파일 이름에서는 여전히 추측하지 않는다
+    (`core.extract.infer_document_type` 은 팩 명명 규칙 밖에서 항상 `unknown`).
 
     결과는 세션 메모리에만 담긴다. 세대 계산에는 합류시키지 않는다 — 그 이유는
     `api/upload.py` 모듈 문서에 적혀 있다.
@@ -470,12 +476,54 @@ async def upload(file: UploadFile = File(...),
     data = b"".join(chunks)
     chunks.clear()
     try:
+        nomination = None
+        chosen_type = (document_type or "").strip()
+        if not chosen_type:
+            # 종류가 오지 않았다. 지명은 PDF 를 실제로 열므로 바이트 검사가 먼저다 —
+            # 순서를 바꾸면 10MB 상한이나 매직바이트 검사가 지명 뒤로 밀린다.
+            upload_mod.validate_bytes(data, file.content_type)
+            nomination = upload_mod.nominate_or_ask(data)
+            chosen_type = nomination["document_type"]
         doc_type = upload_mod.validate(data, file.filename or "upload.pdf",
-                                       file.content_type, document_type)
-        view = STORE.add_upload(s, data, file.filename or "upload.pdf", doc_type)
+                                       file.content_type, chosen_type)
+        view = STORE.add_upload(s, data, file.filename or "upload.pdf", doc_type,
+                                nomination=nomination)
     except upload_mod.UploadRejected as exc:
         raise HTTPException(400, {"code": exc.code, "detail": exc.message}) from exc
     return view
+
+
+@app.delete("/api/upload/{upload_id}")
+def remove_upload(upload_id: str,
+                  x_session_id: str | None = Header(default=None)) -> dict:
+    """올린 문서 **한 장**을 세션에서 걷어낸다.
+
+    세션 전체 삭제(6단계)만 있던 자리의 반쪽: 문서 하나를 잘못 올렸을 때 전부를
+    버릴 필요가 없어야 한다. 걷어낸 뒤에는 그 문서의 바이트·뷰·정정·부재 확인이
+    프로세스 어디에도 남지 않고, 업로드 상한 여섯 자리 중 하나가 돌아오며,
+    업로드 파일(YOUR-UPLOADS)의 리포트·체크리스트·패킷은 다음 조회에서 남은
+    문서만으로 다시 계산된다 — 리포트는 항상 재계산이므로(§store 설계 원칙 3)
+    여기서 따로 할 일이 없다. 마지막 한 장을 걷어내면 파일 자체가 목록에서
+    사라진다. 활동 기록에는 값 없는 이벤트(`document_removed`, 문서 id 만)가
+    남는다. 다른 문서의 정정·확인은 한 글자도 움직이지 않는다.
+    """
+    s = _session(x_session_id)
+    if not STORE.remove_upload(s, upload_id):
+        raise HTTPException(404, f"unknown upload {upload_id}")
+    return {"removed": True, "document_id": upload_id,
+            "uploads_remaining": len(s.uploads)}
+
+
+#: pdfium 직렬화 락. FastAPI 는 동기 엔드포인트를 스레드풀에서 돌리므로, 화면이 페이지
+#: 이미지 두 장을 동시에 요청하면(업로드 패널 + 문서 패널이 함께 살아 있을 때 실제로
+#: 일어난다) pdfium 네이티브 렌더가 겹친다. pdfium 은 스레드 안전하지 않고, 그 겹침은
+#: 예외가 아니라 **access violation 으로 프로세스 전체를 죽였다** (2026-07 실측:
+#: FPDF_RenderPageBitmap / FPDF_CloseDocument). core/render.py 는 이 프로세스 모델을
+#: 모르는 순수 함수이므로, 동시성이 생기는 이 층에서 렌더 호출을 직렬화한다.
+#: 비용은 이미지 응답의 순차화 하나 — 죽은 서버보다 느린 이미지가 낫다.
+import threading
+
+_RENDER_LOCK = threading.Lock()
 
 
 @app.get("/api/upload/{upload_id}/page/{page}.png")
@@ -488,7 +536,8 @@ def upload_page_png(upload_id: str, page: int,
     data = s.upload_bytes.get(upload_id)
     if data is None:
         raise HTTPException(404, f"unknown upload {upload_id}")
-    img = render_page_png(data, page_number=page)
+    with _RENDER_LOCK:
+        img = render_page_png(data, page_number=page)
     return Response(content=img.png_bytes, media_type="image/png",
                     headers={"X-Image-Scale": str(img.scale),
                              "X-Image-Width": str(img.width_px),
@@ -512,12 +561,14 @@ def page_png(document_id: str, page: int,
         data = s.upload_bytes.get(document_id)
         if data is None:
             raise HTTPException(404, f"unknown document {document_id}")
-        img = render_page_png(data, page_number=page)
+        with _RENDER_LOCK:
+            img = render_page_png(data, page_number=page)
     else:
         view = s.views.get(document_id)
         if view is None:
             raise HTTPException(404, f"unknown document {document_id}")
-        img = render_page_png(str(DOCS / view["file_name"]), page_number=page)
+        with _RENDER_LOCK:
+            img = render_page_png(str(DOCS / view["file_name"]), page_number=page)
     return Response(content=img.png_bytes, media_type="image/png",
                     headers={"X-Image-Scale": str(img.scale),
                              "X-Image-Width": str(img.width_px),

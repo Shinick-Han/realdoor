@@ -1141,15 +1141,35 @@
         }
         var form = new FormData();
         form.append("file", file);
-        form.append("document_type", documentType);
+        /* Empty means "read the kind off the page": the server nominates the type from
+         * the page's own printed title and sends the nomination back with its evidence.
+         * When the page does not announce itself the server answers 400
+         * `type_not_announced`, and the code on the error is what lets the panel fall
+         * back to asking — today's behaviour — instead of showing a generic failure. */
+        form.append("document_type", documentType || "");
         return api("/api/upload", { method: "POST", body: form }).then(function (r) {
           return r.json().catch(function () { return {}; }).then(function (body) {
             if (r.ok) return body;
             var detail = body && body.detail;
-            throw new Error((detail && detail.detail) || (typeof detail === "string" ? detail : "") ||
-                            ("The server could not accept that file (HTTP " + r.status + ")."));
+            var err = new Error((detail && detail.detail) || (typeof detail === "string" ? detail : "") ||
+                                ("The server could not accept that file (HTTP " + r.status + ")."));
+            if (detail && detail.code) err.code = detail.code;
+            throw err;
           });
         });
+      },
+
+      /* Removing one uploaded document from the session. The server forgets the
+       * document's bytes, view, corrections and absence checks, frees one of the six
+       * upload seats, and the uploads file recomputes from what is left — the round
+       * trip is the whole story, the screen only re-fetches. */
+      removeUpload: function (uploadId) {
+        if (!live) {
+          return Promise.reject(new Error(
+            "Removing a document needs the server, because the document lives in the " +
+            "server session's memory."));
+        }
+        return json("/api/upload/" + encodeURIComponent(uploadId), { method: "DELETE" });
       },
 
       uploadPageImage: function (uploadId, page) {
@@ -1311,6 +1331,28 @@
     uploadError: null,
     uploadBusy: false,
     uploadActiveField: null,
+    /* The document-type question now answers itself where it can: the server nominates
+     * the type from the page's own printed title (view.nomination carries the evidence)
+     * and the selector collapses into an optional disclosure. These three hold the
+     * fallback and the change path:
+     *   uploadTypeOpen  — the type disclosure is expanded (after a failed nomination,
+     *                     or because the renter opened it)
+     *   uploadAskNote   — the server's plain sentence saying why the page did not
+     *                     announce itself, shown beside the opened selector
+     *   uploadLastFile  — the File just read, kept so "change the kind" can re-read the
+     *                     same bytes with an explicit type in one click            */
+    uploadTypeOpen: false,
+    uploadAskNote: null,
+    uploadLastFile: null,
+    /* Progressive reading (upload panel). One server response still carries everything;
+     * `uploadReveal` paces the *display* of those genuine results — rows and boxes
+     * appear one at a time with a stage line — and is nulled once the reveal is done
+     * so every later re-render shows everything at once. See runStagedReveal for the
+     * honest split between real staging and reveal pacing. */
+    uploadReveal: null,
+    /* The confirming step of "Remove this document": the upload_id (or pack-panel
+     * document_id) whose remove control is armed, or null. One at a time. */
+    removeArmed: null,
     /* The one open inline row editor, or null. Keys: key ("tableId::field"), docId,
      * tableId, field, draft (what the renter has typed so far — kept across re-renders),
      * region ({page, box} in PDF points, the renter-drawn rectangle), suggestionShown
@@ -1672,7 +1714,7 @@
       disabled: Source.live ? null : true,
       "aria-describedby": "upload-type-hint",
       onchange: function (event) { state.uploadDocType = event.target.value; }
-    }, [h("option", { value: "", text: "Choose the kind of document…" })].concat(
+    }, [h("option", { value: "", text: "Read the kind off the page (usual)" })].concat(
       types.map(function (name) {
         return h("option", {
           value: name, text: typeWords(name),
@@ -1703,15 +1745,35 @@
         submitUpload(fileInput, select);
       }
     }, [
-      h("p", { class: "upload-field" }, [
-        h("label", { for: "upload-type", text: "What kind of document is this?" }),
-        select,
-        h("span", {
-          class: "hint", id: "upload-type-hint",
-          text: "We have to ask. We work out the kind of document from the file's name, and " +
-                "we only recognise the naming the challenge pack uses — so for a file named " +
-                "anything else we would read no fields at all and could not tell you why."
-        })
+      /* The document-type question answers itself now. Real documents print what they
+       * are — "Earnings Statement", "EMPLOYMENT VERIFICATION" — at the top, and the
+       * server reads the kind from that printed title and shows the words it used
+       * (api/nominate.py: a closed table, exact match, evidence attached). So the
+       * selector is no longer a gate in front of the upload: it collapses into an
+       * optional disclosure, opened by the renter — or by us, with the server's plain
+       * sentence, when the page does not announce itself. */
+      h("div", { class: "upload-field" }, [
+        h("details", {
+          class: "tech", id: "upload-type-details",
+          open: state.uploadTypeOpen ? true : null,
+          ontoggle: function (event) { state.uploadTypeOpen = event.target.open; }
+        }, [
+          h("summary", { text: "Choose the kind of document yourself (optional)" }),
+          h("p", { id: "upload-ask-note-host", class: "hint",
+                   hidden: state.uploadAskNote ? null : true,
+                   text: state.uploadAskNote || "" }),
+          h("p", { class: "upload-field", style: { marginBottom: "0" } }, [
+            h("label", { for: "upload-type", text: "What kind of document is this?" }),
+            select,
+            h("span", {
+              class: "hint", id: "upload-type-hint",
+              text: "You usually do not have to answer: the page itself prints what it is " +
+                    "at the top, and we read the kind from those printed words, then show " +
+                    "you the words we used. If the page does not announce itself, we ask " +
+                    "here instead of guessing."
+            })
+          ])
+        ])
       ]),
       h("p", { class: "upload-field" }, [
         h("label", { for: "upload-file", text: "PDF file" }),
@@ -1740,16 +1802,10 @@
 
   function submitUpload(fileInput, select) {
     var file = fileInput.files && fileInput.files[0];
-    var docType = select.value;
-    if (!docType) {
-      state.uploadError = "Choose what kind of document this is first. We cannot work it " +
-                          "out from the file name, and guessing is the one thing this " +
-                          "service does not do.";
-      state.uploadResult = null;
-      renderUploadResult();
-      select.focus();
-      return;
-    }
+    /* Empty is a real answer now: it means "read the kind off the page". The server
+     * nominates from the printed title, or answers `type_not_announced` and we open
+     * the selector — today's behaviour, kept as the fallback rather than the gate. */
+    var docType = select ? select.value : "";
     if (!file) {
       state.uploadError = "Choose a PDF file to read.";
       state.uploadResult = null;
@@ -1757,17 +1813,32 @@
       fileInput.focus();
       return;
     }
+    readUpload(file, docType, { focusSelectOnAsk: true });
+  }
+
+  /** One upload round trip, shared by the submit button and the nomination banner's
+   *  "change the kind" control (which re-reads the same bytes with an explicit type). */
+  function readUpload(file, docType, opts) {
+    opts = opts || {};
+    state.uploadLastFile = file;
     state.uploadBusy = true;
     state.uploadError = null;
+    state.uploadAskNote = null;
     state.uploadResult = null;
+    state.uploadReveal = null;
     state.uploadActiveField = null;
+    state.removeArmed = null;
     renderUploadResult();
-    announce("Reading the uploaded document…");
+    /* The in-flight stage line. This one is real: the server's first act on any upload
+     * is reading the page's text layer. What we cannot know from out here is when it
+     * moves on to OCR — that needs the two-stage endpoint (see runStagedReveal). */
+    announce("Reading the text on the page…");
 
     Source.upload(file, docType)
       .then(function (view) {
         state.uploadResult = view;
         state.uploadError = null;
+        beginStagedReveal(view);
         announce(view.read_nothing
           ? "We could not confidently read any field from that document."
           : "Read " + view.located_count + " of " + view.field_count + " fields from the " +
@@ -1779,16 +1850,191 @@
       })
       .catch(function (err) {
         state.uploadResult = null;
-        state.uploadError = err && err.message ? err.message :
-                            "That document could not be read.";
-        announce("The uploaded document was not accepted.");
+        if (err && err.code === "type_not_announced") {
+          /* Not an error: the page simply did not announce what it is. Fall back to
+           * asking — the selector opens with the server's plain sentence beside it,
+           * and the chosen kind goes back through the same round trip. The file input
+           * still holds the file; nothing is re-chosen. */
+          state.uploadAskNote = err.message;
+          state.uploadTypeOpen = true;
+          var details = byId("upload-type-details");
+          if (details) details.open = true;
+          var note = byId("upload-ask-note-host");
+          if (note) { note.textContent = err.message; note.hidden = false; }
+          announce("The page did not announce what kind of document it is. " +
+                   "Choose the kind, then read it again.");
+          if (opts.focusSelectOnAsk) {
+            var typeSelect = byId("upload-type");
+            if (typeSelect) typeSelect.focus();
+          }
+        } else {
+          state.uploadError = err && err.message ? err.message :
+                              "That document could not be read.";
+          announce("The uploaded document was not accepted.");
+        }
       })
       .then(function () {
         state.uploadBusy = false;
         renderUploadResult();
-        var heading = byId("upload-result-heading");
-        if (heading) heading.focus();
+        if (state.uploadError || state.uploadResult) {
+          var heading = byId("upload-result-heading");
+          if (heading) heading.focus();
+        }
       });
+  }
+
+  /* ── progressive reading, honestly ─────────────────────────────────────────────────
+   *
+   * What is REAL staging and what is REVEAL PACING — read this before trusting either.
+   *
+   *   Real: the in-flight line "Reading the text on the page…" (the server's first act
+   *   is exactly that), and everything the stages below contain — every field, box and
+   *   count is a genuine result from the response, in the true order the server
+   *   produced it (text pass first; OCR only when the page had no text).
+   *
+   *   Pacing: the *timing*. Today the server answers once, with everything, so the
+   *   stage-by-stage status line and the one-at-a-time drawing of boxes replay the
+   *   real work after the fact rather than reporting it live. No bar creeps, no fake
+   *   percentages — results are staggered, never invented — but the rhythm is display,
+   *   not progress, and this comment is the contract that keeps the report honest.
+   *
+   * The seam for making it fully real: `stagesFromResponse` is the only producer of
+   * stage objects ({status, announceText, fields}). A later two-stage endpoint (text
+   * pass returns immediately, OCR continues, client polls) replaces this one function
+   * with one that yields the same objects as they become true; the reveal loop and the
+   * status line consume stages and do not know the difference. core/ owns the per-
+   * request switch that endpoint needs, so it could not ship this run.
+   */
+  function stagesFromResponse(view) {
+    var names = renterFields(view).map(function (f) { return f.field; });
+    if (view.extraction_path === "ocr") {
+      return [
+        { status: "No text on the page — the text pass came back empty.",
+          announceText: null, fields: [] },
+        { status: "Read the scanned areas instead (" + view.located_count + " region(s) " +
+                  "came back readable). Drawing each one…",
+          announceText: "Reading the scanned areas: " + view.located_count + " regions.",
+          fields: names }
+      ];
+    }
+    return [
+      { status: "Read the text on the page. Drawing each value where it was found…",
+        announceText: null, fields: names }
+    ];
+  }
+
+  function beginStagedReveal(view) {
+    if (view.read_nothing) return;   // nothing to stagger; the abstention callout says it all
+    /* Reduced motion means exactly that: everything appears at once. The results are
+     * identical either way, which is what makes skipping the pacing free. */
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    state.uploadReveal = {
+      id: view.upload_id,
+      stages: stagesFromResponse(view),
+      pendingSet: {},
+      timer: null,
+      done: false
+    };
+    state.uploadReveal.stages.forEach(function (stage) {
+      stage.fields.forEach(function (name) { state.uploadReveal.pendingSet[name] = true; });
+    });
+  }
+
+  /** Is this field's row/box still waiting for its turn in the reveal? */
+  function revealHolds(view, fieldName) {
+    var reveal = state.uploadReveal;
+    return Boolean(reveal && !reveal.done && reveal.id === view.upload_id &&
+                   reveal.pendingSet[fieldName]);
+  }
+
+  /** Walk the stages: set the status line, then unhide that stage's rows and boxes one
+   *  at a time. DOM-only — no re-render per step, so the page image is fetched once. */
+  function runStagedReveal(view, host) {
+    var reveal = state.uploadReveal;
+    if (!reveal || reveal.done || reveal.id !== view.upload_id || reveal.timer) return;
+    var statusLine = host.querySelector("#upload-read-status");
+    var stageIndex = 0, fieldIndex = 0;
+
+    function showOne(name) {
+      delete reveal.pendingSet[name];
+      var row = host.querySelector("tr[data-field=\"" + name + "\"]");
+      if (row) row.hidden = false;
+      Array.prototype.forEach.call(
+        host.querySelectorAll(".evidence-box[data-field=\"" + name + "\"]"),
+        function (el) { el.classList.remove("reveal-hold"); });
+    }
+
+    function finish() {
+      reveal.done = true;
+      reveal.timer = null;
+      Object.keys(reveal.pendingSet).forEach(showOne);   // belt and braces
+      if (statusLine) {
+        statusLine.textContent = "Done — " + view.located_count + " of " +
+          view.field_count + " fields read, each drawn where it was found.";
+      }
+      announce("Done reading. " + view.located_count + " of " + view.field_count +
+               " fields are on screen with their boxes.");
+    }
+
+    function tick() {
+      if (state.uploadReveal !== reveal) return;          // a newer upload took over
+      var stage = reveal.stages[stageIndex];
+      if (!stage) { finish(); return; }
+      if (fieldIndex === 0) {
+        if (statusLine) statusLine.textContent = stage.status;
+        if (stage.announceText) announce(stage.announceText);
+        if (!stage.fields.length) {
+          stageIndex += 1;
+          reveal.timer = window.setTimeout(tick, 420);
+          return;
+        }
+      }
+      showOne(stage.fields[fieldIndex]);
+      fieldIndex += 1;
+      if (fieldIndex >= stage.fields.length) { stageIndex += 1; fieldIndex = 0; }
+      reveal.timer = window.setTimeout(tick, 160);
+    }
+    reveal.timer = window.setTimeout(tick, 60);
+  }
+
+  /* ── month-only dates against the frozen 60-day window ─────────────────────────────
+   *
+   * A date like "2026-06" has no day, so the machine state is `undatable` and stays
+   * `undatable` — that state is core's and nothing here touches it. But "the 60-day
+   * window cannot be applied" is only honest when the window's floor falls INSIDE the
+   * printed month. When every day of the month is on one side of the floor, the
+   * comparison needs no day: any day the document could carry gives the same answer.
+   * These two helpers compute which of the three cases the screen is in, from the
+   * printed month and the frozen reference date; the wording each case gets is at the
+   * call sites (the upload date line, and the "Still current?" row). */
+  /** "2026-06" → "June 2026" (MONTH_WORDS is the file-wide month table above).
+   *  Anything else comes back unchanged — a date is data, and an unparsed one
+   *  printed raw beats one we dressed up wrongly. */
+  function monthWords(monthStr) {
+    var m = /^(\d{4})-(\d{2})$/.exec(String(monthStr || ""));
+    if (!m || +m[2] < 1 || +m[2] > 12) return String(monthStr);
+    return MONTH_WORDS[+m[2] - 1] + " " + m[1];
+  }
+
+  /** Where the whole printed month sits relative to the 60-day window.
+   *  "inside"    every day of the month is on or after the window floor — current,
+   *              whichever day the document actually carries.
+   *  "outside"   every day of the month is before the floor — out of date, same logic.
+   *  "straddles" the floor falls inside the month — genuinely undatable, keep today's
+   *              wording. Also returned when either input cannot be parsed: when we
+   *              cannot compute, we claim nothing new.
+   *  The window is [reference − 60 days, →): logic/constants.py::CURRENCY_FLOOR. A
+   *  future month is "inside" for the same reason logic treats a future day as current. */
+  function monthWindowPosition(monthStr, referenceIso) {
+    var m = /^(\d{4})-(\d{2})$/.exec(String(monthStr || ""));
+    var r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(referenceIso || ""));
+    if (!m || !r || +m[2] < 1 || +m[2] > 12) return "straddles";
+    var floor = Date.UTC(+r[1], +r[2] - 1, +r[3]) - 60 * 86400000;
+    var monthFirst = Date.UTC(+m[1], +m[2] - 1, 1);
+    var monthLast = Date.UTC(+m[1], +m[2], 0);
+    if (monthFirst >= floor) return "inside";
+    if (monthLast < floor) return "outside";
+    return "straddles";
   }
 
   /* The upload's date line, when no usable date was read.
@@ -1801,15 +2047,41 @@
    * documents; the machine `state` on the view is untouched, and each sentence is its
    * own text node so the i18n layer can carry it. */
   function uploadDateNotice(view) {
-    var monthOnly = (view.fields || []).some(function (f) {
-      return /^\d{4}-\d{2}$/.test(String(f.value === null || f.value === undefined ? "" : f.value));
+    var monthValue = null;
+    (view.fields || []).forEach(function (f) {
+      var value = String(f.value === null || f.value === undefined ? "" : f.value);
+      if (!monthValue && /^\d{4}-\d{2}$/.test(value)) monthValue = value;
     });
-    if (monthOnly) {
-      return [
-        h("span", { class: "chip chip--undatable" }, [
-          h("span", { "aria-hidden": "true", text: "? " }), "No day in the date"
-        ]),
-        " ",
+    if (monthValue) {
+      /* Month-only, honestly three-way. The machine state on this view is unchanged —
+       * core owns it and it stays `undatable`, because no day is recorded. What changes
+       * is only what this sentence may claim: when every day of the printed month sits
+       * on one side of the frozen 60-day window, saying the window "cannot be applied"
+       * asserts an ignorance we do not have. The three cases are computed client-side
+       * from the printed month and the frozen reference date the server sends with the
+       * view; only the straddling month keeps the genuinely-undatable wording. */
+      var position = monthWindowPosition(monthValue, view.reference_date);
+      var chip = h("span", { class: "chip chip--undatable" }, [
+        h("span", { "aria-hidden": "true", text: "? " }), "No day in the date"
+      ]);
+      if (position === "inside") {
+        return [chip, " ",
+          "Current — any day in " + monthWords(monthValue) + " falls inside the 60-day " +
+          "window. The exact day is still not recorded.",
+          " ",
+          "Ask " + issuerWords(view.document_type) + " for a copy dated to the day, or tell " +
+          "the person who reviews it the exact date."
+        ];
+      }
+      if (position === "outside") {
+        return [chip, " ",
+          "Out of date — every day in " + monthWords(monthValue) + " falls outside the " +
+          "60-day window.",
+          " ",
+          "Ask " + issuerWords(view.document_type) + " for a recent copy dated to the day."
+        ];
+      }
+      return [chip, " ",
         "The date shows a month but no day, so we cannot count the 60-day window from it.",
         " ",
         "Ask " + issuerWords(view.document_type) + " for a copy dated to the day, or tell " +
@@ -1831,7 +2103,11 @@
     clear(host);
 
     if (state.uploadBusy) {
-      host.appendChild(h("p", { class: "hint", text: "Reading the document…" }));
+      /* The real first stage: the server's first act on any upload is reading the text
+       * layer. Whether it then had to move on to OCR is only known once the single
+       * response arrives — see runStagedReveal for the honest split. */
+      host.appendChild(h("p", { class: "hint", id: "upload-read-status",
+        text: "Reading the text on the page…" }));
       return;
     }
 
@@ -1853,6 +2129,46 @@
     var block = h("div", { class: "upload-result" }, [
       h("h3", { id: "upload-result-heading", tabindex: "-1" },
         [typeWords(view.document_type) + " — the document you uploaded"]),
+      /* The machine's nomination, with its printed evidence in the same sentence.
+       * The evidence line is mandatory, never decorative: a nomination the renter can
+       * see and change in one click is acceptable, a silent one is not — this banner
+       * is the seeing, the collapsed selector beside it is the one click. */
+      view.nomination ? h("div", { class: "callout", id: "upload-nomination" }, [
+        h("h4", { style: { marginTop: "0" } }, [
+          "We read this as a ",
+          h("strong", { text: typeWords(view.document_type) })
+        ]),
+        h("p", null, [
+          "Because the page prints “" + String(view.nomination.matched_text) +
+          "” at the top (page " + view.nomination.page + ").",
+          " ",
+          "You did not have to choose, and nothing is locked in."
+        ]),
+        h("details", { class: "tech", id: "upload-nomination-change" }, [
+          h("summary", { text: "Not right? Change the kind" }),
+          h("p", { class: "upload-field", style: { marginBottom: "0" } }, [
+            h("label", { for: "upload-nomination-type", text: "Read it again as" }),
+            h("select", { id: "upload-nomination-type" },
+              ((state.uploadTypes && state.uploadTypes.document_types) ||
+               ["application_summary", "benefit_letter", "employment_letter",
+                "gig_statement", "pay_stub"]).map(function (name) {
+                return h("option", { value: name, text: typeWords(name),
+                                     selected: name === view.document_type ? true : null });
+              })),
+            h("button", {
+              type: "button", class: "action secondary",
+              onclick: function () {
+                var pick = byId("upload-nomination-type");
+                if (!state.uploadLastFile) {
+                  announce("The file is no longer held by the page. Choose it again above.");
+                  return;
+                }
+                readUpload(state.uploadLastFile, pick ? pick.value : "");
+              }
+            }, ["Read this document again"])
+          ])
+        ])
+      ]) : null,
       h("dl", { class: "kv" }, [
         h("dt", { text: "File" }), h("dd", { class: "mono", text: view.file_name }),
         h("dt", { text: "Kind of document" }), h("dd", { text: typeWords(view.document_type) }),
@@ -1893,6 +2209,15 @@
         })
       ]));
     } else {
+      var revealing = Boolean(state.uploadReveal && !state.uploadReveal.done &&
+                              state.uploadReveal.id === view.upload_id);
+      if (revealing) {
+        /* The visible stage line. runStagedReveal rewrites its text as the stages
+         * replay; announcements to the live region go through announce(), stage by
+         * stage, not row by row — a screen reader hears the stages, not a drum roll. */
+        block.appendChild(h("p", { class: "hint", id: "upload-read-status",
+          text: "Read. Drawing what was found…" }));
+      }
       var pageHost = h("div");
       block.appendChild(pageHost);
       block.appendChild(fieldTable(view, {
@@ -1901,6 +2226,9 @@
         setActive: function (name) { state.uploadActiveField = name; },
         rerender: renderUploadResult,
         captionLead: "Values read from the document you uploaded.",
+        revealHold: revealing
+          ? function (fieldName) { return revealHolds(view, fieldName); }
+          : null,
         // An absence round trip on an uploaded document answers with the updated upload
         // view, not a household report — the upload joins no household.
         applyAbsence: function (body) {
@@ -1910,9 +2238,21 @@
       }));
       renderPage(pageHost, view, {
         loadImage: function () { return Source.uploadPageImage(view.upload_id, 1); },
-        activeField: state.uploadActiveField
+        activeField: state.uploadActiveField,
+        revealHold: revealing
+          ? function (fieldName) { return revealHolds(view, fieldName); }
+          : null
       });
     }
+
+    /* Removing this one document — with a confirming step, because it cannot be
+     * undone from the screen. Session-wide delete already exists at the end of page 2;
+     * this is its per-document half. */
+    block.appendChild(removeDocumentCard(view.upload_id, function () {
+      state.uploadResult = null;
+      state.uploadReveal = null;
+      state.uploadActiveField = null;
+    }));
 
     /* The uploads now form a file of their own, and this is where the renter learns
      * that. The button is the same open the picker offers — one action, two doors. */
@@ -1946,6 +2286,99 @@
     }
 
     host.appendChild(block);
+    runStagedReveal(view, host);
+  }
+
+  /* ── remove one uploaded document ──────────────────────────────────────────────────
+   *
+   * One card, two states: the offer, then the confirming step. The confirming sentence
+   * is scoped on purpose — it names what goes (this document) and what stays (your
+   * corrections and confirmations on other documents), because "remove" beside a whole
+   * file of documents reads bigger than it is. The server round trip is the deed; the
+   * screen then re-fetches the list and the report, so what is shown afterwards is the
+   * server's state, not the screen's memory of it. */
+  function removeDocumentCard(uploadId, beforeRefresh) {
+    var armed = state.removeArmed === uploadId;
+    var card = h("div", { class: "card", id: "remove-doc-" + uploadId });
+    if (!armed) {
+      card.appendChild(h("p", { class: "button-row", style: { margin: "0" } }, [
+        h("button", {
+          type: "button", class: "action secondary", id: "remove-doc-btn-" + uploadId,
+          onclick: function () {
+            state.removeArmed = uploadId;
+            rerenderRemoveHosts();
+            var confirmBtn = byId("remove-doc-confirm-" + uploadId);
+            if (confirmBtn) confirmBtn.focus();
+          }
+        }, ["Remove this document"])
+      ]));
+      return card;
+    }
+    card.appendChild(h("h4", { style: { marginTop: "0" },
+      text: "Remove this document from the session?" }));
+    card.appendChild(h("p", {
+      text: "This removes only this document from your session. Your corrections and " +
+            "confirmations on other documents stay."
+    }));
+    card.appendChild(h("p", { class: "button-row", style: { marginBottom: "0" } }, [
+      h("button", {
+        type: "button", class: "action secondary", id: "remove-doc-confirm-" + uploadId,
+        onclick: function () { removeDocument(uploadId, beforeRefresh); }
+      }, ["Yes — remove it"]),
+      h("button", {
+        type: "button", class: "action secondary",
+        onclick: function () {
+          state.removeArmed = null;
+          rerenderRemoveHosts();
+          var back = byId("remove-doc-btn-" + uploadId);
+          if (back) back.focus();
+        }
+      }, ["Keep it"])
+    ]));
+    return card;
+  }
+
+  /** Both hosts a remove card can live in. Redrawing them together keeps the two
+   *  cards for one document (upload panel, open uploads file) in the same state. */
+  function rerenderRemoveHosts() {
+    renderUploadResult();
+    renderDocuments();
+  }
+
+  function removeDocument(uploadId, beforeRefresh) {
+    Source.removeUpload(uploadId)
+      .then(function (body) {
+        state.removeArmed = null;
+        if (beforeRefresh) beforeRefresh();
+        if (state.uploadResult && state.uploadResult.upload_id === uploadId) {
+          state.uploadResult = null;
+          state.uploadReveal = null;
+        }
+        var remaining = body ? body.uploads_remaining : null;
+        announce(remaining === 0
+          ? "The document was removed. No uploaded documents are left, so the file made " +
+            "of them is gone from the list."
+          : "The document was removed. " + remaining + " uploaded document(s) remain in " +
+            "this session.");
+        var wasOpen = state.householdId === UPLOADS_HOUSEHOLD_ID;
+        if (wasOpen && remaining === 0) {
+          /* The last one went, so the uploads file no longer exists anywhere — the
+           * picker row disappears with the next list fetch, and holding a report for
+           * a file that is gone would be showing the screen's memory as the server's
+           * state. Close it. */
+          closeHousehold();
+        }
+        return loadHouseholdList().then(function () {
+          if (wasOpen && remaining > 0) return loadHousehold(UPLOADS_HOUSEHOLD_ID);
+          renderUploadResult();
+          renderDocuments();
+          return null;
+        });
+      })
+      .catch(function (err) {
+        announce("That document could not be removed: " +
+                 (err && err.message ? err.message : "the server did not accept it."));
+      });
   }
 
   /** Open the session's own file — the one made of the renter's uploads. */
@@ -2075,6 +2508,13 @@
     if (note) detail.appendChild(note);
     var rest = confirmRemaining(doc, doc.document_id);
     if (rest) detail.appendChild(rest);
+    /* Only in the session's own file, and only because these are the renter's documents:
+     * a pack document is the measured example and has no remove control anywhere. */
+    if (state.householdId === UPLOADS_HOUSEHOLD_ID) {
+      detail.appendChild(removeDocumentCard(doc.document_id, function () {
+        if (state.documentId === doc.document_id) state.documentId = null;
+      }));
+    }
 
     root.appendChild(h("div", { class: "doc-layout" }, [
       h("nav", { "aria-label": "Documents in this household" }, [
@@ -2155,7 +2595,27 @@
      * steps away. The action sentence is a SEPARATE text node so the existing sentence
      * stays its own i18n dictionary key, character for character. */
     var staleAction = null;
-    if (stale === null || stale === undefined) {
+    /* Month-only, honestly three-way (mirrors uploadDateNotice; helpers above it).
+     * The machine state on the report is untouched — it stays `undatable`, core and
+     * logic own it, and the checklist still lists the item as open. Changed here is
+     * only the claim this row makes: a month sitting entirely inside or outside the
+     * window answers the currency question without needing a day, so "cannot be
+     * applied" is reserved for the month the window floor actually cuts through. */
+    var monthOnlyDate = /^\d{4}-\d{2}$/.test(String(doc.document_date || ""))
+      ? String(doc.document_date) : null;
+    var monthPosition = monthOnlyDate
+      ? monthWindowPosition(monthOnlyDate, state.report && state.report.reference_date)
+      : null;
+    if ((stale === null || stale === undefined) && monthPosition === "inside") {
+      staleText = "Current — any day in " + monthWords(monthOnlyDate) + " falls inside " +
+                  "the 60-day window. The exact day is still not recorded.";
+      staleAction = "Page 2 still lists this as an open item, because the day itself is " +
+                    "not on the page. If you know the exact date, fix it on the date row below.";
+    } else if ((stale === null || stale === undefined) && monthPosition === "outside") {
+      staleText = "Out of date — every day in " + monthWords(monthOnlyDate) + " falls " +
+                  "outside the 60-day window.";
+      staleAction = "Ask for a recent copy dated to the day. Page 2 lists this as an open item.";
+    } else if (stale === null || stale === undefined) {
       staleText = "The 60-day window cannot be applied — the date is not precise enough to use without inventing a day.";
       staleAction = "If you know the exact date, fix it on the date row below. Or ask for a copy that shows the full date. Page 2 lists this as an open item.";
     } else if (stale < 0) {
@@ -2219,7 +2679,13 @@
           class: "evidence-box" + (activeField === field.field ? " is-active" : "") +
                  // the lift survives a re-render: the page image reloads on every draw,
                  // and a focus-held lift that lived only in the DOM died with the old boxes
-                 (state.liftedField === field.field ? " tag-lifted" : ""),
+                 (state.liftedField === field.field ? " tag-lifted" : "") +
+                 /* Upload panel staged reveal: a box whose field has not had its turn
+                  * yet is held invisible (visibility, not display — placeTags measures
+                  * pixels, and display:none would measure nothing). The image loads
+                  * asynchronously, so the check is made at draw time: a box drawn
+                  * after its field was already revealed is simply never held. */
+                 ((opts.revealHold && opts.revealHold(field.field)) ? " reveal-hold" : ""),
           "data-field": field.field,
           style: {
             left: pct.left.toFixed(3) + "%",
@@ -3351,7 +3817,15 @@
         valueCell = cell(null, "Value", [document.createTextNode(plain(field.value)), nameNote]);
       }
 
-      return h("tr", { role: "row", class: isActive ? "is-active" : null }, [
+      /* data-field is the reveal loop's handle (and free documentation in the DOM).
+       * revealHold hides a row until its turn in the upload panel's staged reveal —
+       * the hidden attribute, not a class, so nothing assistive reads a row that has
+       * not "arrived" yet. Only the upload panel ever passes it. */
+      return h("tr", {
+        role: "row", class: isActive ? "is-active" : null,
+        "data-field": field.field,
+        hidden: (opts.revealHold && opts.revealHold(field.field)) ? true : null
+      }, [
         h("th", { scope: "row", role: "rowheader", "data-label": "Field" }, [
           field.bbox
             ? h("button", {
@@ -5088,6 +5562,24 @@
       reasons.length > 1 ? raisedByNote(reasons.length) : null,
       h("details", { class: "tech" }, [
         h("summary", { text: "Technical details" }),
+        /* HH-003 / HH-006: a READY banner stands beside this "missing" card, which looks
+         * like our bug. It is the organizer's gold, and our code resolved it as a rule —
+         * logic/test_checklist.py::test_redundant_employment_letter_is_missing_but_not_
+         * blocking. This one line says so where the apparent contradiction is. Detected
+         * off the logic layer's own substitution sentence (the report carries no
+         * `substituted` flag), so if that sentence changes this line disappears rather
+         * than mislabelling a genuinely blocking gap. */
+        (item.item_id === "CHK-EMPLOYMENT-LETTER" && item.state === "missing" &&
+         /already document this wage source/.test(String(item.detail || "")))
+          ? h("p", {
+              text: "Why the ready banner can stand beside this card. The letter has one " +
+                    "job here: to show where your wage comes from. The two pay stubs in " +
+                    "your file already do that job, and they agree with each other. The " +
+                    "challenge's own answer key marks this file ready with the letter " +
+                    "still missing. We still list the letter as missing, because hiding " +
+                    "a gap is worse than showing one."
+            })
+          : null,
         h("dl", { class: "kv" }, [
           h("dt", { text: "Item" }), h("dd", { class: "mono", text: item.item_id }),
           h("dt", { text: "Required because" }),
