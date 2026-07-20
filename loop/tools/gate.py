@@ -109,12 +109,12 @@ def run_json(args: list[str], env: dict[str, str] | None = None, cwd: Path | Non
 
 _DUMP = r'''
 import json, sys
-sys.path.insert(0, ".")
+sys.path.insert(0, ".")           # import the code of the tree we were pointed at
 from core import extract as ex
-docs = json.load(sys.stdin)
+docs = json.load(sys.stdin)       # but read the documents from one canonical copy
 out = {}
 for d in docs:
-    view = ex.extract_document(d["rel"], document_type=d["document_type"],
+    view = ex.extract_document(d["path"], document_type=d["document_type"],
                                fallback_mapper=ex.synonym_mapper)
     out[d["corpus"] + "::" + d["doc"]] = view["fields"]
 sys.stdout.write(json.dumps(out, indent=1, ensure_ascii=False, sort_keys=True, default=str))
@@ -137,8 +137,13 @@ def _dump_via_file(tree: Path, docs: list[dict], flags_off: list[str], scratch: 
     for flag in flags_off:
         env[flag] = "0"
 
+    # Absolute paths into the working tree, deliberately, for two reasons. The weaker one:
+    # G5 asks whether this CODE, with its flag off, still produces what the accepted
+    # commit's code produced -- so the inputs must be one identical set of bytes, not two
+    # checkouts of them. The stronger one, measured: the 14 confirm PDFs are untracked in
+    # git, so they exist at no commit and a worktree-relative read finds nothing there.
     payload = json.dumps([
-        {"rel": str(Path(d["path"]).resolve().relative_to(cl.ROOT)).replace("\\", "/"),
+        {"path": str(Path(d["path"]).resolve()),
          "corpus": d["corpus"], "doc": d["doc"], "document_type": d["document_type"]}
         for d in docs
     ])

@@ -403,8 +403,7 @@ def main(argv: list[str]) -> int:
         baseline = json.loads(cl.BASELINE_PATH.read_text(encoding="utf-8"))
         baseline["preexisting_dirty"] = preexisting_dirty()
         cl.BASELINE_PATH.write_text(
-            json.dumps(baseline, indent=2, ensure_ascii=False) + "
-", encoding="utf-8"
+            json.dumps(baseline, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )
         print(f"preexisting_dirty = {len(baseline['preexisting_dirty'])} paths")
         for path in baseline["preexisting_dirty"]:
