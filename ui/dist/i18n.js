@@ -346,7 +346,20 @@
     "No recorded answer for that wording": "그 표현으로 기록된 답변이 없습니다",
     "Offline, this app can only replay questions the pipeline actually answered. It will not improvise an answer about a housing rule. Choose one of the recorded questions, or start the API for free-form questions.":
       "오프라인에서는 파이프라인이 실제로 답한 질문만 재생할 수 있습니다. 주택 규칙에 대한 답을 지어내지 않습니다. 기록된 질문 중 하나를 고르거나, 자유롭게 묻고 싶으면 API 를 실행하세요.",
-    "Refused, on purpose": "의도적으로 거부했습니다",
+    // U3: "거부"는 신청자에게 문이 닫히는 말로 읽힌다. 실제로 일어난 일은 더 좁다 —
+    // 판단을 그 일을 하는 사람에게 넘긴 것이다. 거부 자체는 그대로다.
+    "Only a person can decide that — here is what we can tell you":
+      "그 판단은 사람만 할 수 있습니다 — 저희가 알려 드릴 수 있는 것은 이렇습니다",
+    "We cannot tell you whether you will get this home, and we will not guess. A housing worker decides that. It takes checks this service does not hold: proof of who lives with you, your income confirmed by an outside source, and status checks that are not in your file.":
+      "이 집을 얻으시게 될지는 저희가 말씀드릴 수 없고, 짐작하지도 않습니다. 그 판단은 주택 담당자가 합니다. 그러려면 이 서비스가 갖고 있지 않은 확인이 필요합니다 — 누가 함께 사는지에 대한 증빙, 외부 기관이 확인한 소득, 그리고 파일에 없는 신분 확인입니다.",
+    "Here is what we can tell you from your documents:": "서류에서 저희가 알려 드릴 수 있는 것은 이렇습니다:",
+    "What your income adds up to over a year.": "소득이 1년 동안 얼마로 합산되는지.",
+    "The income limit for a household your size.": "세대 인원수에 해당하는 소득 상한.",
+    "How those two numbers compare.": "그 두 수치가 서로 어떻게 견주어지는지.",
+    "What is still missing or out of date.": "아직 없거나 기한이 지난 것이 무엇인지.",
+    "Those are facts about paperwork and arithmetic, not about you. Our job is to hand the person who decides a complete file, so they can decide the first time they read it.":
+      "이것들은 서류와 계산에 대한 사실이지, 당신에 대한 사실이 아닙니다. 저희가 할 일은 판단하는 사람에게 온전한 파일을 건네어, 그가 처음 읽을 때 판단할 수 있게 하는 것입니다.",
+    "The precise wording this service sends: ": "이 서비스가 보내는 정확한 문구: ",
     "Abstained — no answer given": "답하지 않았습니다 — 답을 내지 않았습니다",
     "Answer": "답변",
     "No answer is given for this question.": "이 질문에는 답을 내지 않습니다.",
@@ -1580,8 +1593,9 @@
     [/^Loaded (\S+)\. (.+)$/, function (m) {
       return m[1] + " 을 불러왔습니다. " + (lookup(m[2]) || m[2]);
     }],
-    [/^Refused, on purpose\. (.+)$/, function (m) {
-      return "의도적으로 거부했습니다. " + (lookup(m[1]) || m[1]);
+    [/^Only a person can decide that — here is what we can tell you\. (.+)$/, function (m) {
+      return "그 판단은 사람만 할 수 있습니다 — 저희가 알려 드릴 수 있는 것은 이렇습니다. " +
+             (lookup(m[1]) || m[1]);
     }],
     [/^Abstained — no answer given\. (.+)$/, function (m) {
       return "답하지 않았습니다 — 답을 내지 않았습니다. " + (lookup(m[1]) || m[1]);

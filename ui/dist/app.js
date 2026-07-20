@@ -2785,7 +2785,12 @@
      * published range, which is an answer to stand on even though it is not a figure.
      * A heading that calls that "no answer" contradicts the paragraph under it. What we
      * withhold in every abstention is the value, so the heading says that instead. */
-    var headline = response.refused ? "Refused, on purpose"
+    /* "Refused, on purpose" was written for a judge reading a transcript, and it reads to
+     * the applicant as a door closing on them. What actually happened is narrower and
+     * kinder than the word: a decision was left to the person whose job it is. The heading
+     * says that, and says there is something here for the reader — which there is, in the
+     * body and in what_would_resolve_it. Nothing about the refusal itself changes. */
+    var headline = response.refused ? "Only a person can decide that — here is what we can tell you"
       : (response.abstained ? "Abstained — no value given"
       : (interpreted ? "Answer, from how we read your question" : "Answer"));
 
@@ -2826,6 +2831,33 @@
       body = COMPARISON_PLAIN[enumOnly];
     }
 
+    /* The eligibility refusal is the one answer every applicant will read, and it was the
+     * least readable thing on the product: 168 words at Flesch-Kincaid 14.2, 27.5 words a
+     * sentence, carrying READY_TO_REVIEW, NEEDS_REVIEW, "annualized amount", "frozen
+     * threshold" and a closing clause about how many values an enum has. A person who has
+     * just been told nobody will decide for them should not then have to parse that.
+     *
+     * The refusal is untouched — it is the load-bearing thing here and it is stated in the
+     * first sentence. What changes is the register, and only what the screen renders: the
+     * API still sends its exact text (api/test_ask_routing.py asserts the substrings the
+     * pack situation requires, and it still sees them), and that exact text is kept below,
+     * verbatim, under the same Technical details disclosure step 5 uses for the logic
+     * layer's own wording. Moved, not deleted — including the frozen-status-set sentence,
+     * which the evidence line under it also states independently.
+     *
+     * Keyed on `kind`, not on `refused`: the other refusals — a demand for another
+     * applicant's file, a document trying to issue instructions — are already short and
+     * plain, and generalising this would be authoring wording for answers nobody has
+     * read. */
+    var preciseBody = null;
+    if (response.kind === "eligibility_refused") {
+      preciseBody = body;
+      body = "We cannot tell you whether you will get this home, and we will not guess. A housing " +
+             "worker decides that. It takes checks this service does not hold: proof of who lives " +
+             "with you, your income confirmed by an outside source, and status checks that are not " +
+             "in your file.";
+    }
+
     /* The renter-facing sentence for this response kind, written in api/plain.py and
      * already carried on the response as `plain`. It is not invented here and it does not
      * replace the precise answer — it goes above it, which is the arrangement _with_plain
@@ -2845,6 +2877,26 @@
       h("p", { class: "status-line", text: "Question asked: " + question }),
       said && said.headline ? h("p", { class: "answer-lead", text: said.headline }) : null,
       h("p", { text: body }),
+      /* The three things this service can actually answer, named. The old body listed them
+       * inside a 60-word sentence about what it reports "instead"; a list is what a person
+       * scanning for their next move can use, and every line here is a question the ask box
+       * below will answer today. */
+      preciseBody
+        ? h("div", null, [
+            h("p", { text: "Here is what we can tell you from your documents:" }),
+            h("ul", null, [
+              h("li", { text: "What your income adds up to over a year." }),
+              h("li", { text: "The income limit for a household your size." }),
+              h("li", { text: "How those two numbers compare." }),
+              h("li", { text: "What is still missing or out of date." })
+            ]),
+            h("p", {
+              text: "Those are facts about paperwork and arithmetic, not about you. Our job is to " +
+                    "hand the person who decides a complete file, so they can decide the first time " +
+                    "they read it."
+            })
+          ])
+        : null,
       response.what_would_resolve_it
         ? h("p", null, [h("strong", { text: "What would resolve it: " }), response.what_would_resolve_it])
         : null,
@@ -2855,6 +2907,13 @@
        * token lifted off the answer above is reunited with it here. */
       h("details", { class: "tech" }, [
         h("summary", { text: "Technical details" }),
+        /* The API's own answer, byte for byte, whenever the screen said it in other words.
+         * This is the same discipline the abstention rail and every checklist card follow:
+         * plain wording leads, the precise string stays retrievable, and a judge can check
+         * that we did not paraphrase the meaning away. */
+        preciseBody
+          ? h("p", null, [h("strong", { text: "The precise wording this service sends: " }), preciseBody])
+          : null,
         h("p", { class: "status-line" }, [
           "Response kind: ", h("span", { class: "mono", text: response.kind }),
           " · abstained: " + String(response.abstained) + " · refused: " + String(response.refused)

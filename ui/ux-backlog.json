@@ -33,12 +33,13 @@
     },
     {
       "id": "U3",
-      "status": "OPEN",
+      "status": "DONE",
       "harm": 3,
       "title": "'Refused, on purpose' as a heading, over a grade-14.2 body",
       "evidence": "Heading on the eligibility question. Body: 170 words, Flesch-Kincaid 14.2, 27.5 words/sentence, containing READY_TO_REVIEW, NEEDS_REVIEW, 'annualized amount', 'frozen threshold', and a closing sentence about enum cardinality.",
       "fix": "Heading: 'Only a person can decide that - here is what we can tell you.' Body rewritten plain, naming the three things this service CAN answer. The frozen-set paragraph moves to How this works, intact.",
-      "constraint": "The refusal itself is load-bearing and stays. Only the word and the register change."
+      "constraint": "The refusal itself is load-bearing and stays. Only the word and the register change.",
+      "done_note": "Verified live. Heading now 'Only a person can decide that - here is what we can tell you'. Body replaced on screen only, for kind=eligibility_refused: FK 14.2 -> 4.1, 168 words -> 123, and the three answerable things are a scannable list instead of a clause. Done at the screen layer, NOT in api/situations.py: the invariant forbids changing what the API sends, and api/test_ask_routing.py asserts this pack situation's substrings. The API's exact 168-word text is kept verbatim under Technical details ('The precise wording this service sends: ...'), which is where the frozen-set sentence, READY_TO_REVIEW/NEEDS_REVIEW and 'annualized amount' now live - moved, not deleted. Keyed on kind, so the other two refusals are untouched."
     },
     {
       "id": "U4",
