@@ -75,6 +75,25 @@
 
     "Correct a value we read wrong": "잘못 읽은 값을 바로잡으세요",
 
+    // U10: 제품의 핵심 약속이 한국어 토글에서 영어로 남아 있었다. 우선순위대로 옮긴다 —
+    // 머리말 선언문 먼저, 그다음 세입자용 약속 문장들. 인용문(규칙·출처 원문)과
+    // 심사위원용 설계 근거(screen-how)는 그대로 영어로 둔다.
+    "We get your file to the person who decides, complete the first time you hand it over. What we cannot tell you is the outcome — and no software can, because that decision needs checks that are not in these documents. Nothing on this screen means approved, denied, or ineligible; a qualified housing professional decides that.":
+      "저희는 판단하는 사람에게 당신의 파일을, 처음 건네드릴 때 온전한 상태로 전달합니다. 저희가 말씀드릴 수 없는 것은 그 결과입니다 — 어떤 소프트웨어도 말할 수 없습니다. 그 판단에는 이 서류에 없는 확인들이 필요하기 때문입니다. 이 화면의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판단은 공인 주택 전문가가 합니다.",
+    "Anything we could not read, or could not be sure of, is listed here — on every screen, whichever step you are on.":
+      "저희가 읽지 못했거나 확신하지 못한 것은 무엇이든 여기에 나열됩니다 — 어느 단계에 계시든 모든 화면에서요.",
+    "RealDoor reads a document you give it and shows you where on the page every value came from. Each value is shown together with the box it was read from; choose a field name to light up its box. Nothing here is inferred about the person.":
+      "RealDoor 는 당신이 준 문서를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여 드립니다. 각 값은 그것을 읽어낸 상자와 함께 표시됩니다. 항목 이름을 고르면 그 상자가 켜집니다. 여기에서 사람에 대해 추측한 것은 없습니다.",
+    "Choose a PDF and RealDoor reads it, then shows you every value it took out of it and the box on the page each one came from. It is read on its own: nothing else has to be open first, and reading it changes nothing anywhere else.":
+      "PDF 를 고르시면 RealDoor 가 읽고, 거기서 뽑아낸 모든 값과 각 값이 나온 문서상의 상자를 보여 드립니다. 이 문서는 따로 읽힙니다: 먼저 열려 있어야 할 것이 없고, 읽어도 다른 어떤 것도 바뀌지 않습니다.",
+    "Every box below already holds what we read off this page. If a value is right, choose Confirm and leave the box alone. If it is wrong, change the box and choose the same button — that records a correction instead. Confirming does not change the value or any number below it; it records that you read it.":
+      "아래의 모든 칸에는 저희가 이 페이지에서 읽어낸 내용이 이미 들어 있습니다. 값이 맞으면 확인을 누르고 칸은 그대로 두세요. 틀렸으면 칸을 고치고 같은 버튼을 누르세요 — 그러면 대신 정정으로 기록됩니다. 확인은 값이나 그 아래 어떤 숫자도 바꾸지 않습니다. 당신이 그것을 읽었다는 사실을 기록할 뿐입니다.",
+    "If you would rather look around first, this copy carries six made-up household files. They belong to nobody. Everything the six steps do — the evidence boxes, the corrections, the checklist, the packet — works the same on them as on a document of your own.":
+      "먼저 둘러보고 싶으시면, 이 사본에는 지어낸 세대 파일 여섯 개가 들어 있습니다. 누구의 것도 아닙니다. 여섯 단계가 하는 모든 것 — 근거 상자, 정정, 점검 목록, 서류 묶음 — 은 당신의 문서에서와 똑같이 그것들에서도 작동합니다.",
+    "It also states how many values you checked and lists the actions taken in this session, with the rule versions that applied. That log holds no document contents and none of the values themselves.":
+      "또한 당신이 확인한 값이 몇 개인지 밝히고, 이번 세션에서 이루어진 작업을 적용된 규칙 버전과 함께 나열합니다. 그 기록에는 문서 내용도, 값 자체도 담기지 않습니다.",
+    "Nothing is waiting on you.": "당신을 기다리는 것은 없습니다.",
+
     // U9: 계산 패널이 무엇인지 한 줄로. 소득원이 하나뿐이면 두 패널이 같은 식을 보이므로.
     "This is your wage income on its own: one pay period, times the number of pay periods in a year.":
       "이것은 급여 소득만 따로 본 것입니다: 한 지급 주기를, 1년 안의 지급 횟수만큼 곱한 값입니다.",
@@ -1498,6 +1517,27 @@
       }],
     // U6: 영어 제목이 이 한국어를 따라 "Things we did not say" 로 바뀌었다. 한국어는 그대로.
     [/^Things we did not say \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
+    // U10: "이 문서에 N개 값이 남았습니다" 카드 본문. N 과 항목 이름은 그대로 둔다.
+    [/^You have (\d+) value\(s\) left on this document that only the machine has read: (.+)\. Confirming them together records that you compared each one against the page shown above and found it right\. It changes none of the values\. Anything you are unsure about, leave — you can confirm the others one at a time\.$/,
+      function (m) {
+        return "이 문서에는 기계만 읽은 값이 " + m[1] + "개 남아 있습니다: " + m[2] + ". 이것들을 함께 " +
+               "확인하면, 위에 표시된 페이지와 하나하나 대조해 맞다고 확인하셨다는 사실이 기록됩니다. " +
+               "값은 하나도 바뀌지 않습니다. 확실하지 않은 것은 남겨 두세요 — 나머지는 하나씩 확인하실 수 있습니다.";
+      }],
+    // U10: 확인 카운터. 강조 부분(숫자 보간)과 꼬리 문장을 각각 옮긴다.
+    [/^(\d+) of (\d+) read values checked by you\.\s*$/, function (m) {
+      return "읽어낸 값 " + m[2] + "개 중 " + m[1] + "개를 당신이 확인했습니다. ";
+    }],
+    [/^Checking is optional and nothing here is wrong\. Whatever you leave unchecked still travels with your file, marked as read by the machine but not yet confirmed by you, and a person can review it either way\.( (\d+) value\(s\) could not be read at all — those need a person to supply them\.)?$/,
+      function (m) {
+        var base = "확인은 선택 사항이고, 여기에 잘못된 것은 없습니다. 확인하지 않고 두신 것도 " +
+                   "기계가 읽었지만 아직 당신이 확인하지는 않은 것으로 표시되어 파일과 함께 그대로 " +
+                   "전달되며, 사람이 어느 쪽이든 검토할 수 있습니다.";
+        if (m[2]) {
+          base += " " + m[2] + "개 값은 전혀 읽을 수 없었습니다 — 그것들은 사람이 채워 넣어야 합니다.";
+        }
+        return base;
+      }],
     // U8: 이름을 자신 있게 읽지 못했을 때, 이름이 있는 자리에 문장으로 알린다.
     [/^We may not have read your name correctly\. It reads “(.+?)”, but we are not sure\. Check this row first, and fix it here if it is wrong\.$/,
       function (m) {
@@ -1973,6 +2013,9 @@
       ]
     },
     "footer-privacy": {
+      // U10: 저장된 en 이 실제 HTML 보다 한 문장("?fixtures ...") 길어서 대조가 어긋났고,
+      // 그 때문에 이 문단은 한국어 토글에서도 계속 영어로 남아 있었다. 화면의 실제 문단에
+      // 맞춰 en 과 ko 를 그 문장 앞에서 끝낸다(그 정보는 "How this works" 에도 있다).
       en: "No external fonts, scripts, images, or analytics. Every request this page makes goes to the " +
           "address in the bar above it and nowhere else; opened as a file, it makes none at all. That is a " +
           "promise about this page, not about the whole system: when the question classifier is switched on, " +
@@ -1980,9 +2023,7 @@
           "can promise structurally is narrower and harder: no document, no extracted field and no household " +
           "record is ever part of that request. Before your sentence is sent we replace the identifier shapes " +
           "we can recognise, such as an email address, a phone number or a street address. We cannot " +
-          "recognise all of them, so a name you type is sent as you typed it. The data " +
-          "source is named at the top of the page, and you can force the offline one by adding " +
-          "?fixtures to the URL.",
+          "recognise all of them, so a name you type is sent as you typed it.",
       // 영어의 논지 순서를 그대로 지킨다: ① 페이지는 외부로 나가지 않는다 → ② 그러나 그것은
       // 이 페이지에 대한 약속일 뿐이다 → ③ 대신 좁고 단단한 약속(문서·필드·세대 기록은 절대
       // 나가지 않는다) → ④ 식별자 치환은 하되 완전하지 않다.
@@ -1996,10 +2037,7 @@
         "구조로 약속할 수 있는 것은 그보다 좁고 그만큼 단단합니다. 어떤 문서도, 추출된 어떤 항목도, " +
         "세대 기록도 그 요청에 결코 실리지 않습니다. 문장을 보내기 전에 저희가 알아볼 수 있는 " +
         "식별자 형태 — 이메일 주소, 전화번호, 도로명 주소 같은 것 — 는 바꿔 넣습니다. 그러나 모두 " +
-        "알아볼 수는 없습니다. 직접 타이핑하신 이름은 적으신 그대로 나갑니다. 데이터 출처는 화면 맨 " +
-        "위에 적혀 있고, URL 에 ",
-        ["code", "?fixtures"],
-        " 를 붙이면 오프라인 출처를 강제할 수 있습니다."
+        "알아볼 수는 없습니다. 직접 타이핑하신 이름은 적으신 그대로 나갑니다."
       ]
     },
     // U9: 긴 푸터 문단이 "기술 세부사항" 뒤로 접혔고, 그 앞에 한 줄 요약이 남았다.

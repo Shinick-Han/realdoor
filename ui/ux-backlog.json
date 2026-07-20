@@ -97,14 +97,16 @@
       "evidence": "130-word threat-model footer on every screen; 'Routed to deterministic rule handlers. No document text reaches the calculation.' above the ask box on every screen; 'Why this wording:' annotations that defend the copy inside the copy; two calculation panels showing the identical formula 2166.0 * 26 back to back with no explanation of the difference.",
       "fix": "Move to How this works. Keep one line where a line is needed.",
       "done_note": "Verified live. (a) 'Routed to deterministic rule handlers. No document text reaches the calculation.' removed from the ask-box context on every screen (both live and offline branches); the privacy no-PII hint stays. The fact moved to How this works under 'Why the screens are worded the way they are'. (b) The ~130-word footer privacy paragraph folded behind a Technical details disclosure with a one-line honest lead visible on every screen; full text intact and retrievable (confirmed by opening it live). (c) The two calc panels that showed identical formula 2166.0 * 26 (HH-001, HH-005: annualized_wage_income and annualized_income) each now carry a one-line blurb; the total-line blurb explains it equals a single component only when there is one income source (FK 6.3-7.6). (d) The 'Why this wording:' precision_note annotations were ALREADY inside Technical details disclosures (app.js reasonCard line ~511 and checklist card line ~4083) - no action needed, noted. New footer lead + calc blurbs translated for the Korean toggle. NOTE for U10: the folded footer-privacy block's stored i18n `en` has a trailing '?fixtures' sentence the HTML never carried, a pre-existing mismatch that keeps that paragraph English under the Korean toggle - unchanged by this item. Gates: axe 0, reflow 35/35, keyboard 31/31, pytest 1237."
+    },
     {
       "id": "U10",
-      "status": "OPEN",
+      "status": "DONE",
       "harm": 10,
       "title": "The Korean toggle leaves the core promise in English",
       "evidence": "60 of 89 substantial paragraphs translate. What stays English includes the header manifesto and the footer privacy paragraph.",
       "fix": "Translate the manifesto first, then the footer, then the rest.",
-      "constraint": "For the person this product claims to serve, the untranslated sentences are the important ones."
+      "constraint": "For the person this product claims to serve, the untranslated sentences are the important ones.",
+      "done_note": "Verified live (HH-005, Korean toggle). Manifesto first: the header standing-notice ('We get your file to the person who decides ... a qualified housing professional decides that.') now renders Korean. Footer second: the folded privacy paragraph stayed English because the stored i18n `en` carried a trailing '?fixtures' sentence the HTML never had - reconciled en+ko to the actual paragraph, so it now renders Korean (verified collapsed and open); the console mismatch warning is gone. Then the renter-facing rest: rail intro, the four step-1 ledes (RealDoor reads a document / Choose a PDF / Every box below / look-around six households), the step-6 log note, the confirmation counter (strong count + tail, via regex), and the confirm-remaining card body. After: every renter-facing substantial paragraph on header, rail, footer and steps 1-6 is Korean. What remains English by design: the 8 verbatim citation/rule quotes on step 4 (translating authoritative source text would misrepresent it) and the 8 judge-facing design-rationale paragraphs on the How this works page (the lower-priority 'rest'; the constraint names the served person's sentences as the important ones, and those are done). Gates: axe 0, reflow 35/35, keyboard 31/31, pytest 1237."
     },
     {
       "id": "U12",
