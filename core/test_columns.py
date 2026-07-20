@@ -17,20 +17,25 @@ from core import extract as ex
 
 ROOT = Path(__file__).resolve().parent.parent
 EXTERNAL = ROOT / "testdata" / "external_raw"
+CONFIRM = ROOT / "testdata" / "confirm_raw"
 PACK = ROOT / "pack" / "synthetic_documents"
 
 
+# The flags default ON now, so "off" has to be said out loud: only the literal `0`
+# disables a path. The arithmetic flag is pinned off in both fixtures for the same reason
+# it always was -- these tests measure what the *column* path does, so what the arithmetic
+# chain would add has to be held fixed.
 @pytest.fixture()
 def flag_on(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("REALDOOR_COLUMNS", "1")
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     yield
 
 
 @pytest.fixture()
 def flag_off(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     yield
 
 
@@ -42,10 +47,21 @@ def _fields(pdf: Path, document_type: str) -> dict:
 # ───────────────────────────────────────────────────────────────── the flag itself
 
 
-@pytest.mark.parametrize("value", ["0", "", "true", "yes", "2", "1 "])
-def test_only_the_literal_one_switches_it_on(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_default_is_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Promoted from opt-in: with the variable unset the column path runs. The promotion
+    measurement is recorded in `core.extract._arithmetic_enabled`."""
+    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
+    assert ex._columns_enabled() is True
+
+
+@pytest.mark.parametrize("value", ["0", "0 ", " 0", "1", "", "true", "yes", "2", "1 "])
+def test_only_the_literal_zero_switches_it_off(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Off has to be said out loud. Anything that is not the literal `0` leaves the shipped
+    default in force, so a typo in the variable cannot silently turn the path off."""
     monkeypatch.setenv("REALDOOR_COLUMNS", value)
-    assert ex._columns_enabled() is (value.strip() == "1")
+    assert ex._columns_enabled() is (value.strip() != "0")
 
 
 PACK_SAMPLES = sorted(PACK.rglob("*.pdf"))[:6]
@@ -57,8 +73,8 @@ def test_the_flag_moves_nothing_on_the_pack(pdf: Path, monkeypatch: pytest.Monke
     there is already answered by the label geometry, so this path finds no blank to fill and
     must leave the document byte-for-byte as it was."""
     document_type = ex.infer_document_type(pdf)
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
-    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
+    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
     off = json.dumps(ex.extract_document(pdf, document_type=document_type), sort_keys=True)
     monkeypatch.setenv("REALDOOR_COLUMNS", "1")
     on = json.dumps(ex.extract_document(pdf, document_type=document_type), sort_keys=True)
@@ -136,20 +152,30 @@ def test_the_les_net_pay_is_never_attributed_by_this_module(flag_on) -> None:
     """The regression that guards the above, end to end and through the real file.
 
     Narrowed alongside `core/test_arithmetic.py::test_les_gross_and_net_stay_refused`, and for
-    the same reason. This module's refusal is about *column attribution*: the LES earnings
-    matrix must never hand `net_pay` a number by lining it up with a header. That refusal is
-    intact. What changed is elsewhere -- page 3 prints `$960.50` in the column under a net-pay
-    label, and `TYPED_VALUE_X_TOLERANCE` now reaches it through the ordinary label-anchored
-    read, which is a different rule with a different guarantee. So the assertion is made on
-    this module's own note rather than on the field being empty.
+    the same reason. This module's refusal is about *label-row* column attribution: the LES
+    earnings matrix must never hand `net_pay` a number by lining a label's row up with a
+    header. That refusal is intact -- `net_pay`'s value comes from the ordinary
+    label-anchored read of the `$960.50` page 3 prints, and carries no attribution note.
+
+    `gross_pay` was narrowed a second time when the two-axis rule landed: page 3 prints
+    `Gross 1813.00 29739.00` under the header row `Current | YTD`, which is exactly the
+    row-word-crosses-header-cell layout `table_cell_value` reads. The page states the
+    answer, so asserting an abstention here would be pinning a limitation, not a refusal.
+    What must still never happen is a *label* acquiring a value through `column_value`'s
+    header attribution on this matrix, and that is asserted on the note text.
     """
     got = _fields(EXTERNAL / "ext_les.pdf", "pay_stub")
-    assert got["gross_pay"]["certainty"] == "abstain"
+    gross = got["gross_pay"]
+    assert gross["value"] == pytest.approx(1813.00)
+    assert gross["certainty"] == "low"
+    assert "row's first cell 'Gross'" in (gross.get("notes") or "")
     for name in ("net_pay", "gross_pay"):
-        assert "header" not in (got[name].get("notes") or "").lower(), (
-            f"{name} was attributed by a column header on a page whose matrix does not "
-            f"support it: {got[name].get('notes')!r}"
+        note = (got[name].get("notes") or "")
+        assert "in the column the page's own header row names" not in note, (
+            f"{name} was attributed to a label by a column header on a page whose matrix "
+            f"does not support it: {note!r}"
         )
+    assert got["net_pay"]["value"] == pytest.approx(960.50)
 
 
 @pytest.mark.parametrize(
@@ -173,10 +199,17 @@ def test_the_empty_pay_rate_column_stays_empty(flag_on) -> None:
 
 
 def test_the_unc_annual_salary_trap_stays_refused(flag_on) -> None:
-    """UNC prints `Pay Rate: $45,000.00 Annual` against a true hourly rate of 20.35. Reading
-    the labelled figure would be a confident wrong answer."""
+    """UNC prints `Pay Rate: $45,000.00 Annual` against a true hourly rate of 20.346846.
+    Reading the labelled figure would be a confident wrong answer, and it must stay
+    unreadable through every rule. The two-axis rule now reads the true rate instead --
+    UNC's earnings matrix prints `Regular 20.346846 74.50 ...` under a header row whose
+    `Rate` cell sits over the first number -- so the assertion is two-sided: 45,000.00
+    never, and any value that does appear is the one the page's own Rate column prints."""
     got = _fields(EXTERNAL / "ext_unc.pdf", "pay_stub")["hourly_rate"]
-    assert got["certainty"] == "abstain"
+    assert got["value"] != pytest.approx(45000.0), "the annual salary was read as an hourly rate"
+    assert got["value"] == pytest.approx(20.346846)
+    assert got["certainty"] == "low"
+    assert "row's first cell 'Regular'" in (got.get("notes") or "")
 
 
 def test_a_row_of_numbers_is_not_a_header_row() -> None:
@@ -270,6 +303,151 @@ def test_no_header_row_at_all_abstains() -> None:
     assert col._attribute(lines, candidates) is None
 
 
+# ────────────────────────────────────── the two-axis table cell, and what it must refuse
+
+
+def test_adp_hours_come_from_the_hours_header_not_from_adjacency(flag_on) -> None:
+    """The hazard that makes the naive version of this rule unsafe, pinned exactly.
+
+    ADP's row is `Regular 14.9000 40.00 596.00`, and the first number right of "Regular"
+    is the RATE. A side-by-side REGULAR -> regular_hours rule -- one axis, plus proximity
+    -- would confidently emit 14.90 as the hours. The two-axis rule answers 40.00 because
+    the header cell the page prints above it says `Hours`, and 14.9000 becomes the rate
+    for the same reason: the cell above it says `Rate`."""
+    got = _fields(EXTERNAL / "ext_adp.pdf", "pay_stub")
+    hours = got["regular_hours"]
+    assert hours["value"] == 40
+    assert hours["value"] != pytest.approx(14.9), "the rate was read as the hours"
+    assert hours["certainty"] == "low"
+    assert "'Hours'" in (hours["notes"] or "")
+    rate = got["hourly_rate"]
+    assert rate["value"] == pytest.approx(14.9)
+    assert rate["certainty"] == "low"
+    assert "'Rate'" in (rate["notes"] or "")
+
+
+def test_utep_hours_come_from_the_current_hours_column(flag_on) -> None:
+    """UTEP's `Regular` row puts 74.25 under `Current Hours` and 1,596 under `YTD Hours`.
+    The cumulative marker is what tells them apart, exactly as it does for amounts."""
+    got = _fields(EXTERNAL / "ext_utep.pdf", "pay_stub")["regular_hours"]
+    assert got["value"] == pytest.approx(74.25)
+    assert got["certainty"] == "low"
+    assert "'Current Hours'" in (got["notes"] or "")
+
+
+def test_les_hours_come_from_the_hours_header(flag_on) -> None:
+    """The LES prints `Regular 21.38 80.00 1710.00` under `TYPE | RATE | ADJUSTED |
+    ADJ HOURS | HOURS | CURRENT | YTD`. The ADJ HOURS column is empty for this row, so
+    exactly one candidate sits under a cell that names the axis, and it is 80.00."""
+    got = _fields(EXTERNAL / "ext_les.pdf", "pay_stub")["regular_hours"]
+    assert got["value"] == 80
+    assert got["certainty"] == "low"
+    assert "'HOURS'" in (got["notes"] or "")
+
+
+def test_unc_twin_hours_headers_refuse(flag_on) -> None:
+    """UNC's earnings matrix prints two bare `Hours` headers in one row -- the current
+    column and the year-to-date column, distinguished only by a second header tier this
+    rule does not read. Two cells name the axis, the page has not said which one is meant
+    on the row itself, and the honest answer is an abstention -- not 855.00, the YTD
+    figure that a nearest-cell tie-break would have picked."""
+    got = _fields(EXTERNAL / "ext_unc.pdf", "pay_stub")["regular_hours"]
+    assert got["certainty"] == "abstain"
+
+
+def test_the_row_word_must_be_the_rows_first_cell(flag_on) -> None:
+    """The bonita certificated check prints `C M | REGULAR | 9/30/2018 | 6,333.00 | 23.00
+    | 6,333.00` under a header row that includes `RATE` -- and the 6,333.00 in the RATE
+    column is a monthly figure on a document whose truth records hourly_rate as absent.
+    "REGULAR appears in the row" would read it; "REGULAR is the row's name cell" refuses
+    it, because that row's first cell is `C M`."""
+    pdf = CONFIRM / "bonita_certificated_check_sample.pdf"
+    got = _fields(pdf, "pay_stub")
+    assert got["hourly_rate"]["certainty"] == "abstain"
+    assert got["regular_hours"]["certainty"] == "abstain"
+
+
+# Synthetic refusal geometry for `table_cell_value`, one hazard per test. `_word` and the
+# header/value row builder mirror the `_attribute` fixtures above.
+
+
+def _table_lines(*rows: tuple[float, list[tuple[str, float, float]]]):
+    return [[_word(t, a, b, base) for t, a, b in cells] for base, cells in rows]
+
+
+_CONV = ex.LineBoxConvention()
+
+
+def test_a_second_matching_row_refuses() -> None:
+    """The LES layout prints adjustment rows under the same row word as the period's own
+    row, and nothing printed says which is which. Two rows, no reading."""
+    lines = _table_lines(
+        (100.0, [("Hours", 200.0, 260.0), ("Rate", 300.0, 360.0)]),
+        (80.0, [("Regular", 20.0, 60.0), ("40.00", 210.0, 240.0)]),
+        (60.0, [("Regular", 20.0, 60.0), ("8.00", 210.0, 240.0)]),
+    )
+    assert col.table_cell_value(lines, "regular_hours", _CONV) is None
+
+
+def test_a_cumulative_axis_cell_refuses() -> None:
+    """A `YTD Hours` header names the axis word and the wrong period. The unchanged
+    `CUMULATIVE_MARKERS` is what refuses it -- there is no list of current-column names."""
+    lines = _table_lines(
+        (100.0, [("YTD Hours", 200.0, 260.0), ("Amount", 300.0, 360.0)]),
+        (80.0, [("Regular", 20.0, 60.0), ("1596", 210.0, 240.0), ("24422.76", 310.0, 350.0)]),
+    )
+    assert col.table_cell_value(lines, "regular_hours", _CONV) is None
+
+
+def test_a_candidate_under_no_header_cell_refuses() -> None:
+    """A number that shares ink with no header cell is a number the header row does not
+    describe, and one such number disqualifies the whole row -- the page's own header has
+    failed to account for what the row prints."""
+    lines = _table_lines(
+        (100.0, [("Hours", 200.0, 260.0), ("Amount", 300.0, 360.0)]),
+        (80.0, [("Regular", 20.0, 60.0), ("40.00", 210.0, 240.0), ("596.00", 500.0, 540.0)]),
+    )
+    assert col.table_cell_value(lines, "regular_hours", _CONV) is None
+
+
+def test_a_candidate_under_two_header_cells_refuses() -> None:
+    """A candidate straddling two header cells belongs to neither of them plainly."""
+    lines = _table_lines(
+        (100.0, [("Adj Hours", 200.0, 260.0), ("Hours", 255.0, 320.0)]),
+        (80.0, [("Regular", 20.0, 60.0), ("40.00", 240.0, 270.0)]),
+    )
+    assert col.table_cell_value(lines, "regular_hours", _CONV) is None
+
+
+def test_no_header_row_above_refuses() -> None:
+    """A bare `Regular 40.00` with no header row above it is exactly the one-axis layout
+    this rule exists to refuse: nothing printed says what the number is."""
+    lines = _table_lines(
+        (80.0, [("Regular", 20.0, 60.0), ("40.00", 210.0, 240.0)]),
+    )
+    assert col.table_cell_value(lines, "regular_hours", _CONV) is None
+
+
+def test_an_unlisted_field_is_never_read_from_a_table() -> None:
+    """The row-name table is closed. A field without an entry cannot be resolved this way,
+    however suggestive the page's geometry."""
+    lines = _table_lines(
+        (100.0, [("Hours", 200.0, 260.0), ("Rate", 300.0, 360.0)]),
+        (80.0, [("Regular", 20.0, 60.0), ("40.00", 210.0, 240.0)]),
+    )
+    assert col.table_cell_value(lines, "net_pay", _CONV) is None
+
+
+def test_bare_row_words_are_still_not_labels() -> None:
+    """The two-axis rule is precisely why REGULAR, RATE and HOURS stay out of the label
+    vocabulary: as labels they would resolve one-axis, first-number-wins. If someone adds
+    them, this fails before a measurement has to catch the wrong value."""
+    for table in (ex.LABEL_MAP, ex.LABEL_SYNONYMS):
+        for mapping in table.values():
+            for banned in ("REGULAR", "RATE", "HOURS", "GROSS", "CURRENT"):
+                assert banned not in mapping
+
+
 # ─────────────────────────────────────────────────────────── flag off changes nothing
 
 
@@ -279,29 +457,37 @@ def test_no_header_row_at_all_abstains() -> None:
      ("ext_unc.pdf", "pay_stub"), ("ext_les.pdf", "pay_stub"),
      ("ext_nydol.pdf", "benefit_letter"), ("ext_va.pdf", "employment_letter")],
 )
-def test_flag_off_is_byte_for_byte_the_old_behaviour(
+def test_the_default_is_byte_for_byte_the_explicit_on(
     file_name: str, document_type: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Not "the same values" -- the same bytes. The whole document view is compared, so a
-    changed note, box, page or certainty would fail this too."""
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    """Not "the same values" -- the same bytes. An unset variable and an explicit `1` must
+    be the same configuration, so the shipped default is exactly the measured one and there
+    is no third, accidental state between on and off."""
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
-    off = json.dumps(
+    default = json.dumps(
         ex.extract_document(EXTERNAL / file_name, document_type=document_type),
         sort_keys=True,
     )
-    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
-    also_off = json.dumps(
+    monkeypatch.setenv("REALDOOR_COLUMNS", "1")
+    explicit_on = json.dumps(
         ex.extract_document(EXTERNAL / file_name, document_type=document_type),
         sort_keys=True,
     )
-    assert off == also_off
+    assert default == explicit_on
 
 
 def test_the_recovered_fields_are_abstentions_with_the_flag_off(flag_off) -> None:
-    """The three fields this change recovers, pinned as abstentions in the shipped default."""
+    """Every field the column path recovers -- label-row headers and two-axis table cells
+    alike -- pinned as an abstention when the flag is explicitly `0`."""
     adp = _fields(EXTERNAL / "ext_adp.pdf", "pay_stub")
     utep = _fields(EXTERNAL / "ext_utep.pdf", "pay_stub")
+    les = _fields(EXTERNAL / "ext_les.pdf", "pay_stub")
     assert adp["gross_pay"]["certainty"] == "abstain"
     assert adp["net_pay"]["certainty"] == "abstain"
     assert utep["gross_pay"]["certainty"] == "abstain"
+    assert adp["regular_hours"]["certainty"] == "abstain"
+    assert adp["hourly_rate"]["certainty"] == "abstain"
+    assert utep["regular_hours"]["certainty"] == "abstain"
+    assert les["regular_hours"]["certainty"] == "abstain"
+    assert les["gross_pay"]["certainty"] == "abstain"

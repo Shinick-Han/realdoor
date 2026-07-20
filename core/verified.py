@@ -60,8 +60,10 @@ WHAT IS NOT HERE, ON PURPOSE
 
 FLAG
 ----
-Off unless `REALDOOR_ARITHMETIC=1`. With the flag off `extract_document` never calls into this
-module, so its output is bit-identical to the output before this module existed.
+On by default; `REALDOOR_ARITHMETIC=0` switches it off. With the flag off `extract_document`
+never calls into this module, so its output is bit-identical to the output before this module
+existed. Promoted from opt-in after the measurement recorded in
+`core.extract._arithmetic_enabled`.
 """
 from __future__ import annotations
 

@@ -373,6 +373,13 @@ LABEL_SYNONYMS: dict[str, dict[str, str]] = {
         # PeopleSoft calls the payment an "advice" and dates it accordingly; the phrase is
         # the whole entry, so it names one thing and cannot be read as "the date of what?".
         "ADVICE DATE": "pay_date",
+        # il_dol runs the words together as one compound, `Paydate:`. A single word that
+        # names one thing -- unlike bare "DATE", which could date anything on the page.
+        "PAYDATE": "pay_date",
+        # The date a paycheck is issued is the date it pays. bonita prints `ISSUE DATE` in
+        # its header strip with the value directly beneath it at the same x, and the
+        # compound cannot be read as the date of anything but the payment itself.
+        "ISSUE DATE": "pay_date",
         "PERIOD COVERED": "pay_period_start",
         "PERIOD BEGINNING": "pay_period_start",
         "PERIOD BEGIN": "pay_period_start",
@@ -791,6 +798,16 @@ _DATE_FORMATS = (
     "%B %d, %Y",
     "%b %d, %Y",
 )
+# Two-digit years (`%m/%d/%y` -- il_dol prints `8/27/05` and `9/2/05`) were added here
+# once and dropped the same day, and the reason is worth keeping. Month-first is a
+# documented convention over two numbers the page does print; a two-digit year's century
+# is a number the page does NOT print, and strptime's pivot (00-68 -> 20xx) invents it.
+# That is the masked-year failure (`1/7/XX`) in a milder costume. The repository's own
+# scorer agrees: `eval/score_extraction.py` deliberately reads only four-digit years, so
+# a truth transcription of `8/27/05` is unparsable to it and any ISO date we emit for
+# that page scores as a WRONG value -- measured on the confirmation set, where the format
+# turned il_dol's two correctly-located dates into two wrong answers before it was
+# removed. Such dates stay abstentions.
 
 
 def _parse_date(raw: str) -> tuple[str, bool]:
@@ -926,28 +943,34 @@ _DOC_TYPE_RE = re.compile(r"^(hh-\d+)_(d\d+)_(.+)$", re.IGNORECASE)
 
 
 def _arithmetic_enabled() -> bool:
-    """Is the arithmetic-verification path switched on? Off by default, like the label model.
+    """Is the arithmetic-verification path switched on? ON by default; `0` switches it off.
+
+    This flag shipped default-off while the path was unproven. It was promoted after the
+    promotion measurement: with it on, the pack stays 159/159 exact with bbox IoU 159/159,
+    the external six and the confirmation set both gain fields, label mapping on the 26
+    uploads and the wording hold-out is bit-identical, and `wrong` is 0 in every corpus
+    under all four flag combinations. `REALDOOR_ARITHMETIC=0` restores the old behaviour
+    exactly -- with it set, `core.verified` is never imported.
 
     Read through a function rather than captured at import so that a test can flip the
-    environment variable and see the change, and so that `core.verified` -- and with it the
-    whole identity search -- is never imported when the flag is off.
+    environment variable and see the change.
     """
     import os
 
-    return os.environ.get("REALDOOR_ARITHMETIC", "").strip() == "1"
+    return os.environ.get("REALDOOR_ARITHMETIC", "").strip() != "0"
 
 
 def _columns_enabled() -> bool:
-    """Is the column-header path switched on? Off by default, like the arithmetic flag.
+    """Is the column-header path switched on? ON by default; `0` switches it off.
 
-    Read through a function for the same two reasons: a test can flip the environment
-    variable and see the change, and `core.columns` is never imported when the flag is off,
-    so with it off this module's output is bit-identical to what it was before that file
-    existed.
+    Promoted from default-off alongside `REALDOOR_ARITHMETIC`, on the same measurement --
+    see `_arithmetic_enabled`. `REALDOOR_COLUMNS=0` restores the old behaviour exactly:
+    `core.columns` is never imported when the flag is off, so with it off this module's
+    output is bit-identical to what it was before that file existed.
     """
     import os
 
-    return os.environ.get("REALDOOR_COLUMNS", "").strip() == "1"
+    return os.environ.get("REALDOOR_COLUMNS", "").strip() != "0"
 
 
 def infer_document_type(pdf_path: str | Path) -> str:
@@ -1115,7 +1138,8 @@ def _scan_page(
                     label_words, header_words,
                 )
             # ------------------------------------------------------------------------
-            # Column headers (opt-in, `REALDOOR_COLUMNS=1`) -- see `core/columns.py`
+            # Column headers (on by default, `REALDOOR_COLUMNS=0` to disable) -- see
+            # `core/columns.py`
             # ------------------------------------------------------------------------
             # Last, and only when the three rules above produced **no value**. "No value"
             # includes an abstention, because `_resolve_value` records a run it located and
@@ -1138,6 +1162,26 @@ def _scan_page(
                 )
                 if recovered is not None:
                     resolved = recovered
+            # ------------------------------------------------------------------------
+            # A printed conjunction names two fields at once -- see `_period_span_fields`
+            # ------------------------------------------------------------------------
+            # Same abstention-only gate as the column branch above: only a field the
+            # whole chain left without a value may be filled, and the companion
+            # `pay_period_end` is likewise only ever written over a blank or an
+            # abstention, never over a value another label produced.
+            if field_name == "pay_period_start" and (
+                resolved is None or resolved.get("certainty") == "abstain"
+            ):
+                span = _period_span_fields(
+                    line, label_runs, index, column_right, convention, is_exact,
+                    header_words,
+                )
+                if span is not None:
+                    start_field, end_field = span
+                    resolved = start_field
+                    existing_end = found.get("pay_period_end")
+                    if existing_end is None or existing_end.get("certainty") == "abstain":
+                        found["pay_period_end"] = end_field
             if resolved is not None:
                 found[field_name] = resolved
     return unmapped
@@ -1219,6 +1263,30 @@ def extract_fields_from_page(
                 model_named |= set(found) - before_stage
         if tracker is not None:
             _retag_model_provenance(found, model_named, tracker.from_model)
+
+    # ----------------------------------------------------------------------------------
+    # Two-axis table cells (part of the column path: `REALDOOR_COLUMNS=0` disables it)
+    # ----------------------------------------------------------------------------------
+    # Last of all, and only for fields every label pass left with **no value** -- absent,
+    # or recorded as an abstention. This is the same abstention-only gate the header-column
+    # branch in `_scan_page` uses, applied at the page level because the fields this rule
+    # reads have no label anywhere on the page to anchor a `_scan_page` visit: an earnings
+    # matrix names `regular_hours` by crossing a `Regular` row with an `Hours` header
+    # rather than by printing a label. Placing it after every mapper pass is structural
+    # safety, not politeness -- a field any label (canonical, synonym or model-named) can
+    # reach is decided by that label before this rule is allowed to look, so there is no
+    # path by which a table cell can replace, move or re-box a label-anchored value.
+    # See `core.columns.table_cell_value` for the rule and its refusals.
+    if _columns_enabled():
+        from core import columns
+
+        for name in EXPECTED_FIELDS.get(document_type, ()):
+            existing = found.get(name)
+            if existing is not None and existing.get("certainty") != "abstain":
+                continue
+            recovered = columns.table_cell_value(lines, name, convention)
+            if recovered is not None:
+                found[name] = recovered
     return found, unmapped
 
 
@@ -1687,6 +1755,31 @@ def _side_by_side_value(
     so like every other test here it turns readings into abstentions or abstentions into
     readings, never one value into another.
     """
+    run = _side_by_side_run(line, label_runs, index, column_right, field_name, header_words)
+    if run is None:
+        return None
+    return _build_value_field(
+        run, field_name, convention, is_exact,
+        "value read from the same line as its label, in the column to its right",
+        header_words=header_words,
+    )
+
+
+def _side_by_side_run(
+    line: Sequence[Word],
+    label_runs: Sequence[Sequence[Word]],
+    index: int,
+    column_right: float,
+    field_name: str,
+    header_words: frozenset[int] = frozenset(),
+) -> list[Word] | None:
+    """The single run in the cell to a label's right, or None. See `_side_by_side_value`.
+
+    Split out so that `_period_span_fields` can locate the run under exactly the same
+    refusals -- one candidate, no label in the way, a column gap, a caption closing the
+    cell -- and then read it under a different parse. The geometry question and the parse
+    question are separate, and only the geometry lives here.
+    """
     label_run = label_runs[index]
     label_end = max(w.x1 for w in label_run)
     label_words = {id(w) for run in label_runs for w in run}
@@ -1710,11 +1803,87 @@ def _side_by_side_value(
     run = runs[0]
     if run[0].x0 - label_end < SIDE_BY_SIDE_MIN_GAP:
         return None
+    return run
 
-    return _build_value_field(
-        run, field_name, convention, is_exact,
-        "value read from the same line as its label, in the column to its right",
-        header_words=header_words,
+
+def _period_span_fields(
+    line: Sequence[Word],
+    label_runs: Sequence[Sequence[Word]],
+    index: int,
+    column_right: float,
+    convention: LineBoxConvention,
+    is_exact: bool,
+    header_words: frozenset[int] = frozenset(),
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """`<date> to <date>` beside a pay-period label: both endpoints, or None.
+
+    il_dol prints `Pay Period:  8/21/2005 to 8/27/05` -- one label, one run, two dates
+    joined by the page's own printed word "to". The old chain located that run and then
+    abstained because the whole string is not a date, which threw away the *shape* of an
+    answer the page states in full.
+
+    What licenses the split is the conjunction plus a double parse, not position. The run
+    must contain exactly one standalone word `to`; the words on each side must
+    *independently* parse as dates through the unchanged `_parse_date`; and only then is
+    the left half the period start and the right half the period end. Each requirement is
+    a refusal with a concrete failure behind it:
+
+    * more than one `to`, or a `to` at either edge, is prose ("due to processing"), and
+      prose abstains;
+    * a half that does not parse kills the whole reading -- there is no "one good half".
+      The CA DLSE stubs print `1/7/XX to 1/13/XX` with the year masked, and emitting an
+      ISO date for either half would mean inventing the year. Both halves fail
+      `_parse_date` there, so the split never happens. il_dol itself falls to the same
+      refusal today: its right half, `8/27/05`, prints a two-digit year, and the note
+      above `_DATE_FORMATS` records why those stay unread -- so on the document that
+      motivated this rule the split correctly abstains rather than invent a century;
+    * the run itself is located by `_side_by_side_run`, so every refusal that rule makes
+      (two runs in the cell, a caption in the way, a word space instead of a column gap)
+      is inherited unchanged.
+
+    Both fields come back `certainty="low"`: the halves are dates only under the same
+    US-convention caveat the slash formats already carry, and the pairing rests on one
+    printed word. Each field's box is drawn around its own half's glyphs, so the overlay
+    points at exactly the words that produced each value.
+    """
+    run = _side_by_side_run(
+        line, label_runs, index, column_right, "pay_period_start", header_words
+    )
+    if run is None:
+        return None
+    separators = [i for i, w in enumerate(run) if w.text.lower() == "to"]
+    if len(separators) != 1:
+        return None
+    left, right = list(run[: separators[0]]), list(run[separators[0] + 1 :])
+    if not left or not right:
+        return None
+    try:
+        start_value, _ = _parse_date(_join_run(left))
+        end_value, _ = _parse_date(_join_run(right))
+    except ParseError:
+        return None
+
+    note = (
+        "the run beside the label is two dates joined by the page's own printed word "
+        "'to'; this half is the {} of that printed span"
+    )
+    if not is_exact:
+        note += " | label resolved by a non-exact mapper"
+
+    def _half(words: list[Word], field_name: str, value: str, side: str) -> dict[str, Any]:
+        return _extracted_field(
+            field_name,
+            value,
+            words[0].page,
+            _run_box(words, convention),
+            "low",
+            _join_run(words),
+            note.format(side),
+        )
+
+    return (
+        _half(left, "pay_period_start", start_value, "start"),
+        _half(right, "pay_period_end", end_value, "end"),
     )
 
 
@@ -1920,7 +2089,7 @@ def extract_document(
                 found.setdefault(name, value)
 
     # ----------------------------------------------------------------------------------
-    # Arithmetic verification (opt-in, `REALDOOR_ARITHMETIC=1`)
+    # Arithmetic verification (on by default, `REALDOOR_ARITHMETIC=0` to disable)
     # ----------------------------------------------------------------------------------
     # Runs AFTER the label-anchored passes and may only fill fields they left empty. It runs
     # after rather than before because its physical bound is derived from values the label

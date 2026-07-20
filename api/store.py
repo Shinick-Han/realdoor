@@ -307,6 +307,16 @@ class Store:
         self._sessions: dict[str, Session] = {}
         self._checklists = load_pack_checklists()
         self._warm_lock = threading.Lock()
+        # warm 이 **끝까지 갔는지**. 한 번이라도 예외 없이 통과하면 True 가 되고, 그 뒤로는
+        # 내려가지 않는다. 문서 0장으로 끝난 것과 아직 도는 중인 것은 둘 다 `_base` 가
+        # 비어 있어서 구분되지 않는데, 그 둘은 완전히 다른 사건이다 -- 전자는 장애고
+        # 후자는 정상적인 부팅 중간이다. 그래서 개수 말고 이 플래그로 구분한다.
+        self._warm_completed = False
+        # 마지막 warm 이 던진 예외의 종류와 문장. 성공하면 다시 None 이 된다.
+        # 배포된 컨테이너에서 팩 PDF 가 git-lfs 포인터 파일로 도착해 pdfplumber 가
+        # "No /Root object!" 를 던졌을 때, 그 예외는 데몬 스레드의 stderr 로만 갔고
+        # 서버는 몇 시간 동안 200 을 답했다. 던진 쪽이 스스로 남기지 않으면 아무도 모른다.
+        self._warm_failure: dict[str, str] | None = None
 
     # ── 부팅 ────────────────────────────────────────────────────────────
     def warm(self) -> dict[str, Any]:
@@ -315,11 +325,49 @@ class Store:
         기동 시 백그라운드 스레드가 부르고, 세션을 만들 때 요청 경로가 다시 부른다.
         락이 있는 이유는 **먼저 도착한 요청이 같은 일을 기다리게** 하기 위해서다.
         락이 없으면 두 요청이 24장을 각각 추출한다.
+
+        결과(성공/실패)를 스토어에 남긴다. 예외는 **삼키지 않고 그대로 올려보낸다** —
+        부른 쪽이 요청 경로면 500 으로 알아야 하고, 백그라운드 스레드면 traceback 을
+        찍어야 한다. 여기서 하는 일은 기록뿐이고, 그 기록을 `/api/health` 가 읽는다.
         """
         with self._warm_lock:
             if not self._base:
-                self._base = extract_all()
+                try:
+                    self._base = extract_all()
+                except BaseException as exc:
+                    self._warm_failure = {
+                        "type": type(exc).__name__,
+                        "message": str(exc) or repr(exc),
+                    }
+                    raise
+            # 실패한 뒤 다시 불러 성공했다면 그 실패는 더 이상 현재 상태가 아니다.
+            self._warm_failure = None
+            self._warm_completed = True
         return {"documents": len(self._base), "engine": engine_version()}
+
+    def warm_report(self) -> dict[str, Any]:
+        """`/api/health` 가 읽는 준비 상태 한 조각.
+
+        락을 잡지 않는다. 헬스체크가 24장을 추출하는 warm 뒤에서 **블록되면** 그
+        헬스체크는 부팅 중인 서버를 죽은 서버로 오해하게 만든다. 여기서 읽는 값들은
+        각각 한 번의 원자적 읽기이므로, 최악의 경우라도 한 순간 낡은 값을 볼 뿐이다.
+
+        `phase` 값 셋:
+          "running"    아직 한 번도 끝까지 가지 못했고, 예외도 없었다. 부팅 중이다.
+          "completed"  예외 없이 끝났다. 몇 장을 읽었는지는 `documents_loaded` 가 말한다.
+          "failed"     예외로 끝났다. 그 종류와 문장이 `error` 에 있다.
+        """
+        if self._warm_failure is not None:
+            phase = "failed"
+        elif self._warm_completed:
+            phase = "completed"
+        else:
+            phase = "running"
+        return {
+            "phase": phase,
+            "documents_loaded": len(self._base),
+            "error": dict(self._warm_failure) if self._warm_failure else None,
+        }
 
     # ── 세션 ────────────────────────────────────────────────────────────
     def new_session(self) -> Session:

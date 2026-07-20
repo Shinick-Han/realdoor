@@ -1090,14 +1090,26 @@
       var served = /^https?:$/.test(window.location.protocol);
       var knownStaticHost = /(^|\.)github\.io$/i.test(host);
       if (chosen || live || !served || knownStaticHost) return Promise.resolve(source.live);
+      // `r.ok` is deliberately NOT the test any more. Health can now answer 503 — it does
+      // that when the warm failed or loaded nothing — and a 503 from our own API is the
+      // opposite of "there is no API here": it is the API telling us it is not ready. If we
+      // read only `r.ok` we fall back to bundled fixtures **while the real server is one
+      // directory up saying it is broken**, and the reader sees recorded output presented as
+      // live. That is the silent wrong answer this comment block already argues against, so
+      // the rule is: a body carrying `warm` is our API, whatever the status code. Adopt it,
+      // and let the screens report whatever it actually says. Only a body that is not ours,
+      // or no body at all, means static hosting and the fixtures path.
       return fetch("api/health")
-        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (r) { return r.json().catch(function () { return null; }); })
         .then(function (body) {
-          if (!body || body.ok !== true) return source.live;
+          var isOurs = body && typeof body === "object" &&
+                       (body.ok === true || typeof body.warm === "string");
+          if (!isOurs) return source.live;
           apiBase = "";
           live = true;
           source.live = true;
           source.apiBase = "";
+          source.notReady = body.ok === true ? null : body;
           return true;
         })
         .catch(function () { return source.live; });
@@ -4978,6 +4990,22 @@
     if (householdRetryTimer) { clearTimeout(householdRetryTimer); householdRetryTimer = null; }
     householdAttempt += 1;
     return Source.households().then(function (households) {
+      /* An empty list is a failure, and it used to be indistinguishable from success: the
+       * success branch cleared the boot message and filled the picker with nothing but its
+       * placeholder, so a server that had loaded no documents produced a clean, quiet,
+       * error-free empty screen. That is exactly what the deployed build served for hours
+       * while its health check answered 200 — the page had the information and said nothing
+       * with it. There are always six prepared files when this list is real, so zero means
+       * the server did not load them, and the reader is told that instead of being shown a
+       * tidy blank. Thrown rather than handled here so it reaches the one place that already
+       * knows how to report a failure and offer a retry. */
+      if (!households || !households.length) {
+        var why = Source.notReady;
+        throw new Error(
+          why && why.detail ? why.detail
+            : "The server answered, but it is holding no documents. Nothing was lost."
+        );
+      }
       householdAttempt = 0;
       bootStatus("");
       state.households = households;
