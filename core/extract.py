@@ -1858,6 +1858,46 @@ def _caption_refusal(
     return None
 
 
+def _colon_gap_enabled() -> bool:
+    """Is the colon-line fill-in license on? ON by default.
+
+    Guards exactly two readings inside the side-by-side rule: (a) a colon-terminated
+    recognised label may take the immediately following run on its own baseline at a
+    word-space gap (a bare label keeps the 12pt column-gap requirement), and (b) for
+    that read the label's own line is a fill-in line, not a column-header row -- the
+    own-line amnesty in `_side_by_side_value`. With `REALDOOR_COLON_GAP=0` neither
+    runs and this module's output is bit-identical to what it was before the license
+    existed (loop iteration it-010; falsified over all 77 corpus documents plus the
+    filled dev set first -- loop/falsification/it-010.json). Read through a function
+    rather than captured at import so a test can flip the environment variable and see
+    the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_COLON_GAP", "").strip() != "0"
+
+
+def _colon_fill_license(label_run: Sequence[Word]) -> bool:
+    """Does this label's own printed colon license the fill-in read on its line?
+
+    seattle's fill prints `Employee Name:`[71.9-133.3] `Marisol Vega`[138.3-185.0] on
+    one 8pt baseline -- a 5.0pt word-space gap, exactly where a filler writes at the
+    blank after a colon. The colon is the page's own punctuation for "what follows me
+    on my line is my value": the same reading `_caption_refusal` already gives it in
+    the opposite direction (a colon-run may never BE a value), and the reason a
+    column-header cell -- which names the column BELOW it -- does not print one.
+
+    The license reaches exactly two refusals and no further: the 12pt gap floor and
+    the header-row classification of the label's OWN line (the filled line's four
+    letters-only runs read as a >=3-caption header row, which made the value its own
+    barrier). Everything else stands: the sole-run cell, colon barriers (`Job Title:`
+    still closes the cell; an empty cell between two colon labels reads nothing),
+    the colon-candidate refusal, other lines' header rows, the it-009
+    parallel-caption refusal, and the field's parse gates.
+    """
+    return _colon_gap_enabled() and _join_run(label_run).strip().endswith(":")
+
+
 def _parallel_caption_refusal(label_run: Sequence[Word], run: Sequence[Word]) -> bool:
     """Is this candidate the page printing its label's construction again, not a value?
 
@@ -2142,13 +2182,38 @@ def _side_by_side_value(
     so like every other test here it turns readings into abstentions or abstentions into
     readings, never one value into another.
     """
-    run = _side_by_side_run(line, label_runs, index, column_right, field_name, header_words)
+    effective_header_words = header_words
+    if _colon_fill_license(label_runs[index]):
+        # The own-line amnesty (it-010): a line the label itself punctuates with a colon
+        # is a fill-in line, not a column-header row, so its words do not caption-ize the
+        # cell they fill. Measured on the seattle fill: `Employee Name: Marisol Vega
+        # Job Title: Prep Cook` is four letters-only runs, which `_header_row_words`
+        # reads as a >=3-caption header row -- making the value its own barrier and a
+        # refused "header cell". The amnesty reaches exactly the label's own line;
+        # every other line's header row keeps its full force, and colon-terminated runs
+        # on this line still act as barriers and still refuse as values.
+        own_line = {id(word) for word in line}
+        effective_header_words = frozenset(
+            word for word in header_words if word not in own_line
+        )
+    run = _side_by_side_run(
+        line, label_runs, index, column_right, field_name, effective_header_words
+    )
     if run is None:
+        return None
+    if effective_header_words is not header_words and any(
+        word.text.strip().endswith(":") for word in run
+    ):
+        # A licensed read is a clean fill or nothing: a candidate carrying the page's
+        # caption punctuation anywhere inside it (`Job Title: Prep Cook` read as one run
+        # when the caption and its own fill merge at a word space) is the next pair, not
+        # this label's value. Refusal-biased -- the committed conduct refused this run
+        # too, as a header cell; the amnesty must not hand it back.
         return None
     return _build_value_field(
         run, field_name, convention, is_exact,
         "value read from the same line as its label, in the column to its right",
-        header_words=header_words,
+        header_words=effective_header_words,
     )
 
 
@@ -2188,7 +2253,9 @@ def _side_by_side_run(
         return None
 
     run = runs[0]
-    if run[0].x0 - label_end < SIDE_BY_SIDE_MIN_GAP:
+    if run[0].x0 - label_end < SIDE_BY_SIDE_MIN_GAP and not _colon_fill_license(label_run):
+        # The printed colon licenses a word-space gap (run separation already implies a
+        # printed gap at the split threshold); a bare label keeps the 12pt column gap.
         return None
     if _parallel_caption_refusal(label_run, run):
         return None

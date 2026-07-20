@@ -1,6 +1,6 @@
 {
-  "accepted_commit": "538567ab40d820c3c45c0d2a1e7b920141cb83a9",
-  "updated": "2026-07-20T15:55:31+00:00",
+  "accepted_commit": "b173e7bf678c3d1c7726338c71f88d17acd16064",
+  "updated": "2026-07-20T16:44:09+00:00",
   "generated_by": "loop/tools/build_field_state.py",
   "pack": {
     "correct": 159,
@@ -43,25 +43,11 @@
     "unreachable_absent": 20
   },
   "pytest": {
-    "passed": 1491,
+    "passed": 1540,
     "failed": 0,
     "exit_code": 0
   },
   "preexisting_dirty": [
-    "api/ask.py",
-    "api/route_llm.py",
-    "api/test_ask_routing.py",
-    "api/test_route_llm.py",
-    "logic/answer_rules.py",
-    "logic/test_answer_rules.py",
-    "testdata/blank_carriers_raw/_verify_tmp.json",
-    "testdata/blank_carriers_raw/atlanta_community_housing_application.pdf",
-    "testdata/blank_carriers_raw/dha_verification_self_employment.pdf",
-    "testdata/blank_carriers_raw/edd_de429z_ui_award_notice.pdf",
-    "testdata/blank_carriers_raw/irs_f1099msc.pdf",
-    "testdata/blank_carriers_raw/irs_f1099nec.pdf",
-    "testdata/blank_carriers_raw/nycha_059293.pdf",
-    "testdata/blank_carriers_raw/reno_rental_application.pdf",
     "testdata/confirm_raw/bonita_certificated_check_sample.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_hourly.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_piecerate.pdf",
@@ -76,7 +62,6 @@
     "testdata/confirm_raw/ou_sample_check_stub.pdf",
     "testdata/confirm_raw/seattle_housing_employment_verification_blank.pdf",
     "testdata/confirm_raw/wa_dshs_14252_employment_verification.pdf",
-    "ui/dist/i18n.js",
     "ui/shots-variant/screen-1-1280.png",
     "ui/shots-variant/screen-1-390.png",
     "ui/shots-variant/screen-2-1280.png",
@@ -113,6 +98,7 @@
     "ui/shots/tier/f2-classifier.png",
     "ui/shots/tier/f2-tech-open.png",
     "ui/tools/_axe_live_editor.mjs",
+    "ui/tools/_axe_new_states.mjs",
     "ui/tools/_rec.mjs",
     "ui/tools/_rec_demo.mjs",
     "ui/tools/_rec_demo2.mjs",

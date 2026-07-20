@@ -222,11 +222,30 @@ def test_the_employment_letter_table_is_out_of_scope() -> None:
     assert got["certainty"] != "abstain"
 
 
-def test_seattle_filled_stays_all_abstain() -> None:
+def test_seattle_filled_stays_all_abstain(monkeypatch: pytest.MonkeyPatch) -> None:
     """The menu document itself: nothing on the seattle fill binds through RATE OF PAY,
-    and nothing may start to -- every reachable field stays an abstention."""
+    and nothing may start to. As measured at it-008 the whole document abstained; it-010's
+    colon-line license (`REALDOOR_COLON_GAP`) later reads person_name through `Employee
+    Name:`'s own printed colon -- a path that touches no rate synonym -- so the it-008
+    state is pinned with that flag off (the it-005 precedent: a pin is updated under the
+    newer flag, never deleted), and the sibling test below holds the rate abstention
+    under the license too."""
+    monkeypatch.setenv("REALDOOR_COLON_GAP", "0")
     fields = _fields(SEATTLE, "pay_stub")
     assert all(f["certainty"] == "abstain" for f in fields.values())
+
+
+def test_seattle_filled_rate_stays_abstained_under_the_colon_license(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """it-008's actual property, held with every flag at its default: the colon-line
+    license reads exactly person_name (`Marisol Vega`, the printed fill), and the wage
+    menu still licenses nothing -- hourly_rate and every other field keep abstaining."""
+    monkeypatch.delenv("REALDOOR_COLON_GAP", raising=False)
+    fields = _fields(SEATTLE, "pay_stub")
+    others = {name: f for name, f in fields.items() if name != "person_name"}
+    assert all(f["certainty"] == "abstain" for f in others.values())
+    assert fields["person_name"]["value"] == "Marisol Vega"
 
 
 # ─────────────────────────────────────────────────────────── the restated constant
