@@ -88,11 +88,29 @@ app.add_middleware(limits.RateLimit)
 @app.on_event("startup")
 def _startup() -> None:
     import threading
+    import traceback
 
     def _warm() -> None:
-        info = STORE.warm()
+        # A daemon thread that raises dies quietly: the interpreter prints the traceback and
+        # every other thread carries on, so the process keeps answering 200 with nothing
+        # loaded. That is exactly how a container full of git-lfs pointer files served an
+        # empty pack for hours. `STORE.warm()` records the failure before it re-raises, so
+        # /api/health can report it; this handler exists to make sure the traceback is
+        # printed by us, deliberately, rather than lost in whatever the runtime does with a
+        # dead thread. It is never swallowed — the store keeps the type and message, and the
+        # full stack goes to stderr.
+        try:
+            info = STORE.warm()
+        except BaseException:
+            traceback.print_exc()
+            print("[realdoor] the warm FAILED; /api/health will answer 503 until it is fixed",
+                  flush=True)
+            return
         print(f"[realdoor] warmed {info['documents']} documents · {info['engine']}",
               flush=True)
+        if not info["documents"]:
+            print("[realdoor] the warm finished with ZERO documents; /api/health will "
+                  "answer 503 because a session created now would be empty", flush=True)
 
     threading.Thread(target=_warm, name="realdoor-warm", daemon=True).start()
     print("[realdoor] serving; warming in the background", flush=True)
@@ -109,16 +127,63 @@ def _session(x_session_id: str | None):
 
 # ── 기본 ────────────────────────────────────────────────────────────────
 @app.get("/api/health")
-def health() -> dict:
-    return {
-        "ok": True,
+def health() -> Response:
+    """Whether this process can actually serve the thing it exists to serve.
+
+    It used to return {"ok": true} unconditionally, which made it a check on whether the
+    port was open — a question the TCP connect already answered. Meanwhile the deployed
+    server held zero documents and handed every caller {"households": []} with a 200. A
+    health check that cannot fail is not a health check, it is a decoration.
+
+    So it reports the readiness of the pack itself:
+
+      warm "running"    → 200. Booting is not a fault. `Store.new_session()` waits for the
+                          warm, so a session created right now still gets its documents;
+                          the only cost is that the first request is slow.
+      warm "completed"  → 200 if documents_loaded > 0. This is the normal steady state.
+                        → 503 if documents_loaded == 0. Nothing raised, and nothing loaded:
+                          every session from here on is born empty and no later call
+                          repairs it. This is the shape of the outage we shipped.
+      warm "failed"     → 503, with the exception type and message in `warm_error`, so the
+                          reason is in the body of the check rather than in a container log
+                          nobody is tailing.
+
+    `ok`, `engine_version`, `active_sessions` and `notice` keep their meaning and their
+    names: ui/dist/app.js reads `ok` to decide whether to adopt the same-origin API, and
+    ui/tools/*.mjs read `active_sessions`. The readiness fields are additions.
+    """
+    warm = STORE.warm_report()
+    serving = warm["phase"] == "running" or (
+        warm["phase"] == "completed" and warm["documents_loaded"] > 0)
+    if warm["phase"] == "failed":
+        detail = ("The document warm raised. No session created by this process will hold "
+                  "the pack, and this instance should not take traffic.")
+    elif warm["phase"] == "running":
+        detail = ("The document warm is still going. A session created now waits for it "
+                  "rather than being born empty, so this instance can take traffic.")
+    elif warm["documents_loaded"]:
+        detail = "The pack is loaded."
+    else:
+        detail = ("The document warm finished without raising and loaded nothing. Every "
+                  "session this process hands out would be empty.")
+
+    body = {
+        "ok": serving,
         "engine_version": engine_version(),
         "active_sessions": STORE.session_count,
+        # The documents are the reason this service exists. Without the count in the
+        # check, a process holding zero of them and one holding all 24 give the same
+        # answer, which is how tonight's outage stayed invisible.
+        "documents_loaded": warm["documents_loaded"],
+        "warm": warm["phase"],
+        "warm_error": warm["error"],
+        "detail": detail,
         # 화면과 같은 순서로 말한다: 무엇을 하는지 먼저, 경계는 이유와 함께 뒤에.
         # 서버가 화면과 다른 말을 하면 그것도 어긋남이다.
         "notice": ("This service gets a file to the person who decides, complete the first "
                    "time it is handed over. It never decides eligibility itself."),
     }
+    return JSONResponse(status_code=200 if serving else 503, content=body)
 
 
 # ── 세션 (데모 6단계: 세션 삭제) ────────────────────────────────────────
