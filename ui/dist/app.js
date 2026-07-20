@@ -1150,6 +1150,28 @@
         return api("/api/upload", { method: "POST", body: form }).then(function (r) {
           return r.json().catch(function () { return {}; }).then(function (body) {
             if (r.ok) return body;
+            /* Two refusal shapes reach this line, and the panel has to tell them apart by
+             * what the server *said*, not by "not ok":
+             *
+             *   UploadRejected  400 {detail: {code, detail}}   — about this file
+             *   the limiter     429 {error, detail, retry_after_seconds} — about the pace
+             *
+             * The limiter's code lives in `error` rather than `detail.code` (it is shared
+             * with /api/session, /api/ask and /api/selftest, so its body is not the upload
+             * contract). Both are normalised onto `err.code` here so exactly one place in
+             * this file knows about the two shapes, and readUpload branches on a code.
+             *
+             * Writes are not auto-repeated (see `api`), so a 429 on an upload always
+             * arrives here rather than being waited out — which is right: repeating an
+             * upload is the renter's call, and the panel gives them the button. */
+            if (r.status === 429) {
+              var capped = cappedError(body);
+              capped.code = (body && body.error) || "too_many_requests";
+              var wait = body && body.retry_after_seconds;
+              capped.retryAfterSeconds = (typeof wait === "number" && isFinite(wait) && wait > 0)
+                ? Math.min(Math.round(wait), RETRY_MAX_WAIT) : null;
+              throw capped;
+            }
             var detail = body && body.detail;
             var err = new Error((detail && detail.detail) || (typeof detail === "string" ? detail : "") ||
                                 ("The server could not accept that file (HTTP " + r.status + ")."));
@@ -1344,6 +1366,13 @@
     uploadTypeOpen: false,
     uploadAskNote: null,
     uploadLastFile: null,
+    /* A refusal that is about the pace, not about the file: the limiter's 429.
+     * {message, seconds, readyAt, docType} or null. It is held apart from
+     * `uploadError` on purpose — `uploadError` renders "We did not read that file",
+     * which is a true sentence about a file we declined and a false one about a file
+     * we never looked at. The selector is not touched on this branch: the renter's
+     * document type had nothing to do with the refusal. */
+    uploadPause: null,
     /* Progressive reading (upload panel). One server response still carries everything;
      * `uploadReveal` paces the *display* of those genuine results — rows and boxes
      * appear one at a time with a stage line — and is nulled once the reveal is done
@@ -1816,6 +1845,26 @@
     readUpload(file, docType, { focusSelectOnAsk: true });
   }
 
+  /** Take back the "the page did not announce itself" sentence, without touching the
+   *  selector's open state.
+   *
+   *  The sentence and the open selector are two different things and only one of them
+   *  is ours. The sentence belongs to one refusal (`type_not_announced`) and must not
+   *  outlive it — it did, because `renderUploadResult` redraws only the result host and
+   *  the note lives up in the form, so clearing `state.uploadAskNote` never reached the
+   *  screen. A renter who was rate-limited after a scan read "This page has no text we
+   *  can read for a title…" beside their perfectly ordinary PDF.
+   *
+   *  The open/closed state, by contrast, is where the renter left it — we opened it for
+   *  them once, and closing it again for a refusal that has nothing to do with the
+   *  document type would move a control out from under them. So this touches the
+   *  sentence only. */
+  function clearAskNote() {
+    state.uploadAskNote = null;
+    var note = byId("upload-ask-note-host");
+    if (note) { note.textContent = ""; note.hidden = true; }
+  }
+
   /** One upload round trip, shared by the submit button and the nomination banner's
    *  "change the kind" control (which re-reads the same bytes with an explicit type). */
   function readUpload(file, docType, opts) {
@@ -1823,7 +1872,8 @@
     state.uploadLastFile = file;
     state.uploadBusy = true;
     state.uploadError = null;
-    state.uploadAskNote = null;
+    state.uploadPause = null;
+    clearAskNote();
     state.uploadResult = null;
     state.uploadReveal = null;
     state.uploadActiveField = null;
@@ -1850,7 +1900,14 @@
       })
       .catch(function (err) {
         state.uploadResult = null;
-        if (err && err.code === "type_not_announced") {
+        /* Three refusals, three different causes, three different next actions — and
+         * one of them is not about the document at all. Branch on the code the server
+         * reported (Source.upload normalises both refusal shapes onto `err.code`), never
+         * on "the upload failed": every failure used to arrive at the same two states,
+         * so a 429 left the type-selector fallback standing beside a file that was
+         * never the problem. */
+        var code = err && err.code;
+        if (code === "type_not_announced") {
           /* Not an error: the page simply did not announce what it is. Fall back to
            * asking — the selector opens with the server's plain sentence beside it,
            * and the chosen kind goes back through the same round trip. The file input
@@ -1867,7 +1924,25 @@
             var typeSelect = byId("upload-type");
             if (typeSelect) typeSelect.focus();
           }
+        } else if (code === "too_many_requests") {
+          /* The cap, not the file. The document was never opened, so nothing about it
+           * is in question and the selector is left exactly where the renter had it.
+           * What the renter needs here is the server's own wait and one button that
+           * repeats what they were already doing. */
+          state.uploadPause = {
+            message: err && err.message ? err.message : null,
+            seconds: err && err.retryAfterSeconds ? err.retryAfterSeconds : null,
+            readyAt: Date.now() + ((err && err.retryAfterSeconds ? err.retryAfterSeconds : 0) * 1000),
+            docType: docType || ""
+          };
+          announce("Nothing is wrong with your file. This copy paused, and the same " +
+                   "document can be read again in a moment.");
         } else {
+          /* Everything the server declined about the file itself — too large, empty,
+           * not a PDF, unreadable, the session's sixth document already held. The
+           * server's sentence already says which one and what to do, so it is kept
+           * whole; the selector is not touched, because none of these are answered by
+           * naming a document type. */
           state.uploadError = err && err.message ? err.message :
                               "That document could not be read.";
           announce("The uploaded document was not accepted.");
@@ -1876,7 +1951,7 @@
       .then(function () {
         state.uploadBusy = false;
         renderUploadResult();
-        if (state.uploadError || state.uploadResult) {
+        if (state.uploadError || state.uploadResult || state.uploadPause) {
           var heading = byId("upload-result-heading");
           if (heading) heading.focus();
         }
@@ -2097,9 +2172,83 @@
     ];
   }
 
+  /* The one live timer the upload panel owns: the countdown on a paused upload. Held at
+   * module scope and cleared on every re-render, so a panel that has moved on to another
+   * state cannot leave a tick running against a node that is no longer on the page. */
+  var uploadPauseTimer = null;
+  function stopUploadPauseTimer() {
+    if (uploadPauseTimer !== null) { clearInterval(uploadPauseTimer); uploadPauseTimer = null; }
+  }
+
+  /** The limiter said "not right now". This is not a verdict on the document.
+   *
+   *  The card deliberately does not use the refusal callout: `callout--stop` with "We did
+   *  not read that file" is a true sentence about a file we declined and a false one about
+   *  a file we never opened. And nothing here touches the type selector — the renter's
+   *  document type had no part in this, so a control that answers a different question
+   *  stays exactly where they left it. */
+  function uploadPauseCard(pause) {
+    var secondsLeft = function () {
+      if (!pause.readyAt) return 0;
+      return Math.max(0, Math.ceil((pause.readyAt - Date.now()) / 1000));
+    };
+
+    var retry = h("button", {
+      type: "button", class: "action action--lead",
+      id: "upload-pause-retry",
+      "aria-describedby": "upload-pause-ready",
+      disabled: secondsLeft() > 0 ? true : null,
+      onclick: function () {
+        if (!state.uploadLastFile) {
+          announce("The file is no longer held by the page. Choose it again above.");
+          return;
+        }
+        readUpload(state.uploadLastFile, pause.docType || "");
+      }
+    }, ["Read this document again"]);
+
+    /* Not a live region: a countdown that announces every second is a drum roll. The
+     * state change was already announced once, by readUpload, in the renter's words. */
+    var ready = h("p", { class: "hint", id: "upload-pause-ready",
+                         text: secondsLeft() > 0
+                           ? "Ready to try again in " + secondsLeft() + " seconds."
+                           : "You can try again now." });
+
+    stopUploadPauseTimer();
+    if (secondsLeft() > 0) {
+      uploadPauseTimer = setInterval(function () {
+        var left = secondsLeft();
+        if (!ready.isConnected) { stopUploadPauseTimer(); return; }
+        if (left > 0) {
+          ready.textContent = "Ready to try again in " + left + " seconds.";
+          return;
+        }
+        ready.textContent = "You can try again now.";
+        retry.disabled = false;
+        stopUploadPauseTimer();
+      }, 1000);
+    }
+
+    return h("div", { class: "callout" }, [
+      h("h3", { id: "upload-result-heading", tabindex: "-1",
+                text: "Nothing is wrong with your file" }),
+      h("p", {
+        text: "This is a pause, not a refusal. This copy did not take the document just " +
+              "now, so it was never opened and nothing you have done in this session " +
+              "changed. The same file works when you try again."
+      }),
+      /* The server's own sentence, kept whole: it is the one that says why a free public
+       * demo caps a connection at all, and how long this one asked for. */
+      pause.message ? h("p", { text: pause.message }) : null,
+      h("p", { class: "button-row" }, [retry]),
+      ready
+    ]);
+  }
+
   function renderUploadResult() {
     var host = byId("upload-result-host");
     if (!host) return;
+    stopUploadPauseTimer();
     clear(host);
 
     if (state.uploadBusy) {
@@ -2108,6 +2257,13 @@
        * response arrives — see runStagedReveal for the honest split. */
       host.appendChild(h("p", { class: "hint", id: "upload-read-status",
         text: "Reading the text on the page…" }));
+      return;
+    }
+
+    /* A pause is checked before a refusal because they are different screens for
+     * different causes, and only one of them is about the document. */
+    if (state.uploadPause) {
+      host.appendChild(uploadPauseCard(state.uploadPause));
       return;
     }
 
@@ -6934,6 +7090,7 @@
       state.rowEdit = null;
       state.uploadResult = null;
       state.uploadError = null;
+      state.uploadPause = null;
       state.uploadBusy = false;
       state.uploadActiveField = null;
       var picker = byId("household-select");

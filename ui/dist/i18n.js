@@ -1175,6 +1175,19 @@
     "Choose a PDF file to read.": "읽을 PDF 파일을 골라 주세요.",
     "That document could not be read.": "그 문서를 읽지 못했습니다.",
 
+    // ── 잠깐 멈춤(429). 거절 카드가 아니다 ────────────────────────────────────
+    // 상한에 걸린 업로드는 **파일에 대한 판단이 아니다**. 서버가 문서를 열어 보지도
+    // 않았으므로 "읽지 않았습니다" 라고 말하면 파일에 문제가 있다는 뜻이 되어 버린다.
+    // 그래서 제목이 먼저 "당신 파일에는 아무 문제가 없다"고 말한다. 대기 초를 담은
+    // 문장은 숫자가 매번 달라 사전 키가 될 수 없고, 서버의 원문(limits.py::_slow_down)
+    // 과 같은 이유로 영어로 남는다 — 이 화면의 다른 숫자 문장들과 같은 취급이다.
+    "Nothing is wrong with your file": "당신 파일에는 아무 문제가 없습니다",
+    "This is a pause, not a refusal. This copy did not take the document just now, so it was never opened and nothing you have done in this session changed. The same file works when you try again.":
+      "이것은 거절이 아니라 잠깐 멈춤입니다. 이 서버가 방금은 그 문서를 받지 않았고, 그래서 문서를 열어 보지도 않았으며, 이번 세션에서 하신 일도 그대로 남아 있습니다. 같은 파일로 다시 하시면 됩니다.",
+    "You can try again now.": "이제 다시 하실 수 있습니다.",
+    "Nothing is wrong with your file. This copy paused, and the same document can be read again in a moment.":
+      "당신 파일에는 아무 문제가 없습니다. 이 서버가 잠깐 멈췄을 뿐이고, 같은 문서를 곧 다시 읽을 수 있습니다.",
+
     "Kind of document": "문서 종류",
     "How we read it": "어떻게 읽었는지",
     "Fields we could read": "읽어낸 항목",
