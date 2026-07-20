@@ -154,13 +154,47 @@ _INSTRUCTION = (
 )
 
 
-def _prompt(document_type: str) -> str:
+#: Appended to the instruction only when a page skeleton is supplied (T28). It tells the
+#: model the structure is CONTEXT for disambiguation, never a source of values, and points
+#: at the two decisions the one-caption path could not make: a per-row rate table (piece
+#: rate -> `unknown`, no single hourly rate) vs a lone rate, and a long real-form caption
+#: whose neighbouring columns fix its meaning.
+_SKELETON_INSTRUCTION = (
+    "\n\nThe user message also carries the PAGE STRUCTURE around the caption: the page in "
+    "reading order with EVERY value blanked to a typed placeholder (<MONEY>, <HRS>, "
+    "<DATE>, <NUM>, <NAME>, <TEXT>). Use it ONLY to disambiguate the caption -- it holds no "
+    "values. In particular:\n"
+    "- If the caption heads a column with SEVERAL different rows of the same kind (a "
+    "piece-rate breakdown: Productive / Non-productive / Rest / Overtime rows each with "
+    "their own rate), there is no single value for it -- answer `unknown`.\n"
+    "- A caption that is a section title, a column header shared by many rows, or an "
+    "answer option among several on one band is `unknown`.\n"
+)
+
+
+def _prompt(document_type: str, *, with_skeleton: bool = False) -> str:
     lines = []
     for field in known_fields(document_type):
         gloss = GLOSSES.get(field)
         lines.append(f"- {field}" + (f" -- {gloss}" if gloss else ""))
     lines.append(f"- {UNKNOWN} -- none of the above, or not sure")
-    return _INSTRUCTION + "\n".join(lines)
+    instruction = _INSTRUCTION + "\n".join(lines)
+    return instruction + _SKELETON_INSTRUCTION if with_skeleton else instruction
+
+
+def _content(label: str, ctx: "_PageContext | None") -> str:
+    """The user message: the bare caption, plus the masked page skeleton when one is set.
+
+    With no context this is byte-for-byte the caption alone -- the shape every existing
+    test and the api/upload path already rely on.
+    """
+    bare = label.strip()
+    if ctx is None or not ctx.skeleton:
+        return bare
+    return (
+        f"CAPTION TO NAME: {bare}\n\n"
+        f"PAGE STRUCTURE (values blanked; context only):\n{ctx.skeleton}"
+    )
 
 
 def _schema(document_type: str) -> dict[str, Any]:
@@ -234,15 +268,65 @@ _STATS: dict[str, Any] = {
     "returned_unknown": 0,
     "rejected_not_in_field_set": 0,
     "rejected_value_shaped": 0,   # refused to send; looked like content
+    "rejected_not_furniture": 0,  # refused to send; not furniture, not position-qualified
     "accepted": 0,
     "offline_or_uncached": 0,
     "timeouts": 0,
     "errors": 0,
 }
 
-#: (document_type, normalized label) -> field name or None. Within one process a label is
-#: asked once. Documents repeat captions and pages are scanned more than once.
-_MEMO: dict[tuple[str, str], str | None] = {}
+#: (document_type, normalized label, context digest) -> field name or None. Within one
+#: process a (label, context) pair is asked once. The context digest is part of the key so
+#: the SAME caption asked under two different page skeletons -- `Rate/Hour` over a
+#: single-rate header vs over a multi-row piece-rate table -- is answered per structure and
+#: never cross-contaminates document to document (the T28 reasoning is context-dependent).
+_MEMO: dict[tuple[str, str, str], str | None] = {}
+
+
+# ─────────────────────────────────────────── the page context (T28: EYES, not HANDS)
+# The extractor sets this before scanning a page when the model is on; it carries the
+# masked page skeleton (CONTEXT for the model, never an answer) and the set of captions
+# that page's egress gate permits leaving. When it is unset -- an upload with no skeleton
+# built, a unit test -- the mapper falls back to the context-free furniture test, which
+# still closes T25 (a name is not furniture, so it cannot be sent).
+
+
+class _PageContext:
+    __slots__ = ("skeleton", "sendable", "digest")
+
+    def __init__(self, skeleton: str, sendable: "frozenset[str]") -> None:
+        import hashlib
+
+        self.skeleton = skeleton or ""
+        self.sendable = frozenset(sendable or ())
+        self.digest = hashlib.sha1(self.skeleton.encode("utf-8")).hexdigest()[:12]
+
+
+_CONTEXT: _PageContext | None = None
+
+
+def set_page_context(skeleton: str, sendable: "frozenset[str]") -> None:
+    """Install the current page's skeleton + egress set. Called by the extractor only."""
+    global _CONTEXT
+    _CONTEXT = _PageContext(skeleton, sendable)
+
+
+def clear_page_context() -> None:
+    global _CONTEXT
+    _CONTEXT = None
+
+
+def _sendable(label: str) -> bool:
+    """May this caption leave the process? Context set -> the page's egress set; else the
+    context-free furniture test. Either way a value string (a name, an address) is refused.
+    """
+    from core.extract import normalize_label
+    from core.skeleton import is_furniture_text
+
+    ctx = _CONTEXT
+    if ctx is not None:
+        return normalize_label(label) in ctx.sendable
+    return is_furniture_text(label)
 
 
 def stats() -> dict[str, Any]:
@@ -261,6 +345,7 @@ def reset_stats() -> None:
             _STATS[key] = 0
     _STATS["cache_hits_measurable"] = True
     _MEMO.clear()
+    clear_page_context()
 
 
 # ────────────────────────────────────────────────────────────── on / off
@@ -331,7 +416,8 @@ def model_mapper(document_type: str, label: str) -> str | None:
     if not fields:
         return None
 
-    key = (document_type, normalize_label(label))
+    ctx = _CONTEXT
+    key = (document_type, normalize_label(label), ctx.digest if ctx else "")
     if key in _MEMO:
         return _MEMO[key]
 
@@ -344,16 +430,27 @@ def model_mapper(document_type: str, label: str) -> str | None:
         _MEMO[key] = None
         return None
 
+    # The unified egress gate (T25). A caption leaves only if it is furniture, or -- when a
+    # page skeleton is in force and the position extension is on -- a run that anchors a
+    # value. A person's name passes neither, so it can no longer be sent. Not memoized: the
+    # verdict is context-dependent (a caption furniture on no page may be unsendable on
+    # another), so it is re-checked per call rather than frozen for the process.
+    if not _sendable(label):
+        _STATS["rejected_not_furniture"] += 1
+        return None
+
     providers = _providers()
     try:
         offset = Path(providers.USAGE_LOG).stat().st_size
     except OSError:
         offset = 0
 
+    content = _content(label, ctx)
+
     def _call():
         return providers.complete(
-            _prompt(document_type),
-            label.strip(),
+            _prompt(document_type, with_skeleton=ctx is not None and bool(ctx.skeleton)),
+            content,
             model=MODEL,
             json_schema=_schema(document_type),
             max_tokens=24,
@@ -367,8 +464,11 @@ def model_mapper(document_type: str, label: str) -> str | None:
         # only warms the cache.
         raw = _POOL.submit(_call).result(timeout=TIMEOUT_SECONDS)
     except _FutureTimeout:
+        # T26: a timeout is "we never heard back", NOT "the model said unknown". Do NOT
+        # memoize it -- poisoning the memo with None made one slow call render the caption
+        # permanently unreadable for the rest of the process and the harness scored
+        # differently run to run. Leaving the memo untouched lets a later occurrence retry.
         _STATS["timeouts"] += 1
-        _MEMO[key] = None
         return None
     except Exception as exc:
         if type(exc).__name__ == "CacheMiss":

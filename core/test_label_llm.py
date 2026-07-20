@@ -191,6 +191,122 @@ def test_only_the_label_is_sent(monkeypatch):
     assert "1440" not in instruction and "John Doe" not in instruction
 
 
+# ───────────────────────────── the unified egress gate (T25) + skeleton context (T28)
+
+def test_a_name_is_never_sent_context_free(monkeypatch):
+    """T25: a caption-shaped person's name is not furniture, so it never leaves.
+
+    `assert_no_values` (the old 48-char shape test) passes `Terrence Boyd`; the furniture
+    gate refuses it. With no page context the gate is the context-free furniture test, so
+    this holds on api/upload.py too, where no skeleton is built.
+    """
+    monkeypatch.setenv("REALDOOR_LABEL_LLM", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    label_llm.reset_stats()
+    fake = _FakeProviders({"field": "person_name"})
+    monkeypatch.setattr(label_llm, "_providers", lambda: fake)
+
+    assert label_llm.model_mapper("pay_stub", "Terrence Boyd") is None
+    assert fake.calls == [], "a person's name was sent to the model"
+    assert label_llm.stats()["rejected_not_furniture"] == 1
+
+
+def test_furniture_caption_still_sends(monkeypatch):
+    """The gate is selective: a structural caption still reaches the model."""
+    monkeypatch.setenv("REALDOOR_LABEL_LLM", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    label_llm.reset_stats()
+    fake = _FakeProviders({"field": "gross_pay"})
+    monkeypatch.setattr(label_llm, "_providers", lambda: fake)
+
+    assert label_llm.model_mapper("pay_stub", "TOTAL EARNINGS") == "gross_pay"
+    assert len(fake.calls) == 1
+
+
+def test_page_context_gates_the_send_and_carries_the_skeleton(monkeypatch):
+    """With a page context set, the egress set decides, and the skeleton rides as context."""
+    from core.extract import normalize_label
+
+    monkeypatch.setenv("REALDOOR_LABEL_LLM", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    label_llm.reset_stats()
+    fake = _FakeProviders({"field": "gross_pay"})
+    monkeypatch.setattr(label_llm, "_providers", lambda: fake)
+
+    label_llm.set_page_context(
+        "EMPLOYEE: <NAME>\nAVERAGE HOURS PER WEEK <HRS>",
+        {normalize_label("AVERAGE HOURS PER WEEK")},
+    )
+    try:
+        # in the set -> sent, with the skeleton in the user message
+        assert label_llm.model_mapper("pay_stub", "AVERAGE HOURS PER WEEK") == "gross_pay"
+        _instruction, content = fake.calls[-1]
+        assert "PAGE STRUCTURE" in content and "AVERAGE HOURS PER WEEK" in content
+        # not in the set -> not sent, even though it would be a value-shaped miss
+        fake.calls.clear()
+        assert label_llm.model_mapper("pay_stub", "SOME UNLISTED CAPTION") is None
+        assert fake.calls == []
+    finally:
+        label_llm.clear_page_context()
+
+
+def test_context_digest_keys_the_memo(monkeypatch):
+    """T28: the SAME caption under two skeletons is answered per structure, not once."""
+    monkeypatch.setenv("REALDOOR_LABEL_LLM", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    label_llm.reset_stats()
+
+    replies = {"skelA": {"field": "hourly_rate"}, "skelB": {"field": "unknown"}}
+
+    class _CtxProviders:
+        USAGE_LOG = "nonexistent-usage.jsonl"
+
+        def complete(self, instruction, content="", **kw):
+            return replies["skelA"] if "skelA" in content else replies["skelB"]
+
+    monkeypatch.setattr(label_llm, "_providers", lambda: _CtxProviders())
+
+    label_llm.set_page_context("skelA", _rate_set())
+    try:
+        assert label_llm.model_mapper("pay_stub", "Rate/Hour") == "hourly_rate"
+    finally:
+        label_llm.clear_page_context()
+    label_llm.set_page_context("skelB", _rate_set())
+    try:
+        assert label_llm.model_mapper("pay_stub", "Rate/Hour") is None  # different context, re-asked
+    finally:
+        label_llm.clear_page_context()
+
+
+def _rate_set():
+    from core.extract import normalize_label
+    return {normalize_label("Rate/Hour")}
+
+
+def test_timeout_is_not_memoized(monkeypatch):
+    """T26: a timeout is 'never heard back', retriable -- it must not poison the memo."""
+    import time
+
+    monkeypatch.setenv("REALDOOR_LABEL_LLM", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    label_llm.reset_stats()
+    monkeypatch.setattr(label_llm, "TIMEOUT_SECONDS", 0.05)
+
+    class _SlowProviders:
+        USAGE_LOG = "nonexistent-usage.jsonl"
+
+        def complete(self, instruction, content="", **kw):
+            time.sleep(0.6)
+            return {"field": "gross_pay"}
+
+    monkeypatch.setattr(label_llm, "_providers", lambda: _SlowProviders())
+
+    assert label_llm.model_mapper("pay_stub", "TOTAL EARNINGS") is None
+    assert label_llm.stats()["timeouts"] == 1
+    assert not any(k[:2] == ("pay_stub", "TOTAL EARNINGS") for k in label_llm._MEMO), \
+        "a timeout was memoized -- the caption is now permanently unreadable for the run"
+
+
 # ─────────────────────────────────────── failures degrade to abstention
 
 #: The gateway raises `CacheMiss` when offline with a cold cache. That is a designed

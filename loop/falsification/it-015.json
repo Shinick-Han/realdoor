@@ -1,0 +1,1919 @@
+{
+  "hazard": "a truth value leaves the process on the skeleton channel OR the caption channel",
+  "channel_1_skeleton": {
+    "predicate": "it-014's leak predicate, re-run unchanged to prove the wiring moved nothing",
+    "leaks": 0,
+    "per_corpus": {
+      "pack": {
+        "documents": 24,
+        "truth_values_checked": 159,
+        "values_masked": 157,
+        "leaks": 0,
+        "caption_coincidences": 2,
+        "furniture_runs_kept": 104
+      },
+      "uploads": {
+        "documents": 26,
+        "truth_values_checked": 175,
+        "values_masked": 173,
+        "leaks": 0,
+        "caption_coincidences": 2,
+        "furniture_runs_kept": 147
+      },
+      "holdout": {
+        "documents": 7,
+        "truth_values_checked": 34,
+        "values_masked": 34,
+        "leaks": 0,
+        "caption_coincidences": 0,
+        "furniture_runs_kept": 29
+      },
+      "external": {
+        "documents": 6,
+        "truth_values_checked": 28,
+        "values_masked": 28,
+        "leaks": 0,
+        "caption_coincidences": 0,
+        "furniture_runs_kept": 215
+      },
+      "confirm": {
+        "documents": 14,
+        "truth_values_checked": 54,
+        "values_masked": 54,
+        "leaks": 0,
+        "caption_coincidences": 0,
+        "furniture_runs_kept": 390
+      },
+      "filled": {
+        "documents": 3,
+        "truth_values_checked": 16,
+        "values_masked": 16,
+        "leaks": 0,
+        "caption_coincidences": 0,
+        "furniture_runs_kept": 79
+      },
+      "scenarios": {
+        "documents": 154,
+        "truth_values_checked": 717,
+        "values_masked": 710,
+        "leaks": 0,
+        "caption_coincidences": 7,
+        "furniture_runs_kept": 1422
+      }
+    },
+    "detail": []
+  },
+  "channel_2_caption": {
+    "predicate": "no truth value appears as/inside a sendable caption unless that caption is furniture-by-string; a value reaching the sendable set through the POSITION arm alone is a leak (a value anchoring a value)",
+    "per_corpus": {
+      "pack": {
+        "documents": 24,
+        "truth_values_checked": 159,
+        "furniture_sendable_captions": 104,
+        "position_sendable_captions": 136,
+        "extension_only_captions": 32,
+        "furniture_leaks": 0,
+        "extension_leaks": 16,
+        "caption_coincidences": 2
+      },
+      "uploads": {
+        "documents": 26,
+        "truth_values_checked": 175,
+        "furniture_sendable_captions": 147,
+        "position_sendable_captions": 200,
+        "extension_only_captions": 53,
+        "furniture_leaks": 0,
+        "extension_leaks": 22,
+        "caption_coincidences": 1
+      },
+      "holdout": {
+        "documents": 7,
+        "truth_values_checked": 34,
+        "furniture_sendable_captions": 29,
+        "position_sendable_captions": 44,
+        "extension_only_captions": 15,
+        "furniture_leaks": 0,
+        "extension_leaks": 3,
+        "caption_coincidences": 0
+      },
+      "external": {
+        "documents": 6,
+        "truth_values_checked": 28,
+        "furniture_sendable_captions": 131,
+        "position_sendable_captions": 366,
+        "extension_only_captions": 235,
+        "furniture_leaks": 0,
+        "extension_leaks": 3,
+        "caption_coincidences": 0
+      },
+      "confirm": {
+        "documents": 14,
+        "truth_values_checked": 54,
+        "furniture_sendable_captions": 243,
+        "position_sendable_captions": 799,
+        "extension_only_captions": 556,
+        "furniture_leaks": 0,
+        "extension_leaks": 7,
+        "caption_coincidences": 0
+      },
+      "filled": {
+        "documents": 3,
+        "truth_values_checked": 16,
+        "furniture_sendable_captions": 53,
+        "position_sendable_captions": 149,
+        "extension_only_captions": 96,
+        "furniture_leaks": 0,
+        "extension_leaks": 5,
+        "caption_coincidences": 0
+      },
+      "scenarios": {
+        "documents": 154,
+        "truth_values_checked": 717,
+        "furniture_sendable_captions": 1133,
+        "position_sendable_captions": 2543,
+        "extension_only_captions": 1410,
+        "furniture_leaks": 0,
+        "extension_leaks": 83,
+        "caption_coincidences": 7
+      }
+    },
+    "totals": {
+      "documents": 234,
+      "truth_values_checked": 1183,
+      "furniture_sendable_captions": 1840,
+      "position_sendable_captions": 4237,
+      "extension_only_captions": 2397,
+      "furniture_leaks": 0,
+      "extension_leaks": 139,
+      "caption_coincidences": 10
+    },
+    "furniture_only_leaks": [],
+    "position_extension_leaks": [
+      {
+        "corpus": "pack",
+        "doc": "hh-001_d01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Mara North",
+        "captions": [
+          "MARA NORTH"
+        ],
+        "position_only_captions": [
+          "MARA NORTH"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-001_d03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Mara North",
+        "captions": [
+          "MARA NORTH"
+        ],
+        "position_only_captions": [
+          "MARA NORTH"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-001_d04_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Mara North",
+        "captions": [
+          "MARA NORTH"
+        ],
+        "position_only_captions": [
+          "MARA NORTH"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-002_d02_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Jonas Vale",
+        "captions": [
+          "JONAS VALE"
+        ],
+        "position_only_captions": [
+          "JONAS VALE"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-002_d03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Jonas Vale",
+        "captions": [
+          "JONAS VALE"
+        ],
+        "position_only_captions": [
+          "JONAS VALE"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-003_d01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Avery Moss",
+        "captions": [
+          "AVERY MOSS"
+        ],
+        "position_only_captions": [
+          "AVERY MOSS"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-003_d02_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Avery Moss",
+        "captions": [
+          "AVERY MOSS"
+        ],
+        "position_only_captions": [
+          "AVERY MOSS"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-003_d04_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Avery Moss",
+        "captions": [
+          "AVERY MOSS"
+        ],
+        "position_only_captions": [
+          "AVERY MOSS"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-004_d01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Rin Calder",
+        "captions": [
+          "RIN CALDER"
+        ],
+        "position_only_captions": [
+          "RIN CALDER"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-004_d03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Rin Calder",
+        "captions": [
+          "RIN CALDER"
+        ],
+        "position_only_captions": [
+          "RIN CALDER"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-004_d04_gig_statement.pdf",
+        "field": "person_name",
+        "value": "Rin Calder",
+        "captions": [
+          "RIN CALDER"
+        ],
+        "position_only_captions": [
+          "RIN CALDER"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-005_d02_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Tess Alder",
+        "captions": [
+          "TESS ALDER"
+        ],
+        "position_only_captions": [
+          "TESS ALDER"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-005_d03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Tess Alder",
+        "captions": [
+          "TESS ALDER"
+        ],
+        "position_only_captions": [
+          "TESS ALDER"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-006_d01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Noel Reed",
+        "captions": [
+          "NOEL REED"
+        ],
+        "position_only_captions": [
+          "NOEL REED"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-006_d02_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Noel Reed",
+        "captions": [
+          "NOEL REED"
+        ],
+        "position_only_captions": [
+          "NOEL REED"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-006_d04_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Noel Reed",
+        "captions": [
+          "NOEL REED"
+        ],
+        "position_only_captions": [
+          "NOEL REED"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_001_application_summary_john_doe.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_002_application_summary_jane_roe_month_only.pdf",
+        "field": "person_name",
+        "value": "Jane Roe",
+        "captions": [
+          "JANE ROE"
+        ],
+        "position_only_captions": [
+          "JANE ROE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_003_pay_stub_john_doe.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_004_pay_stub_john_doe_mismatch.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_005_pay_stub_jane_roe_expired.pdf",
+        "field": "person_name",
+        "value": "Jane Roe",
+        "captions": [
+          "JANE ROE"
+        ],
+        "position_only_captions": [
+          "JANE ROE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_007_employment_letter_john_doe.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_008_employment_letter_jane_roe_expired.pdf",
+        "field": "person_name",
+        "value": "Jane Roe",
+        "captions": [
+          "JANE ROE"
+        ],
+        "position_only_captions": [
+          "JANE ROE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_009_benefit_letter_jane_roe.pdf",
+        "field": "person_name",
+        "value": "Jane Roe",
+        "captions": [
+          "JANE ROE"
+        ],
+        "position_only_captions": [
+          "JANE ROE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_011_gig_statement_sam_poe.pdf",
+        "field": "person_name",
+        "value": "Sam Poe",
+        "captions": [
+          "SAM POE"
+        ],
+        "position_only_captions": [
+          "SAM POE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_012_gig_statement_john_doe_fees_exceed.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_013_utility_bill_john_doe.pdf",
+        "field": "account_holder",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_015_pay_stub_sam_poe_odd_frequency.pdf",
+        "field": "person_name",
+        "value": "Sam Poe",
+        "captions": [
+          "SAM POE"
+        ],
+        "position_only_captions": [
+          "SAM POE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_016_pay_stub_wording_total_earnings.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_017_pay_stub_wording_gross_wages.pdf",
+        "field": "person_name",
+        "value": "Sam Poe",
+        "captions": [
+          "SAM POE"
+        ],
+        "position_only_captions": [
+          "SAM POE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_018_employment_letter_wording_company.pdf",
+        "field": "person_name",
+        "value": "Jane Roe",
+        "captions": [
+          "JANE ROE"
+        ],
+        "position_only_captions": [
+          "JANE ROE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_019_pay_stub_labels_10pt.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_020_pay_stub_labels_9pt.pdf",
+        "field": "person_name",
+        "value": "Sam Poe",
+        "captions": [
+          "SAM POE"
+        ],
+        "position_only_captions": [
+          "SAM POE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_021_pay_stub_labels_not_bold.pdf",
+        "field": "person_name",
+        "value": "Jane Roe",
+        "captions": [
+          "JANE ROE"
+        ],
+        "position_only_captions": [
+          "JANE ROE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_022_pay_stub_labels_8pt_control.pdf",
+        "field": "person_name",
+        "value": "John Doe",
+        "captions": [
+          "JOHN DOE"
+        ],
+        "position_only_captions": [
+          "JOHN DOE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_024_pay_stub_table.pdf",
+        "field": "person_name",
+        "value": "Jane Roe",
+        "captions": [
+          "JANE ROE"
+        ],
+        "position_only_captions": [
+          "JANE ROE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_025_benefit_letter_caption_layout.pdf",
+        "field": "person_name",
+        "value": "Sam Poe",
+        "captions": [
+          "SAM POE"
+        ],
+        "position_only_captions": [
+          "SAM POE"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_025_benefit_letter_caption_layout.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY",
+          "MONTHLY AMOUNT"
+        ],
+        "position_only_captions": [
+          "MONTHLY"
+        ]
+      },
+      {
+        "corpus": "holdout",
+        "doc": "ho_002_pay_stub_cfpb_gross_income.pdf",
+        "field": "person_name",
+        "value": "Ada Lark",
+        "captions": [
+          "ADA LARK"
+        ],
+        "position_only_captions": [
+          "ADA LARK"
+        ]
+      },
+      {
+        "corpus": "holdout",
+        "doc": "ho_004_pay_stub_statement_of_earnings_and_deductions.pdf",
+        "field": "person_name",
+        "value": "Milo Fenn",
+        "captions": [
+          "MILO FENN"
+        ],
+        "position_only_captions": [
+          "MILO FENN"
+        ]
+      },
+      {
+        "corpus": "holdout",
+        "doc": "ho_006_employment_letter_work_number_voe.pdf",
+        "field": "person_name",
+        "value": "Rosa Quill",
+        "captions": [
+          "ROSA QUILL"
+        ],
+        "position_only_captions": [
+          "ROSA QUILL"
+        ]
+      },
+      {
+        "corpus": "external",
+        "doc": "ext_adp.pdf",
+        "field": "person_name",
+        "value": "AMIS SMITH",
+        "captions": [
+          "AMIS SMITH"
+        ],
+        "position_only_captions": [
+          "AMIS SMITH"
+        ]
+      },
+      {
+        "corpus": "external",
+        "doc": "ext_utep.pdf",
+        "field": "person_name",
+        "value": "Mary Doe",
+        "captions": [
+          "MARY DOE"
+        ],
+        "position_only_captions": [
+          "MARY DOE"
+        ]
+      },
+      {
+        "corpus": "external",
+        "doc": "ext_les.pdf",
+        "field": "person_name",
+        "value": "STALLONE, SYLVESTER",
+        "captions": [
+          "STALLONE, SYLVESTER"
+        ],
+        "position_only_captions": [
+          "STALLONE, SYLVESTER"
+        ]
+      },
+      {
+        "corpus": "confirm",
+        "doc": "ca_dlse_paystub_hourly.pdf",
+        "field": "person_name",
+        "value": "Johnson, Bob",
+        "captions": [
+          "JOHNSON, BOB"
+        ],
+        "position_only_captions": [
+          "JOHNSON, BOB"
+        ]
+      },
+      {
+        "corpus": "confirm",
+        "doc": "ca_dlse_paystub_piecerate.pdf",
+        "field": "person_name",
+        "value": "Johnson, Bob",
+        "captions": [
+          "JOHNSON, BOB"
+        ],
+        "position_only_captions": [
+          "JOHNSON, BOB"
+        ]
+      },
+      {
+        "corpus": "confirm",
+        "doc": "ca_dlse_paystub_piecerate.pdf",
+        "field": "employer_name",
+        "value": "Smith And Company, Inc.",
+        "captions": [
+          "SMITH AND COMPANY, INC."
+        ],
+        "position_only_captions": [
+          "SMITH AND COMPANY, INC."
+        ]
+      },
+      {
+        "corpus": "confirm",
+        "doc": "bonita_certificated_check_sample.pdf",
+        "field": "person_name",
+        "value": "JONES, JAMES",
+        "captions": [
+          "JONES, JAMES"
+        ],
+        "position_only_captions": [
+          "JONES, JAMES"
+        ]
+      },
+      {
+        "corpus": "confirm",
+        "doc": "bonita_certificated_check_sample.pdf",
+        "field": "employer_name",
+        "value": "BONITA UNIFIED",
+        "captions": [
+          "BONITA UNIFIED"
+        ],
+        "position_only_captions": [
+          "BONITA UNIFIED"
+        ]
+      },
+      {
+        "corpus": "confirm",
+        "doc": "il_dol_day_labor_wage_notice_sample.pdf",
+        "field": "employer_name",
+        "value": "ABC Staffing",
+        "captions": [
+          "ABC STAFFING"
+        ],
+        "position_only_captions": [
+          "ABC STAFFING"
+        ]
+      },
+      {
+        "corpus": "confirm",
+        "doc": "lcc_understanding_your_paycheck.pdf",
+        "field": "employer_name",
+        "value": "Lansing Community College",
+        "captions": [
+          "LANSING COMMUNITY COLLEGE"
+        ],
+        "position_only_captions": [
+          "LANSING COMMUNITY COLLEGE"
+        ]
+      },
+      {
+        "corpus": "filled",
+        "doc": "seattle_housing_employment_verification_filled.pdf",
+        "field": "person_name",
+        "value": "Marisol Vega",
+        "captions": [
+          "MARISOL VEGA"
+        ],
+        "position_only_captions": [
+          "MARISOL VEGA"
+        ]
+      },
+      {
+        "corpus": "filled",
+        "doc": "seattle_housing_employment_verification_filled.pdf",
+        "field": "hourly_rate",
+        "value": "19.75",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.75"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.75"
+        ]
+      },
+      {
+        "corpus": "filled",
+        "doc": "seattle_housing_employment_verification_filled.pdf",
+        "field": "employer_name",
+        "value": "Cascade Fresh Foods LLC",
+        "captions": [
+          "CASCADE FRESH FOODS LLC"
+        ],
+        "position_only_captions": [
+          "CASCADE FRESH FOODS LLC"
+        ]
+      },
+      {
+        "corpus": "filled",
+        "doc": "orangeusd_sample_paystub_filled.pdf",
+        "field": "person_name",
+        "value": "DELGADO, RUTH A",
+        "captions": [
+          "DELGADO, RUTH A"
+        ],
+        "position_only_captions": [
+          "DELGADO, RUTH A"
+        ]
+      },
+      {
+        "corpus": "filled",
+        "doc": "orangeusd_sample_paystub_filled.pdf",
+        "field": "employer_name",
+        "value": "CANYON GLEN UNIFIED",
+        "captions": [
+          "CANYON GLEN UNIFIED"
+        ],
+        "position_only_captions": [
+          "CANYON GLEN UNIFIED"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S01_w_complete/S01-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Mara Voss",
+        "captions": [
+          "MARA VOSS"
+        ],
+        "position_only_captions": [
+          "MARA VOSS"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S01_w_complete/S01-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Mara Voss",
+        "captions": [
+          "MARA VOSS"
+        ],
+        "position_only_captions": [
+          "MARA VOSS"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S01_w_complete/S01-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.5",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S03_w_missing_stub/S03-D02_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Tamsin Reyes",
+        "captions": [
+          "TAMSIN REYES"
+        ],
+        "position_only_captions": [
+          "TAMSIN REYES"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S03_w_missing_stub/S03-D02_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.75",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.75"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.75"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S04_w_missing_letter/S04-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Colm Ferris",
+        "captions": [
+          "COLM FERRIS"
+        ],
+        "position_only_captions": [
+          "COLM FERRIS"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S05_wb_complete/S05-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Adaeze Okon",
+        "captions": [
+          "ADAEZE OKON"
+        ],
+        "position_only_captions": [
+          "ADAEZE OKON"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S05_wb_complete/S05-D04_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Adaeze Okon",
+        "captions": [
+          "ADAEZE OKON"
+        ],
+        "position_only_captions": [
+          "ADAEZE OKON"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S08_wb_missing_letter/S08-D03_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Ines Marchetti",
+        "captions": [
+          "INES MARCHETTI"
+        ],
+        "position_only_captions": [
+          "INES MARCHETTI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S09_wb_missing_benefit/S09-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Dario Selk",
+        "captions": [
+          "DARIO SELK"
+        ],
+        "position_only_captions": [
+          "DARIO SELK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S09_wb_missing_benefit/S09-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Dario Selk",
+        "captions": [
+          "DARIO SELK"
+        ],
+        "position_only_captions": [
+          "DARIO SELK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S10_wg_complete/S10-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Yuki Tanahara",
+        "captions": [
+          "YUKI TANAHARA"
+        ],
+        "position_only_captions": [
+          "YUKI TANAHARA"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S10_wg_complete/S10-D04_gig_statement.pdf",
+        "field": "person_name",
+        "value": "Yuki Tanahara",
+        "captions": [
+          "YUKI TANAHARA"
+        ],
+        "position_only_captions": [
+          "YUKI TANAHARA"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S10_wg_complete/S10-D05_gig_income_corroboration.pdf",
+        "field": "person_name",
+        "value": "Yuki Tanahara",
+        "captions": [
+          "YUKI TANAHARA"
+        ],
+        "position_only_captions": [
+          "YUKI TANAHARA"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S11_wg_missing_summary/S11-D02_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Odette Brill",
+        "captions": [
+          "ODETTE BRILL"
+        ],
+        "position_only_captions": [
+          "ODETTE BRILL"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S12_wg_missing_stub/S12-D04_gig_income_corroboration.pdf",
+        "field": "person_name",
+        "value": "Casper Nwosu",
+        "captions": [
+          "CASPER NWOSU"
+        ],
+        "position_only_captions": [
+          "CASPER NWOSU"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S13_wg_missing_letter/S13-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Livia Grant",
+        "captions": [
+          "LIVIA GRANT"
+        ],
+        "position_only_captions": [
+          "LIVIA GRANT"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S13_wg_missing_letter/S13-D03_gig_statement.pdf",
+        "field": "person_name",
+        "value": "Livia Grant",
+        "captions": [
+          "LIVIA GRANT"
+        ],
+        "position_only_captions": [
+          "LIVIA GRANT"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S14_wg_missing_corroboration/S14-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Emrys Vale",
+        "captions": [
+          "EMRYS VALE"
+        ],
+        "position_only_captions": [
+          "EMRYS VALE"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S14_wg_missing_corroboration/S14-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Emrys Vale",
+        "captions": [
+          "EMRYS VALE"
+        ],
+        "position_only_captions": [
+          "EMRYS VALE"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S15_wbg_complete/S15-D04_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Sana Idrisov",
+        "captions": [
+          "SANA IDRISOV"
+        ],
+        "position_only_captions": [
+          "SANA IDRISOV"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S15_wbg_complete/S15-D06_gig_income_corroboration.pdf",
+        "field": "person_name",
+        "value": "Sana Idrisov",
+        "captions": [
+          "SANA IDRISOV"
+        ],
+        "position_only_captions": [
+          "SANA IDRISOV"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S16_wbg_missing_summary/S16-D02_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Theo Marden",
+        "captions": [
+          "THEO MARDEN"
+        ],
+        "position_only_captions": [
+          "THEO MARDEN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S16_wbg_missing_summary/S16-D02_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "18.0",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 18.00"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 18.00"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S16_wbg_missing_summary/S16-D04_gig_statement.pdf",
+        "field": "person_name",
+        "value": "Theo Marden",
+        "captions": [
+          "THEO MARDEN"
+        ],
+        "position_only_captions": [
+          "THEO MARDEN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S17_wbg_missing_stub/S17-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Priya Chandrasek",
+        "captions": [
+          "PRIYA CHANDRASEK"
+        ],
+        "position_only_captions": [
+          "PRIYA CHANDRASEK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S17_wbg_missing_stub/S17-D03_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Priya Chandrasek",
+        "captions": [
+          "PRIYA CHANDRASEK"
+        ],
+        "position_only_captions": [
+          "PRIYA CHANDRASEK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S17_wbg_missing_stub/S17-D03_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY"
+        ],
+        "position_only_captions": [
+          "MONTHLY"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S17_wbg_missing_stub/S17-D05_gig_income_corroboration.pdf",
+        "field": "person_name",
+        "value": "Priya Chandrasek",
+        "captions": [
+          "PRIYA CHANDRASEK"
+        ],
+        "position_only_captions": [
+          "PRIYA CHANDRASEK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S19_wbg_missing_benefit/S19-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Aster Colvin",
+        "captions": [
+          "ASTER COLVIN"
+        ],
+        "position_only_captions": [
+          "ASTER COLVIN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S19_wbg_missing_benefit/S19-D04_gig_statement.pdf",
+        "field": "person_name",
+        "value": "Aster Colvin",
+        "captions": [
+          "ASTER COLVIN"
+        ],
+        "position_only_captions": [
+          "ASTER COLVIN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S20_wbg_missing_corroboration/S20-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Renate Osei",
+        "captions": [
+          "RENATE OSEI"
+        ],
+        "position_only_captions": [
+          "RENATE OSEI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S20_wbg_missing_corroboration/S20-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Renate Osei",
+        "captions": [
+          "RENATE OSEI"
+        ],
+        "position_only_captions": [
+          "RENATE OSEI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S20_wbg_missing_corroboration/S20-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.25",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.25"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.25"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S21_ps_expired/S21-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Milo Draper",
+        "captions": [
+          "MILO DRAPER"
+        ],
+        "position_only_captions": [
+          "MILO DRAPER"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S21_ps_expired/S21-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Milo Draper",
+        "captions": [
+          "MILO DRAPER"
+        ],
+        "position_only_captions": [
+          "MILO DRAPER"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S23_ps_unreadable_garbage/S23-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Sorrel Antone",
+        "captions": [
+          "SORREL ANTONE"
+        ],
+        "position_only_captions": [
+          "SORREL ANTONE"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S23_ps_unreadable_garbage/S23-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Sorrel Antone",
+        "captions": [
+          "SORREL ANTONE"
+        ],
+        "position_only_captions": [
+          "SORREL ANTONE"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S24_ps_image_scan/S24-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Kaveh Rostami",
+        "captions": [
+          "KAVEH ROSTAMI"
+        ],
+        "position_only_captions": [
+          "KAVEH ROSTAMI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S24_ps_image_scan/S24-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.25",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.25"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.25"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S25_ps_second_stub_conflicting/S25-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Bess Whitlow",
+        "captions": [
+          "BESS WHITLOW"
+        ],
+        "position_only_captions": [
+          "BESS WHITLOW"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S25_ps_second_stub_conflicting/S25-D03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Bess Whitlow",
+        "captions": [
+          "BESS WHITLOW"
+        ],
+        "position_only_captions": [
+          "BESS WHITLOW"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S25_ps_second_stub_conflicting/S25-D04_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Bess Whitlow",
+        "captions": [
+          "BESS WHITLOW"
+        ],
+        "position_only_captions": [
+          "BESS WHITLOW"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S26_ps_second_stub_consistent/S26-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Arlo Jensen",
+        "captions": [
+          "ARLO JENSEN"
+        ],
+        "position_only_captions": [
+          "ARLO JENSEN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S26_ps_second_stub_consistent/S26-D03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Arlo Jensen",
+        "captions": [
+          "ARLO JENSEN"
+        ],
+        "position_only_captions": [
+          "ARLO JENSEN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S26_ps_second_stub_consistent/S26-D04_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Arlo Jensen",
+        "captions": [
+          "ARLO JENSEN"
+        ],
+        "position_only_captions": [
+          "ARLO JENSEN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S27_el_expired/S27-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Noor Haddad",
+        "captions": [
+          "NOOR HADDAD"
+        ],
+        "position_only_captions": [
+          "NOOR HADDAD"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S27_el_expired/S27-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.5",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S28_el_month_only/S28-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Felix Trask",
+        "captions": [
+          "FELIX TRASK"
+        ],
+        "position_only_captions": [
+          "FELIX TRASK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S29_el_unreadable_garbage/S29-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Imara Solon",
+        "captions": [
+          "IMARA SOLON"
+        ],
+        "position_only_captions": [
+          "IMARA SOLON"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S31_as_unreadable_garbage/S31-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Wren Castellan",
+        "captions": [
+          "WREN CASTELLAN"
+        ],
+        "position_only_captions": [
+          "WREN CASTELLAN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S31_as_unreadable_garbage/S31-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "18.5",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 18.50"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 18.50"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S32_as_image_scan/S32-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Zofia Brenner",
+        "captions": [
+          "ZOFIA BRENNER"
+        ],
+        "position_only_captions": [
+          "ZOFIA BRENNER"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S33_bl_expired/S33-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Hollis Nakamura",
+        "captions": [
+          "HOLLIS NAKAMURA"
+        ],
+        "position_only_captions": [
+          "HOLLIS NAKAMURA"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S33_bl_expired/S33-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.25",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.25"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.25"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S33_bl_expired/S33-D04_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Hollis Nakamura",
+        "captions": [
+          "HOLLIS NAKAMURA"
+        ],
+        "position_only_captions": [
+          "HOLLIS NAKAMURA"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S33_bl_expired/S33-D04_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY"
+        ],
+        "position_only_captions": [
+          "MONTHLY"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S35_bl_unreadable_garbage/S35-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Barnaby Cole",
+        "captions": [
+          "BARNABY COLE"
+        ],
+        "position_only_captions": [
+          "BARNABY COLE"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S35_bl_unreadable_garbage/S35-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Barnaby Cole",
+        "captions": [
+          "BARNABY COLE"
+        ],
+        "position_only_captions": [
+          "BARNABY COLE"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S35_bl_unreadable_garbage/S35-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.5",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S36_gs_month_only/S36-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Suvi Aaltonen",
+        "captions": [
+          "SUVI AALTONEN"
+        ],
+        "position_only_captions": [
+          "SUVI AALTONEN"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S37_gc_expired_dated/S37-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Ezra Mbeki",
+        "captions": [
+          "EZRA MBEKI"
+        ],
+        "position_only_captions": [
+          "EZRA MBEKI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S37_gc_expired_dated/S37-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Ezra Mbeki",
+        "captions": [
+          "EZRA MBEKI"
+        ],
+        "position_only_captions": [
+          "EZRA MBEKI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S37_gc_expired_dated/S37-D03_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "20.25",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 20.25"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 20.25"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S37_gc_expired_dated/S37-D04_gig_statement.pdf",
+        "field": "person_name",
+        "value": "Ezra Mbeki",
+        "captions": [
+          "EZRA MBEKI"
+        ],
+        "position_only_captions": [
+          "EZRA MBEKI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S37_gc_expired_dated/S37-D05_gig_income_corroboration.pdf",
+        "field": "person_name",
+        "value": "Ezra Mbeki",
+        "captions": [
+          "EZRA MBEKI"
+        ],
+        "position_only_captions": [
+          "EZRA MBEKI"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S39_stub_conflict_and_expired_letter/S39-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Anselm Rijker",
+        "captions": [
+          "ANSELM RIJKER"
+        ],
+        "position_only_captions": [
+          "ANSELM RIJKER"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S39_stub_conflict_and_expired_letter/S39-D03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Anselm Rijker",
+        "captions": [
+          "ANSELM RIJKER"
+        ],
+        "position_only_captions": [
+          "ANSELM RIJKER"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S39_stub_conflict_and_expired_letter/S39-D04_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Anselm Rijker",
+        "captions": [
+          "ANSELM RIJKER"
+        ],
+        "position_only_captions": [
+          "ANSELM RIJKER"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S39_stub_conflict_and_expired_letter/S39-D04_employment_letter.pdf",
+        "field": "hourly_rate",
+        "value": "19.5",
+        "captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ],
+        "position_only_captions": [
+          "CURRENT WAGES/SALARY $ 19.50"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S41_benefit_present_letter_missing_ready/S41-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Nora Quill",
+        "captions": [
+          "NORA QUILL"
+        ],
+        "position_only_captions": [
+          "NORA QUILL"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S41_benefit_present_letter_missing_ready/S41-D03_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Nora Quill",
+        "captions": [
+          "NORA QUILL"
+        ],
+        "position_only_captions": [
+          "NORA QUILL"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S42_kitchen_sink/S42-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Idris Fenwick",
+        "captions": [
+          "IDRIS FENWICK"
+        ],
+        "position_only_captions": [
+          "IDRIS FENWICK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S42_kitchen_sink/S42-D04_pay_stub.pdf",
+        "field": "person_name",
+        "value": "Idris Fenwick",
+        "captions": [
+          "IDRIS FENWICK"
+        ],
+        "position_only_captions": [
+          "IDRIS FENWICK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S42_kitchen_sink/S42-D05_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Idris Fenwick",
+        "captions": [
+          "IDRIS FENWICK"
+        ],
+        "position_only_captions": [
+          "IDRIS FENWICK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S42_kitchen_sink/S42-D06_benefit_letter.pdf",
+        "field": "person_name",
+        "value": "Idris Fenwick",
+        "captions": [
+          "IDRIS FENWICK"
+        ],
+        "position_only_captions": [
+          "IDRIS FENWICK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S42_kitchen_sink/S42-D06_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY"
+        ],
+        "position_only_captions": [
+          "MONTHLY"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S44_summary_only/S44-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Oskar Lindt",
+        "captions": [
+          "OSKAR LINDT"
+        ],
+        "position_only_captions": [
+          "OSKAR LINDT"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S45_out_of_scope_document/S45-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Tallis Grey",
+        "captions": [
+          "TALLIS GREY"
+        ],
+        "position_only_captions": [
+          "TALLIS GREY"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S47_household_size_8/S47-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Ansel Marek",
+        "captions": [
+          "ANSEL MAREK"
+        ],
+        "position_only_captions": [
+          "ANSEL MAREK"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S49_income_equals_threshold/S49-D01_application_summary.pdf",
+        "field": "person_name",
+        "value": "Corin Vasquez",
+        "captions": [
+          "CORIN VASQUEZ"
+        ],
+        "position_only_captions": [
+          "CORIN VASQUEZ"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S49_income_equals_threshold/S49-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Corin Vasquez",
+        "captions": [
+          "CORIN VASQUEZ"
+        ],
+        "position_only_captions": [
+          "CORIN VASQUEZ"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S50_income_one_cent_above/S50-D03_employment_letter.pdf",
+        "field": "person_name",
+        "value": "Amara Diallo",
+        "captions": [
+          "AMARA DIALLO"
+        ],
+        "position_only_captions": [
+          "AMARA DIALLO"
+        ]
+      }
+    ],
+    "caption_coincidences": [
+      {
+        "corpus": "pack",
+        "doc": "hh-003_d04_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AMOUNT"
+        ]
+      },
+      {
+        "corpus": "pack",
+        "doc": "hh-006_d04_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AMOUNT"
+        ]
+      },
+      {
+        "corpus": "uploads",
+        "doc": "up_009_benefit_letter_jane_roe.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AMOUNT"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S05_wb_complete/S05-D04_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AMOUNT"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S06_wb_missing_summary/S06-D03_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AWARD"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S08_wb_missing_letter/S08-D03_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AMOUNT"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S15_wbg_complete/S15-D04_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AMOUNT"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S16_wbg_missing_summary/S16-D03_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AWARD"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S20_wbg_missing_corroboration/S20-D04_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AWARD"
+        ]
+      },
+      {
+        "corpus": "scenarios",
+        "doc": "S41_benefit_present_letter_missing_ready/S41-D04_benefit_letter.pdf",
+        "field": "benefit_frequency",
+        "value": "monthly",
+        "captions": [
+          "MONTHLY AWARD"
+        ]
+      }
+    ]
+  },
+  "seal": "filled/scenarios read DEV-ONLY via build_field_state._dev_records; no seal opened",
+  "verdict_skeleton": "PASS",
+  "verdict_caption_furniture_only": "PASS",
+  "verdict_caption_position_extension": "FAIL"
+}

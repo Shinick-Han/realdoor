@@ -374,9 +374,12 @@
       "title": "label-invisible carriers: real employment-verification layouts and colon-inline stubs read nothing",
       "corpus": "scenarios",
       "status": "OPEN",
-      "attempts": 0,
-      "prior_attempts": [],
-      "root_cause_note": "The dominant cause of 5/42 end-to-end agreement. Style-Y ledger stubs partially read while style-X reads nothing; T17 colon-line geometry is one arm of this."
+      "attempts": 1,
+      "prior_attempts": [
+        "it-015"
+      ],
+      "root_cause_note": "The dominant cause of 5/42 end-to-end agreement. Style-Y ledger stubs partially read while style-X reads nothing; T17 colon-line geometry is one arm of this.",
+      "progress_note": "it-015 attempted the unknown-caption route via T28 and found NO SAFE RULE. The captions T21 needs (AVERAGE HOURS PER WEEK, RATE OF PAY OR SALARY; the 18 acroform-carrier abstentions in the scenario acroform stratum, which stayed 6/18/0) are non-furniture, so the furniture-only egress gate never sends them. The only route that would send them -- the POSITION extension (a run that anchors a value is a caption by role) -- was implemented (REALDOOR_SKELETON_POSITION) and re-falsified: loop/falsify/it-015.py channel 2 shows the position-extended sendable set leaks 139 person_name values across the corpora (a value that anchors another value -- a letterhead/header name over an address -- exactly it-014's key finding). So the position arm ships OFF and these fields stay unreached. Closing T21 needs a signal separating a role-caption from an entity name without leaning on shape, which is the open it-014 problem; until then this is NO_SAFE_RULE for the label-invisible captions."
     },
     {
       "id": "T23",
@@ -403,11 +406,12 @@
       "id": "T25",
       "title": "assert_no_values does not stop a person's name leaving the process",
       "corpus": "scenarios",
-      "status": "IN_PROGRESS",
-      "attempts": 1,
+      "status": "DONE",
+      "attempts": 2,
       "prior_attempts": [
         "it-014"
       ],
+      "done_note": "Closed by it-015. The caption egress gate in core/label_llm.model_mapper is now the furniture test (core/skeleton.is_furniture_text: colon caption or STRUCTURAL_VOCAB membership) rather than the 48-char assert_no_values shape test. A person's name is not furniture, so it is refused before any send -- context-free, so it holds on api/upload.py where no skeleton is built (stat rejected_not_furniture; unit test test_a_name_is_never_sent_context_free). Corpus proof: loop/falsify/it-015.py channel 2, furniture-only sendable set over all 7 corpora / 234 docs / 1183 truth values = 0 leaks. assert_no_values is kept in front of the gate for its value-shape stat and existing tests. Measured cost: on the label hold-out the gate blocks 3 non-furniture captions the model previously mapped correctly (27/34 -> 24/34 model-on, correct->abstain, 0 wrong) -- the honest price of the leak boundary.",
       "root_cause_note": "Measured it-011. core/label_llm.py promise #2 is 'Label strings go out. Values never do.' On the orangeusd stubs the strings 'Bess Whitlow', 'Arlo Jensen', 'Anselm Rijker', 'Nora Quill', 'Idris Fenwick' and (ca_dlse) 'Johnson, Bob' were sent to the hosted model and named person_name; prose fragments 'compensation paid to the employee.' and 'Shows before tax deductions.' also went out. assert_no_values is a shape test for money/date/SSN/email under 48 chars and a human name has no shape it can catch. No figure moved (the tables had already named person_name) but the module's central safety claim is false as written. Either the promise or the gate must change. Live on api/upload.py today.",
       "progress_note": "it-014 built and PROVED the fix: core/skeleton.py, a position-aware redactor that keeps only confident furniture (colon captions + digit-free STRUCTURAL_VOCAB) and masks everything else, so a caption-shaped name and a bold letterhead employer are both redacted. Leak-falsification (loop/falsification/it-014.json) over all 7 corpora / 234 docs / 1183 truth values: 0 leaks, 1172 masked, 11 benign caption-coincidences ('monthly' in 'MONTHLY AMOUNT'). Skeleton is digit-free by construction so no numeric value can appear. NOT yet DONE: the redactor is additive and consumed by nothing; it-015 must wire it into the label/model path (replacing the 48-char assert_no_values shape gate) to actually close T25 on api/upload.py."
     },
@@ -415,27 +419,35 @@
       "id": "T26",
       "title": "model_mapper caches a timeout as `unknown`, making measurement irreproducible",
       "corpus": "all",
-      "status": "OPEN",
-      "attempts": 0,
+      "status": "DONE",
+      "attempts": 1,
       "prior_attempts": [],
-      "root_cause_note": "Measured it-011. On _FutureTimeout, model_mapper writes None into _MEMO, so one slow call makes that caption permanently unreadable for the rest of the process and the same harness scores differently run to run. Observed at the 6s default on the caption 'Team Member:'. Every it-011 measurement therefore ran with REALDOOR_LABEL_TIMEOUT=30. Fixing it means distinguishing 'the model said unknown' from 'we never heard back'."
+      "root_cause_note": "Measured it-011. On _FutureTimeout, model_mapper writes None into _MEMO, so one slow call makes that caption permanently unreadable for the rest of the process and the same harness scores differently run to run. Observed at the 6s default on the caption 'Team Member:'. Every it-011 measurement therefore ran with REALDOOR_LABEL_TIMEOUT=30. Fixing it means distinguishing 'the model said unknown' from 'we never heard back'.",
+      "done_note": "Closed by it-015. On _FutureTimeout the mapper now returns None WITHOUT memoizing, so a later occurrence of the caption retries -- 'never heard back' is no longer frozen as 'unknown' (test_timeout_is_not_memoized). Separately, the memo key gained a context digest (document skeleton hash), so the same caption under two different page structures is asked per structure and never cross-contaminates document to document -- a prerequisite for the T28 context-dependent reasoning to be correct. it-015 measurements still ran at REALDOOR_LABEL_TIMEOUT=30 for stability and this is stated in the report."
     },
     {
       "id": "T27",
       "title": "ca_dlse piece-rate: a Rate/Hour header over a multi-row rate table reads the closest row as hourly_rate",
       "corpus": "confirm",
       "status": "OPEN",
-      "attempts": 0,
-      "prior_attempts": [],
-      "root_cause_note": "Surviving 1/4 from it-011, model-on only (deterministic path already abstains: RATE/HOUR is not in the vocabulary and TABLE_ROW_AXES needs a REGULAR row this doc lacks). With the model on, the mapper names Rate/Hour -> hourly_rate and geometry reads 19.55, the first of several category rows (Productive/Non-productive/Rest/OT/DT) under one Rate/Hour header on a piece-rate stub; truth is abstain (no single hourly rate). it-013 wrote a 'several-different-answers -> abstain' rule and it was FALSIFIED by ext_unc's NET PAY current-vs-YTD column, where reading the closer figure is a deliberate tested capability (test_columns/test_arithmetic). So a naive several-answers refusal is unsafe; needs the header-row/piece-rate structural signal. it-008 salary-as-rate family. Candidate to be SUBSUMED by T28 (masked-skeleton reasoning) rather than hand-coded: a model that sees the whole table structure distinguishes a piece-rate breakdown (abstain) from a current/YTD pair (read closer) where geometry cannot."
+      "attempts": 1,
+      "prior_attempts": [
+        "it-015"
+      ],
+      "root_cause_note": "Surviving 1/4 from it-011, model-on only (deterministic path already abstains: RATE/HOUR is not in the vocabulary and TABLE_ROW_AXES needs a REGULAR row this doc lacks). With the model on, the mapper names Rate/Hour -> hourly_rate and geometry reads 19.55, the first of several category rows (Productive/Non-productive/Rest/OT/DT) under one Rate/Hour header on a piece-rate stub; truth is abstain (no single hourly rate). it-013 wrote a 'several-different-answers -> abstain' rule and it was FALSIFIED by ext_unc's NET PAY current-vs-YTD column, where reading the closer figure is a deliberate tested capability (test_columns/test_arithmetic). So a naive several-answers refusal is unsafe; needs the header-row/piece-rate structural signal. it-008 salary-as-rate family. Candidate to be SUBSUMED by T28 (masked-skeleton reasoning) rather than hand-coded: a model that sees the whole table structure distinguishes a piece-rate breakdown (abstain) from a current/YTD pair (read closer) where geometry cannot.",
+      "resolution_note": "it-015 VALIDATED the reasoning fix and left T27 OPEN. With the it-014 masked skeleton handed to the mapper as context (REALDOOR_SKELETON_CONTEXT=1), gpt-4o reads the multi-row piece-rate table and ABSTAINS -- measure_confirm_set --config with_mapper goes 1 wrong -> 0 wrong, ca_dlse hourly_rate 19.55 -> abstain, by reasoning, no hand-coded refusal. But gpt-4o-mini (the default model) reasons UNSAFELY over the wider view: 3 wrong (19.55 plus two NEW person_name nominations the confirm layer cannot type-check away). So the fix is real but frontier-model-only, and switching the default model silently is what the operator asked to avoid (cost-sensitive). Kept OPEN because the DEFAULT config still emits 19.55; closure is one operator decision away (sanction REALDOOR_LABEL_MODEL=gpt-4o for the context path; ~$0.05/doc measured). NOT closable by a hand-coded piece-rate refusal this iteration (it-013 proved that unsafe)."
     },
     {
       "id": "T28",
       "title": "masked-skeleton reasoning: widen model_mapper input from one caption to a position-redacted page skeleton",
       "corpus": "all",
-      "status": "OPEN",
-      "attempts": 0,
-      "prior_attempts": [],
+      "status": "DONE",
+      "attempts": 2,
+      "prior_attempts": [
+        "it-014",
+        "it-015"
+      ],
+      "done_note": "Mechanism DONE, remainder scoped. it-014 built and proved the leak-free skeleton; it-015 wired it into core/label_llm.model_mapper as CONTEXT (the skeleton rides the user message with every value blanked), unified the caption egress gate through the furniture test (closes T25), added the context digest + timeout fix (closes T26), and re-falsified both outbound channels (loop/falsification/it-015.json: skeleton 0 leaks, caption furniture-only 0 leaks). Deterministic path byte-identical (G5), gate PASS. The EYES are widened without widening the HANDS: the model still nominates one field from the closed set and geometry still reads/type-checks every value. REMAINDER, scoped and measured: (1) safe default-on requires a FRONTIER model -- gpt-4o abstains on the ca_dlse piece-rate table (T27, 0 wrong) but gpt-4o-mini reasons unsafely (3 wrong), so REALDOOR_SKELETON_CONTEXT ships default OFF pending an operator model-cost decision (~$0.05/doc); (2) the T21 position arm that would reach unknown captions leaks 139 values and ships OFF. So T28's product value (T27 closed, T21 lifted) is unrealized in the DEFAULT config; only its safety half (T25/T26) is live by default.",
       "root_cause_note": "Architecture direction chosen with the user. The corner-case patch accretion (option-band, gloss-colon, TABLE_ROW_AXES refusals) exists mostly to compensate for the model's blindfold: model_mapper sees only one <=48-char caption and cannot tell a piece-rate breakdown from a single rate, or a template annotation from a value. Widen the EYES without widening the HANDS: give the model a position-redacted page skeleton (every value slot -- numeric OR personal: name/address/SSN/date -- replaced by a typed placeholder <MONEY>/<HRS>/<NAME>/<DATE>, captions/headers/row-labels and footnote markers preserved), keep the output contract exactly (nominate one field from the closed set, deterministic geometry reads and type-checks the value, runs-last/blanks-only, off by default under pytest). Subsumes T27 (model abstains on piece-rate from structure), T21 (nominates long real-form captions), and T25 (the position-based redactor IS the leak boundary assert_no_values cannot be). Named hazard: a value string -- numeric or personal -- leaves the process inside the skeleton; primary falsification = scan every outbound skeleton across all corpora for any value string, gate the send on it, fall back to deterministic-only on any leak. Security envelope unchanged vs today's caption-only send ONLY if the redactor is position-based and correct (R20: this trades a structural guarantee for a filtered one -- justified because it unlocks frontier reasoning the one-caption path cannot reach). Deterministic headline must stay byte-identical (model off)."
     }
   ]

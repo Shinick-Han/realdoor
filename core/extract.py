@@ -1163,6 +1163,41 @@ def _columns_enabled() -> bool:
     return os.environ.get("REALDOOR_COLUMNS", "").strip() != "0"
 
 
+def _skeleton_context_enabled() -> bool:
+    """Feed the model mapper a masked page skeleton as context? OFF by default; `1` on (T28).
+
+    Gates ONLY the model path. It is consulted solely inside the `label_llm.is_enabled()`
+    guard in `extract_document`, so with the model off (every deterministic run, every G5
+    dump, the whole pytest suite) no skeleton is built and no context is set -- the
+    deterministic output is byte-identical whatever this flag says.
+
+    **Default OFF, measured.** it-015 measured the skeleton context on the confirm hold-out:
+    it fixes T27 (`ca_dlse` `hourly_rate` 19.55 -> abstain) with `gpt-4o` at 0 wrong, but
+    `gpt-4o-mini` -- the default model -- reasons over the wider view UNSAFELY, nominating
+    `person_name` on two ambiguous captions the confirm layer cannot type-check away (3
+    wrong, up from 1). So the context is only safe with a frontier model, and switching the
+    default model to one silently is exactly what the operator asked not to happen. Enabling
+    it is an explicit two-part opt-in: `REALDOOR_SKELETON_CONTEXT=1 REALDOOR_LABEL_MODEL=gpt-4o`.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_SKELETON_CONTEXT", "").strip() == "1"
+
+
+def _skeleton_position_enabled() -> bool:
+    """Extend the caption egress gate by POSITION (the T21 arm)? OFF by default; `1` on.
+
+    Furniture (colon/vocabulary) is always sendable. This additionally lets a run that
+    ANCHORS a value slot leave as a caption -- the unknown real-form captions T21 needs.
+    It re-opens the leak surface it-014 closed (a free-floating name that anchors an
+    address), so it defaults OFF and ships on only if `loop/falsify/it-015.py` shows the
+    position-extended sendable set carries no value on any corpus.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_SKELETON_POSITION", "").strip() == "1"
+
+
 def _header_cell_enabled() -> bool:
     """Is the header-cell column reader switched on? ON by default; `0` switches it off.
 
@@ -2827,9 +2862,30 @@ def extract_document(
                 )
             else:
                 ocr_by_page.append([])
-            page_fields, _ = extract_fields_from_page(
-                words, doc_type, convention, field_mapper, fallback_mapper
-            )
+            # T28: when the model mapper is live, hand it this page's masked skeleton as
+            # CONTEXT and the page's caption egress set. Built only inside the model guard,
+            # so nothing here runs on a deterministic pass -- G5 byte-identity is untouched.
+            page_ctx_set = False
+            if _skeleton_context_enabled():
+                from core import label_llm
+
+                if label_llm.is_enabled():
+                    from core import skeleton as _skeleton
+
+                    skel, sendable = _skeleton.page_context(
+                        words, position_extension=_skeleton_position_enabled()
+                    )
+                    label_llm.set_page_context(skel, sendable)
+                    page_ctx_set = True
+            try:
+                page_fields, _ = extract_fields_from_page(
+                    words, doc_type, convention, field_mapper, fallback_mapper
+                )
+            finally:
+                if page_ctx_set:
+                    from core import label_llm
+
+                    label_llm.clear_page_context()
             for name, value in page_fields.items():
                 found.setdefault(name, value)
 

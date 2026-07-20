@@ -134,6 +134,39 @@ def test_redact_value_run_typing():
 
 
 # --------------------------------------------------------------------------------------
+# the egress gate (T25 unified) and the position extension (T21, gated)
+# --------------------------------------------------------------------------------------
+
+
+def test_is_furniture_text():
+    assert sk.is_furniture_text("GROSS EARNINGS")
+    assert sk.is_furniture_text("Deductions:")
+    assert sk.is_furniture_text("Rate/Hour")
+    # a name / an unknown real-form caption is NOT furniture -- it cannot leave context-free
+    assert not sk.is_furniture_text("Terrence Boyd")
+    assert not sk.is_furniture_text("SMITH AND COMPANY, INC.")
+    assert not sk.is_furniture_text("AVERAGE HOURS PER WEEK")
+
+
+@pytest.mark.skipif(not PIECERATE.exists(), reason="confirm corpus not present")
+def test_page_sendable_labels_furniture_excludes_names_position_only_widens():
+    import pdfplumber
+    from core.extract import read_words, normalize_label
+
+    furn: set = set()
+    ext: set = set()
+    with pdfplumber.open(str(PIECERATE)) as pdf:
+        for pnum, page in enumerate(pdf.pages, 1):
+            w = read_words(page, pnum)
+            furn |= set(sk.page_sendable_labels(w, position_extension=False))
+            ext |= set(sk.page_sendable_labels(w, position_extension=True))
+
+    assert normalize_label("Rate/Hour") in furn        # furniture is sendable
+    assert normalize_label("Johnson, Bob") not in furn  # a name is not furniture
+    assert furn <= ext                                  # the position arm only widens
+
+
+# --------------------------------------------------------------------------------------
 # the flag gates only whether a skeleton is BUILT
 # --------------------------------------------------------------------------------------
 

@@ -63,6 +63,7 @@ from core.extract import (
     _join_run,
     _split_runs,
     group_lines,
+    looks_like_a_label,
     normalize_label,
     read_words,
 )
@@ -348,6 +349,20 @@ def is_furniture(run: Sequence[Word]) -> bool:
     return _is_caption(text) or _is_structural(text)
 
 
+def is_furniture_text(text: str) -> bool:
+    """The text-level furniture test -- the CONTEXT-FREE half of the egress gate (T25).
+
+    `is_furniture` needs a run's geometry; this needs only the string, because the two
+    signals it rests on -- a trailing colon and membership of `STRUCTURAL_VOCAB` -- are
+    pure functions of the text. It is what `core.label_llm.model_mapper` consults before
+    a caption may leave the process when no page skeleton has been built (an upload, a
+    unit test): a person's name, an employer, a prose fragment is not furniture and is
+    never sent, however caption-shaped it is. That is the T25 fix `assert_no_values`
+    (a 48-char shape test that folds `$1,283.15` but passes `Terrence Boyd`) could not be.
+    """
+    return _is_caption(text) or _is_structural(text)
+
+
 # =====================================================================================
 # building the skeleton
 # =====================================================================================
@@ -414,6 +429,99 @@ def build_page_skeleton(words: Sequence[Word]) -> str:
         if text.strip():
             out_lines.append(text)
     return "\n".join(out_lines)
+
+
+# =====================================================================================
+# the egress gate for the caption channel (T25 unified, T21 position extension)
+# =====================================================================================
+# The model mapper (`core.label_llm`) sends ONE caption per call. Which captions may
+# leave is decided here, over exactly the runs the extractor would ever hand the model:
+# typographic label runs (`Word.is_label`) and `looks_like_a_label` runs. Two tiers:
+#
+#   * FURNITURE (always safe): colon caption or `STRUCTURAL_VOCAB` -- the same closed test
+#     the skeleton keeps a run by. This is the T25 boundary: a name is not furniture.
+#   * POSITION-QUALIFIED (the T21 extension, opt-in, RE-FALSIFIED): an unknown run that
+#     ANCHORS a value slot -- a run with another run sitting below or beside it, where the
+#     extractor's own value readers would look. Such a run labels a value by role, which is
+#     what T21 needs (a real-form caption the vocabulary never saw). It re-opens the leak
+#     risk it-014 closed (a free-floating employer name anchors an address), so it ships
+#     only if `loop/falsify/it-015.py` shows no value ever reaches the sendable set.
+
+
+def _label_candidate_runs(lines: Sequence[Sequence[Word]]) -> list[Sequence[Word]]:
+    """Every run that could reach the model as a caption -- the union `_label_runs` forms.
+
+    Typographic label runs plus `looks_like_a_label` runs among the rest, mirroring
+    `core.extract._label_runs` so the egress gate is computed over precisely the strings
+    the caption channel can send and no others.
+    """
+    out: list[Sequence[Word]] = []
+    for line in lines:
+        out.extend(_split_runs([w for w in line if w.is_label()]))
+        rest = [w for w in line if not w.is_label()]
+        for run in _split_runs(rest):
+            if looks_like_a_label(_join_run(run)):
+                out.append(run)
+    return out
+
+
+def _run_anchors_value(run: Sequence[Word], all_runs: Sequence[Sequence[Word]]) -> bool:
+    """Does some OTHER run sit in the value slot this run projects (below it, or beside it)?
+
+    The mirror of `_in_value_slot`: there it asks "is this masked run in a slot an anchor
+    projects"; here it asks "does this run project a slot another run fills" -- i.e. does it
+    label a value by position. Same two geometries as the extractor's below/beside readers.
+    """
+    ax0 = run[0].x0
+    ax1 = max(w.x1 for w in run)
+    abase = run[0].baseline
+    near, far = VALUE_Y_WINDOW
+    for other in all_runs:
+        if other is run:
+            continue
+        ox0 = other[0].x0
+        obase = other[0].baseline
+        # below: the other run is within the vertical value window, left edges aligned
+        if near <= (abase - obase) <= far and abs(ax0 - ox0) <= VALUE_X_TOLERANCE + 5.0:
+            return True
+        # beside: same baseline, a column gap to this run's right
+        if abs(abase - obase) <= 1.5 and (ox0 - ax1) >= SIDE_BY_SIDE_MIN_GAP:
+            return True
+    return False
+
+
+def page_sendable_labels(
+    words: Sequence[Word], *, position_extension: bool = False
+) -> frozenset[str]:
+    """Normalized captions that may leave this page via the model mapper's caption channel.
+
+    Furniture always; position-qualified runs additionally when `position_extension` is on.
+    Stored in `normalize_label` form so `model_mapper` can test its own label the same way.
+    """
+    lines = group_lines(words)
+    all_runs = [run for line in lines for run in _split_runs(line)]
+    sendable: set[str] = set()
+    for run in _label_candidate_runs(lines):
+        text = _join_run(run)
+        if is_furniture_text(text):
+            sendable.add(normalize_label(text))
+        elif position_extension and _run_anchors_value(run, all_runs):
+            sendable.add(normalize_label(text))
+    return frozenset(sendable)
+
+
+def page_context(
+    words: Sequence[Word], *, position_extension: bool = False
+) -> tuple[str, frozenset[str]]:
+    """(masked page skeleton, sendable caption set) -- everything the model mapper needs.
+
+    The skeleton is the leak-proof structural view it-014 proved (it goes to the model as
+    CONTEXT, never as an answer); the sendable set is the egress gate for the target
+    caption. Both are read-only derivations of the page's words.
+    """
+    return build_page_skeleton(words), page_sendable_labels(
+        words, position_extension=position_extension
+    )
 
 
 def build_skeleton(pdf_path, *, respect_flag: bool = True) -> str | None:
