@@ -1,6 +1,6 @@
 {
-  "accepted_commit": "e4933bec8f2dab3e5e9bdb86d723b0eb8200eb8a",
-  "updated": "2026-07-20T12:25:00+00:00",
+  "accepted_commit": "996b15999f572422177960e36a28f4a50f89818a",
+  "updated": "2026-07-20T14:42:13+00:00",
   "generated_by": "loop/tools/build_field_state.py",
   "pack": {
     "correct": 159,
@@ -43,14 +43,11 @@
     "unreachable_absent": 20
   },
   "pytest": {
-    "passed": 1418,
+    "passed": 1464,
     "failed": 0,
     "exit_code": 0
   },
   "preexisting_dirty": [
-    "core/extract.py",
-    "core/test_ocr_single_row.py",
-    "core/verified.py",
     "testdata/confirm_raw/bonita_certificated_check_sample.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_hourly.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_piecerate.pdf",
@@ -65,6 +62,8 @@
     "testdata/confirm_raw/ou_sample_check_stub.pdf",
     "testdata/confirm_raw/seattle_housing_employment_verification_blank.pdf",
     "testdata/confirm_raw/wa_dshs_14252_employment_verification.pdf",
+    "ui/dist/app.js",
+    "ui/dist/index.html",
     "ui/shots-variant/screen-1-1280.png",
     "ui/shots-variant/screen-1-390.png",
     "ui/shots-variant/screen-2-1280.png",
@@ -100,6 +99,8 @@
     "ui/shots/tier/f1-tech-open.png",
     "ui/shots/tier/f2-classifier.png",
     "ui/shots/tier/f2-tech-open.png",
+    "ui/tools/_axe_live_editor.mjs",
+    "ui/tools/_measure_heights.mjs",
     "ui/tools/_rec.mjs",
     "ui/tools/_rec_demo.mjs",
     "ui/tools/_rec_demo2.mjs",
@@ -107,15 +108,7 @@
     "ui/tools/_rec_team.mjs",
     "ui/tools/_rec_tech.mjs",
     "ui/tools/_rec_tech2.mjs",
-    "ui/tools/_shots_variant.mjs",
-    "api/region.py",
-    "api/store.py",
-    "api/upload.py",
-    "api/app.py",
-    "ui/dist/app.js",
-    "ui/dist/app.css",
-    "ui/dist/i18n.js",
-    "ui/dist/index.html"
+    "ui/tools/_shots_variant.mjs"
   ],
   "field_state_census": {
     "confirm": {

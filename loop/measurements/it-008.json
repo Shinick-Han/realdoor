@@ -1,12 +1,13 @@
 {
-  "iteration": 0,
-  "target": null,
-  "run_at": "2026-07-20T14:58:19+00:00",
-  "head": "996b15999f572422177960e36a28f4a50f89818a",
+  "iteration": 8,
+  "target": "T15",
+  "run_at": "2026-07-20T15:21:47+00:00",
+  "head": "5e77d7f55ab4e47096f0c8d13bd0f989837c5a24",
   "accepted_commit": "996b15999f572422177960e36a28f4a50f89818a",
   "verdict": "REJECTED_GATE",
   "failed_gates": [
-    "G6"
+    "G6",
+    "G7"
   ],
   "gates": [
     {
@@ -44,7 +45,7 @@
       "gate": "G4",
       "pass": true,
       "detail": {
-        "passed": 1465,
+        "passed": 1490,
         "failed": 0,
         "baseline_passed": 1464
       }
@@ -53,7 +54,9 @@
       "gate": "G5",
       "pass": true,
       "detail": {
-        "flags_off": [],
+        "flags_off": [
+          "REALDOOR_RATE_PERIOD_LICENSE"
+        ],
         "compared_against": "996b15999f572422177960e36a28f4a50f89818a",
         "documents_compared": 77,
         "identical": true,
@@ -65,30 +68,53 @@
       "gate": "G6",
       "pass": false,
       "detail": {
-        "allowlist": [],
+        "allowlist": [
+          "core/extract.py",
+          "core/test_rate_period_license.py"
+        ],
         "changed": [
+          "README.md",
           "api/store.py",
           "api/upload.py",
           "core/extract.py",
           "core/test_rate_period_license.py",
+          "loop/backlog.json",
           "loop/baseline.json",
           "loop/falsification/it-008.json",
           "loop/falsify/it-008.py",
+          "loop/measurements/it-000.json",
+          "loop/measurements/it-008.json",
           "loop/proposals/it-008.md",
+          "loop/reports/it-008.md",
+          "ui/axe-report.json",
           "ui/dist/app.css",
           "ui/dist/i18n.js",
+          "ui/screen-scan.json",
           "ui/tools/_smoke.mjs",
-          "ui/tools/_smoke2.mjs"
+          "ui/tools/_smoke2.mjs",
+          "ui/tools/axe-scan.mjs",
+          "ui/tools/journey-regression.mjs",
+          "ui/tools/keyboard-journey.mjs",
+          "ui/tools/live-check.mjs",
+          "ui/tools/reflow-check.mjs",
+          "ui/tools/screen-scan.mjs"
         ],
         "outside_allowlist": [
+          "README.md",
           "api/store.py",
           "api/upload.py",
-          "core/extract.py",
-          "core/test_rate_period_license.py",
+          "ui/axe-report.json",
           "ui/dist/app.css",
           "ui/dist/i18n.js",
+          "ui/screen-scan.json",
           "ui/tools/_smoke.mjs",
-          "ui/tools/_smoke2.mjs"
+          "ui/tools/_smoke2.mjs",
+          "ui/tools/axe-scan.mjs",
+          "ui/tools/journey-regression.mjs",
+          "ui/tools/keyboard-journey.mjs",
+          "ui/tools/live-check.mjs",
+          "ui/tools/reflow-check.mjs",
+          "ui/tools/screen-scan.mjs"
         ],
         "forbidden_touched": [],
         "cache_paths_exempted": 0,
@@ -97,11 +123,14 @@
     },
     {
       "gate": "G7",
-      "pass": true,
+      "pass": false,
       "detail": {
-        "mode": "baseline self-check",
+        "mode": "iteration",
+        "target": "T15",
+        "predicted": [],
         "observed": [],
-        "requirement": "the unchanged tree must flip nothing"
+        "unpredicted": [],
+        "target_fields_flipped": []
       }
     }
   ],
@@ -127,7 +156,7 @@
       "abstained": 100
     },
     "pytest": {
-      "passed": 1465,
+      "passed": 1490,
       "failed": 0,
       "exit_code": 0
     }
@@ -159,17 +188,30 @@
   "field_flips_observed": [],
   "flag_off_identical": true,
   "diff_files": [
+    "README.md",
     "api/store.py",
     "api/upload.py",
     "core/extract.py",
     "core/test_rate_period_license.py",
+    "loop/backlog.json",
     "loop/baseline.json",
     "loop/falsification/it-008.json",
     "loop/falsify/it-008.py",
+    "loop/measurements/it-000.json",
+    "loop/measurements/it-008.json",
     "loop/proposals/it-008.md",
+    "loop/reports/it-008.md",
+    "ui/axe-report.json",
     "ui/dist/app.css",
     "ui/dist/i18n.js",
+    "ui/screen-scan.json",
     "ui/tools/_smoke.mjs",
-    "ui/tools/_smoke2.mjs"
+    "ui/tools/_smoke2.mjs",
+    "ui/tools/axe-scan.mjs",
+    "ui/tools/journey-regression.mjs",
+    "ui/tools/keyboard-journey.mjs",
+    "ui/tools/live-check.mjs",
+    "ui/tools/reflow-check.mjs",
+    "ui/tools/screen-scan.mjs"
   ]
 }

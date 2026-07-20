@@ -282,6 +282,54 @@
       "closed_on": "2026-07-20, zero iterations spent",
       "root_cause_note": "scripts/measure_label_mapping._tally skips rasterized documents outright, and loop/tools/build_field_state.py reconciles against it by construction, so no change to core/ or ocr/ can ever flip these 31 in field_state. The measuring script is a protected instrument (G6); acting on this requires the instrument owner, not the loop -- the T5 precedent. The PRODUCT path is not blocked: api/upload.py already routes empty-text-layer uploads to ocr/ocr_extract.py and the uploads manifest records its measured behaviour, including the conf-based certainty='high' (design section 1g) that the owner should cap to 'low' as an ordinary reviewed change.",
       "design_note": "Design section 2 and C.4. Belongs in STOP.md alongside T5 at loop end."
+    },
+    {
+      "id": "T15",
+      "title": "filled orangeusd: RATE OF PAY on a salaried stub read a monthly salary as hourly_rate -- the corpus's first measured WRONG value",
+      "corpus": "filled",
+      "doc": "orangeusd_sample_paystub_filled.pdf",
+      "fields": [
+        "filled::orangeusd_sample_paystub_filled.pdf::hourly_rate"
+      ],
+      "field_note": "The filled corpus is outside loop/baseline.json.field_state (the manifest is the 77); this field's state is measured by scripts/measure_filled_forms.py, where it sat in wrong_detail as 'value invented for a field that is not on the page'.",
+      "category": "label_vocabulary",
+      "status": "DONE",
+      "attempts": 1,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "root_cause_note": "LABEL_SYNONYMS['pay_stub'] maps RATE OF PAY -> hourly_rate unconditionally. The table's own comment refuses bare RATE as context-dependent; RATE OF PAY is exactly as context-dependent (on salaried stubs it names a salary) and was admitted anyway. On the filled orangeusd stub `Rate of Pay` heads a MONTHLY certificated 4,812.00 (equal to the printed gross; Hours/Units 21.00 is working DAYS) and _resolve_value emitted it at certainty low.",
+      "closed_note": "Closed by the period license (flag REALDOOR_RATE_PERIOD_LICENSE, it-008): RATE OF PAY may bind hourly_rate only when the page settles the period by an arithmetic identity -- the bound value closes v x h = g cent-exact against a printed hours-shaped token (0 < h <= 744, h != 1) and a printed cents-form amount on the same page, neither the value's own run. up_016 (19.25 x 72 = 1386.00, all printed) stays licensed and byte-identical; orangeusd closes nothing (measured: zero closing pairs among its 45 numeric tokens) and becomes an abstention. The marker-adjacency license (an 'hourly' word on the label's line) was weighed and REFUSED: the seattle fill measured the only wage-adjacent 'hourly' in the corpus as a circle-one MENU whose text layer prints every period word equally (the circling is ink), so the marker's firing shape is the menu's false-fire shape. Scope pay_stub only: the employment_letter twin entry stays (up_018/ho_006 measured correct through it, no closable identity on their pages -- a G3 boundary, recorded as a residual hazard, not patched). The anchoring twin HOURS/UNITS stays out of every vocabulary, pinned by test. Falsified first: 0/77 manifest firings, filled dev fired on the target only, zero conflicts. Filled dev headline 12.5%/1 WRONG -> 12.5%/0 WRONG (the flip is wrong->abstain; the field is expect_absent)."
+    },
+    {
+      "id": "T16",
+      "title": "curly-quote fold: vocabulary apostrophes are ASCII, real forms print U+2019",
+      "corpus": "filled",
+      "doc": "wa_dshs_14252_employment_verification_filled.pdf | seattle_housing_employment_verification_filled.pdf",
+      "fields": [],
+      "category": "label_vocabulary",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "root_cause_note": "Measured on the filled corpus's text layers: wa_dshs prints `EMPLOYEE’S NAME` (curly U+2019, baseline 585.6) and seattle prints `Employer’s Signature` / `Employer’s Printed Name` -- while LABEL_SYNONYMS holds the ASCII form `EMPLOYEE'S NAME`. normalize_label folds whitespace and colons but not quote glyphs, so the curly caption is a total miss; eval/score_extraction.normalize already folds curly quotes to ASCII (its line 62), an asymmetry between the scorer's reading convention and the extractor's.",
+      "design_note": "Zero measurable yield on the current corpora (the wa_dshs filled values live in AcroForm widget annotations the text path cannot see, so folding the caption flips no field today) -- but the miss class is real on any flat form printing typographer's apostrophes. A fold inside normalize_label admits no new strings (it maps glyph variants of strings already in the tables) and is the same argument as case-insensitivity in it-era label work; falsify over all 77 + filled before implementing."
+    },
+    {
+      "id": "T17",
+      "title": "colon-line geometry: a filled-in value sits a word-space after its colon caption, inside SIDE_BY_SIDE_MIN_GAP",
+      "corpus": "filled",
+      "doc": "seattle_housing_employment_verification_filled.pdf",
+      "fields": [
+        "filled::seattle_housing_employment_verification_filled.pdf::person_name"
+      ],
+      "field_note": "Outside field_state; measured by scripts/measure_filled_forms.py (currently an abstention; truth 'Marisol Vega').",
+      "category": "column_geometry",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 1,
+      "root_cause_note": "Measured on the seattle fill: `Employee Name:`[71.9-133.3] with `Marisol Vega`[138.3-185.0] on the same baseline -- the label is recognised (EMPLOYEE NAME is in LABEL_SYNONYMS), the cell holds exactly one run, but the 5.0pt gap is under SIDE_BY_SIDE_MIN_GAP (12.0), so _side_by_side_run refuses. The 12pt gap exists to stop prose that opens with a label ('PAY DATE has not been assigned yet') from reading its own tail as a value; a filler writing at the blank after a colon produces exactly a word-space gap.",
+      "design_note": "Candidate license for a future P2: the trailing colon is PRINTED punctuation -- the page's own author marking 'value follows' -- so a colon-terminated label may be allowed a word-space gap where a bare label keeps the 12pt column-gap requirement. The prose hazard must be re-falsified under that reading (prose after a colon exists: 'Note: the following...'), swept over all 77 + filled before any code."
     }
   ]
 }

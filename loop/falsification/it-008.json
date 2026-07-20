@@ -1,0 +1,35 @@
+{
+  "predicate": "loop/falsify/it-008.py",
+  "run_at": "2026-07-20T14:48:19+00:00",
+  "documents_swept": 77,
+  "docs_fired": [],
+  "firing_count": 0,
+  "firings": [],
+  "conflicts": [],
+  "target_fired": true,
+  "verdict": "pass",
+  "filled_dev": {
+    "documents_swept": 3,
+    "docs_fired": [
+      "filled::orangeusd_sample_paystub_filled.pdf"
+    ],
+    "firings": [
+      {
+        "corpus": "filled",
+        "doc": "orangeusd_sample_paystub_filled.pdf",
+        "field": "hourly_rate",
+        "value": {
+          "hourly_rate": {
+            "without_rule": 4812.0,
+            "with_rule": null
+          }
+        },
+        "page": null,
+        "bbox": null,
+        "emitted_with_rule": {}
+      }
+    ],
+    "conflicts": [],
+    "target_fired": true
+  }
+}

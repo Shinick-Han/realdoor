@@ -562,6 +562,122 @@ def synonym_mapper(document_type: str, label: str) -> str | None:
 
 
 # --------------------------------------------------------------------------------------
+# A synonym whose meaning depends on the period the page states -- or does not
+# --------------------------------------------------------------------------------------
+# The comment above `LABEL_SYNONYMS` refuses bare "RATE" as context-dependent. "RATE OF
+# PAY" is exactly as context-dependent -- on a salaried stub it names a salary -- and it
+# was admitted anyway. The filled-forms corpus measured the consequence, the corpus's
+# first WRONG value: `orangeusd_sample_paystub_filled.pdf` prints `Rate of Pay` over a
+# MONTHLY certificated 4,812.00 (equal to the printed gross; the hours column holds
+# working DAYS), and the synonym read it as an hourly rate.
+#
+# So the binding now carries a license: `RATE OF PAY` may name `hourly_rate` only when
+# the page itself settles the period by an arithmetic identity -- the bound value `v`
+# closes `v x h = g` cent-exact against a printed hours-shaped token `h` and a printed
+# cents-form money token `g` on the same page (see `_rate_period_closure`). A rate that
+# closes the product with same-page hours and gross has proven its own period
+# (`up_016_pay_stub_wording_total_earnings.pdf`: 19.25 x 72 = 1386.00, all three
+# printed); a rate that closes nothing has an unstated period and the binding is
+# refused into an abstention.
+#
+# What was weighed and refused (loop/proposals/it-008.md section 3):
+#   * A printed "hourly"/"per hour" marker on the label's line. The only wage-adjacent
+#     "hourly" in the corpus is the seattle form's circle-one MENU, where the text
+#     layer prints every period word equally (the circling is ink the text layer does
+#     not carry) -- the marker's firing shape IS the menu's false-fire shape, so no
+#     marker license shipped. A menu settles nothing.
+#   * Removing the synonym outright: up_016's measured-correct field rides it.
+#
+# Scope is `pay_stub` only, deliberately: the employment_letter table carries the same
+# string, but employment letters print no gross for the identity to close against, and
+# the two corpus documents reading through it (`up_018`, `ho_006`) are measured correct.
+# The residual hazard there is recorded in the it-008 report, not patched by widening
+# this table without a measured wrong.
+PERIOD_DEPENDENT_LABELS: dict[str, dict[str, str]] = {
+    "pay_stub": {"RATE OF PAY": "hourly_rate"},
+}
+
+#: The physical ceiling for an hours factor: one calendar month, 31 days x 24 hours.
+#: Same number and same argument as `core.verified.FALLBACK_HOURS_BOUND`, restated here
+#: (the way `core.columns.MAX_PERIOD_HOURS` restates it) because `core.verified` stays
+#: unimported unless `REALDOOR_ARITHMETIC` says otherwise; a test pins the equality.
+RATE_PERIOD_MAX_HOURS = 744.0
+
+_RATE_PERIOD_REFUSAL_NOTE = (
+    "the label names a rate of an unstated period and nothing printed on the "
+    "page settles it (no printed hours x this rate = a printed amount closes)"
+)
+
+
+def _rate_period_license_enabled() -> bool:
+    """Is the period license on period-dependent rate synonyms on? ON by default.
+
+    Guards exactly one intercept in `_scan_page`: a value bound through a label in
+    `PERIOD_DEPENDENT_LABELS` must pass `_rate_period_closure` or it becomes an
+    abstention. A licensed binding's emission is byte-identical to what it always was
+    (no note is added), and with `REALDOOR_RATE_PERIOD_LICENSE=0` the intercept never
+    runs, so this module's output is bit-identical to what it was before the license
+    existed (loop iteration it-008; falsified over all 77 corpus documents plus the
+    filled dev set first -- loop/falsification/it-008.json). Read through a function
+    rather than captured at import so a test can flip the environment variable and see
+    the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_RATE_PERIOD_LICENSE", "").strip() != "0"
+
+
+def _rate_period_closure(
+    lines: Sequence[Sequence["Word"]], field: dict[str, Any]
+) -> bool:
+    """Does the page prove the bound value is a per-hour rate? `v x h = g`, cent-exact.
+
+    `v` is the value the label geometry already located (this function never chooses a
+    value -- it only corroborates or refuses the one binding). `h` must be printed and
+    hours-shaped: no currency mark, `0 < h <= RATE_PERIOD_MAX_HOURS`, and `h != 1` --
+    the multiplicative identity testifies to nothing (the it-004 `_degenerate`
+    precedent), and a salaried stub printing `rate = gross, hours 1` must not license
+    itself. `g` must be printed in cents form (a decimal point with two digits after
+    it, the way money states itself). Both must be on the value's own page and neither
+    may be a word of the value's own run -- a token cannot corroborate itself. Any one
+    closing pair licenses the binding; this is corroboration, not selection.
+    """
+    value = field.get("value")
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or value <= 0:
+        return False
+    page = field.get("page")
+    box = field.get("bbox") or [0.0, 0.0, -1.0, -1.0]
+    x0, y0, x1, y1 = box
+
+    def _own(word: "Word") -> bool:
+        return (word.x0 >= x0 - 0.5 and word.x1 <= x1 + 0.5
+                and y0 - 0.5 <= word.baseline <= y1 + 0.5)
+
+    hours: list[tuple[int, float]] = []
+    money: list[tuple[int, float]] = []
+    for line in lines:
+        for word in line:
+            if word.page != page or _own(word):
+                continue
+            text = word.text.strip()
+            bare = text.lstrip("$").replace(",", "")
+            try:
+                number = float(bare)
+            except ValueError:
+                continue
+            if (not text.startswith("$")
+                    and 0 < number <= RATE_PERIOD_MAX_HOURS and number != 1):
+                hours.append((id(word), number))
+            if "." in bare and len(bare.rsplit(".", 1)[1]) == 2 and number > 0:
+                money.append((id(word), number))
+    return any(
+        hours_id != money_id and abs(value * h - g) < 0.005
+        for hours_id, h in hours
+        for money_id, g in money
+    )
+
+
+# --------------------------------------------------------------------------------------
 # What is even worth asking a mapper about
 # --------------------------------------------------------------------------------------
 # Every run of words on the page used to be offered to the mapper. On the pack that was
@@ -1360,6 +1476,27 @@ def _scan_page(
                         existing_end = found.get("pay_period_end")
                         if existing_end is None or existing_end.get("certainty") == "abstain":
                             found["pay_period_end"] = end_field
+            # ------------------------------------------------------------------------
+            # A period-dependent synonym binds only when the page settles the period
+            # (`REALDOOR_RATE_PERIOD_LICENSE=0` to disable) -- see the block above
+            # `PERIOD_DEPENDENT_LABELS`
+            # ------------------------------------------------------------------------
+            # After the whole chain, deliberately: whichever rule produced the value,
+            # the same license is asked of the same binding, once. Only a *value* is
+            # examined -- an abstention or a miss passes through untouched, so blank
+            # forms printing the caption over an empty cell do not engage this at all.
+            # The abstention recorded here stands exactly as any other does: the
+            # `field_name in found` rule above keeps a later mapper stage from
+            # re-binding the field on this page.
+            if (
+                resolved is not None
+                and resolved.get("certainty") != "abstain"
+                and PERIOD_DEPENDENT_LABELS.get(document_type, {}).get(
+                    normalize_label(label)) == field_name
+                and _rate_period_license_enabled()
+                and not _rate_period_closure(lines, resolved)
+            ):
+                resolved = _abstain(field_name, _RATE_PERIOD_REFUSAL_NOTE)
             if resolved is not None:
                 found[field_name] = resolved
     return unmapped
