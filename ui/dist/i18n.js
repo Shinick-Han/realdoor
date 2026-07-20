@@ -75,6 +75,13 @@
 
     "Correct a value we read wrong": "잘못 읽은 값을 바로잡으세요",
 
+    // U9: 계산 패널이 무엇인지 한 줄로. 소득원이 하나뿐이면 두 패널이 같은 식을 보이므로.
+    "This is your wage income on its own: one pay period, times the number of pay periods in a year.":
+      "이것은 급여 소득만 따로 본 것입니다: 한 지급 주기를, 1년 안의 지급 횟수만큼 곱한 값입니다.",
+    "This is your gig income on its own.": "이것은 긱(gig) 소득만 따로 본 것입니다.",
+    "This is your whole yearly income: every income line above, added together. With one income source it matches that line; with more than one, it is their sum.":
+      "이것은 한 해 전체 소득입니다: 위의 모든 소득 항목을 더한 값입니다. 소득원이 하나면 그 항목과 같고, 둘 이상이면 그것들의 합입니다.",
+
     // U4: 문서가 소프트웨어에 명령을 심으려 한 경우의 안내. 공격 문구는 신청자의 값이
     // 아니므로 값 표에서 빼고, 대신 여기서 "당신에 대한 것이 아니라 문서에 대한 사실"이라고
     // 설명한다. 원문(격리된 텍스트)은 기술 세부정보에 그대로 남는다.
@@ -1993,6 +2000,18 @@
         "위에 적혀 있고, URL 에 ",
         ["code", "?fixtures"],
         " 를 붙이면 오프라인 출처를 강제할 수 있습니다."
+      ]
+    },
+    // U9: 긴 푸터 문단이 "기술 세부사항" 뒤로 접혔고, 그 앞에 한 줄 요약이 남았다.
+    "footer-privacy-lead": {
+      en: "This page sends nothing to outside servers on its own. When the question " +
+          "classifier is switched on, your typed question — and only that — goes to a model " +
+          "provider so it can pick a topic; no document, no extracted field and no household " +
+          "record ever does.",
+      ko: [
+        "이 화면은 스스로 외부 서버로 아무것도 보내지 않습니다. 질문 분류기가 켜져 있으면, " +
+        "직접 타이핑하신 질문 — 오직 그것만 — 이 주제를 고르기 위해 모델 제공자에게 갑니다. " +
+        "어떤 문서도, 추출된 어떤 항목도, 세대 기록도 결코 가지 않습니다."
       ]
     }
   };

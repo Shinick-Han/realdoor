@@ -195,6 +195,19 @@
     confirmed_by_renter: "Confirmed by the renter",
     corrected_by_renter: "Corrected by the renter"
   };
+  /* What each calculation panel is, in one sentence. Keyed on the calc name the pipeline
+   * sends. The wage and gig panels are single income lines; the total panel adds them, and
+   * so can print the same formula as a component panel when there is only one income line —
+   * which is exactly the case this blurb exists to explain. */
+  var CALC_BLURB = {
+    annualized_wage_income:
+      "This is your wage income on its own: one pay period, times the number of pay periods in a year.",
+    annualized_gig_income:
+      "This is your gig income on its own.",
+    annualized_income:
+      "This is your whole yearly income: every income line above, added together. With one income " +
+      "source it matches that line; with more than one, it is their sum."
+  };
   var CERTAINTY_WORDS = {
     high: "High",
     low: "Low",
@@ -3418,11 +3431,12 @@
         ])
       ]));
 
-      /* The two hints left the form and stayed in the main column with the rest of the
-       * reading matter. The second one is the one worth defending: it is a privacy note,
-       * and a privacy note the reader meets *before* they start typing is worth more than
-       * one crowded into the strip under the cursor. */
-      context.appendChild(h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }));
+      /* One hint now, not two. "Routed to deterministic rule handlers. No document text
+       * reaches the calculation." is a sentence about how the product is built — a thing a
+       * judge asks and a renter does not — and it sat above the ask box on every screen. It
+       * moves to "Why the screens are worded the way they are" on How this works, where the
+       * rest of the build's reasoning already lives. The privacy note stays: a reader meets
+       * it before they type, which is exactly when it is useful. */
       context.appendChild(h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." }));
 
       /* Starter questions, directly under the box they fill.
@@ -3506,7 +3520,6 @@
           h("button", { type: "submit", class: "action", disabled: true, text: "Ask" })
         ])
       ]));
-      context.appendChild(h("p", { class: "hint", text: "Routed to deterministic rule handlers. No document text reaches the calculation." }));
       context.appendChild(h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." }));
     }
   }
@@ -3673,6 +3686,13 @@
 
       root.appendChild(h("section", { class: "card", "aria-labelledby": "calc-" + calc.name }, [
         h("h3", { id: "calc-" + calc.name, style: { marginTop: "0" }, text: calc.name.replace(/_/g, " ") }),
+        /* One line saying what this panel is, because two of them can show the identical
+         * formula. For a household whose only income is wages, "annualized wage income" and
+         * "annualized income" both read 2166.0 * 26, back to back, with nothing to tell a
+         * renter why the same sum appears twice. The wage and gig lines are components; the
+         * total line adds them, and equals a single component only when there is one. Said
+         * here in a sentence rather than left for the reader to deduce. */
+        CALC_BLURB[calc.name] ? h("p", { class: "hint", text: CALC_BLURB[calc.name] }) : null,
         inputs,
         h("h4", { text: "Formula" }),
         h("code", { class: "formula", text: calc.formula }),
