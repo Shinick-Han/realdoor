@@ -1,0 +1,331 @@
+{
+ "iteration": 11,
+ "target": "T23",
+ "verdict": "REJECTED_FALSIFICATION",
+ "implemented": false,
+ "note": "No core/ change was written. loop/falsification/it-011.json fired 6/77 with 4 conflicts, which kills the proposal before implementation. This file records the two-column measurement the iteration existed to produce.",
+ "columns": {
+  "off": "REALDOOR_LABEL_LLM=0",
+  "on": "REALDOOR_LABEL_LLM=1 REALDOOR_LABEL_TIMEOUT=30 (gpt-4o-mini)"
+ },
+ "harnesses": {
+  "verify_pack": {
+   "off": {
+    "correct": 159,
+    "of": 159,
+    "wrong": 0,
+    "iou_mean": 0.9677
+   },
+   "on": {
+    "correct": 159,
+    "of": 159,
+    "wrong": 0,
+    "iou_mean": 0.9677
+   },
+   "delta_correct": 0
+  },
+  "label_mapping_existing_26": {
+   "off": {
+    "correct": 136,
+    "wrong": 0,
+    "fields_total": 144,
+    "rate": 94.4
+   },
+   "on": {
+    "correct": 136,
+    "wrong": 0,
+    "fields_total": 144,
+    "rate": 94.4
+   },
+   "delta_correct": 0
+  },
+  "label_mapping_wording_holdout": {
+   "off": {
+    "correct": 24,
+    "wrong": 0,
+    "fields_total": 34,
+    "rate": 70.6
+   },
+   "on": {
+    "correct": 27,
+    "wrong": 0,
+    "fields_total": 34,
+    "rate": 79.4
+   },
+   "delta_correct": 3
+  },
+  "external_holdout": {
+   "off": {},
+   "on": {},
+   "delta_correct": 0
+  },
+  "confirm_set": {
+   "off": {
+    "correct": 26,
+    "wrong": 0,
+    "fields_total": 126,
+    "rate": 20.6
+   },
+   "on": {
+    "correct": 26,
+    "wrong": 4,
+    "fields_total": 126,
+    "rate": 20.6
+   },
+   "delta_correct": 0,
+   "delta_wrong": 4,
+   "wrong_detail": [
+    {
+     "file": "ca_dlse_paystub_piecerate.pdf",
+     "field": "hourly_rate",
+     "kind": "value invented for a field that is not on the page",
+     "expected": null,
+     "got": 19.55,
+     "certainty": "low",
+     "page": 1,
+     "bbox": [
+      270.72,
+      594.77,
+      295.89,
+      606.45
+     ],
+     "source_text": "$19.55",
+     "notes": "label resolved by the model mapper (closed set; see core/label_llm.py) | 7 candidate value runs sat in this label's column (2 aligned with it; column read as unknown-aligned)"
+    },
+    {
+     "file": "hi_ags_pay_statement_example_2021.pdf",
+     "field": "person_name",
+     "kind": "wrong value for a field that exists",
+     "expected": "John Aloha",
+     "got": "Employee Address: Your Payroll Address",
+     "certainty": "low",
+     "page": 3,
+     "bbox": [
+      306.77,
+      347.27,
+      474.76,
+      361.23
+     ],
+     "source_text": "Employee Address: Your Payroll Address",
+     "notes": "label resolved by the model mapper (closed set; see core/label_llm.py)"
+    },
+    {
+     "file": "seattle_housing_employment_verification_blank.pdf",
+     "field": "pay_frequency",
+     "kind": "value invented for a field that is not on the page",
+     "expected": null,
+     "got": "through",
+     "certainty": "low",
+     "page": 1,
+     "bbox": [
+      459.55,
+      240.33,
+      490.69,
+      252.37
+     ],
+     "source_text": "through",
+     "notes": "value read from the single row beneath the header cell 'monthly' in one of the page's own column-header rows | label resolved by the model mapper (closed set; see core/label_llm.py) | value did not match the expected format for this field"
+    },
+    {
+     "file": "wa_dshs_14252_employment_verification.pdf",
+     "field": "pay_frequency",
+     "kind": "value invented for a field that is not on the page",
+     "expected": null,
+     "got": "daily",
+     "certainty": "low",
+     "page": 1,
+     "bbox": [
+      165.61,
+      456.4,
+      192.41,
+      470.8
+     ],
+     "source_text": "Daily",
+     "notes": "value read from the same line as its label, in the column to its right | label resolved by the model mapper (closed set; see core/label_llm.py) | value did not match the expected format for this field"
+    }
+   ],
+   "reproduced_identically_on_rerun": true
+  },
+  "filled_forms": {
+   "off": {
+    "correct": 4,
+    "wrong": 0,
+    "fields_total": 24,
+    "rate": 16.7
+   },
+   "on": {
+    "correct": 6,
+    "wrong": 0,
+    "fields_total": 24,
+    "rate": 25.0
+   },
+   "delta_correct": 2
+  },
+  "scenario_sets": {
+   "off": {
+    "correct": 272,
+    "wrong": 0,
+    "abstained": 373,
+    "absent_held": 72,
+    "latent_correct": 0,
+    "latent_wrong": 0,
+    "latent_abstained": 37,
+    "rate": 42.2,
+    "note": "real + generator strata only; acroform reported separately"
+   },
+   "on": {
+    "correct": 397,
+    "wrong": 0,
+    "abstained": 248,
+    "absent_held": 72,
+    "latent_correct": 0,
+    "latent_wrong": 0,
+    "latent_abstained": 37,
+    "rate": 61.6,
+    "note": "real + generator strata only; acroform reported separately"
+   },
+   "off_strata": {
+    "real": {
+     "correct": 42,
+     "wrong": 0,
+     "abstained": 73,
+     "absent_held": 43,
+     "latent_correct": 0,
+     "latent_wrong": 0,
+     "latent_abstained": 12
+    },
+    "generator": {
+     "correct": 230,
+     "wrong": 0,
+     "abstained": 300,
+     "absent_held": 29,
+     "latent_correct": 0,
+     "latent_wrong": 0,
+     "latent_abstained": 25
+    },
+    "acroform": {
+     "correct": 0,
+     "wrong": 0,
+     "abstained": 24,
+     "absent_held": 0,
+     "latent_correct": 0,
+     "latent_wrong": 0,
+     "latent_abstained": 0
+    }
+   },
+   "on_strata": {
+    "real": {
+     "correct": 52,
+     "wrong": 0,
+     "abstained": 63,
+     "absent_held": 43,
+     "latent_correct": 0,
+     "latent_wrong": 0,
+     "latent_abstained": 12
+    },
+    "generator": {
+     "correct": 345,
+     "wrong": 0,
+     "abstained": 185,
+     "absent_held": 29,
+     "latent_correct": 0,
+     "latent_wrong": 0,
+     "latent_abstained": 25
+    },
+    "acroform": {
+     "correct": 0,
+     "wrong": 0,
+     "abstained": 24,
+     "absent_held": 0,
+     "latent_correct": 0,
+     "latent_wrong": 0,
+     "latent_abstained": 0
+    }
+   },
+   "delta_correct": 125,
+   "caveat": "eval/score_extraction.py was edited by a concurrent workstream at 03:28:37 while this run was in flight (finished 03:29:56). Re-run this pair before quoting the +125."
+  },
+  "pytest": {
+   "selection": "api core logic eval ui",
+   "passed": 1594,
+   "failed": 0,
+   "baseline_passed": 1540
+  }
+ },
+ "pack_non_negotiable": {
+  "text_layer_documents_compared": 16,
+  "byte_identical": true,
+  "documents_differing": [],
+  "tier3_asked_on_documents": 14,
+  "captions_asked": 61,
+  "nominations_accepted": 32,
+  "finding": "Byte-identity HOLDS, but the documented reason ('pack documents never reach the third tier') is false. Tier 3 is reached on 14/16 pack documents and the model accepted 32 nominations; nothing moved because `found` already held those fields. The blank-only gate preserves the bytes, not unreachability."
+ },
+ "real_carrier_recovery": {
+  "external": {
+   "fields_recovered": 0
+  },
+  "confirm": {
+   "fields_recovered": 0,
+   "wrong_values_introduced": 4
+  },
+  "filled": {
+   "fields_recovered": 2,
+   "document": "orangeusd_sample_paystub_filled.pdf",
+   "captions": [
+    "Payroll Issue Date -> pay_date",
+    "Payroll Ending Date -> pay_period_end"
+   ]
+  },
+  "scenarios_real_stratum": {
+   "fields_recovered": 10,
+   "documents": 5,
+   "carrier": "orangeusd",
+   "captions": [
+    "Payroll Issue Date -> pay_date",
+    "Payroll Ending Date -> pay_period_end"
+   ]
+  }
+ },
+ "value_leak_finding": {
+  "promise": "core/label_llm.py #2: label strings go out, values never do",
+  "held": false,
+  "strings_sent_to_model": [
+   "Bess Whitlow",
+   "Arlo Jensen",
+   "Anselm Rijker",
+   "Nora Quill",
+   "Idris Fenwick",
+   "Johnson, Bob",
+   "compensation paid to the employee.",
+   "Shows before tax deductions."
+  ],
+  "figures_moved": 0
+ },
+ "cache_behaviour": {
+  "pack_run": {
+   "asked": 61,
+   "calls": 61,
+   "gateway_cache_hits": 61,
+   "accepted": 32,
+   "returned_unknown": 29,
+   "timeouts": 0,
+   "rejected_value_shaped": 0
+  },
+  "captions_per_confirm_document": "116-171",
+  "store_cache_key_verified": "api/store._label_model_key() carries is_enabled():MODEL; verify.py run with .cache/extractions cleared under each state produced 159/159 independently",
+  "memo_defect": "model_mapper caches a timeout as None, so one slow call makes a caption permanently unreadable for the process (filed T26)"
+ },
+ "gate": {
+  "invocation": "gate.py --iteration 0 (baseline self-check; no diff to gate)",
+  "G1": true,
+  "G2": true,
+  "G3": true,
+  "G4": true,
+  "G5": true,
+  "G7": true,
+  "G6": false,
+  "G6_detail": "FAIL on another workstream's dirty files: eval/score_extraction.py (PROTECTED), eval/test_harness.py, api/limits.py, ui/dist/*. Per loop/README the forbidden-path half is not exempted whoever made it dirty. This iteration's own diff is loop/ only.",
+  "G7_registry_gap": "baseline.field_state enumerates neither `filled` nor `scenarios`; both corpora carrying this iteration's signal are invisible to G3/G7. Third filing (it-008, it-010, it-011)."
+ }
+}

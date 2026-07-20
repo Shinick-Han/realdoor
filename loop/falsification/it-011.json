@@ -1,0 +1,184 @@
+{
+  "predicate": "loop/falsify/it-011.py",
+  "run_at": "2026-07-20T18:46:47+00:00",
+  "documents_swept": 77,
+  "docs_fired": [
+    "confirm::ca_dlse_paystub_piecerate.pdf",
+    "confirm::hi_ags_pay_statement_example_2021.pdf",
+    "confirm::seattle_housing_employment_verification_blank.pdf",
+    "confirm::wa_dshs_14252_employment_verification.pdf",
+    "holdout::ho_006_employment_letter_work_number_voe.pdf",
+    "holdout::ho_007_benefit_letter_monetary_determination.pdf"
+  ],
+  "firing_count": 6,
+  "firings": [
+    {
+      "corpus": "holdout",
+      "doc": "ho_006_employment_letter_work_number_voe.pdf",
+      "field": "weekly_hours",
+      "value": {
+        "weekly_hours": {
+          "tables_only": null,
+          "with_ladder": 32
+        }
+      },
+      "model_named": {
+        "weekly_hours": 32
+      },
+      "unknown_captions": [
+        "AVERAGE HOURS WORKED EACH WEEK"
+      ],
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "weekly_hours": 32
+      }
+    },
+    {
+      "corpus": "holdout",
+      "doc": "ho_007_benefit_letter_monetary_determination.pdf",
+      "field": "document_date, monthly_benefit",
+      "value": {
+        "document_date": {
+          "tables_only": null,
+          "with_ladder": "2026-06-30"
+        },
+        "monthly_benefit": {
+          "tables_only": null,
+          "with_ladder": 1247.0
+        }
+      },
+      "model_named": {
+        "document_date": "2026-06-30",
+        "monthly_benefit": 1247.0
+      },
+      "unknown_captions": [
+        "DATE MAILED",
+        "MONTHLY ENTITLEMENT AMOUNT"
+      ],
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "document_date": "2026-06-30",
+        "monthly_benefit": 1247.0
+      }
+    },
+    {
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_piecerate.pdf",
+      "field": "hourly_rate",
+      "value": {
+        "hourly_rate": {
+          "tables_only": null,
+          "with_ladder": 19.55
+        }
+      },
+      "model_named": {
+        "hourly_rate": 19.55
+      },
+      "unknown_captions": [
+        "*",
+        "DLSE",
+        "ID:",
+        "SSN"
+      ],
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "hourly_rate": 19.55
+      }
+    },
+    {
+      "corpus": "confirm",
+      "doc": "hi_ags_pay_statement_example_2021.pdf",
+      "field": "person_name",
+      "value": {
+        "person_name": {
+          "tables_only": null,
+          "with_ladder": "Employee Address: Your Payroll Address"
+        }
+      },
+      "model_named": {
+        "person_name": "Employee Address: Your Payroll Address"
+      },
+      "unknown_captions": [],
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "person_name": "Employee Address: Your Payroll Address"
+      }
+    },
+    {
+      "corpus": "confirm",
+      "doc": "seattle_housing_employment_verification_blank.pdf",
+      "field": "pay_frequency",
+      "value": {
+        "pay_frequency": {
+          "tables_only": null,
+          "with_ladder": "through"
+        }
+      },
+      "model_named": {
+        "pay_frequency": "through"
+      },
+      "unknown_captions": [
+        "NOTE:"
+      ],
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "pay_frequency": "through"
+      }
+    },
+    {
+      "corpus": "confirm",
+      "doc": "wa_dshs_14252_employment_verification.pdf",
+      "field": "pay_frequency",
+      "value": {
+        "pay_frequency": {
+          "tables_only": null,
+          "with_ladder": "daily"
+        }
+      },
+      "model_named": {
+        "pay_frequency": "daily"
+      },
+      "unknown_captions": [
+        "DSHS 14-252 (REV. 06/2020)"
+      ],
+      "page": null,
+      "bbox": null,
+      "emitted_with_rule": {
+        "pay_frequency": "daily"
+      }
+    }
+  ],
+  "conflicts": [
+    {
+      "doc": "ca_dlse_paystub_piecerate.pdf",
+      "field": "hourly_rate",
+      "truth": "absent",
+      "rule_would_emit": 19.55
+    },
+    {
+      "doc": "hi_ags_pay_statement_example_2021.pdf",
+      "field": "person_name",
+      "truth": "John Aloha",
+      "rule_would_emit": "Employee Address: Your Payroll Address"
+    },
+    {
+      "doc": "seattle_housing_employment_verification_blank.pdf",
+      "field": "pay_frequency",
+      "truth": "absent",
+      "rule_would_emit": "through"
+    },
+    {
+      "doc": "wa_dshs_14252_employment_verification.pdf",
+      "field": "pay_frequency",
+      "truth": "absent",
+      "rule_would_emit": "daily"
+    }
+  ],
+  "target_fired": null,
+  "verdict": "fail"
+}

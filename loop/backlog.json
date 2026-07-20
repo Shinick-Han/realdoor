@@ -359,6 +359,44 @@
       "attempts": 0,
       "prior_attempts": [],
       "root_cause_note": "The dominant cause of 5/42 end-to-end agreement. Style-Y ledger stubs partially read while style-X reads nothing; T17 colon-line geometry is one arm of this."
+    },
+    {
+      "id": "T23",
+      "title": "one product, one reading path: make the layered label ladder extract_document's default",
+      "corpus": "all",
+      "status": "NO_SAFE_RULE",
+      "attempts": 1,
+      "prior_attempts": [
+        "it-011"
+      ],
+      "root_cause_note": "REJECTED at falsification (loop/falsification/it-011.json: fired 6/77, 4 conflicts). The model mapper emits 4 reproducible WRONG values on real published documents by naming a form's unticked ANSWER OPTIONS (weekly/bi-weekly/Monthly/Daily) as captions, after which the extractor reads the option's neighbour as the value. Measured transfer where it matters is near zero: external +0, confirm +0 correct, real-carrier scenarios +10 (one carrier, two captions). The +125 on scenarios is the generator stratum -- our own invented vocabulary read back. Pack byte-identity HELD under model-on (16/16, verify.py 159/159 IoU 0.9677) but NOT for the documented reason: tier 3 is reached on 14/16 pack documents and the blank-only gate, not unreachability, is what preserves the bytes. Blocked on T24 and T25. NOTE: the ladder is ALREADY live on api/upload.py and api/store.py, so these wrong values are reachable in the shipped product whenever OPENAI_API_KEY is set -- operator decision requested."
+    },
+    {
+      "id": "T24",
+      "title": "looks_like_a_label admits a form's answer-options as captions, so tier 3 cannot tell an option from a label",
+      "corpus": "confirm",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "Measured it-011. On wa_dshs_14252 and seattle_housing_..._blank the runs `Weekly`, `Every two weeks`, `Two times a month`, `Monthly`, `bi-weekly`, `semi-monthly` are letters-only and short, so looks_like_a_label admits them and they reach the model as candidate captions. The model answers pay_frequency -- semantically right -- and the extractor then treats the option word as a LABEL and reads its neighbour as the VALUE (`through`, `Daily`). parse_value cannot refuse it because a frequency word is well-typed for pay_frequency. This is the prerequisite for any model mapper: the page prints options and captions in the same shape, and nothing downstream distinguishes them."
+    },
+    {
+      "id": "T25",
+      "title": "assert_no_values does not stop a person's name leaving the process",
+      "corpus": "scenarios",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "Measured it-011. core/label_llm.py promise #2 is 'Label strings go out. Values never do.' On the orangeusd stubs the strings 'Bess Whitlow', 'Arlo Jensen', 'Anselm Rijker', 'Nora Quill', 'Idris Fenwick' and (ca_dlse) 'Johnson, Bob' were sent to the hosted model and named person_name; prose fragments 'compensation paid to the employee.' and 'Shows before tax deductions.' also went out. assert_no_values is a shape test for money/date/SSN/email under 48 chars and a human name has no shape it can catch. No figure moved (the tables had already named person_name) but the module's central safety claim is false as written. Either the promise or the gate must change. Live on api/upload.py today."
+    },
+    {
+      "id": "T26",
+      "title": "model_mapper caches a timeout as `unknown`, making measurement irreproducible",
+      "corpus": "all",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "root_cause_note": "Measured it-011. On _FutureTimeout, model_mapper writes None into _MEMO, so one slow call makes that caption permanently unreadable for the rest of the process and the same harness scores differently run to run. Observed at the 6s default on the caption 'Team Member:'. Every it-011 measurement therefore ran with REALDOOR_LABEL_TIMEOUT=30. Fixing it means distinguishing 'the model said unknown' from 'we never heard back'."
     }
   ]
 }
