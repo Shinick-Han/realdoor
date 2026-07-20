@@ -2247,13 +2247,25 @@
     ]);
   }
 
-  /** One line, on every step, saying how much of this profile a person has actually seen. */
+  /** One line, on every step, saying how much of this profile a person has actually seen.
+   *
+   *  The tail used to read "26 still carry only the machine reading", which lands as a task
+   *  bar sitting at zero — an exam a renter has not started. But checking is optional and
+   *  nothing here is wrong: a value the machine read and a person did not is not an error,
+   *  it is just a value a person has not looked at. So the line says that checking is
+   *  optional and what happens if it is skipped — the value still travels, marked honestly
+   *  as read by the machine but not confirmed by a person — rather than implying a debt. */
   function confirmationSummary(report) {
     var t = confirmationTally(report);
     var tail = t.not_confirmed === 0
-      ? "No value is waiting on you."
-      : t.not_confirmed + " still carry only the machine reading.";
-    if (t.not_read) tail += " " + t.not_read + " could not be read at all.";
+      ? "Nothing is waiting on you."
+      : "Checking is optional and nothing here is wrong. Whatever you leave unchecked still " +
+        "travels with your file, marked as read by the machine but not yet confirmed by you, " +
+        "and a person can review it either way.";
+    if (t.not_read) {
+      tail += " " + t.not_read + " value(s) could not be read at all — those need a person to " +
+              "supply them.";
+    }
     // No id: this line appears on more than one screen, and two nodes with one id is a
     // defect in itself.
     return h("p", { class: "hint confirmation-summary" }, [
