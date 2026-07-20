@@ -1050,6 +1050,25 @@ def _ocr_words_enabled() -> bool:
     return os.environ.get("REALDOOR_OCR_WORDS", "").strip() != "0"
 
 
+def _ocr_band_role_enabled() -> bool:
+    """Is the OCR band-role completion switched on? ON by default; `0` switches it off.
+
+    Guards the `band_role` keyword of `core.verified.verify_page` -- two completions of
+    the identity chain that run ONLY on pages carrying words injected by
+    `core.ocr_words`: a `x * 1 = x` coincidence stops hiding a deductions+net band from
+    the existing net rule, and `regular_hours` is emitted from the anchored row that
+    prints the word REGULAR under a printed HOURS header instead of from the whole
+    hours column (loop iteration it-004; falsified over all 77 corpus documents first
+    -- loop/falsification/it-004.json). With `REALDOOR_OCR_BAND_ROLE=0` the keyword is
+    never passed true, so this module's output is bit-identical to what it was before
+    the completion existed. Read through a function rather than captured at import so a
+    test can flip the environment variable and see the change.
+    """
+    import os
+
+    return os.environ.get("REALDOOR_OCR_BAND_ROLE", "").strip() != "0"
+
+
 def infer_document_type(pdf_path: str | Path) -> str:
     """Derive the document type from the pack's file naming convention."""
     stem = Path(pdf_path).stem
@@ -2318,8 +2337,12 @@ def extract_document(
                 # `core/ocr_words.py`). With no injected words this is the exact call
                 # that always ran.
                 page_words = [*words, *injected] if injected else words
+                # `band_role` completes the chain on OCR-injected pages only (loop
+                # iteration it-004); a page with no injected words takes the exact
+                # call that always ran, whatever the flag says.
                 answers, proposals = verified.verify_page(
-                    page_words, doc_type, found, convention, wanted
+                    page_words, doc_type, found, convention, wanted,
+                    band_role=bool(injected) and _ocr_band_role_enabled(),
                 )
                 for name, value in answers.items():
                     if _blank(name):

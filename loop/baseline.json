@@ -1,13 +1,12 @@
 {
-  "accepted_commit": "b070d15d14e15aed0ec0afc8feea3b25bbc003c1",
-  "accepted_commit_note": "KNOWN LIMIT of build_field_state.py: it stamps head_sha() at build time, and the baseline is committed WITH the iteration, so this pointer names the PREVIOUS accepted commit, not the commit that contains this file. G5 must compare against the LAST ACCEPTED commit. Repointed 2026-07-20 (pre-it-003) from 6fcc001 (it-001) to master HEAD b070d15: improve-loop (incl. the accepted it-002 commit 56cc979) and ux-copy were merged into master; b070d15's extraction behaviour is the accepted it-002 behaviour (the ux commits touch ui/ only), verified by the iteration-0 self-check run after this repoint. The next iteration's first mechanical step remains: repoint accepted_commit at the last ACCEPT commit before running its gate.",
-  "updated": "2026-07-20T12:00:00Z",
+  "accepted_commit": "d6b7a2af448e6940077daf41aebd9579b52e89f2",
+  "updated": "2026-07-20T10:49:48+00:00",
   "generated_by": "loop/tools/build_field_state.py",
   "pack": {
     "correct": 159,
     "wrong": 0,
     "of": 159,
-    "iou_mean": 0.967727,
+    "iou_mean": 0.9677,
     "iou_over_05": 159,
     "iou_evaluated": 159,
     "abstained": 0,
@@ -36,31 +35,23 @@
     "abstained": 21
   },
   "confirm": {
-    "correct": 21,
+    "correct": 23,
     "wrong": 0,
     "of": 126,
-    "abstained": 105,
+    "abstained": 103,
     "unreachable_expected": 8,
     "unreachable_absent": 20
   },
   "pytest": {
-    "passed": 1331,
+    "passed": 1370,
     "failed": 0,
     "exit_code": 0
   },
   "preexisting_dirty": [
-    "README.md",
-    "api/app.py",
-    "api/packet_baseline/activity_log.json",
-    "api/packet_baseline/readiness_report.json",
-    "api/test_confirmation.py",
-    "api/test_packet_summary.py",
-    "api/test_upload.py",
-    "ui/dist/app.js",
-    "ui/dist/i18n.js",
-    "core/columns.py",
     "core/extract.py",
-    "core/test_columns.py",
+    "core/test_ocr_band_role.py",
+    "core/test_ocr_words.py",
+    "core/verified.py",
     "testdata/confirm_raw/bonita_certificated_check_sample.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_hourly.pdf",
     "testdata/confirm_raw/ca_dlse_paystub_piecerate.pdf",
@@ -75,8 +66,6 @@
     "testdata/confirm_raw/ou_sample_check_stub.pdf",
     "testdata/confirm_raw/seattle_housing_employment_verification_blank.pdf",
     "testdata/confirm_raw/wa_dshs_14252_employment_verification.pdf",
-    "ui/axe-report.json",
-    "ui/screen-scan.json",
     "ui/shots-variant/screen-1-1280.png",
     "ui/shots-variant/screen-1-390.png",
     "ui/shots-variant/screen-2-1280.png",
@@ -124,8 +113,8 @@
   "field_state_census": {
     "confirm": {
       "blocked_contract": 2,
-      "correct": 21,
-      "image_only": 18,
+      "correct": 23,
+      "image_only": 16,
       "masked": 5
     },
     "external": {
@@ -183,7 +172,7 @@
     "confirm::lcc_understanding_your_paycheck.pdf::pay_period_start": "image_only",
     "confirm::lcc_understanding_your_paycheck.pdf::person_name": "image_only",
     "confirm::osu_sample_earnings_statement.pdf::gross_pay": "correct",
-    "confirm::osu_sample_earnings_statement.pdf::net_pay": "image_only",
+    "confirm::osu_sample_earnings_statement.pdf::net_pay": "correct",
     "confirm::osu_sample_earnings_statement.pdf::pay_date": "image_only",
     "confirm::ou_sample_check_stub.pdf::gross_pay": "correct",
     "confirm::ou_sample_check_stub.pdf::hourly_rate": "correct",
@@ -191,7 +180,7 @@
     "confirm::ou_sample_check_stub.pdf::pay_date": "image_only",
     "confirm::ou_sample_check_stub.pdf::pay_period_end": "image_only",
     "confirm::ou_sample_check_stub.pdf::pay_period_start": "image_only",
-    "confirm::ou_sample_check_stub.pdf::regular_hours": "image_only",
+    "confirm::ou_sample_check_stub.pdf::regular_hours": "correct",
     "external::ext_adp.pdf::gross_pay": "correct",
     "external::ext_adp.pdf::hourly_rate": "correct",
     "external::ext_adp.pdf::net_pay": "correct",

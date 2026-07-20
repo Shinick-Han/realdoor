@@ -131,6 +131,9 @@ def test_the_guard_is_inert_without_printed_words() -> None:
 
 @pytest.fixture(scope="module")
 def ou_view() -> dict:
+    """The it-003 conduct, pinned: `REALDOOR_OCR_BAND_ROLE=0` isolates the injection
+    layer from the it-004 completions, whose own on/off pins live in
+    `core/test_ocr_band_role.py` -- this fixture keeps asserting what it-003 shipped."""
     if not OU.exists():
         pytest.skip("confirm corpus not present (untracked PDFs)")
     seen: list[int] = []
@@ -141,10 +144,13 @@ def ou_view() -> dict:
         return original(words, *args, **kwargs)
 
     ex.extract_fields_from_page = recording
+    flags = pytest.MonkeyPatch()
+    flags.setenv("REALDOOR_OCR_BAND_ROLE", "0")
     try:
         view = ex.extract_document(OU, document_type="pay_stub")
     finally:
         ex.extract_fields_from_page = original
+        flags.undo()
     return {"fields": {f["field"]: f for f in view["fields"]},
             "label_path_word_counts": seen}
 
@@ -152,8 +158,9 @@ def ou_view() -> dict:
 def test_ou_emits_exactly_its_identity_closed_values(ou_view: dict) -> None:
     """The design's target, exceeded and pinned: at the region's native scale the
     earnings column, the deduction band and the row products all close, so gross, net
-    and rate are emitted; regular_hours still refuses (S3 two-survivors {68.43, 8.00})
-    and stays a T10 target."""
+    and rate are emitted; regular_hours refuses on S3 (three distinct hours survivors)
+    with the it-004 completion pinned off -- its recovery is asserted, flag on, in
+    `core/test_ocr_band_role.py`."""
     fields = ou_view["fields"]
     assert fields["gross_pay"]["value"] == pytest.approx(1251.09)
     assert fields["net_pay"]["value"] == pytest.approx(750.14)

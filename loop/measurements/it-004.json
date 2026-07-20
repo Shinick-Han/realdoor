@@ -1,8 +1,8 @@
 {
-  "iteration": 0,
-  "target": null,
-  "run_at": "2026-07-20T10:32:44+00:00",
-  "head": "1e927a79221d22c7b73bc452b971c4f34a555826",
+  "iteration": 4,
+  "target": "T10",
+  "run_at": "2026-07-20T10:44:44+00:00",
+  "head": "02c65b04bd2f3c1a776f0e191924f9ded8e2bf1e",
   "accepted_commit": "1e927a79221d22c7b73bc452b971c4f34a555826",
   "verdict": "PASS",
   "failed_gates": [],
@@ -42,7 +42,7 @@
       "gate": "G4",
       "pass": true,
       "detail": {
-        "passed": 1348,
+        "passed": 1369,
         "failed": 0,
         "baseline_passed": 1331
       }
@@ -51,7 +51,9 @@
       "gate": "G5",
       "pass": true,
       "detail": {
-        "flags_off": [],
+        "flags_off": [
+          "REALDOOR_OCR_BAND_ROLE"
+        ],
         "compared_against": "1e927a79221d22c7b73bc452b971c4f34a555826",
         "documents_compared": 77,
         "identical": true,
@@ -63,8 +65,16 @@
       "gate": "G6",
       "pass": true,
       "detail": {
-        "allowlist": [],
+        "allowlist": [
+          "core/extract.py",
+          "core/test_ocr_band_role.py",
+          "core/test_ocr_words.py",
+          "core/verified.py"
+        ],
         "changed": [
+          "core/test_ocr_band_role.py",
+          "core/test_ocr_words.py",
+          "core/verified.py",
           "loop/baseline.json",
           "loop/falsification/it-004.json",
           "loop/falsify/it-004.py",
@@ -81,9 +91,21 @@
       "gate": "G7",
       "pass": true,
       "detail": {
-        "mode": "baseline self-check",
-        "observed": [],
-        "requirement": "the unchanged tree must flip nothing"
+        "mode": "iteration",
+        "target": "T10",
+        "predicted": [
+          "confirm::osu_sample_earnings_statement.pdf::net_pay",
+          "confirm::ou_sample_check_stub.pdf::regular_hours"
+        ],
+        "observed": [
+          "confirm::osu_sample_earnings_statement.pdf::net_pay",
+          "confirm::ou_sample_check_stub.pdf::regular_hours"
+        ],
+        "unpredicted": [],
+        "target_fields_flipped": [
+          "confirm::osu_sample_earnings_statement.pdf::net_pay",
+          "confirm::ou_sample_check_stub.pdf::regular_hours"
+        ]
       }
     }
   ],
@@ -103,13 +125,13 @@
       "abstained": 21
     },
     "confirm": {
-      "correct": 21,
+      "correct": 23,
       "of": 126,
       "wrong": 0,
-      "abstained": 105
+      "abstained": 103
     },
     "pytest": {
-      "passed": 1348,
+      "passed": 1369,
       "failed": 0,
       "exit_code": 0
     }
@@ -117,8 +139,8 @@
   "field_state_census": {
     "confirm": {
       "blocked_contract": 2,
-      "correct": 21,
-      "image_only": 18,
+      "correct": 23,
+      "image_only": 16,
       "masked": 5
     },
     "external": {
@@ -138,9 +160,15 @@
       "image_only": 31
     }
   },
-  "field_flips_observed": [],
+  "field_flips_observed": [
+    "confirm::osu_sample_earnings_statement.pdf::net_pay",
+    "confirm::ou_sample_check_stub.pdf::regular_hours"
+  ],
   "flag_off_identical": true,
   "diff_files": [
+    "core/test_ocr_band_role.py",
+    "core/test_ocr_words.py",
+    "core/verified.py",
     "loop/baseline.json",
     "loop/falsification/it-004.json",
     "loop/falsify/it-004.py",

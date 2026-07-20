@@ -194,12 +194,13 @@
         "confirm::osu_sample_earnings_statement.pdf::net_pay"
       ],
       "category": "image_only",
-      "status": "OPEN",
-      "attempts": 0,
+      "status": "DONE",
+      "attempts": 1,
       "prior_attempts": [],
       "expected_yield": 2,
       "root_cause_note": "Design sections A.2/A.3: ou regular_hours refuses on S3 two-survivors {68.43, 8.00} (needs the REGULAR row word + hours-column-sums-to-printed-80.00 + L5 unqualified-HOURS header); osu net_pay refuses on band-role assignment (the remaining member of an already-closed band, named by printed row position). Note: it-A's native-scale measurement already landed ou gross/net, which the design had listed here -- this item shrank from 4 to 2 predicted fields.",
-      "design_note": "Design section F it-B, flag REALDOOR_OCR_BAND_ROLE. Blunt review 3: the S3 relaxation is where a wrong value would enter if anywhere; must stay one-distinct-survivor-per-role, and the falsification predicate must fire on ou+osu only."
+      "design_note": "Design section F it-B, flag REALDOOR_OCR_BAND_ROLE. Blunt review 3: the S3 relaxation is where a wrong value would enter if anywhere; must stay one-distinct-survivor-per-role, and the falsification predicate must fire on ou+osu only.",
+      "closed_note": "Both fields recovered by the band-role completions (flag REALDOOR_OCR_BAND_ROLE, OCR-injected pages only; license: printed total closed by an arithmetic identity). Diagnosis corrections recorded: ou regular_hours refused on THREE hours survivors {3.57, 8.00, 68.43} (backlog said two), resolved by the printed word REGULAR naming the anchored row under a printed header that is exactly HOURS; osu net_pay was hidden by a degenerate product (1666.94 x 1 with a stray form-field '1') putting the band's own line into the earnings exclusion -- the multiplicative identity now testifies to nothing, and the EXISTING band-tail rule emits. L4 from the design's it-B list was subsumed: the frozen product_tolerance had already closed ou's truncated row in it-003, so no tolerance was touched. Falsified over all 77 first: fired on exactly ou+osu, zero conflicts. Predicted 2, observed 2 (loop/measurements/it-004.json)."
     },
     {
       "id": "T11",
