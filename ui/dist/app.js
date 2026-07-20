@@ -2332,13 +2332,26 @@
 
     var rows = renterFields(doc).map(function (field) {
       var isActive = activeField === field.field;
+      /* The one abstention about the person's own name was the least explained on the whole
+       * product: a low-confidence name showed only as the word "Low" in a Certainty column,
+       * and the document picker's "name not read clearly" was the nearest thing to a
+       * sentence about it. A person whose name we may have wrong should be told so in
+       * words, next to the name, and told what to do — because their name is the first
+       * thing worth fixing. This says it where the name is; the "Low" cell still stands, and
+       * nothing is hidden. */
+      var nameNote = (field.field === "person_name" && field.certainty === "low")
+        ? h("p", { class: "hint value-uncertain-note" }, [
+            "We may not have read your name correctly. It reads “" + plain(field.value) +
+            "”, but we are not sure. Check this row first, and fix it here if it is wrong."
+          ])
+        : null;
       var valueCell;
       if (confirmable) {
-        valueCell = cell(null, "Value", [valueBox(doc, field, tableId)]);
+        valueCell = cell(null, "Value", [valueBox(doc, field, tableId), nameNote]);
       } else if (field.value === null || field.value === undefined) {
         valueCell = cell({ class: "abstain-cell" }, "Value", ["Not read — a person must supply this"]);
       } else {
-        valueCell = cell(null, "Value", [document.createTextNode(plain(field.value))]);
+        valueCell = cell(null, "Value", [document.createTextNode(plain(field.value)), nameNote]);
       }
 
       return h("tr", { role: "row", class: isActive ? "is-active" : null }, [

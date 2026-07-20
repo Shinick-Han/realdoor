@@ -1491,6 +1491,12 @@
       }],
     // U6: 영어 제목이 이 한국어를 따라 "Things we did not say" 로 바뀌었다. 한국어는 그대로.
     [/^Things we did not say \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
+    // U8: 이름을 자신 있게 읽지 못했을 때, 이름이 있는 자리에 문장으로 알린다.
+    [/^We may not have read your name correctly\. It reads “(.+?)”, but we are not sure\. Check this row first, and fix it here if it is wrong\.$/,
+      function (m) {
+        return "성함을 정확히 읽지 못했을 수 있습니다. “" + m[1] + "”로 읽었지만 확신하지 못합니다. " +
+               "이 행을 먼저 확인하시고, 틀렸으면 여기서 바로잡아 주세요.";
+      }],
     [/^Reasons this needs review \((\d+)\)$/, function (m) {
       return "검토가 필요한 이유 (" + m[1] + ")";
     }],

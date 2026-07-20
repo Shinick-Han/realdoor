@@ -82,11 +82,12 @@
     },
     {
       "id": "U8",
-      "status": "OPEN",
+      "status": "DONE",
       "harm": 8,
       "title": "The one abstention about the person's own name is the least explained",
       "evidence": "HH-005's low-confidence name shows only as a 'Low' cell in a Certainty column. The picker says 'name not read clearly' but no screen says plainly: we may have your name wrong, check that row first.",
-      "fix": "Say it in a sentence, where the name is."
+      "fix": "Say it in a sentence, where the name is.",
+      "done_note": "Verified live on HH-005. A plain sentence now renders in the value cell of any person_name row whose certainty is 'low' (D01 application summary and D04 employment letter): 'We may not have read your name correctly. It reads “Tess Alder”, but we are not sure. Check this row first, and fix it here if it is wrong.' The name value is interpolated, not hardcoded, so it stays correct for any household. The 'Low' certainty cell is untouched (nothing hidden). i18n regex added so the Korean toggle renders it. FK grade 1.2. No eligibility language. Gates: axe 0, reflow 35/35, keyboard 31/31, pytest 1237."
     },
     {
       "id": "U9",
