@@ -337,16 +337,18 @@ def test_an_upload_does_not_join_the_household(client, session):
     assert before["calculations"] == after["calculations"]
 
 
-def test_only_the_most_recent_upload_is_kept(client, session):
+def test_every_upload_is_kept_and_forms_the_session_file(client, session):
+    """예전에는 마지막 한 장만 남았다. 업로드들이 세션 자신의 파일을 이루면서 전부
+    남는다 — 먼저 올린 문서가 파일의 일부인 채로 소리 없이 사라지면 안 되기 때문이다.
+    총량은 개수 상한이 지킨다 (api/test_uploads_file.py)."""
     from api.store import STORE
 
     first = post(client, session, "up_003_pay_stub_john_doe.pdf", "pay_stub").json()
     second = post(client, session, "up_001_application_summary_john_doe.pdf",
                   "application_summary").json()
     s = STORE.get(session)
-    assert list(s.uploads) == [second["upload_id"]]
-    assert list(s.upload_bytes) == [second["upload_id"]]
-    assert first["upload_id"] not in s.uploads
+    assert list(s.uploads) == [first["upload_id"], second["upload_id"]]
+    assert list(s.upload_bytes) == [first["upload_id"], second["upload_id"]]
 
 
 def test_the_page_image_comes_from_memory_and_dies_with_the_session(client):

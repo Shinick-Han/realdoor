@@ -38,6 +38,49 @@ GOLD = ROOT / "pack/synthetic_documents/gold/document_gold.jsonl"
 DOCS = ROOT / "pack/synthetic_documents/documents"
 CACHE = ROOT / ".cache/extractions"
 
+#: 세입자가 올린 문서들이 이루는 **세션 자신의 파일** 의 id. 팩 세대와 같은 기계
+#: (리포트·정정·계산·체크리스트·패킷)를 그대로 타지만, 팩 세대의 자루에는 절대 섞이지
+#: 않는다 — 업로드를 팩 세대에 편입하는 것은 근거 없는 추측(누구의 문서인지, 중복인지)을
+#: 요구하고, 그 거절의 근거는 처음부터 팩의 무결성이었지 업로드끼리의 파일을 막는 것이
+#: 아니었다. 업로드가 하나도 없으면 이 파일은 어디에도 나타나지 않는다.
+UPLOADS_HOUSEHOLD_ID = "YOUR-UPLOADS"
+
+#: 한 세션이 쥘 수 있는 업로드 문서 수. 바이트가 전부 세션 메모리에 살기 때문에 상한이
+#: 있어야 한다(문서당 10MB까지 — api/upload.py). 여섯이면 팩의 가장 큰 세대(5문서)보다
+#: 크고, 인수 데모 한 바퀴를 자기 문서로 걷기에 넉넉하다.
+MAX_SESSION_UPLOADS = 6
+
+
+def uploads_required_types(views: list[dict[str, Any]]) -> tuple[str, ...]:
+    """업로드 파일의 필수 문서 목록 — **주최측 자신의 규칙을 그들의 데이터에서 읽은 것**
+    이지 우리가 지어낸 정책이 아니다.
+
+    `pack/evaluation/application_checklists.json` 의 여섯 시나리오가 조건부 패턴 하나를
+    일관되게 부호화한다:
+
+      * 기본 셋(application_summary, pay_stub, employment_letter)은 **모든** 시나리오가
+        요구한다.
+      * `benefit_letter` 는 수당 소득이 있는 시나리오(HH-003, HH-006)에서만 요구된다.
+      * `gig_income_corroboration` 은 긱 명세서가 있는 시나리오(HH-004)에서만 요구되고,
+        긱 명세서 **자신은 그것을 만족하지 못한다** — 자기 작성 문서이기 때문이다.
+        팩 문서의 각주가 스스로 교차 확인을 요구하고, HH-004 골드도 gig_statement 를
+        present 로 두면서 gig_income_corroboration 을 missing 으로 남긴다. 규칙 근거는
+        CH-INCOME-001 의 "Sum independently documented recurring sources" 이며, 항목의
+        인용은 팩 카드와 같은 길(evaluate_item 의 CH-READINESS-001 + 기권의
+        GIG_INCOME_UNCORROBORATED 코드)을 그대로 탄다.
+
+    같은 패턴을 세션이 실제로 쥔 문서에 적용한다. 수당 소득의 존재는 수당 서류로만
+    알 수 있으므로(monthly_benefit 은 benefit_letter 의 필드다) 그 조건은 문서의 존재로
+    판정된다.
+    """
+    present = {str(v.get("document_type") or "") for v in views}
+    required = ["application_summary", "pay_stub", "employment_letter"]
+    if "benefit_letter" in present:
+        required.append("benefit_letter")
+    if "gig_statement" in present:
+        required.append("gig_income_corroboration")
+    return tuple(required)
+
 
 def engine_version() -> str:
     """커밋 해시. 리포트에 박혀서 '어느 코드가 이 숫자를 냈는지'가 추적된다."""
@@ -255,6 +298,10 @@ EVENT_WORDS = {
     # 없다는 사실이 확인의 내용이다. field_confirmed 와 같은 규율: 동작·문서·필드명만.
     "field_absence_confirmed": "A value the machine could not read was checked by the renter: not shown on that document",
     "absence_confirmation_withdrawn": "An absence check was withdrawn",
+    # 세입자가 페이지 위의 위치를 손으로 가리킨 기록. 값도 좌표도 여기엔 싣지 않는다 —
+    # 좌표는 리포트의 필드 주석(region_marked_by_renter)에 있고, 이 로그는 동작·문서·
+    # 필드명만 남기는 규율을 지킨다.
+    "field_region_marked": "The renter pointed at the place on the page this value comes from",
     "question_asked": "A rule question was asked",
     "packet_exported": "A packet was exported by the renter",
 }
@@ -466,8 +513,25 @@ class Store:
                 # 메서드다. 그래서 `d.get("document_id")` 는 언제나 None 이었고, 이
                 # 배열은 지금까지 [null, null, null, null] 로 나갔다. 속성으로 읽는다.
                 "document_ids": [d.document_id for d in docs],
+                "file_kind": "pack",
             }
             row.update(self._applicant(houses[hid]))
+            out.append(row)
+        # 업로드가 하나라도 있으면 그것들로 이룬 파일이 목록의 마지막 행이 된다.
+        # 팩 세대 행은 위에서 이미 만들어졌고 여기서는 한 글자도 달라지지 않는다.
+        if s.uploads:
+            up_houses = households_from_views(list(s.uploads.values()))
+            up_house = up_houses.get(UPLOADS_HOUSEHOLD_ID)
+            row = {
+                "household_id": UPLOADS_HOUSEHOLD_ID,
+                "document_count": len(s.uploads),
+                "document_ids": list(s.uploads),
+                "file_kind": "uploads",
+            }
+            # 업로드에 신청 요약서가 없으면 이름도 없다 — 팩과 같은 규칙, 같은 함수.
+            row.update(self._applicant(up_house) if up_house else {
+                "applicant_name": None, "applicant_name_certainty": None,
+                "applicant_name_evidence": None})
             out.append(row)
         return out
 
@@ -476,8 +540,21 @@ class Store:
 
         로직층의 리포트는 문서를 메타데이터로만 담는다. UI가 문서 위에 근거 상자를
         그리려면 필드와 좌표가 필요하므로, 그 병합은 이 층의 책임이다.
+
+        업로드 파일(`UPLOADS_HOUSEHOLD_ID`)도 **같은 기계**를 탄다: 같은 build_report,
+        같은 병합, 같은 평문 계층, 같은 집계. 다른 것은 뷰의 출처(세션의 업로드 사전)와
+        필수 문서 목록의 출처뿐이다 — 팩 체크리스트에 이 파일의 행이 없으므로 목록은
+        주최측 체크리스트가 부호화한 조건부 패턴을 세션의 실제 문서에 적용해 얻는다
+        (`uploads_required_types` 의 문서 주석이 그 패턴의 출처를 인용한다).
         """
-        views = list(s.views.values())
+        if household_id == UPLOADS_HOUSEHOLD_ID:
+            if not s.uploads:
+                return None
+            views = list(s.uploads.values())
+            required = uploads_required_types(views)
+        else:
+            views = list(s.views.values())
+            required = required_document_types(household_id, self._checklists)
         houses = households_from_views(views)
         house = houses.get(household_id)
         if house is None:
@@ -485,7 +562,7 @@ class Store:
 
         rep = build_report(
             house,
-            required_document_types(household_id, self._checklists),
+            required,
             engine_version=engine_version(),
         )
 
@@ -496,7 +573,10 @@ class Store:
             doc["page_count"] = v.get("page_count")
             doc["page_size_points"] = v.get("page_size_points")
             doc["state"] = v.get("state")
-            doc["source"] = "ocr" if v.get("rasterized") else "text_layer"
+            # 업로드 뷰는 어느 경로로 읽었는지를 스스로 안다(api/upload.py 가 "source" 를
+            # 싣는다). 팩 뷰에는 그 키가 없으므로 기존 문장이 그대로 남는다 — 팩 리포트는
+            # 이 변경 전과 바이트 단위로 같아야 한다(api/packet_baseline).
+            doc["source"] = v.get("source") or ("ocr" if v.get("rasterized") else "text_layer")
         rep["session_id"] = s.session_id
 
         # 세입자용 평문 계층. **덧붙이기만 한다** — 로직층이 만든 정밀한 문자열은
@@ -509,7 +589,8 @@ class Store:
         return rep
 
     def apply_correction(self, s: Session, document_id: str, field_name: str,
-                         value: Any, together: bool = False) -> str:
+                         value: Any, together: bool = False,
+                         region: dict[str, Any] | None = None) -> str:
         """사람이 **확인하거나 정정한** 값을 반영한다. 한 경로, 두 결과.
 
         브리프 표제: "turns synthetic household documents into a human-confirmed profile",
@@ -526,8 +607,14 @@ class Store:
           "confirmed_by_renter" | "corrected_by_renter"  적용된 결과
           "no_such_field"                                 그 문서에 그 필드가 없다
           "nothing_was_read"                              읽히지 않은 필드를 확인하려 했다
+
+        `region` 은 세입자가 페이지 위에 직접 그린 사각형이다(인라인 편집기의
+        "Point at it on the page"). **정정에만** 붙는 추가 주석이고, 기계의 page/bbox 는
+        계약대로 얼어붙은 채 한 글자도 움직이지 않는다 — 정정은 증거 옆의 주석이지
+        증거의 변경이 아니다. 확인(값이 같음)으로 끝나면 사각형은 버려진다: 값이 기계의
+        읽기 그대로라면 그 값의 출처는 기계 자신의 상자가 이미 말하고 있다.
         """
-        view = s.views.get(document_id)
+        view = self._document_view(s, document_id)
         if view is None:
             return "no_such_field"
         for f in view.get("fields", []):
@@ -557,6 +644,9 @@ class Store:
                 f["value"] = s.originals[key]["value"]
                 f["certainty"] = s.originals[key]["certainty"]
                 f["evidence_kind"] = "confirmed_by_renter"
+                # 확인은 "기계가 맞게 읽었다"는 주장이다. 앞선 정정에 붙어 있던
+                # 가리킴 주석은 그 정정과 함께 걷힌다 — 기계 값의 출처는 기계의 상자다.
+                f.pop("region_marked_by_renter", None)
                 s.corrections.pop(key, None)
                 s.log("field_confirmed" if not together else "fields_confirmed_together",
                       document_id=document_id, field=field_name,
@@ -579,6 +669,13 @@ class Store:
             if s.absences.pop(key, None) is not None:
                 f.pop("absence_confirmed_by_renter", None)
                 f.pop("absence_confirmed_on", None)
+            # 가리킨 사각형은 이 정정의 주석이다. 새 정정이 사각형 없이 오면 이전
+            # 정정의 사각형은 더 이상 서 있는 주장이 아니므로 함께 걷힌다.
+            if region is not None:
+                f["region_marked_by_renter"] = dict(region)
+                s.log("field_region_marked", document_id=document_id, field=field_name)
+            else:
+                f.pop("region_marked_by_renter", None)
             s.corrections[key] = value
             s.log("field_corrected", document_id=document_id, field=field_name,
                   evidence_kind="corrected_by_renter")
@@ -591,13 +688,24 @@ class Store:
         """올린 문서를 읽어 **세션 메모리에만** 담는다. 디스크에 닿지 않는다."""
         from api import upload as upload_mod
 
+        # 예전에는 마지막 한 장만 남기고 직전 업로드를 지웠다. 이제 업로드들은 함께
+        # **세션 자신의 파일**(UPLOADS_HOUSEHOLD_ID)을 이루므로 전부 남는다 — 심사위원이
+        # 자기 문서 여러 장으로 2~6단계를 걸을 수 있는 것이 이 파일의 존재 이유다.
+        # 바이트가 세션 메모리에 살기 때문에 개수 상한(MAX_SESSION_UPLOADS)이 자리를
+        # 대신한다. 상한 초과는 조용한 교체가 아니라 이유를 말하는 거절이다: 먼저 올린
+        # 문서가 파일의 일부인 채로 소리 없이 사라지는 쪽이 더 나쁘다.
+        if len(s.uploads) >= MAX_SESSION_UPLOADS:
+            raise upload_mod.UploadRejected(
+                "session_upload_limit",
+                f"This session already holds {MAX_SESSION_UPLOADS} uploaded documents, "
+                f"and they all stay in this session's memory. That is the ceiling. "
+                f"You can open the file made of the ones you have, or delete the "
+                f"session on step 6 and start again.",
+            )
         view = upload_mod.read_upload(data, file_name, document_type)
-        # **직전 업로드는 여기서 사라진다.** 화면은 언제나 마지막에 올린 문서 하나만 보여주므로
-        # 그 이상 들고 있을 이유가 없고, 들고 있으면 세션 메모리가 올린 만큼 계속 늘어난다.
-        # 개수 상한을 두는 것보다 이쪽이 정직하다 — 상한은 "10장까지는 남아 있다"고 약속하는데
-        # 그 약속을 쓰는 화면이 없다. 이렇게 하면 세션이 쥐는 문서 바이트는 항상 한 장분이다.
-        s.uploads.clear()
-        s.upload_bytes.clear()
+        # 업로드들이 한 파일로 모이려면 같은 household_id 를 말해야 한다. 이 키는 팩
+        # 세대의 id 공간(HH-xxx)과 겹치지 않으므로 팩 세대는 이 문서를 절대 줍지 않는다.
+        view["household_id"] = UPLOADS_HOUSEHOLD_ID
         uid = view["upload_id"]
         s.uploads[uid] = view
         s.upload_bytes[uid] = data
@@ -631,7 +739,7 @@ class Store:
         snapshot = s.originals.get(key)
         if snapshot is None:
             return False
-        view = s.views.get(document_id)
+        view = self._document_view(s, document_id)
         if view is None:
             return False
         for f in view.get("fields", []):
@@ -640,6 +748,9 @@ class Store:
                 f["value"] = snapshot["value"]
                 f["certainty"] = snapshot["certainty"]
                 f["evidence_kind"] = snapshot["evidence_kind"]
+                # 되돌린 필드는 스냅샷과 완전히 같아야 한다. 가리킴 주석은 정정과 함께
+                # 생겼으니 정정과 함께 사라진다.
+                f.pop("region_marked_by_renter", None)
                 s.originals.pop(key, None)
                 s.corrections.pop(key, None)
                 s.log("confirmation_withdrawn" if was == "confirmed_by_renter"

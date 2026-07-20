@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from api import gate, limits
-from api.store import STORE, DOCS, engine_version
+from api.store import STORE, DOCS, UPLOADS_HOUSEHOLD_ID, engine_version
 
 app = FastAPI(
     title="RealDoor — application-readiness copilot",
@@ -123,6 +123,17 @@ def _session(x_session_id: str | None):
     if s is None:
         raise HTTPException(404, "session not found or already deleted")
     return s
+
+
+def _household_of(s, document_id: str) -> str:
+    """이 문서가 속한 파일의 id. 업로드는 세션 자신의 파일(YOUR-UPLOADS)에 산다.
+
+    팩 문서 id 는 `HH-001-D02` 꼴이라 rsplit 으로 세대가 나오지만, 업로드 id
+    (`UP-xxxxxxxx`)에는 그런 구조가 없다 — 구조를 흉내 내는 대신 소속을 직접 본다.
+    """
+    if document_id in s.uploads:
+        return UPLOADS_HOUSEHOLD_ID
+    return document_id.rsplit("-", 1)[0]
 
 
 # ── 기본 ────────────────────────────────────────────────────────────────
@@ -262,16 +273,32 @@ def confirm(payload: dict, x_session_id: str | None = Header(default=None)) -> d
     # 남는다. 그건 사용자가 한 일이 아니다.
     if isinstance(payload["value"], str) and not payload["value"].strip():
         raise HTTPException(400, "`value` is empty; send the value this field should hold")
+    # `region` 은 **추가 전용** 키다: 인라인 편집기에서 세입자가 페이지 위에 그린
+    # 사각형이 정정과 함께 온다. 검증은 읽기 엔드포인트와 같은 함수가 한다 — 커밋
+    # 경로만 검증이 느슨하면 화면을 거치지 않은 호출이 페이지 밖 좌표를 기록으로 남긴다.
+    region = payload.get("region")
+    if region is not None:
+        from api import region as region_mod
+
+        if not isinstance(region, dict):
+            raise HTTPException(400, {"code": "bad_region",
+                                      "detail": "`region` must be an object"})
+        _, view = region_mod.resolve_document(s, payload["document_id"])
+        page_number, box = region_mod.validate_region(
+            view, region.get("page"), region.get("box"))
+        region = {"page": page_number, "box": box,
+                  "machine_suggestion_shown": bool(region.get("machine_suggestion_shown"))}
     outcome = STORE.apply_correction(s, payload["document_id"], payload["field"],
                                      payload["value"],
-                                     together=bool(payload.get("together")))
+                                     together=bool(payload.get("together")),
+                                     region=region)
     if outcome == "no_such_field":
         raise HTTPException(404, "no such field on that document")
     if outcome == "nothing_was_read":
         raise HTTPException(
             400, "this field was not read from the document, so there is nothing to "
                  "confirm; send the value it should hold instead")
-    hid = payload["document_id"].rsplit("-", 1)[0]
+    hid = _household_of(s, payload["document_id"])
     rep = STORE.report(s, hid)
     if rep is None:
         raise HTTPException(404, f"unknown household {hid}")
@@ -357,7 +384,7 @@ def undo(payload: dict, x_session_id: str | None = Header(default=None)) -> dict
     ok = STORE.undo_correction(s, payload["document_id"], payload["field"])
     if not ok:
         raise HTTPException(404, "no correction on that field to undo")
-    hid = payload["document_id"].rsplit("-", 1)[0]
+    hid = _household_of(s, payload["document_id"])
     rep = STORE.report(s, hid)
     if rep is None:
         raise HTTPException(404, f"unknown household {hid}")
@@ -472,17 +499,45 @@ def upload_page_png(upload_id: str, page: int,
 @app.get("/api/document/{document_id}/page/{page}.png")
 def page_png(document_id: str, page: int,
              x_session_id: str | None = Header(default=None)) -> Response:
+    """팩 문서든 업로드든 **한 URL**로 페이지 이미지가 나온다.
+
+    업로드 파일이 팩 세대와 같은 화면 기계를 타려면 화면이 문서마다 이미지 주소를
+    갈라 짚을 필요가 없어야 한다. 업로드의 원본 바이트는 세션 메모리에서만 나온다 —
+    `/api/upload/{id}/page/{n}.png` 는 업로드 패널이 계속 쓰므로 그대로 남는다.
+    """
     from core.render import render_page_png
 
     s = _session(x_session_id)
-    view = s.views.get(document_id)
-    if view is None:
-        raise HTTPException(404, f"unknown document {document_id}")
-    img = render_page_png(str(DOCS / view["file_name"]), page_number=page)
+    if document_id in s.uploads:
+        data = s.upload_bytes.get(document_id)
+        if data is None:
+            raise HTTPException(404, f"unknown document {document_id}")
+        img = render_page_png(data, page_number=page)
+    else:
+        view = s.views.get(document_id)
+        if view is None:
+            raise HTTPException(404, f"unknown document {document_id}")
+        img = render_page_png(str(DOCS / view["file_name"]), page_number=page)
     return Response(content=img.png_bytes, media_type="image/png",
                     headers={"X-Image-Scale": str(img.scale),
                              "X-Image-Width": str(img.width_px),
                              "X-Image-Height": str(img.height_px)})
+
+
+# ── 사각형 읽기 (인라인 편집기의 "Point at it on the page") ─────────────
+@app.post("/api/document/{document_id}/read-region")
+def read_region(document_id: str, payload: dict,
+                x_session_id: str | None = Header(default=None)) -> dict:
+    """세입자가 그린 사각형 하나를 읽어 **제안**을 돌려준다.
+
+    제안은 자동으로 어디에도 기록되지 않는다 — 입력칸을 채울 뿐이고, 기록은 세입자가
+    저장을 눌러 `/api/confirm` 을 거칠 때만 생긴다. 경계·크기 검증과 세션 격리는
+    `api/region.py` 가 강제한다.
+    """
+    from api import region as region_mod
+
+    s = _session(x_session_id)
+    return region_mod.read_region(s, document_id, payload)
 
 
 # ── 규칙 질문 + 적대적 입력 (데모 3·6단계) ─────────────────────────────
@@ -620,6 +675,21 @@ def _packet_summary_html(rep: dict, originals: dict) -> str:
                                     f"applicant corrected to {escape(_fmt_value(value))}")
                     else:
                         standing = "corrected by the applicant"
+                    # 세입자가 페이지 위를 직접 가리킨 정정은 그 사각형이 검토자에게
+                    # 전달된다. 기계의 page/bbox 는 위의 "where" 칸에 그대로 있다 —
+                    # 이 줄은 추가 주석이지 그 좌표의 수정이 아니다.
+                    marked = f.get("region_marked_by_renter")
+                    if marked:
+                        box_words = ", ".join(str(v) for v in (marked.get("box") or []))
+                        standing += (f"; applicant pointed at page "
+                                     f"{escape(str(marked.get('page')))}, region "
+                                     f"[{escape(box_words)}]")
+                        standing += (
+                            " (the machine's reading of that region was shown to the "
+                            "applicant as a suggestion beside the marked area)"
+                            if marked.get("machine_suggestion_shown") else
+                            " (the machine could not read that region; the applicant "
+                            "typed the value)")
                 elif kind == "confirmed_by_renter":
                     standing = "machine-read; confirmed by the applicant"
                 else:
@@ -847,10 +917,30 @@ def packet(household_id: str, x_session_id: str | None = Header(default=None)) -
                    "housing professional makes that determination.\n\n"
                    "Nothing here has been sent to any property or provider. Sharing it\n"
                    "is your choice.\n")
+        # 두 업로드가 같은 파일 이름을 가질 수 있다(같은 문서를 두 번 올리면 실제로
+        # 그렇게 된다). ZIP 은 같은 경로 두 개를 조용히 받아 주므로, 여기서 막지 않으면
+        # 압축을 푼 쪽에서 한 파일이 다른 파일을 덮어쓴다. 겹치는 이름은 문서 id 로
+        # 앞을 붙여 갈라놓는다 — 첫 파일의 경로는 그대로라 팩 세대의 패킷은 한 바이트도
+        # 달라지지 않는다.
+        used_names: set[str] = set()
+
+        def _entry_name(doc: dict) -> str:
+            name = str(doc.get("file_name", ""))
+            if name in used_names:
+                name = f"{doc.get('document_id', '')}_{name}"
+            used_names.add(name)
+            return f"documents/{name}"
+
         for doc in rep.get("documents", []):
+            # 업로드 파일의 문서는 디스크에 없다 — 원본 바이트는 세션 메모리에만 있고,
+            # 패킷에는 거기서 바로 실린다. 디스크에는 이번에도 아무것도 쓰지 않는다.
+            doc_id = str(doc.get("document_id", ""))
+            if doc_id in s.upload_bytes:
+                z.writestr(_entry_name(doc), s.upload_bytes[doc_id])
+                continue
             src = DOCS / doc["file_name"]
             if src.exists():
-                z.write(src, f"documents/{doc['file_name']}")
+                z.write(src, _entry_name(doc))
     s.log("packet_exported", household_id=household_id)
     return Response(
         content=buf.getvalue(), media_type="application/zip",
@@ -903,7 +993,7 @@ def overlay(document_id: str, page: int,
     from core.render import overlay_rects
 
     s = _session(x_session_id)
-    view = s.views.get(document_id)
+    view = s.views.get(document_id) or s.uploads.get(document_id)
     if view is None:
         raise HTTPException(404, f"unknown document {document_id}")
     return {"document_id": document_id, "page": page,

@@ -220,10 +220,11 @@ def read_upload(data: bytes, file_name: str, document_type: str,
     view["limits"] = [
         "We read each value from the label above it. We do not check the values against "
         "each other, so a document whose own arithmetic disagrees still reads cleanly here.",
-        "This document was read on its own. It is not added to any household and it changes "
-        "no figure anywhere else in this walkthrough.",
-        "Only the document you uploaded most recently is kept. Uploading another replaces "
-        "it, and deleting the session removes it with everything else.",
+        "This document was read on its own. It is never added to any example household and "
+        "it changes no figure in any of them.",
+        "Everything you upload in this session is kept together as one file of your own. "
+        "You can open that file from the list on step 1 and walk every step with it. "
+        "Deleting the session removes all of it.",
         "Nothing here means approved, denied, or ineligible. A qualified housing "
         "professional makes that determination.",
     ]
