@@ -110,12 +110,13 @@
     },
     {
       "id": "U12",
-      "status": "OPEN",
+      "status": "DONE",
       "harm": 10.5,
       "title": "An unrouted question returns an empty abstention with no next step",
       "evidence": "Live battery on the running server: 'im so stressed, do i even have a chance' and 'can i keep a dog in the apartment' both return kind=unrouted with an empty answer body. The screen shows the could-not-route state with no guidance. The reviewer's principle applies verbatim: an abstention with no next step is a dead end wearing a lab coat.",
       "fix": "When nothing routes, say three things in renter register: (a) this service holds only the housing-income rules listed on step 3, (b) name where a question like theirs belongs - the property manager or a housing worker - and (c) offer the recorded questions as examples of what CAN be asked. Never imply the question was wrong to ask.",
-      "constraint": "Do not widen routing to answer more - the abstention itself is correct behaviour. Only the words around it change. No eligibility language."
+      "constraint": "Do not widen routing to answer more - the abstention itself is correct behaviour. Only the words around it change. No eligibility language.",
+      "done_note": "Verified live (kind=unrouted for both 'can i keep a dog in the apartment' and 'im so stressed, do i even have a chance'). Before: heading 'Abstained — no value given' over body 'No answer is given for this question.' After, screen-only (routing untouched, API response unchanged): heading 'This isn't one this tool can answer — here is where to take it'; body '(a) This tool only answers questions about the housing-income rules: the frozen income limits, how income is added up over a year, and what a document needs. Yours is not one of those. That is fine to ask — it is just not something this tool can look up.'; then '(b) Where a question like this belongs: your property manager or a housing worker can answer it.' and '(c) What you can ask here: questions about the rules. Step 3 lists them — for example...'. Keyed on kind==='unrouted' so other abstentions are untouched. No eligibility language; never implies the question was wrong ('That is fine to ask'). FK ~5.4-6.8. i18n added. A routed question ('$72,000 for household size 1.') is unaffected. Gates: axe 0, reflow 35/35, keyboard 31/31, pytest 1237."
     },
     {
       "id": "U11",

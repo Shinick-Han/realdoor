@@ -2953,9 +2953,20 @@
      * kinder than the word: a decision was left to the person whose job it is. The heading
      * says that, and says there is something here for the reader — which there is, in the
      * body and in what_would_resolve_it. Nothing about the refusal itself changes. */
+    /* A question that routes nowhere — "can i keep a dog in the apartment", "im so stressed,
+     * do i even have a chance" — came back kind "unrouted" with a null answer, and the
+     * screen rendered "No answer is given for this question." over a terse resolve line. The
+     * abstention is correct: this tool only looks up the housing-income rules, and it should
+     * not widen to answer more. But an abstention with no next step is a dead end, and to a
+     * stressed applicant it reads as a rejection. The heading gives the next step, the body
+     * says plainly what the tool does and does not cover without implying the question was
+     * wrong to ask, and the guidance block below names where the question belongs and what
+     * can be asked here instead. Only the words change; routing is untouched. */
+    var unrouted = response.kind === "unrouted";
     var headline = response.refused ? "Only a person can decide that — here is what we can tell you"
+      : (unrouted ? "This isn't one this tool can answer — here is where to take it"
       : (response.abstained ? "Abstained — no value given"
-      : (interpreted ? "Answer, from how we read your question" : "Answer"));
+      : (interpreted ? "Answer, from how we read your question" : "Answer")));
 
     /* Several situation texts open with the bare machine status they resolve to —
      * "NEEDS_REVIEW. An expired document is stale evidence, and…". That token is the
@@ -3020,6 +3031,15 @@
              "with you, your income confirmed by an outside source, and status checks that are not " +
              "in your file.";
     }
+    /* The unrouted body, in renter register, replacing "No answer is given for this
+     * question." — which is true but reads as a shrug. The guidance block that names where
+     * the question belongs and what can be asked is built below and inserted into the
+     * callout. */
+    if (unrouted) {
+      body = "This tool only answers questions about the housing-income rules: the frozen income " +
+             "limits, how income is added up over a year, and what a document needs. Yours is not " +
+             "one of those. That is fine to ask — it is just not something this tool can look up.";
+    }
 
     /* The renter-facing sentence for this response kind, written in api/plain.py and
      * already carried on the response as `plain`. It is not invented here and it does not
@@ -3035,11 +3055,31 @@
      * without being a toll. */
     var reading = interpreted ? readingNote(routing, couldNotSeparate) : null;
 
+    /* Where the unrouted question belongs, and what can be asked here instead. Two things a
+     * dead-end abstention withheld: the real destination for the question, and an example of
+     * what this tool does answer. The examples point at step 3's recorded questions rather
+     * than inventing new ones. No eligibility language, and nothing here says the question
+     * was a mistake. */
+    var unroutedGuidance = unrouted
+      ? h("div", null, [
+          h("p", null, [
+            h("strong", { text: "Where a question like this belongs: " }),
+            "your property manager or a housing worker can answer it. This tool cannot."
+          ]),
+          h("p", null, [
+            h("strong", { text: "What you can ask here: " }),
+            "questions about the rules. Step 3 lists them — for example, what the frozen income " +
+            "limit is, how a year of income is added up, or what is still missing or out of date."
+          ])
+        ])
+      : null;
+
     host.appendChild(h("div", { class: "callout " + flavour }, [
       h("h3", { id: "ask-answer-heading", tabindex: "-1", text: headline }),
       h("p", { class: "status-line", text: "Question asked: " + question }),
       said && said.headline ? h("p", { class: "answer-lead", text: said.headline }) : null,
       h("p", { text: body }),
+      unroutedGuidance,
       /* The three things this service can actually answer, named. The old body listed them
        * inside a 60-word sentence about what it reports "instead"; a list is what a person
        * scanning for their next move can use, and every line here is a question the ask box

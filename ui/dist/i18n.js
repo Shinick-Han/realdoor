@@ -94,6 +94,18 @@
       "또한 당신이 확인한 값이 몇 개인지 밝히고, 이번 세션에서 이루어진 작업을 적용된 규칙 버전과 함께 나열합니다. 그 기록에는 문서 내용도, 값 자체도 담기지 않습니다.",
     "Nothing is waiting on you.": "당신을 기다리는 것은 없습니다.",
 
+    // U12: 어디로도 라우팅되지 않은 질문 — 막다른 기권이 아니라 다음 걸음을 준다.
+    "This isn't one this tool can answer — here is where to take it":
+      "이건 이 도구가 답할 수 있는 질문이 아닙니다 — 어디로 가져가면 되는지 알려 드립니다",
+    "This tool only answers questions about the housing-income rules: the frozen income limits, how income is added up over a year, and what a document needs. Yours is not one of those. That is fine to ask — it is just not something this tool can look up.":
+      "이 도구는 주택 소득 규칙에 관한 질문만 답합니다: 동결된 소득 상한, 1년치 소득을 어떻게 합산하는지, 그리고 서류에 무엇이 필요한지입니다. 물으신 것은 그중 하나가 아닙니다. 물으셔도 괜찮습니다 — 다만 이 도구가 찾아볼 수 있는 것이 아닐 뿐입니다.",
+    "Where a question like this belongs:": "이런 질문이 가야 할 곳:",
+    "your property manager or a housing worker can answer it. This tool cannot.":
+      "관리사무소나 주택 담당자가 답해 줄 수 있습니다. 이 도구는 답할 수 없습니다.",
+    "What you can ask here:": "여기서 물어볼 수 있는 것:",
+    "questions about the rules. Step 3 lists them — for example, what the frozen income limit is, how a year of income is added up, or what is still missing or out of date.":
+      "규칙에 관한 질문입니다. 3단계에 목록이 있습니다 — 예를 들어, 동결된 소득 상한이 얼마인지, 1년치 소득을 어떻게 합산하는지, 또는 아직 없거나 기한이 지난 것이 무엇인지입니다.",
+
     // U9: 계산 패널이 무엇인지 한 줄로. 소득원이 하나뿐이면 두 패널이 같은 식을 보이므로.
     "This is your wage income on its own: one pay period, times the number of pay periods in a year.":
       "이것은 급여 소득만 따로 본 것입니다: 한 지급 주기를, 1년 안의 지급 횟수만큼 곱한 값입니다.",
