@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -105,12 +106,48 @@ def rel(path: Path) -> str:
     return str(path.relative_to(REPO_ROOT)).replace("\\", "/")
 
 
+def _ignored_paths() -> set[str]:
+    """Repo-relative paths git is ignoring, or an empty set if git cannot say.
+
+    This guard walks the filesystem, and the filesystem holds things the repository
+    does not: scratch dumps, timing scripts, half-finished corpora that agents write
+    while they work. Scanning them has bitten twice in the same way. First `.cache`
+    made the suite's SIZE follow how many stale entries sat on the disk (2538 tests
+    one hour, 2106 the next, with no product code changed). Then a scratch tree under
+    `loop/worktmp/` was created and deleted by one workstream mid-run, and two other
+    workstreams read the resulting four failures as regressions in their own changes.
+    Both were the same mistake wearing different clothes: asking the disk a question
+    that was about the repository.
+
+    `.cache` was fixed by name. Fixing this one by name too would leave the next
+    scratch directory to be discovered the same way, so the rule is now the general
+    one -- if git is ignoring a file, it is not part of the repository and this guard
+    has no business scanning it. `EXCLUDED_DIRS` stays as the fallback for a checkout
+    with no git available, and as the answer for directories git DOES track but this
+    guard should skip anyway (`pack/` is the organizer's, read-only to us).
+    """
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
+            cwd=REPO_ROOT, capture_output=True, timeout=60, check=True,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    return {p for p in result.stdout.decode("utf-8", "replace").split("\0") if p}
+
+
+_IGNORED = _ignored_paths()
+
+
 def walk(suffixes: set[str]) -> list[Path]:
     out = []
     for path in REPO_ROOT.rglob("*"):
         if not path.is_file() or path.suffix not in suffixes:
             continue
-        if any(part in EXCLUDED_DIRS for part in path.relative_to(REPO_ROOT).parts):
+        relative = path.relative_to(REPO_ROOT)
+        if any(part in EXCLUDED_DIRS for part in relative.parts):
+            continue
+        if str(relative).replace("\\", "/") in _IGNORED:
             continue
         out.append(path)
     return sorted(out)
