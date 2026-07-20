@@ -3356,12 +3356,26 @@
         ])
       : null;
 
+    /* A question about the reader's own figures, asked while nothing is open, abstains —
+     * rightly. But "What would resolve it: supply the documents" names the cure without
+     * naming the control, and the control is one step away. R26: the abstention stays
+     * exactly as it is; this adds where to go. Only when no file is open — an abstention
+     * with a household open already carries its own resolve line. */
+    var noFileGuidance = (response.abstained && !response.refused && !unrouted && !state.householdId)
+      ? h("p", null, [
+          h("strong", { text: "What you can do: " }),
+          "no file is open, so there was nothing to answer from. Step 1 reads a document " +
+          "you upload, or opens a prepared example file. Then ask again."
+        ])
+      : null;
+
     host.appendChild(h("div", { class: "callout " + flavour }, [
       h("h3", { id: "ask-answer-heading", tabindex: "-1", text: headline }),
       h("p", { class: "status-line", text: "Question asked: " + question }),
       said && said.headline ? h("p", { class: "answer-lead", text: said.headline }) : null,
       h("p", { text: body }),
       unroutedGuidance,
+      noFileGuidance,
       /* The three things this service can actually answer, named. The old body listed them
        * inside a 60-word sentence about what it reports "instead"; a list is what a person
        * scanning for their next move can use, and every line here is a question the ask box
