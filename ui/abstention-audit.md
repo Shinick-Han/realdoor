@@ -85,3 +85,23 @@ New copy measures FK grade 0.6–6.6 per string, combined FK 4.0 / SMOG 6.7 (tex
    new behaviour.
 3. **Open-item step routing** — left as is. The step-4 callouts carry the action in place;
    moving the open item would touch the error summary for no coverage gain.
+
+
+## Addendum (2026-07-20) — the steps-2–6 empty state, re-registered
+
+The shared no-file notice (`app.js::nothingReadYetNotice`, reached from every step's
+body when no file is open) previously said "Nothing has been uploaded and no example has
+been opened" — a sentence that became FALSE the moment a session held an upload, because
+uploads joined nothing and the steps stayed empty anyway. That read as a verdict
+("nothing here for you"), which is exactly what R26 forbids.
+
+The surface is now two surfaces, each with its control in hand:
+
+* **Uploads exist** → "Your uploaded documents form a file you can open" + the direct
+  open control (`Open your uploaded documents (N)`) beside "Go to step 1". The redirect
+  IS the resolution: one press opens the file this step will read. (c)
+* **No uploads** → the empty-desk wording, minus the enumerating clause, with the two
+  ways forward named and "Go to step 1" as the control. (a)+(c)
+
+Korean carried for both in `i18n.js` (dict + a count-bearing rule). New copy measured
+with textstat alongside the rest of this feature's prose (see the feature report).

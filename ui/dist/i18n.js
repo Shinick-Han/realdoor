@@ -86,8 +86,8 @@
       "RealDoor 는 당신이 준 문서를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여 드립니다. 각 값은 그것을 읽어낸 상자와 함께 표시됩니다. 항목 이름을 고르면 그 상자가 켜집니다. 여기에서 사람에 대해 추측한 것은 없습니다.",
     "Choose a PDF and RealDoor reads it, then shows you every value it took out of it and the box on the page each one came from. It is read on its own: nothing else has to be open first, and reading it changes nothing anywhere else.":
       "PDF 를 고르시면 RealDoor 가 읽고, 거기서 뽑아낸 모든 값과 각 값이 나온 문서상의 상자를 보여 드립니다. 이 문서는 따로 읽힙니다: 먼저 열려 있어야 할 것이 없고, 읽어도 다른 어떤 것도 바뀌지 않습니다.",
-    "Every box below already holds what we read off this page. If a value is right, choose Confirm and leave the box alone. If it is wrong, change the box and choose the same button — that records a correction instead. Confirming does not change the value or any number below it; it records that you read it.":
-      "아래의 모든 칸에는 저희가 이 페이지에서 읽어낸 내용이 이미 들어 있습니다. 값이 맞으면 확인을 누르고 칸은 그대로 두세요. 틀렸으면 칸을 고치고 같은 버튼을 누르세요 — 그러면 대신 정정으로 기록됩니다. 확인은 값이나 그 아래 어떤 숫자도 바꾸지 않습니다. 당신이 그것을 읽었다는 사실을 기록할 뿐입니다.",
+    "Each row below shows what we read off this page. If a value is right, choose Confirm. If it is wrong, choose “This is wrong — fix it”: the row opens a box where you type what the page really says, or you point at the spot on the page and check our reading of it before you save. Confirming does not change the value or any number below it; it records that you read it.":
+      "아래의 각 행에는 저희가 이 페이지에서 읽어낸 내용이 표시됩니다. 값이 맞으면 확인을 누르세요. 틀렸으면 “잘못 읽었어요 — 고치기”를 누르세요. 행에 입력칸이 열리고, 페이지가 실제로 말하는 값을 직접 입력하거나, 페이지 위의 그 자리를 가리켜 저희가 읽은 내용을 확인한 뒤 저장할 수 있습니다. 확인은 값이나 그 아래 어떤 숫자도 바꾸지 않습니다. 당신이 그것을 읽었다는 사실을 기록할 뿐입니다.",
     "If you would rather look around first, this copy carries six made-up household files. They belong to nobody. Everything the six steps do — the evidence boxes, the corrections, the checklist, the packet — works the same on them as on a document of your own.":
       "먼저 둘러보고 싶으시면, 이 사본에는 지어낸 세대 파일 여섯 개가 들어 있습니다. 누구의 것도 아닙니다. 여섯 단계가 하는 모든 것 — 근거 상자, 정정, 점검 목록, 서류 묶음 — 은 당신의 문서에서와 똑같이 그것들에서도 작동합니다.",
     "It also states how many values you checked and lists the actions taken in this session, with the rule versions that applied. That log holds no document contents and none of the values themselves.":
@@ -1211,10 +1211,56 @@
     // ── api/upload.py — 판독의 한계와 거절 사유 ────────────────────────────────
     "We read each value from the label above it. We do not check the values against each other, so a document whose own arithmetic disagrees still reads cleanly here.":
       "각 값은 그 위에 있는 항목 이름을 보고 읽습니다. 값들끼리 서로 대조하지는 않습니다. 그래서 문서 안의 계산이 서로 맞지 않아도 여기서는 깨끗하게 읽힙니다.",
-    "This document was read on its own. It is not added to any household and it changes no figure anywhere else in this walkthrough.":
-      "이 문서는 그 문서 하나만 놓고 읽었습니다. 어떤 세대에도 합치지 않으며, 이 과정의 다른 어떤 숫자도 바꾸지 않습니다.",
-    "Only the document you uploaded most recently is kept. Uploading another replaces it, and deleting the session removes it with everything else.":
-      "가장 최근에 올리신 문서 하나만 남습니다. 다른 문서를 올리면 그것으로 바뀌고, 세션을 삭제하면 나머지와 함께 사라집니다.",
+    "This document was read on its own. It is never added to any example household and it changes no figure in any of them.":
+      "이 문서는 그 문서 하나만 놓고 읽었습니다. 어떤 예시 세대에도 절대 합쳐지지 않고, 그쪽의 어떤 숫자도 바꾸지 않습니다.",
+    "Everything you upload in this session is kept together as one file of your own. You can open that file from the list on step 1 and walk every step with it. Deleting the session removes all of it.":
+      "이번 세션에서 올리신 문서는 전부 하나의 파일로 함께 보관됩니다. 1단계의 목록에서 그 파일을 열어 모든 단계를 걸어 볼 수 있습니다. 세션을 삭제하면 전부 사라집니다.",
+    "This session already holds 6 uploaded documents, and they all stay in this session's memory. That is the ceiling. You can open the file made of the ones you have, or delete the session on step 6 and start again.":
+      "이번 세션에는 이미 올린 문서가 6개 있고, 전부 이 세션의 메모리에 남아 있습니다. 거기까지가 상한입니다. 지금 있는 문서들로 이루어진 파일을 여시거나, 6단계에서 세션을 삭제하고 새로 시작하실 수 있습니다.",
+
+    // ── app.js: 업로드 파일 — 올린 문서들이 이루는 세션 자신의 파일 ──────────
+    "Walk the six steps with your own documents": "당신의 문서로 여섯 단계를 걸어 보세요",
+    "Everything you upload in this session is kept together as one file. Open it and every step reads your documents — you can fix values, see the numbers, check the list, and take the packet.":
+      "이번 세션에서 올리신 문서는 전부 하나의 파일로 함께 보관됩니다. 그 파일을 열면 모든 단계가 당신의 문서를 읽습니다 — 값을 고치고, 숫자를 보고, 목록을 점검하고, 서류 묶음을 받으실 수 있습니다.",
+    "Documents with scanned or photographed parts can take up to a minute to read — plain documents are quick.":
+      "스캔하거나 사진으로 찍은 부분이 있는 문서는 읽는 데 1분까지 걸릴 수 있습니다 — 일반 문서는 금방 읽힙니다.",
+
+    // ── app.js: 빈 상태 두 갈래 (R26: 기권은 안내이지 판정이 아니다) ─────────
+    "There is no document to show yet": "아직 보여드릴 문서가 없습니다",
+    "This step reads whatever file is open, and none is — so there is nothing here to be right or wrong about. This is not an empty result, it is an empty desk.":
+      "이 단계는 열려 있는 파일을 읽는데, 지금은 열린 파일이 없습니다 — 그래서 여기에는 맞고 틀릴 것이 아직 없습니다. 빈 결과가 아니라 빈 책상입니다.",
+    "Step 1 does both of the things that change that: it reads a PDF you choose, and it opens one of the six prepared example files.":
+      "그것을 바꾸는 두 가지 일을 모두 1단계가 합니다: 고르신 PDF 를 읽는 것, 그리고 준비된 예시 파일 여섯 중 하나를 여는 것입니다.",
+    "Go to step 1": "1단계로 가기",
+    "Your uploaded documents form a file you can open": "올리신 문서들이 하나의 파일이 되어 있습니다",
+    "This step reads whatever file is open, and none is. The documents you uploaded on step 1 are kept together as a file of your own — open it and this step reads them.":
+      "이 단계는 열려 있는 파일을 읽는데, 지금은 열린 파일이 없습니다. 1단계에서 올리신 문서들은 당신 자신의 파일 하나로 함께 보관되어 있습니다 — 그 파일을 열면 이 단계가 그것을 읽습니다.",
+
+    // ── app.js: 파일 선택 패널 — 열기·닫기·처음부터 다시 ─────────────────────
+    "Your uploaded documents are open. Use the list below to open a different one, or close it to start from your own document.":
+      "내가 올린 문서 파일이 열려 있습니다. 다른 파일을 열려면 아래 목록을 쓰시고, 내 문서로 시작하려면 닫으세요.",
+    "Close this file": "이 파일 닫기",
+    "Start over": "처음부터 다시",
+    "Start over?": "처음부터 다시 시작할까요?",
+    "Yes, clear this session": "네, 이 세션을 비웁니다",
+    "Keep working": "계속 작업하기",
+    "The session could not be cleared": "세션을 비우지 못했습니다",
+
+    // ── app.js: 행 안 편집기와 페이지 가리키기 ───────────────────────────────
+    "This is wrong — fix it": "잘못 읽었어요 — 고치기",
+    "Save": "저장",
+    "Cancel": "취소",
+    "Point at it on the page": "페이지에서 그 자리를 가리키기",
+    "The box holds what we read. Type what the page really shows, then choose Save.":
+      "칸에는 저희가 읽은 값이 들어 있습니다. 페이지가 실제로 보여 주는 값을 입력하고 저장을 누르세요.",
+    "This is the area you pointed at, enlarged. The box holds what the machine read there — a suggestion, nothing more. If the picture says something else, type that instead.":
+      "가리키신 영역을 확대한 것입니다. 칸에는 기계가 거기서 읽은 값이 들어 있습니다 — 제안일 뿐, 그 이상이 아닙니다. 그림이 다른 값을 말하고 있다면 그 값을 입력하세요.",
+    "This is the area you pointed at, enlarged. We could not read it — type what it says.":
+      "가리키신 영역을 확대한 것입니다. 저희는 읽지 못했습니다 — 뭐라고 쓰여 있는지 입력해 주세요.",
+    "We could not read that area — type what it says.":
+      "그 영역을 읽지 못했습니다 — 뭐라고 쓰여 있는지 입력해 주세요.",
+    "Drag a box around the value on the page above. Press Escape to stop. Typing the value works without this.":
+      "위 페이지에서 값 주위로 상자를 끌어 그려 주세요. 그만두려면 Esc 를 누르세요. 값은 이 도구 없이 직접 입력하셔도 됩니다.",
     "Nothing here means approved, denied, or ineligible. A qualified housing professional makes that determination.":
       "여기의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판단은 공인 주택 전문가가 합니다.",
     "This page had no text layer, so it was read by OCR on page 1 only. OCR recovers fewer fields than a text layer does, and what it cannot read it declines to guess.":
@@ -2150,7 +2196,32 @@
       var parts = m[0].split(" · ").map(koMeasureSegment);
       for (var i = 0; i < parts.length; i += 1) if (parts[i] === null) return null;
       return parts.join(" · ");
-    }]
+    }],
+
+    // ══ app.js: 업로드 파일과 행 안 편집기 — 숫자·값이 박힌 문장들 ═══════════════
+    // 세대 선택 목록의 업로드 파일 행. 개수는 데이터, 나머지가 문장이다.
+    [/^Your uploaded documents \((\d+)\)$/, function (m) {
+      return "내가 올린 문서 (" + m[1] + ")";
+    }],
+    [/^Open your uploaded documents \((\d+)\)$/, function (m) {
+      return "내가 올린 문서 열기 (" + m[1] + ")";
+    }],
+    // 정정된 행 옆의 가리킴 기록.
+    [/^You pointed at page (\d+) for this value\. The packet carries the spot you marked\.$/,
+      function (m) {
+        return "이 값의 자리로 페이지 " + m[1] + "을(를) 가리키셨습니다. 표시하신 자리는 서류 묶음에 함께 실립니다.";
+      }],
+    // 가리킨 영역을 읽어낸 제안. 값은 데이터로 그대로 둔다.
+    [/^We read “(.+)” from the area you pointed at\. It is a suggestion — check it against the picture, fix it if it is wrong, then save\.$/,
+      function (m) {
+        return "가리키신 영역에서 “" + m[1] + "”(이)라고 읽었습니다. 제안일 뿐입니다 — 그림과 대조해 확인하고, 틀렸으면 고친 뒤 저장하세요.";
+      }],
+    // "처음부터 다시"의 확인 단계. 숫자 셋은 데이터다.
+    [/^This clears all your work in this session: (\d+) upload\(s\), (\d+) correction\(s\) and (\d+) confirmation\(s\)\. The prepared example files are not touched\.$/,
+      function (m) {
+        return "이번 세션에서 하신 일이 모두 지워집니다: 올린 문서 " + m[1] + "건, 정정 " +
+               m[2] + "건, 확인 " + m[3] + "건. 준비된 예시 파일들은 건드리지 않습니다.";
+      }]
   ];
 
   /** 성적표 요약 한 조각. app.js::measureSummary 가 만드는 네 가지 모양을 되받는다. */
@@ -2347,7 +2418,10 @@
   // ── DOM 적용 ────────────────────────────────────────────────────────────────
   // 기계 식별자가 사는 곳은 건드리지 않는다. 규칙 id·필드명·좌표·엔진 sha 는
   // 번역 대상이 아니라 데이터다.
-  var SKIP = "script, style, code, .mono, .formula, .box-tag, .schematic-text, #footer-meta";
+  // .box-tag 는 더 이상 건너뛰지 않는다: 태그가 기계 식별자 대신 표의 평문 단어
+  // (fieldWords)를 입게 되면서 번역 대상이 됐다. 기계 id 는 태그의 title 속성에
+  // 남는데, 사전에 그 키가 없으므로 저절로 번역되지 않는다 — 데이터는 데이터로 남는다.
+  var SKIP = "script, style, code, .mono, .formula, .schematic-text, #footer-meta";
   var ATTRS = ["aria-label", "alt", "title", "placeholder"];
 
   var lang = "en";
