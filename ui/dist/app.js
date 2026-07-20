@@ -2832,19 +2832,23 @@
      * in api/ask.py was written to produce and which this screen had simply never used. */
     var said = response.plain || null;
 
-    /* Said before the answer, not after it. A renter who reads two paragraphs of figures
-     * and only then learns we guessed at the question has already spent the trust. */
+    /* Below the answer, not above it. Two paragraphs of parsing commentary used to sit
+     * between the question and the answer, so a renter had to read about our routing
+     * before reading what they asked for. The headline already says "from how we read
+     * your question" — the disclosure still arrives first — and the detail of that
+     * reading now sits under the answer as one short line, where it can be checked
+     * without being a toll. */
     var reading = interpreted ? readingNote(routing, couldNotSeparate) : null;
 
     host.appendChild(h("div", { class: "callout " + flavour }, [
       h("h3", { id: "ask-answer-heading", tabindex: "-1", text: headline }),
       h("p", { class: "status-line", text: "Question asked: " + question }),
-      reading,
       said && said.headline ? h("p", { class: "answer-lead", text: said.headline }) : null,
       h("p", { text: body }),
       response.what_would_resolve_it
         ? h("p", null, [h("strong", { text: "What would resolve it: " }), response.what_would_resolve_it])
         : null,
+      reading,
       /* The machine fields move behind the same "Technical details" disclosure the
        * readiness alert and every checklist card already use. They are demoted, not
        * deleted: a judge who wants the response kind can still read it, and the status
@@ -2899,11 +2903,11 @@
       host.appendChild(citationBlock(citation));
     });
     byId("ask-answer-heading").focus();
-    /* The reading is announced with the answer, not left to be discovered visually. The
-     * heading already carries "from how we read your question", and the sentence after it
-     * says which reading — a screen-reader user who was told the second half is the one
-     * who can correct us. */
-    announce(headline + ". " + (interpreted ? spokenReading(routing, couldNotSeparate) + " " : "") + body);
+    /* The reading is announced with the answer, not left to be discovered visually — and
+     * in the order the screen now shows: answer first, then which reading it came from.
+     * A screen-reader user hears what they asked for, then the sentence that lets them
+     * correct us. */
+    announce(headline + ". " + body + (interpreted ? " " + spokenReading(routing, couldNotSeparate) : ""));
   }
 
   /** "We read your question as…" — the middle tier's own block.
@@ -2938,17 +2942,22 @@
       }
     }, ["Ask again in different words"]);
 
+    /* One short line, not two paragraphs. The old block spent 60 words on how the routing
+     * works before naming the reading, and the reading is the only part a renter can
+     * check. The disclosure is not deleted: the headline above says the answer comes from
+     * a reading, this line says which reading, and the exit is in the same breath. The
+     * could-not-separate sentence stays whole — it is a disclosure, and it only appears
+     * when it is true. */
     return h("div", { class: "read-note" }, [
       h("p", null, [
-        h("span", { class: "read-note__label", text: "How we read your question. " }),
-        "You did not use one of the wordings this service recognises exactly, so it worked " +
-        "out what you were most likely asking and answered that. ",
         routing.gloss
           ? h("span", null, [
-              "We read it as a question about ",
-              h("span", { class: "read-note__gloss", text: routing.gloss }), "."
+              "We read your question as one about ",
+              h("span", { class: "read-note__gloss", text: routing.gloss }), ". "
             ])
-          : "We cannot put that reading into a short phrase here."
+          : "We answered our best reading of your wording, not an exact match. ",
+        "If that is not what you meant, ask again in different words, or use a recorded " +
+        "question on step 3."
       ]),
       couldNotSeparate
         ? h("p", {
@@ -2957,11 +2966,6 @@
                   "attempt at your question rather than a settled answer to it."
           })
         : null,
-      h("p", { class: "read-note__action" }, [
-        "If that is not what you meant, ask again in different words, or use one of the " +
-        "recorded questions on step 3, where the wording is fixed and nothing has to be " +
-        "worked out."
-      ]),
       h("div", { class: "read-note__buttons" }, [askAgain])
     ]);
   }

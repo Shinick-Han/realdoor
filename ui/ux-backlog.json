@@ -23,12 +23,13 @@
     },
     {
       "id": "U2",
-      "status": "OPEN",
+      "status": "DONE",
       "harm": 2,
       "title": "Two paragraphs of parsing commentary sit above the answer",
       "evidence": "'How we read your question. You did not use one of the wordings this service recognises exactly...' plus a second paragraph, both before the answer body.",
       "fix": "Answer first. The fact that the wording was interpreted stays - it must - but as one short line below the answer, not two paragraphs above it.",
-      "constraint": "Do not delete the disclosure. A reader must still learn that the question was interpreted."
+      "constraint": "Do not delete the disclosure. A reader must still learn that the question was interpreted.",
+      "done_note": "Verified live: the answer body now follows the question directly, and the reading note sits below it as one line - 'We read your question as one about how an income sits next to the limit figure. If that is not what you meant, ask again in different words, or use a recorded question on step 3.' The heading still reads 'Answer, from how we read your question', so the disclosure still arrives before the answer. 75 words to 36; FK grade 9.4 to 6.8. The could-not-separate paragraph is unchanged and still renders when true. The live-region announcement was reordered to match."
     },
     {
       "id": "U3",

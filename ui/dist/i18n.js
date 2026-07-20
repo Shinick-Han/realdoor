@@ -358,16 +358,14 @@
     // gloss 는 API 가 보내는 영어 조각이라 아래 따로 옮긴다 — 옮기지 못한 것은
     // 영어로 남고, 그게 지어내는 것보다 낫다.
     "Answer, from how we read your question": "답변 — 질문을 이렇게 읽고 드린 답입니다",
-    "How we read your question.": "질문을 이렇게 읽었습니다.",
-    "You did not use one of the wordings this service recognises exactly, so it worked out what you were most likely asking and answered that.":
-      "이 서비스가 정확히 알아듣는 표현이 아니어서, 무엇을 물으신 것인지 헤아려 그 질문에 답했습니다.",
-    "We read it as a question about": "다음에 대한 질문으로 읽었습니다:",
-    "We cannot put that reading into a short phrase here.":
-      "그 해석을 여기에 짧은 말로 옮기지는 못합니다.",
+    // U2: 해석 안내는 이제 답 아래 한 줄이다. 답이 먼저, 우리의 라우팅 이야기는 나중.
+    "We read your question as one about": "질문을 다음에 대한 것으로 읽었습니다:",
+    "We answered our best reading of your wording, not an exact match.":
+      "표현이 정확히 일치하지 않아, 헤아린 최선의 읽기에 답했습니다.",
     "Your wording also sat close to several other questions this service answers, and it could not tell them apart. Take this as our best attempt at your question rather than a settled answer to it.":
       "게다가 이 표현은 이 서비스가 답하는 다른 몇 가지 질문과도 가까워서, 그것들과 구분하지 못했습니다. 확정된 답이 아니라 질문에 대한 최선의 시도로 읽어 주세요.",
-    "If that is not what you meant, ask again in different words, or use one of the recorded questions on step 3, where the wording is fixed and nothing has to be worked out.":
-      "뜻하신 바가 아니라면 다른 표현으로 다시 물어보시거나, 3단계의 기록된 질문을 쓰세요. 그쪽은 표현이 정해져 있어 헤아릴 것이 없습니다.",
+    "If that is not what you meant, ask again in different words, or use a recorded question on step 3.":
+      "뜻하신 바가 아니라면 다른 표현으로 다시 물어보시거나, 3단계의 기록된 질문을 쓰세요.",
     "Ask again in different words": "다른 표현으로 다시 묻기",
     // Technical details 안. 값(경로 이름·의도 이름)은 .mono 라서 번역되지 않는다.
     "Routed by:": "어느 층이 잡았는지:",
