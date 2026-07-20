@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -142,6 +143,14 @@ def test_extra_predicted_field_is_reported_not_scored():
         ("pay_date", "2026-06-27", "27 June 2026", True),
         ("pay_date", "2026-06-27", "2026-06-28", False),
         ("pay_date", "2026-06-27", "27/06/2026", False),  # documented US-order caveat
+        # two-digit years: the truth files print them, so the scorer must read them
+        ("pay_date", "9/2/05", "2005-09-02", True),
+        ("pay_period_end", "8/27/05", "2005-08-27", True),
+        ("pay_period_end", "8/27/05", "2005-08-28", False),   # day still checked
+        ("pay_period_end", "8/27/05", "1905-08-27", False),   # century is resolved, not wild
+        ("pay_period_end", "8/27/05", "2105-08-27", False),
+        ("pay_period_start", "8/21/2005", "2005-08-21", True),  # 4-digit form on the same line
+        ("pay_date", "8/27/05", "8/27/2005", True),           # both spellings agree
         ("person_name", "Mara North", "  mara   north ", True),
         ("person_name", "Mara North", "North, Mara", False),
         ("address", "14 Lantern Way, Boston, MA 02118", "14 Lantern Way Boston MA 02118",
@@ -681,3 +690,162 @@ def test_selftest_cli_prints_valid_json(capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["generated_at"] == FIXED_NOW
     assert payload["extraction"]["status"] == "not_run"
+
+
+# --- two-digit-year century rule ------------------------------------------------------
+def test_two_digit_year_pivot_tracks_the_frozen_reference_date():
+    """The pivot literal in the scorer must not drift from REFERENCE_DATE.
+
+    ``score_extraction`` hardcodes the year so it stays runnable standalone; this pins that
+    literal to the single frozen source of truth.
+    """
+    from logic.constants import REFERENCE_DATE
+
+    assert scorer._REFERENCE_YEAR == REFERENCE_DATE.year
+
+
+@pytest.mark.parametrize(
+    "yy,expected",
+    [(5, 2005), (26, 2026), (27, 1927), (99, 1999), (0, 2000)],
+)
+def test_two_digit_year_resolves_to_the_most_recent_past_year(yy, expected):
+    assert scorer._resolve_two_digit_year(yy) == expected
+
+
+def test_masked_year_stays_unparsable_for_the_confirm_harness():
+    """"1/7/XX" is a year the page does not print. It must NOT gain a century here --
+    scripts/measure_confirm_set._masked_date is its only handler."""
+    for masked in ("1/7/XX", "1/13/XX", "1/20/XX"):
+        result = scorer._as_date(masked)
+        assert result[1] == scorer.UNPARSABLE, f"{masked} must stay unparsable, got {result}"
+
+
+#: Every corpus that carries date-kind truth values, and the subtree to read in each.
+#: ``None`` means walk the whole document. Enumerated from the repo rather than assumed:
+#: an earlier version of this test walked only the first three and only the {field_name:
+#: value} record shape, which silently skipped scenario_truth.json -- the one corpus
+#: holding month-precision values -- because it stores truth as {"field": ..., "value": ...}
+#: records. A truth file the walker does not reach is a truth file the instrument is not
+#: checked against.
+_DATE_TRUTH_CORPORA = [
+    ("testdata/confirm_truth.json", "documents"),
+    ("testdata/external_truth.json", "documents"),
+    ("testdata/filled/filled_truth.json", "documents"),
+    ("testdata/scenarios/scenario_truth.json", None),
+    ("testdata/holdout_manifest.json", None),
+    ("testdata/uploads_manifest.json", None),
+    ("pack/synthetic_documents/gold/document_gold.jsonl", None),
+]
+
+
+def _walk_date_truth_values():
+    """Yield (corpus, field, value) for every date-kind truth value in the repo.
+
+    Handles both record shapes the corpora use:
+      A. ``{"pay_date": "6/27/2026"}``            -- field name is the key
+      B. ``{"field": "pay_date", "value": ...}``  -- field name is a sibling value
+    """
+    date_fields = {k for k, v in scorer.FIELD_KINDS.items() if v == "date"}
+
+    def walk(node, corpus, out):
+        if isinstance(node, dict):
+            field = node.get("field")
+            if isinstance(field, str) and field in date_fields and "value" in node:
+                value = node["value"]
+                if isinstance(value, str) and value.strip():
+                    out.append((corpus, field, value))          # shape B
+            for key, value in node.items():
+                if key in date_fields and isinstance(value, str) and value.strip():
+                    out.append((corpus, key, value))            # shape A
+                walk(value, corpus, out)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value, corpus, out)
+
+    found = []
+    for rel, subtree in _DATE_TRUTH_CORPORA:
+        path = scorer.REPO_ROOT / rel
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        if path.suffix == ".jsonl":
+            for line in text.splitlines():
+                if line.strip():
+                    walk(json.loads(line), rel, found)
+        else:
+            doc = json.loads(text)
+            walk(doc[subtree] if subtree else doc, rel, found)
+    return found
+
+
+def test_date_truth_corpora_are_actually_being_read():
+    """Guard the guard: if the walker reaches nothing, the readability test below is vacuous
+    and would keep passing after someone moves or restructures a truth file."""
+    found = _walk_date_truth_values()
+    assert len(found) > 300, f"walker reached only {len(found)} date truth values"
+    corpora = {corpus for corpus, _, _ in found}
+    for rel, _ in _DATE_TRUTH_CORPORA:
+        if (scorer.REPO_ROOT / rel).exists():
+            assert rel in corpora, f"{rel} exists but the walker found no date values in it"
+
+
+def test_every_date_valued_truth_string_in_the_corpora_is_readable():
+    """The instrument must be able to read its own scale.
+
+    Any date-kind truth value that normalises to UNPARSABLE would score a CORRECT
+    extraction as WRONG -- the failure mode this whole class of fix exists to prevent.
+    Masked "XX" years are the one documented exception (see the test above them).
+
+    This covers every truth corpus in the repo, so the next unparsable shape anyone adds to
+    any of them fails here rather than at the moment extraction first reaches the field.
+    """
+    unreadable = [
+        (corpus, field, value)
+        for corpus, field, value in _walk_date_truth_values()
+        if "X" not in value.upper()  # masked years handled by the confirm harness
+        and scorer._as_date(value)[1] == scorer.UNPARSABLE
+    ]
+    assert unreadable == [], f"scorer cannot read its own truth values: {unreadable}"
+
+
+def test_month_precision_truth_is_present_and_readable():
+    """Month precision is a live shape, not a hypothetical: pin that it is in the corpora
+    and that every instance of it normalises to a month payload."""
+    months = [
+        (corpus, field, value)
+        for corpus, field, value in _walk_date_truth_values()
+        if re.fullmatch(r"\d{4}-\d{1,2}", value.strip())
+    ]
+    assert months, "no month-precision truth values found -- has a corpus moved?"
+    for corpus, field, value in months:
+        normalised = scorer._as_date(value)
+        assert len(normalised) == 2, f"{value} in {corpus} is not a clean month payload"
+        assert re.fullmatch(r"\d{4}-\d{2}", normalised[1])
+
+
+# --- month precision: the day is absent by structure -----------------------------------
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        ("2026-06", "2026-06", True),        # same month, same information
+        ("2026-06", "2026/06", True),        # same month, other spelling
+        ("2026-06", "2026-6", True),         # unpadded month
+        ("2026-06", "June 2026", True),      # month name form
+        ("2026-06", "2026-06-15", False),    # a day the truth never asserted
+        ("2026-06", "2026-06-01", False),    # ... including the one a default would invent
+        ("2026-06", "2026-06-30", False),    # ... and the one a month-end default would
+        ("2026-06-15", "2026-06", False),    # and the reverse direction
+        ("2026-06", "2026-07", False),       # wrong month
+        ("2026-06", "2025-06", False),       # wrong year
+    ],
+)
+def test_month_precision_never_matches_a_full_date(gold, pred, expected):
+    """Different precision is different information.
+
+    A month-precision truth must not be satisfied by an emission that names a day, and a
+    day-precision truth must not be satisfied by a bare month. Both directions are pinned
+    because the failure is symmetric and only one direction is exercised by today's data.
+    """
+    assert (
+        scorer.normalize("statement_month", gold) == scorer.normalize("statement_month", pred)
+    ) is expected

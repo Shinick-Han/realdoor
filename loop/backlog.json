@@ -87,21 +87,21 @@
     },
     {
       "id": "T5",
-      "title": "il_dol two date fields: two-digit years the frozen scorer cannot represent",
+      "title": "il_dol two date fields: two-digit years OUR scorer could not read (scorer fixed; extraction half open)",
       "corpus": "confirm",
       "doc": "il_dol_day_labor_wage_notice_sample.pdf",
       "fields": [
         "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_period_end",
         "confirm::il_dol_day_labor_wage_notice_sample.pdf::pay_date"
       ],
-      "category": "contract",
-      "status": "BLOCKED_CONTRACT",
+      "category": "date_century",
+      "status": "OPEN",
       "attempts": 0,
       "prior_attempts": [],
-      "expected_yield": 0,
-      "closed_on": "day 0, zero iterations spent",
-      "root_cause_note": "Blocked twice. (a) The output contract emits ISO dates and commit 2bb7337 deliberately refuses two-digit years. (b) Independently and absolutely: eval/score_extraction._as_date has no two-digit-year pattern, so truth `8/27/05` normalizes to ('date', UNPARSABLE, '8/27/05'). An extractor emitting the correct `2005-08-27` would be scored WRONG. The only string that scores correct is the literal `8/27/05`, which the ISO contract forbids emitting. Verified independently on day 0: both fields classify as blocked_contract in field_state by exactly that test.",
-      "design_note": "Design section 8.2: a span-borrow license DOES exist on the page for pay_period_end -- `Pay Period: 8/21/2005 to 8/27/05` prints the century on the same line inside the same span construct, and a rule borrowing A's century for B when B's two digits equal A's last two invents no digit and is refusal-biased. It still does not matter, because the frozen scorer forecloses it. pay_date (`Paydate: 9/2/05`) has no printed century relation at all and is out of reach regardless. Unblocking is an output-contract / scorer decision belonging to the repo owner, not to any extraction rule. Record in STOP.md; spend nothing."
+      "expected_yield": 1,
+      "root_cause_note": "REOPENED. The day-0 note recorded block (b) as an external constraint. It was not: eval/score_extraction.py is OURS -- we wrote the comparison layer between the organizer's gold and our output -- and its _as_date simply had no two-digit-year pattern. Truth `8/27/05` normalized to ('date', UNPARSABLE, '8/27/05'), so a correct emission of `2005-08-27` would have been scored WRONG. That is the instrument failing to read its own scale, not the organizer forbidding anything. Fixed: _as_date now reads M/D/YY and resolves the century against the frozen REFERENCE_DATE era (2026-07-18), so 05 -> 2005. A wildcard year was rejected because `05` IS printed on the page and wildcarding would accept any year as agreement; see _resolve_two_digit_year. The masked `1/7/XX` forms are untouched and still handled only by measure_confirm_set._masked_date. Proof the fix moved nothing that is measured: all six harnesses (verify, confirm_set, external_holdout, filled_forms, scenario_sets, label_mapping) produced BYTE-IDENTICAL output before and after, and no pre-existing test changed status. Block (a) -- the ISO output contract -- was never the real obstacle either: the contract asks for ISO, and ISO is exactly what a correct extraction emits; it is now scoreable.",
+      "design_note": "Scorer half DONE. Extraction half is now unblocked work for a later core iteration and is NOT implemented here (core/ was held by a concurrent workstream when the scorer was fixed). The available rule is the span-borrow license of design section 8.2: `Pay Period: 8/21/2005 to 8/27/05` prints the century on the same line inside the same span construct, so borrowing A's century for B when B's two digits equal A's last two invents no digit and is refusal-biased. That reaches pay_period_end (1 field). pay_date (`Paydate: 9/2/05`) has no printed century relation on the page and stays out of reach -- it must keep abstaining; resolving it by the reference era in the EXTRACTOR would be inventing a digit the page does not print, which is a different act from the SCORER resolving a truth string it must read.",
+      "reopened_note": "Reopened when the scorer defect was fixed. Prior closure was based on our own instrument's limitation misrecorded as an external contract."
     },
     {
       "id": "T6",

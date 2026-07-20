@@ -46,11 +46,26 @@ Python type of the value.
       * accepted input formats, normalised to ISO:
           YYYY-MM-DD, YYYY/MM/DD, YYYY-MM (month precision, kept as YYYY-MM),
           MM/DD/YYYY and M/D/YYYY  (US convention — see caveat),
+          MM/DD/YY and M/D/YY      (two-digit year — see century rule),
           MM-DD-YYYY, "July 10, 2026", "Jul 10 2026", "10 July 2026"
       * CAVEAT: slash dates are read US-style (month first). The gold is ISO, so this
         convention is only exercised by predictions. A prediction of "07/10/2026" matches
         gold "2026-07-10"; a prediction of "10/07/2026" is read as 2026-10-07 and FAILS.
         We accept that risk rather than guess per value.
+      * CENTURY RULE: a two-digit year resolves to the most recent year with that ending
+        that is not after REFERENCE_DATE (2026-07-18, contracts/FROZEN_CONSTANTS.md).
+        05 -> 2005, 26 -> 2026, 27 -> 1927. Rationale and the rejected wildcard-year
+        alternative are in ``_resolve_two_digit_year``. This is not leniency: it admits
+        exactly one year per value, and it is what lets the scorer READ truth strings that
+        real documents print ("8/27/05" on il_dol_day_labor_wage_notice_sample.pdf).
+        A year the page does not print at all (the masked "1/7/XX" form) stays UNPARSABLE
+        here and is handled only by scripts/measure_confirm_set._masked_date.
+      * MONTH PRECISION: "2026-06" and "July 2026" normalise to ("date", "2026-06") — a
+        payload one element shorter than a full date's ("date", "2026-06-15"). A month
+        matches only the same month; it never matches a full date in either direction.
+        Rationale and the rejected default-the-day / range-the-day alternatives are in
+        ``_as_date``. Real shape in this domain: gig statements and monthly benefit
+        records print only a month (statement_month, testdata/scenarios/scenario_truth).
       * an unparsable date string is returned as ("date", UNPARSABLE, original) and can
         only match an identical unparsable string.
 
@@ -213,6 +228,27 @@ def _as_date(value: Any) -> tuple:
     if m:
         y, mo, d = (int(g) for g in m.groups())
         return _iso(y, mo, d, raw)
+    # MONTH PRECISION ("2026-06", "2026/6", and the "July 2026" branch below). The day is
+    # absent BY STRUCTURE: this returns a two-element payload ``("date", "YYYY-MM")`` while
+    # every full date returns ``("date", "YYYY-MM-DD")``. Because equality is tuple
+    # equality, a month-precision value can only ever match another month-precision value
+    # for the same year and month. It can NOT match "2026-06-15", and "2026-06-15" can not
+    # match it -- different precision is different information, and the scorer reports that
+    # as disagreement rather than resolving it. This is the same discipline the two-digit
+    # year rule follows: the shape of the payload, not a comparison-time branch, is what
+    # makes the missing component unmatchable.
+    #
+    # Month precision is a real shape in this domain, not a degenerate one: gig statements
+    # and monthly benefit records routinely print only a month, and it is carried in the
+    # truth corpora today (statement_month in testdata/scenarios/scenario_truth.json).
+    #
+    # REJECTED: defaulting the absent day (to the 1st, or to the month end) and comparing as
+    # a full date. That manufactures agreement from a component nobody wrote -- "2026-06"
+    # would silently match "2026-06-01", an answer the truth never asserted. REJECTED also:
+    # treating the day as a range so any day in the month matches. That is the inverse
+    # error, accepting thirty different answers as one; a scorer that grades "2026-06-15"
+    # and "2026-06-28" both correct against "2026-06" is no longer measuring extraction.
+    # A missing component must stay missing.
     m = re.fullmatch(r"(\d{4})[-/](\d{1,2})", text)
     if m:
         y, mo = int(m.group(1)), int(m.group(2))
@@ -223,6 +259,10 @@ def _as_date(value: Any) -> tuple:
     if m:
         mo, d, y = (int(g) for g in m.groups())
         return _iso(y, mo, d, raw)
+    m = re.fullmatch(r"(\d{1,2})[-/](\d{1,2})[-/](\d{2})", text)  # US month first, "8/27/05"
+    if m:
+        mo, d, yy = (int(g) for g in m.groups())
+        return _iso(_resolve_two_digit_year(yy), mo, d, raw)
     m = re.fullmatch(r"([A-Za-z]+)\s+(\d{1,2})\s+(\d{4})", text)  # July 10 2026
     if m and m.group(1).casefold() in _MONTHS:
         return _iso(int(m.group(3)), _MONTHS[m.group(1).casefold()], int(m.group(2)), raw)
@@ -233,6 +273,40 @@ def _as_date(value: Any) -> tuple:
     if m and m.group(1).casefold() in _MONTHS:
         return ("date", f"{int(m.group(2)):04d}-{_MONTHS[m.group(1).casefold()]:02d}")
     return ("date", UNPARSABLE, raw.casefold())
+
+
+#: Year of ``REFERENCE_DATE`` (contracts/FROZEN_CONSTANTS.md — 2026-07-18). Duplicated as a
+#: literal rather than imported from ``logic.constants`` so this scorer stays runnable
+#: standalone (``python eval/score_extraction.py``, where ``logic`` is not on sys.path).
+#: ``test_two_digit_year_pivot_tracks_the_frozen_reference_date`` pins the two together.
+_REFERENCE_YEAR = 2026
+
+
+def _resolve_two_digit_year(yy: int) -> int:
+    """Resolve a two-digit year against the pack's frozen reference era.
+
+    ``8/27/05`` is genuinely ambiguous in the abstract (1905 or 2005), so the scorer has to
+    take a documented position. It takes this one: a two-digit year names the most recent
+    year with that ending that is not in the future relative to REFERENCE_DATE. 05 -> 2005,
+    26 -> 2026, 27 -> 1927. The justification is the scorer's own domain, not convenience —
+    every field it grades (pay_date, pay_period_*, application_date, document_date,
+    statement_month) is evidence of income that has already been earned, and a document
+    dated after the frozen reference date is not evidence of anything.
+
+    REJECTED: holding the year as a wildcard and comparing only month/day, the way
+    ``scripts/measure_confirm_set._masked_date`` treats "1/7/XX". That precedent does not
+    transfer. "XX" is a year the page genuinely does not print, so wildcarding it tests
+    everything the page actually asserts. "05" IS printed. Wildcarding it would throw away
+    printed evidence and accept ANY year -- 1905, 2105, 9999 -- as agreement, manufacturing
+    a match where none exists. The pivot admits exactly one year, so its only failure mode
+    is the safe direction: it can mark a correct answer wrong (were a document truly from
+    1905), never a wrong answer correct.
+
+    Note this deliberately does NOT touch the masked "XX" forms; those stay UNPARSABLE here
+    so that the confirm harness's wildcard path remains their only handler.
+    """
+    candidate = 2000 + yy
+    return candidate if candidate <= _REFERENCE_YEAR else 1900 + yy
 
 
 def _iso(year: int, month: int, day: int, raw: str) -> tuple:
