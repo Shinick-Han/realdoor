@@ -926,28 +926,34 @@ _DOC_TYPE_RE = re.compile(r"^(hh-\d+)_(d\d+)_(.+)$", re.IGNORECASE)
 
 
 def _arithmetic_enabled() -> bool:
-    """Is the arithmetic-verification path switched on? Off by default, like the label model.
+    """Is the arithmetic-verification path switched on? ON by default; `0` switches it off.
+
+    This flag shipped default-off while the path was unproven. It was promoted after the
+    promotion measurement: with it on, the pack stays 159/159 exact with bbox IoU 159/159,
+    the external six and the confirmation set both gain fields, label mapping on the 26
+    uploads and the wording hold-out is bit-identical, and `wrong` is 0 in every corpus
+    under all four flag combinations. `REALDOOR_ARITHMETIC=0` restores the old behaviour
+    exactly -- with it set, `core.verified` is never imported.
 
     Read through a function rather than captured at import so that a test can flip the
-    environment variable and see the change, and so that `core.verified` -- and with it the
-    whole identity search -- is never imported when the flag is off.
+    environment variable and see the change.
     """
     import os
 
-    return os.environ.get("REALDOOR_ARITHMETIC", "").strip() == "1"
+    return os.environ.get("REALDOOR_ARITHMETIC", "").strip() != "0"
 
 
 def _columns_enabled() -> bool:
-    """Is the column-header path switched on? Off by default, like the arithmetic flag.
+    """Is the column-header path switched on? ON by default; `0` switches it off.
 
-    Read through a function for the same two reasons: a test can flip the environment
-    variable and see the change, and `core.columns` is never imported when the flag is off,
-    so with it off this module's output is bit-identical to what it was before that file
-    existed.
+    Promoted from default-off alongside `REALDOOR_ARITHMETIC`, on the same measurement --
+    see `_arithmetic_enabled`. `REALDOOR_COLUMNS=0` restores the old behaviour exactly:
+    `core.columns` is never imported when the flag is off, so with it off this module's
+    output is bit-identical to what it was before that file existed.
     """
     import os
 
-    return os.environ.get("REALDOOR_COLUMNS", "").strip() == "1"
+    return os.environ.get("REALDOOR_COLUMNS", "").strip() != "0"
 
 
 def infer_document_type(pdf_path: str | Path) -> str:
@@ -1115,7 +1121,8 @@ def _scan_page(
                     label_words, header_words,
                 )
             # ------------------------------------------------------------------------
-            # Column headers (opt-in, `REALDOOR_COLUMNS=1`) -- see `core/columns.py`
+            # Column headers (on by default, `REALDOOR_COLUMNS=0` to disable) -- see
+            # `core/columns.py`
             # ------------------------------------------------------------------------
             # Last, and only when the three rules above produced **no value**. "No value"
             # includes an abstention, because `_resolve_value` records a run it located and
@@ -1920,7 +1927,7 @@ def extract_document(
                 found.setdefault(name, value)
 
     # ----------------------------------------------------------------------------------
-    # Arithmetic verification (opt-in, `REALDOOR_ARITHMETIC=1`)
+    # Arithmetic verification (on by default, `REALDOOR_ARITHMETIC=0` to disable)
     # ----------------------------------------------------------------------------------
     # Runs AFTER the label-anchored passes and may only fill fields they left empty. It runs
     # after rather than before because its physical bound is derived from values the label

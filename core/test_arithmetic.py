@@ -31,18 +31,18 @@ PACK = ROOT / "pack" / "synthetic_documents"
 # off the page's own header row, and when it is on, the arithmetic chain correctly never runs
 # for them and the assertions below have nothing to describe. Leaving the variable ambient
 # made this file's result depend on the shell it was run from, which is the one thing a
-# measurement may not do.
+# measurement may not do. Now that both flags default ON, pinning off means the literal `0`.
 @pytest.fixture()
 def flag_on(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("REALDOOR_ARITHMETIC", "1")
-    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
+    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
     yield
 
 
 @pytest.fixture()
 def flag_off(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
-    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
+    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
     yield
 
 
@@ -248,14 +248,25 @@ def test_grounding_refuses_an_index_that_names_a_different_word() -> None:
 # ─────────────────────────────────────────────── the flag, and what it must not move
 
 
-def test_flag_is_off_by_default(flag_off) -> None:
+def test_the_default_is_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Promoted from opt-in: with the variable unset the arithmetic path runs. The
+    promotion measurement is recorded in `core.extract._arithmetic_enabled`."""
+    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    assert ex._arithmetic_enabled() is True
+
+
+def test_the_explicit_zero_switches_it_off(flag_off) -> None:
     assert ex._arithmetic_enabled() is False
 
 
-@pytest.mark.parametrize("value", ["0", "", "true", "yes", "2"])
-def test_only_the_literal_one_switches_it_on(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("value", ["0", "0 ", " 0", "1", "", "true", "yes", "2"])
+def test_only_the_literal_zero_switches_it_off(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Off has to be said out loud. Anything that is not the literal `0` leaves the shipped
+    default in force, so a typo in the variable cannot silently turn the path off."""
     monkeypatch.setenv("REALDOOR_ARITHMETIC", value)
-    assert ex._arithmetic_enabled() is False
+    assert ex._arithmetic_enabled() is (value.strip() != "0")
 
 
 def _view_signature(pdf: Path, document_type: str) -> str:
@@ -272,8 +283,8 @@ def test_the_flag_moves_nothing_on_the_pack(pdf: Path, monkeypatch: pytest.Monke
     path may not touch it in either direction -- every field there is already answered by the
     label geometry, so there is no blank for it to fill and it must stay silent."""
     document_type = ex.infer_document_type(pdf)
-    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     off = _view_signature(pdf, document_type)
     monkeypatch.setenv("REALDOOR_ARITHMETIC", "1")
     on = _view_signature(pdf, document_type)

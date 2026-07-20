@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Read the column headers the document prints about itself.
 
-Opt-in behind ``REALDOOR_COLUMNS=1``. With the flag off nothing in this module is imported
-and `core.extract` behaves bit-for-bit as it did before it existed.
+On by default; ``REALDOOR_COLUMNS=0`` switches it off. With the flag off nothing in this
+module is imported and `core.extract` behaves bit-for-bit as it did before it existed. It
+shipped opt-in and was promoted after the measurement recorded in
+`core.extract._arithmetic_enabled`: zero wrong values in every corpus under all four flag
+combinations, and the pack bit-identical.
 
 WHY THIS EXISTS
 ---------------

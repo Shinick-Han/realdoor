@@ -20,17 +20,21 @@ EXTERNAL = ROOT / "testdata" / "external_raw"
 PACK = ROOT / "pack" / "synthetic_documents"
 
 
+# The flags default ON now, so "off" has to be said out loud: only the literal `0`
+# disables a path. The arithmetic flag is pinned off in both fixtures for the same reason
+# it always was -- these tests measure what the *column* path does, so what the arithmetic
+# chain would add has to be held fixed.
 @pytest.fixture()
 def flag_on(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("REALDOOR_COLUMNS", "1")
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     yield
 
 
 @pytest.fixture()
 def flag_off(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     yield
 
 
@@ -42,10 +46,21 @@ def _fields(pdf: Path, document_type: str) -> dict:
 # ───────────────────────────────────────────────────────────────── the flag itself
 
 
-@pytest.mark.parametrize("value", ["0", "", "true", "yes", "2", "1 "])
-def test_only_the_literal_one_switches_it_on(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_default_is_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Promoted from opt-in: with the variable unset the column path runs. The promotion
+    measurement is recorded in `core.extract._arithmetic_enabled`."""
+    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
+    assert ex._columns_enabled() is True
+
+
+@pytest.mark.parametrize("value", ["0", "0 ", " 0", "1", "", "true", "yes", "2", "1 "])
+def test_only_the_literal_zero_switches_it_off(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Off has to be said out loud. Anything that is not the literal `0` leaves the shipped
+    default in force, so a typo in the variable cannot silently turn the path off."""
     monkeypatch.setenv("REALDOOR_COLUMNS", value)
-    assert ex._columns_enabled() is (value.strip() == "1")
+    assert ex._columns_enabled() is (value.strip() != "0")
 
 
 PACK_SAMPLES = sorted(PACK.rglob("*.pdf"))[:6]
@@ -57,8 +72,8 @@ def test_the_flag_moves_nothing_on_the_pack(pdf: Path, monkeypatch: pytest.Monke
     there is already answered by the label geometry, so this path finds no blank to fill and
     must leave the document byte-for-byte as it was."""
     document_type = ex.infer_document_type(pdf)
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
-    monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
+    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
     off = json.dumps(ex.extract_document(pdf, document_type=document_type), sort_keys=True)
     monkeypatch.setenv("REALDOOR_COLUMNS", "1")
     on = json.dumps(ex.extract_document(pdf, document_type=document_type), sort_keys=True)
@@ -279,23 +294,24 @@ def test_no_header_row_at_all_abstains() -> None:
      ("ext_unc.pdf", "pay_stub"), ("ext_les.pdf", "pay_stub"),
      ("ext_nydol.pdf", "benefit_letter"), ("ext_va.pdf", "employment_letter")],
 )
-def test_flag_off_is_byte_for_byte_the_old_behaviour(
+def test_the_default_is_byte_for_byte_the_explicit_on(
     file_name: str, document_type: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Not "the same values" -- the same bytes. The whole document view is compared, so a
-    changed note, box, page or certainty would fail this too."""
-    monkeypatch.delenv("REALDOOR_ARITHMETIC", raising=False)
+    """Not "the same values" -- the same bytes. An unset variable and an explicit `1` must
+    be the same configuration, so the shipped default is exactly the measured one and there
+    is no third, accidental state between on and off."""
+    monkeypatch.setenv("REALDOOR_ARITHMETIC", "0")
     monkeypatch.delenv("REALDOOR_COLUMNS", raising=False)
-    off = json.dumps(
+    default = json.dumps(
         ex.extract_document(EXTERNAL / file_name, document_type=document_type),
         sort_keys=True,
     )
-    monkeypatch.setenv("REALDOOR_COLUMNS", "0")
-    also_off = json.dumps(
+    monkeypatch.setenv("REALDOOR_COLUMNS", "1")
+    explicit_on = json.dumps(
         ex.extract_document(EXTERNAL / file_name, document_type=document_type),
         sort_keys=True,
     )
-    assert off == also_off
+    assert default == explicit_on
 
 
 def test_the_recovered_fields_are_abstentions_with_the_flag_off(flag_off) -> None:
