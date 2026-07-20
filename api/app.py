@@ -472,6 +472,224 @@ def ask(payload: dict, x_session_id: str | None = Header(default=None)) -> dict:
 
 
 # ── 패킷 내보내기 (데모 5단계) ─────────────────────────────────────────
+def _fmt_value(value) -> str:
+    """리포트가 든 값을 사람이 읽을 표기로. 2166.0 → 2166, 나머지는 그대로."""
+    if value is None:
+        return ""
+    if isinstance(value, float) and value == int(value):
+        return str(int(value))
+    return str(value)
+
+
+def _packet_summary_html(rep: dict, originals: dict) -> str:
+    """패킷의 표지 — 사람이 읽는 한 장.
+
+    패킷의 나머지(두 JSON)는 사무소의 검토 도구를 위한 것이고, 지금까지 그 사실을
+    아무 데도 적지 않았다. 이 파일이 그 공백을 메운다: 패킷이 **누구에게** 가는
+    문서인지 첫 줄에 말하고, 사람이 읽을 수 있는 형태로 프로필·공백·확인 내역을
+    담는다.
+
+    렌더링 규칙 셋:
+      * `rep` 에 실린 값만 싣는다 — 정정된 값 포함, 서버가 지금 알고 있는 그대로.
+        정정 이전의 기계 판독값만은 `rep` 에 없으므로 세션의 originals 스냅샷에서
+        온다. 정정은 증거 **옆의 주석**이지 증거의 변경이 아니다 — 원본 문서는
+        재렌더링되지 않고, 그 경계를 본문이 한 줄로 말한다.
+      * 5단계 체크리스트가 이미 렌더하는 문장(`rep["plain"]["checklist"]`)을 그대로
+        재사용한다. 같은 공백을 두 벌의 문장으로 설명하면 언젠가 갈라진다.
+      * 자기완결: 인라인 CSS만, 외부 리소스 없음, JS 없음. 패킷은 영원히 오프라인로
+        열려야 한다.
+      * 판정 어휘 금지 목록(eval/test_no_decision.py)의 토큰은 본문 어디에도 쓰지
+        않는다. 결정을 이름으로 부르지 않고 "the person who decides" 라고만 부른다.
+    """
+    from html import escape
+
+    from api.plain import DOC_NAMES
+
+    hid = escape(str(rep.get("household_id", "")))
+    tally = rep.get("confirmation") or {}
+    plain_checklist = (rep.get("plain") or {}).get("checklist") or {}
+
+    # ── the profile, one table per document ─────────────────────────────
+    doc_sections: list[str] = []
+    for doc in rep.get("documents", []):
+        doc_id = str(doc.get("document_id", ""))
+        name = DOC_NAMES.get(str(doc.get("document_type", "")),
+                             str(doc.get("document_type", "document")).replace("_", " "))
+        title = name[:1].upper() + name[1:]
+        dated = f" (dated {escape(str(doc.get('document_date')))})" if doc.get("document_date") else ""
+        rows: list[str] = []
+        for f in doc.get("fields", []):
+            field_name = escape(str(f.get("field", "")).replace("_", " "))
+            value = f.get("value")
+            kind = f.get("evidence_kind")
+            if value is None:
+                where = "&mdash;"
+                note = escape(str(f.get("notes") or "")) or "nothing usable was found on the page"
+                standing = f"not read &mdash; the machine took no value here ({note})"
+                shown = "&mdash;"
+            else:
+                page = f.get("page")
+                box = "source box recorded" if f.get("bbox") else "no source box on file"
+                where = f"page {escape(str(page))} &middot; {box}" if page else box
+                shown = escape(_fmt_value(value))
+                if kind == "corrected_by_renter":
+                    snapshot = originals.get((doc_id, str(f.get("field"))))
+                    machine = _fmt_value(snapshot.get("value")) if snapshot else ""
+                    if machine:
+                        standing = (f"machine read {escape(machine)}; "
+                                    f"applicant corrected to {escape(_fmt_value(value))}")
+                    else:
+                        standing = "corrected by the applicant"
+                elif kind == "confirmed_by_renter":
+                    standing = "machine-read; confirmed by the applicant"
+                else:
+                    standing = "machine-read; not yet checked by a person"
+            rows.append(
+                f"<tr><th scope=\"row\">{field_name}</th><td>{shown}</td>"
+                f"<td>{where}</td><td>{standing}</td></tr>"
+            )
+        doc_sections.append(
+            f"<h3>{escape(title)} &mdash; {escape(str(doc.get('file_name', '')))}{dated}</h3>\n"
+            "<table><thead><tr><th scope=\"col\">Value</th><th scope=\"col\">As it stands</th>"
+            "<th scope=\"col\">Where it came from</th><th scope=\"col\">Standing</th></tr></thead>"
+            f"<tbody>{''.join(rows)}</tbody></table>"
+        )
+
+    # ── what is still open: the step-5 checklist wording, verbatim ──────
+    open_items: list[str] = []
+    for item in rep.get("checklist", []):
+        if item.get("state") == "present":
+            continue
+        wording = plain_checklist.get(str(item.get("item_id", ""))) or {}
+        headline = escape(str(wording.get("headline") or item.get("label") or ""))
+        body = escape(str(wording.get("body") or item.get("detail") or ""))
+        action = escape(str(wording.get("action") or ""))
+        detail = escape(str(item.get("detail") or ""))
+        block = [f"<h3>{headline}</h3>", f"<p>{body}</p>"]
+        if action:
+            block.append(f"<p><strong>Next step:</strong> {action}</p>")
+        if detail:
+            block.append(f"<p class=\"machine\">On the record: {detail}</p>")
+        open_items.append("\n".join(block))
+    if open_items:
+        gaps = "\n".join(open_items)
+    else:
+        # The same sentence step 5 shows when the list is clear.
+        gaps = "<p>Nothing. Every required item is present and current.</p>"
+
+    # ── the tally, in a sentence rather than an exam mark ───────────────
+    seen = int(tally.get("confirmed", 0)) + int(tally.get("corrected", 0))
+    readable = int(tally.get("fields", 0)) - int(tally.get("not_read", 0))
+    tally_text = (
+        f"The applicant checked {seen} of the {readable} values the machine read: "
+        f"{tally.get('confirmed', 0)} value(s) confirmed as read correctly and "
+        f"{tally.get('corrected', 0)} value(s) corrected. "
+        f"The other {tally.get('not_confirmed', 0)} value(s) still carry only the machine "
+        "reading. Checking is optional and an unchecked value is not an error &mdash; it "
+        "travels marked as read by the machine and not yet confirmed by a person, and the "
+        "reviewer can weigh it either way."
+    )
+    if tally.get("not_read"):
+        tally_text += (f" {tally.get('not_read', 0)} value(s) could not be read at all; "
+                       "those need a person to supply them.")
+
+    # ── abstentions: what was not said, and why ─────────────────────────
+    abstention_rows: list[str] = []
+    for entry in rep.get("abstentions", []):
+        about = escape(str(entry.get("about", "")))
+        reason = escape(str(entry.get("reason", "")))
+        fix = escape(str(entry.get("what_would_resolve_it", "")))
+        abstention_rows.append(
+            f"<li><strong>{about}</strong>: {reason}"
+            + (f" <em>What would clear it: {fix}</em>" if fix else "") + "</li>"
+        )
+    abstentions = ("<ul>" + "".join(abstention_rows) + "</ul>") if abstention_rows else \
+        "<p>None for this file. Every figure this sheet carries could be read and traced.</p>"
+
+    status = str(rep.get("readiness_status", ""))
+    if status == "READY_TO_REVIEW":
+        status_line = ("READY_TO_REVIEW &mdash; a person can start reading this file. "
+                       "That says nothing about what they will say.")
+    else:
+        status_line = ("NEEDS_REVIEW &mdash; something in this file is still open: "
+                       "missing, out of date, or not settled. The open points are "
+                       "listed below. This is about the paperwork, not the person.")
+
+    ruleset = escape(str(rep.get("ruleset_version", "")))
+    reference = escape(str(rep.get("reference_date", "")))
+    engine = escape(str(rep.get("engine_version", "")))
+    generated = escape(str(rep.get("generated_at", "")))
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Readiness packet cover sheet &mdash; {hid}</title>
+<style>
+  body {{ font-family: Georgia, 'Times New Roman', serif; color: #1a1a1a; margin: 2rem auto;
+         max-width: 46rem; padding: 0 1rem; line-height: 1.5; }}
+  h1 {{ font-size: 1.5rem; border-bottom: 3px solid #1a1a1a; padding-bottom: .4rem; }}
+  h2 {{ font-size: 1.15rem; margin-top: 2rem; border-bottom: 1px solid #999; padding-bottom: .2rem; }}
+  h3 {{ font-size: 1rem; margin-top: 1.2rem; }}
+  table {{ border-collapse: collapse; width: 100%; font-size: .85rem;
+           font-family: Helvetica, Arial, sans-serif; }}
+  th, td {{ border: 1px solid #bbb; padding: .3rem .5rem; text-align: left;
+            vertical-align: top; }}
+  thead th {{ background: #eee; }}
+  .who {{ font-size: 1.02rem; }}
+  .machine {{ font-family: monospace; font-size: .78rem; color: #444; }}
+  .boundary {{ border-left: 4px solid #1a1a1a; padding: .5rem .8rem; background: #f4f4f4; }}
+  footer {{ margin-top: 2.5rem; border-top: 1px solid #999; padding-top: .8rem;
+            font-size: .85rem; color: #333; }}
+  @media print {{ body {{ margin: 0; max-width: none; }} a {{ color: inherit; }} }}
+</style>
+</head>
+<body>
+<h1>Readiness packet &mdash; cover sheet</h1>
+<p class="who"><strong>Who this packet is for.</strong> It goes to the reviewing housing
+professional at the housing office &mdash; the person who decides on the application. The
+applicant prepared it with RealDoor and carries it to that person. The two JSON files
+beside this sheet are for the office&rsquo;s review tooling. The applicant was never meant
+to read them. This sheet says, in plain words, what a person needs from them.</p>
+<p><strong>What this sheet is not.</strong> It is not a determination of any kind. It does
+not say what should happen with the application. The person who decides makes that call,
+with checks that are not in these papers.</p>
+<p class="machine">File {hid} &middot; generated {generated} &middot; {status_line}</p>
+
+<h2>The profile as it stands</h2>
+<p>Every value below was read from a page of the documents in this packet. Each row says
+which document and page it came from; the exact source box on that page is recorded in
+readiness_report.json. Where the applicant corrected a reading, the row shows both the
+machine&rsquo;s reading and the applicant&rsquo;s correction.</p>
+<p class="boundary">A correction is a note beside the evidence, never a change to it. The
+original documents in this packet are not re-rendered or modified in any way &mdash; what
+the applicant corrected is this tool&rsquo;s reading of the page, not the page itself.</p>
+{''.join(doc_sections)}
+
+<h2>What is still missing, expired, or undatable</h2>
+{gaps}
+
+<h2>What a person has checked</h2>
+<p>{tally_text}</p>
+
+<h2>Things this tool did not say</h2>
+<p>When this tool could not read, date, or trace a figure, it said so instead of
+guessing. Each entry below is one of those refusals, with its reason.</p>
+{abstentions}
+
+<footer>
+<p>Ruleset {ruleset} &middot; reference date {reference} &middot; engine {engine}. The
+same versions appear in the machine-readable files, so the office can check that this
+sheet and the records agree.</p>
+<p>Nothing in this packet was sent anywhere by RealDoor. Sharing it is the
+applicant&rsquo;s choice, made outside the tool.</p>
+</footer>
+</body>
+</html>
+"""
+
+
 @app.post("/api/packet/{household_id}")
 def packet(household_id: str, x_session_id: str | None = Header(default=None)) -> Response:
     """신청자가 통제하는 준비 패킷. **어디에도 자동 전송되지 않는다.**"""
@@ -485,6 +703,10 @@ def packet(household_id: str, x_session_id: str | None = Header(default=None)) -
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        # 표지가 맨 앞에 온다. 사람이 이 ZIP 을 열면 처음 보는 파일이 사람을 위한
+        # 파일이어야 한다. 두 JSON 은 아래에 **바이트 하나 바뀌지 않고** 그대로 있다 —
+        # 이 표지는 추가이지 재구성이 아니다 (api/test_packet_summary.py 가 잰다).
+        z.writestr("packet_summary.html", _packet_summary_html(rep, s.originals))
         z.writestr("readiness_report.json",
                    json.dumps(rep, ensure_ascii=False, indent=1, default=str))
         # 활동 기록을 **따로** 싣는다. 리포트 안에도 있지만, 이 파일을 열어 본 사람이
@@ -496,22 +718,31 @@ def packet(household_id: str, x_session_id: str | None = Header(default=None)) -
                                "confirmation": rep.get("confirmation"),
                                "activity_log": rep.get("activity_log")},
                               ensure_ascii=False, indent=1, default=str))
-        tally = rep.get("confirmation") or {}
+        # README 는 주소록이다. 첫 줄이 패킷 전체의 수신인을 말하고, 그 다음은 파일마다
+        # 한 줄씩 "누구를 위한 파일인지"다. 확인 집계는 표지(packet_summary.html)로
+        # 옮겨 갔다 — 집계는 사람이 읽는 문서의 일이고, 이제 그 문서가 생겼다.
         z.writestr("README.txt",
-                   "RealDoor readiness packet\n"
-                   "=========================\n\n"
-                   "This packet describes what your documents show and what is still\n"
-                   "missing or expired. It is NOT an eligibility decision. A qualified\n"
+                   "This packet is for the person at the housing office who decides\n"
+                   "on the application. You, the applicant, carry it to them.\n\n"
+                   "RealDoor readiness packet - what each file is for\n"
+                   "=================================================\n\n"
+                   "packet_summary.html    For you and the reviewer - open this one.\n"
+                   "                       It is the cover sheet: what the documents\n"
+                   "                       show, what a person checked, and what is\n"
+                   "                       still open, on one printable page.\n\n"
+                   "readiness_report.json  For the office's review tooling. You do\n"
+                   "                       not need to open it.\n\n"
+                   "activity_log.json      For the office's review tooling. You do\n"
+                   "                       not need to open it. It lists the actions\n"
+                   "                       taken in this session, in order, with the\n"
+                   "                       rule versions that applied. It holds no\n"
+                   "                       document contents and no typed values.\n\n"
+                   "documents/             The documents themselves, exactly as they\n"
+                   "                       were read. A correction you made is a note\n"
+                   "                       in the files above, never a change to a\n"
+                   "                       document - no document here was altered.\n\n"
+                   "This packet is NOT an eligibility decision. A qualified\n"
                    "housing professional makes that determination.\n\n"
-                   "What a person checked\n"
-                   "---------------------\n"
-                   f"  {tally.get('confirmed', 0)} value(s) confirmed as read correctly\n"
-                   f"  {tally.get('corrected', 0)} value(s) corrected by the renter\n"
-                   f"  {tally.get('not_confirmed', 0)} value(s) still carry only the machine reading\n"
-                   f"  {tally.get('not_read', 0)} value(s) could not be read at all\n\n"
-                   "activity_log.json lists the actions taken in this session, in order.\n"
-                   "It records what was done and which rule versions applied. It does not\n"
-                   "record the contents of any document or any value that was typed.\n\n"
                    "Nothing here has been sent to any property or provider. Sharing it\n"
                    "is your choice.\n")
         for doc in rep.get("documents", []):

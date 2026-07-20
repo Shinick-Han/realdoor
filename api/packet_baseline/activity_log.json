@@ -1,0 +1,26 @@
+{
+ "household_id": "HH-001",
+ "confirmation": {
+  "confirmed": 0,
+  "corrected": 0,
+  "not_confirmed": 26,
+  "not_read": 0,
+  "fields": 26,
+  "seen_by_a_person": 0
+ },
+ "activity_log": {
+  "notice": "Actions only. This log never holds the contents of a document, a file name, or a value you typed.",
+  "ruleset_version": "pack-v1/2026-05-01",
+  "engine_version": "ENGINE_VERSION",
+  "counts": {
+   "session_created": 1
+  },
+  "events": [
+   {
+    "n": 1,
+    "action": "session_created",
+    "what_happened": "This session was created"
+   }
+  ]
+ }
+}

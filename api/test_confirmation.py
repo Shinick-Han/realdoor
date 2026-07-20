@@ -385,7 +385,7 @@ def test_the_packet_carries_the_log_and_not_the_document_text(client, session):
         names = z.namelist()
         assert "activity_log.json" in names
         log = json.loads(z.read("activity_log.json").decode("utf-8"))
-        readme = z.read("README.txt").decode("utf-8")
+        summary = z.read("packet_summary.html").decode("utf-8")
 
     assert log["confirmation"]["confirmed"] == 1
     assert [e["action"] for e in log["activity_log"]["events"]] == \
@@ -393,7 +393,8 @@ def test_the_packet_carries_the_log_and_not_the_document_text(client, session):
     # 문서 원문은 기록에 없다. (PDF 원본은 세입자 자신의 패킷이므로 documents/ 에 따로 있다.)
     blob = json.dumps(log, ensure_ascii=False)
     assert str(read["value"]) not in blob
-    assert "1 value(s) confirmed as read correctly" in readme
+    # 확인 집계는 사람이 읽는 파일 — 표지 — 가 문장으로 말한다.
+    assert "1 value(s) confirmed as read correctly" in summary
 
 
 def test_the_packet_says_how_much_is_still_unchecked(client, session):
@@ -401,9 +402,9 @@ def test_the_packet_says_how_much_is_still_unchecked(client, session):
     눈을 거치지 않았는지는 그 사람에게도 전달돼야 한다."""
     r = client.post(f"/api/packet/{HH}", headers=_h(session))
     with zipfile.ZipFile(io.BytesIO(r.content)) as z:
-        readme = z.read("README.txt").decode("utf-8")
+        summary = z.read("packet_summary.html").decode("utf-8")
     tally = _report(client, session)["confirmation"]
-    assert f"{tally['not_confirmed']} value(s) still carry only the machine reading" in readme
+    assert f"{tally['not_confirmed']} value(s) still carry only the machine reading" in summary
 
 
 # ── 판정 어휘는 한 글자도 늘어나지 않았다 ──────────────────────────────────

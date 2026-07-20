@@ -4484,6 +4484,17 @@
 
     root.appendChild(h("h2", { text: "Take your packet" }));
     root.appendChild(h("div", { class: "callout" }, [
+      /* Who the packet is for, said before the button that produces it. The packet is
+       * addressed to the person at the housing office who decides; the renter carries it.
+       * The two JSON files inside exist for that office's tooling — without this sentence,
+       * a renter who opens the ZIP meets machine files with no word about why. The cover
+       * sheet inside (packet_summary.html) opens with the same statement, so the screen
+       * and the file cannot tell two different stories. */
+      h("p", null, [
+        "This packet is the file you hand to the housing office. Inside is a cover sheet a person " +
+        "can read, plus records in machine form that their systems can check. You do not need to " +
+        "open the technical files."
+      ]),
       h("p", null, [
         h("strong", { text: "Nothing is sent anywhere. " }),
         "This button writes a file to your own device and nothing else. RealDoor does not transmit " +

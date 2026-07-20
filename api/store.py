@@ -62,6 +62,9 @@ ENGINE_SOURCES = (
     ROOT / "core/render.py",
     ROOT / "ocr/ocr_extract.py",
     ROOT / "core/label_llm.py",
+    # 임베디드 이미지 영역 OCR(REALDOOR_OCR_WORDS)의 소스. 캐시 키는 플래그 상태를 담지
+    # 않으므로(루프 README 함정 1), 이 파일이 바뀌면 캐시된 추출은 낡은 코드의 산물이다.
+    ROOT / "core/ocr_words.py",
 )
 
 _ENGINE_SHA: str | None = None
