@@ -1064,3 +1064,26 @@ ul.plain li { margin-bottom: .35rem; }
 @media (prefers-reduced-motion: no-preference) {
   .evidence-box { transition: background-color .12s ease, border-color .12s ease; }
 }
+
+/* ── VARIANT B (trial): A + spatial hierarchy ──────────────────────────────── */
+:root{ --display: Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif; }
+.wordmark{ font-family:var(--display); font-size:1.55rem; font-weight:600; letter-spacing:0; }
+.screen h1{ font-family:var(--display); font-weight:600; letter-spacing:-.012em; line-height:1.18; }
+.screen h2, .example-offer h2, .ask-anywhere h2{ font-family:var(--display); font-weight:600; }
+.notice{ font-size:.78rem; color:var(--ink-soft); background:transparent; border:0; border-left:2px solid var(--line); }
+body{ line-height:1.62; }
+.lede{ font-size:1.06rem; }
+
+/* nesting: the inner callout loses its box and keeps only its rule */
+.example-offer .callout,
+.callout{ background:transparent; border:0; border-left:3px solid currentColor; border-radius:0;
+          padding-left:1rem; margin-left:0; }
+.callout--warn{ color:var(--warn); }
+.callout--warn > *{ color:var(--ink); }
+/* the outer panel carries the frame, and pays for it with room */
+.example-offer{ border:1px solid var(--line); border-radius:var(--radius); padding:1.6rem 1.7rem; }
+/* breathing room between the big moves of the page */
+.screen h1{ margin-bottom:.55em; }
+.screen > * + *{ margin-top:1.15rem; }
+/* the step rail stops being a coloured bar and becomes type */
+.steps a[aria-current="step"], .steps [aria-current="step"]{ font-weight:700; }

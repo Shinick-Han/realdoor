@@ -159,10 +159,29 @@
               "and it is not an eligibility outcome; it is a list of what to fix."
     }
   };
+  /* The three comparison outcomes, in the calculation panel's own precise words. Step 4's
+   * calculation panel and step 6's summary row render these verbatim, next to the formula
+   * and the threshold figure they describe, and the keyboard journey asserts the exact
+   * phrase — they must not drift. */
   var COMPARISON = {
     below_or_equal: "The annualized amount is at or below the frozen 60% threshold for this household size.",
     above: "The annualized amount is above the frozen 60% threshold for this household size.",
     no_frozen_threshold: "No frozen threshold applies to this figure, so no comparison is made."
+  };
+  /* Plain sentences for the same three outcomes, used only when a bare token arrives as
+   * the *entire* answer to a typed question. There the precise sentence has no formula or
+   * threshold figure beside it — "annualized", "frozen" and "threshold" are our words, not
+   * the reader's. What a person needs to be told is which two numbers were compared, and
+   * that comparing them is not a decision about them. The API still sends the token
+   * unchanged; only the ask screen rewords what it renders. */
+  var COMPARISON_PLAIN = {
+    below_or_equal: "Your yearly income figure is at or below the income limit for your household size. " +
+                    "That is a comparison of two numbers — it is not a decision about you.",
+    above: "Your yearly income figure is above the income limit for your household size. " +
+           "That is a comparison of two numbers — it is not a decision about you, and it is not a refusal. " +
+           "A qualified housing worker decides, using checks this service does not hold.",
+    no_frozen_threshold: "This service holds no published limit for a household of that size, so it makes " +
+                         "no comparison. A housing worker can tell you which limit applies."
   };
   var STATE_WORDS = {
     present:    { word: "Present",    glyph: "✓" },
@@ -2784,6 +2803,27 @@
     if (prefixMatch) {
       statusPrefix = prefixMatch[1];
       body = body.slice(prefixMatch[0].length);
+    }
+
+    /* The whole answer is sometimes a single enum token and nothing else. Asked "do i make
+     * too much money for the apartment?" this panel rendered, as its entire answer body:
+     *
+     *     below_or_equal
+     *
+     * The one place the product invites somebody to use their own words, it replied in
+     * compiler output. The token is not a mistake in the API — `below_or_equal` is the
+     * literal expected answer in the organizer's own qa_gold, so the response must keep
+     * sending it and the scorer must keep seeing it. What must change is the sentence a
+     * person reads. The token is not dropped: it is moved to Technical details below,
+     * beside the response kind, where the reader who wants it can still find it.
+     *
+     * Narrow on purpose: only a body that is *entirely* a known comparison token is
+     * rewritten. An answer that merely contains one, or that opens with a real sentence,
+     * is passed through exactly as the API sent it. */
+    var enumOnly = body.trim();
+    if (Object.prototype.hasOwnProperty.call(COMPARISON_PLAIN, enumOnly)) {
+      statusPrefix = statusPrefix || enumOnly;
+      body = COMPARISON_PLAIN[enumOnly];
     }
 
     /* The renter-facing sentence for this response kind, written in api/plain.py and
