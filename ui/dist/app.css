@@ -18,30 +18,36 @@
   --line:       #e5e5e7;   /* hairline: card + row separators (decorative) */
   --line-strong:#86868b;   /* control borders — 3.6:1 on white for SC 1.4.11 */
 
-  /* Near-monochrome, with RealPage's orange kept as a small SPARK — not the UI's colour.
-     The interactive family is INK, so a screen reads black-on-white and calm; orange
-     survives only where it quietly signals identity/state (the active-tab underline, a
-     thin brand rule). Two duties, so contrast is never a matter of taste:
-       · --accent (graphite, = --ink) is the INTERACTIVE colour — link text and primary
-         fill. 16.9:1 on white and white on it 16.9:1, so links, dark "black-pill" CTAs
-         and filled marks all clear AA with room to spare. Every interactive text/fill
-         pair below reads --accent, so they turn dark together from this one line.
-       · --accent-bright (#F2623C, the brand orange) is the SPARK — the active page-tab
-         underline and the thin brand top/left rules, and nothing a word rests on. It is
-         3.19:1 on white: clears the 3:1 UI-component floor, never used as text. */
-  --accent:      #1d1d1f;  /* interactive INK — link text + primary fill. On white 16.9:1; white on it 16.9:1 */
+  /* Near-monochrome, with RealPage's COOL gradient kept as a small SPARK — not the UI's
+     colour. The interactive family is INK, so a screen reads black-on-white and calm; the
+     cool sweep survives only where it quietly signals identity/state (the active-tab
+     underline, a thin brand top-rule). Two duties, so contrast is never a matter of taste:
+       · --accent (graphite, = --ink) is the INTERACTIVE colour — link text stays this dark
+         ink. 16.9:1 on white and white on it 16.9:1, so links and filled marks clear AA
+         with room to spare. Every interactive text/link pair below reads --accent, so they
+         turn dark together from this one line.
+       · --brand-gradient (blue→violet→magenta) is the SPARK — DECORATIVE only: the active
+         page-tab underline and the thin brand top-rules (ask-dock / ask-anywhere). Nothing
+         a word rests on, so its vivid magenta end is free (graphic ≥3:1, never text).
+       · --brand-hairline (#7b2fd6 violet, 6.52:1 on white) is the SPARK on vertical
+         left-rules, where a gradient reads awkward on a 1-axis hairline. Graphic, ≥3:1.
+       · --brand-cta (blue→indigo) fills the primary CTA — dark enough that white text is
+         AA at every point (lightest point #1e40c8 → white 8.0:1). */
+  --brand-gradient: linear-gradient(100deg, #1f52e0, #7b2fd6, #e0219a); /* DECORATIVE sweep — hairlines/underlines only, never under text */
+  --brand-hairline: #7b2fd6;   /* violet drawn from the gradient — solid, for vertical left-rules (6.52:1 on white ≥ 3:1 UI floor) */
+  --brand-cta:       linear-gradient(135deg, #1e40c8, #5b2fb0); /* CTA fill — white text AA throughout (lightest #1e40c8 → 8.0:1) */
+  --brand-cta-hover: linear-gradient(135deg, #2a4ad4, #6a3ac0); /* CTA hover — a subtle cool lift (white text ≥ 6.9:1) */
+  --accent:      #1d1d1f;  /* interactive INK — link text. On white 16.9:1; white on it 16.9:1 */
   --accent-ink:  #ffffff;  /* white on --accent: 16.9:1 */
-  --accent-strong:#363639; /* primary-button hover — one step LIGHTER (a lift). White on it 12:1 */
-  --accent-bright:#f2623c; /* RealPage brand orange — THE SPARK (3.19:1): active-tab underline + thin brand rules. Never text. */
-  --accent-soft:  rgba(29, 29, 31, .06);   /* neutral hover wash + input focus-ring glow (was warm; now cool/restrained) */
+  --accent-strong:#363639; /* one step LIGHTER (a lift): dark filled-control hover. White on it 12:1 */
+  --accent-soft:  rgba(29, 29, 31, .06);   /* neutral hover wash + input focus-ring glow (cool/restrained) */
   --accent-softer:rgba(29, 29, 31, .045);  /* fainter neutral still: the inline editor's field */
-  --wash-accent:  #fdf3ef;                 /* solid faint-warm fill for alert/callout — ink-soft on it 4.65:1 */
+  --wash-accent:  #f5f5fd;                 /* solid faint-COOL fill for alert/callout — ink-soft on it 4.68:1 */
 
-  /* Warm ring, in the same orange family as the accent: it carries BOTH the focus
-     outline AND the "active / pointing" highlight on the evidence boxes. Kept one notch
-     redder/darker than --accent so the active-box highlight stays distinct from the
-     accent-orange border it sits on. */
-  --focus:      #a8380a;   /* on white 6.49:1 — warm rust, in the orange family */
+  /* Cool ring, drawn from the gradient's indigo: it carries BOTH the focus outline AND the
+     "active / pointing" highlight on the evidence boxes. A deep indigo (not the brighter
+     gradient stops) so the ring stays distinct where it sits beside the cool spark. */
+  --focus:      #3730a3;   /* on white 9.9:1 — deep indigo, cool, clearly visible ≥ 3:1 */
 
   /* Semantic states — word + glyph always accompany the colour; values AA-tuned. */
   --ok:         #1c5a34;   /* present  */
@@ -372,9 +378,14 @@ main:focus { outline: none; }
    walkthrough rather than to the step above it" (the open-questions rail does the same
    with a warn-coloured border). No new colour, no new shape, no new component. */
 .ask-anywhere {
-  background: var(--paper);
+  /* The 4px top rule is the cool brand SPARK: the gradient is painted as a 4px strip in
+     the (transparent) top border via a layered background, so it stays purely decorative
+     with no text on it. Paper fills the padding-box; the sweep fills the border-box top. */
+  background:
+    var(--brand-gradient) border-box 0 0 / 100% 4px no-repeat,
+    var(--paper) padding-box;
   border: 1px solid var(--line);
-  border-top: 4px solid var(--accent-bright);
+  border-top: 4px solid transparent;
   border-radius: var(--radius);
   padding: 1.1rem clamp(.8rem, 2vw, 1.6rem) 1.1rem;
   margin-top: .6rem;
@@ -401,11 +412,15 @@ main:focus { outline: none; }
      --band-inset as every other band, so the strip lines up on the shared centered axis
      with the column above it at every width. */
   margin: 1rem var(--band-inset) 0;
-  background: var(--paper);
+  /* The same 4px cool rule .ask-anywhere carries: this belongs to the whole walkthrough
+     rather than to the step above it. The gradient sweep, decorative — painted as a 4px
+     strip in the transparent top border; paper fills the padding-box. Follows the rounded
+     top corners via the shared border-box clip. */
+  background:
+    var(--brand-gradient) border-box 0 0 / 100% 4px no-repeat,
+    var(--paper) padding-box;
   border: 1px solid var(--line);
-  /* The same 4px accent rule .ask-anywhere carries: this belongs to the whole
-     walkthrough rather than to the step above it. The bright brand orange, decorative. */
-  border-top: 4px solid var(--accent-bright);
+  border-top: 4px solid transparent;
   border-radius: var(--radius) var(--radius) 0 0;
   /* Enough separation to read as "in front of the page" without inventing a surface.
      --ink at 14% on --paper; it is a shadow, never a carrier of meaning. */
@@ -488,10 +503,12 @@ main:focus { outline: none; }
 .page-rail__link[aria-current="page"] {
   color: var(--ink);
   font-weight: 600;
-  /* The active tab keeps the warm SPARK: label is ink, but the underline is the brand
-     orange — the one quiet identity mark on an otherwise near-monochrome rail. It is a
-     3px graphic (3.19:1 ≥ the 3:1 UI floor), never text, so AA is unaffected. */
-  border-bottom-color: var(--accent-bright);
+  /* The active tab carries the cool SPARK: label is ink, but the underline is the brand
+     gradient — the one quiet identity mark on an otherwise near-monochrome rail. It is
+     painted as a 3px gradient strip in the (transparent) bottom border, so it is a pure
+     graphic (≥ the 3:1 UI floor), never text; AA is unaffected. */
+  border-bottom-color: transparent;
+  background: var(--brand-gradient) border-box bottom / 100% 3px no-repeat;
   cursor: default;
 }
 
@@ -643,7 +660,7 @@ details.tech > * { margin-top: .4rem; }
    inside, carries the same weight while letting the page read mostly white with one accent. */
 .summary-box {
   border: 1px solid var(--line);
-  border-left: 4px solid var(--accent-bright);
+  border-left: 4px solid var(--brand-hairline);
   border-radius: var(--radius);
   background: var(--paper);
   padding: var(--space-5);
@@ -656,7 +673,7 @@ details.tech > * { margin-top: .4rem; }
 
 /* ── USWDS alert: new information, stated in words ──────────────────── */
 .alert {
-  border-left: 4px solid var(--accent-bright);
+  border-left: 4px solid var(--brand-hairline);
   background: var(--wash-accent);
   padding: 1rem 1.2rem;
   margin: 0 0 1.2rem;
@@ -798,7 +815,7 @@ details.tech > * { margin-top: .4rem; }
 .card > :last-child { margin-bottom: 0; }
 
 .callout {
-  border-left: 6px solid var(--accent-bright);
+  border-left: 6px solid var(--brand-hairline);
   background: var(--wash-accent);
   padding: .8rem 1rem;
   margin: 0 0 1rem;
@@ -820,7 +837,7 @@ details.tech > * { margin-top: .4rem; }
    생겨 카드가 닫힌 상자가 된다. 확신 계층 셋은 전부 왼쪽 한 면만 있는 열린 형태다.
    색을 못 보는 사람에게도 이 둘은 다른 모양이고, 그 위에 제목 문구가 또 한 번 말한다. */
 .callout--read {
-  border-left-color: var(--accent-bright);
+  border-left-color: var(--brand-hairline);
   border-left-style: dashed;
   border-top: 1px solid var(--line-strong);
   border-right: 1px solid var(--line-strong);
@@ -994,15 +1011,19 @@ button.action, .action {
   font-weight: 600;
   padding: .55rem 1.1rem;
   border-radius: var(--radius);
-  border: 1px solid var(--accent);
-  background: var(--accent);
+  /* Primary CTA: a restrained COOL gradient (blue→indigo). Dark enough that white text is
+     AA at every point of the sweep (lightest #1e40c8 → white 8.0:1). The 1px border is
+     transparent so the fill sizing is unchanged from the old dark pill. */
+  border: 1px solid transparent;
+  background: var(--brand-cta);
   color: var(--accent-ink);
   cursor: pointer;
-  transition: background-color var(--dur) var(--ease),
+  transition: background-image var(--dur) var(--ease),
+              background-color var(--dur) var(--ease),
               border-color var(--dur) var(--ease),
               transform .06s var(--ease);
 }
-button.action:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+button.action:hover { background: var(--brand-cta-hover); border-color: transparent; }
 button.action:active { transform: translateY(1px); }
 button.action[aria-disabled="true"],
 button.action:disabled { background: var(--muted-fill); border-color: var(--muted-fill); cursor: not-allowed; }
@@ -1104,14 +1125,14 @@ button.action.secondary:disabled:hover { background: var(--paper); }
 .evidence-box {
   position: absolute;
   border: 2px solid var(--accent);
-  background: rgba(242, 98, 60, .12);
+  background: rgba(31, 82, 224, .12);
   border-radius: 2px;
 }
 .evidence-box.is-active {
   border-color: var(--focus);
   border-width: 3px;
-  background: rgba(168, 56, 10, .14);
-  box-shadow: 0 0 0 3px rgba(168, 56, 10, .28);
+  background: rgba(55, 48, 163, .14);
+  box-shadow: 0 0 0 3px rgba(55, 48, 163, .28);
 }
 .evidence-box .box-tag {
   position: absolute;
@@ -1411,7 +1432,7 @@ body{ line-height:1.5; }
 .region-rect {
   position: absolute;
   border: 2px dashed var(--focus);
-  background: rgba(168, 56, 10, .12);
+  background: rgba(55, 48, 163, .12);
   pointer-events: none;
 }
 .region-hint { margin-top: .3rem; }
@@ -1512,7 +1533,7 @@ body{ line-height:1.5; }
   border: 2px solid var(--focus);
   border-radius: var(--radius);
   padding: .55rem .65rem;
-  background: rgba(168, 56, 10, .06);
+  background: rgba(55, 48, 163, .06);
 }
 .region-compare__crop { margin: 0; }
 .region-compare__crop img {
