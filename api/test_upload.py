@@ -381,6 +381,134 @@ def test_an_upload_logs_the_action_but_never_the_contents(client, session):
     assert "up_003" not in blob          # 파일 이름도 남기지 않는다
 
 
+# ── 이미지 업로드(PNG/JPG): OCR 경로로 감싸 읽는다 ────────────────────────
+def _rasterize_to_image(pdf_name: str, fmt: str) -> bytes:
+    """텍스트 PDF 한 장을 픽셀 이미지로 굽는다 — '스캔본 이미지' 픽스처.
+
+    실제 스캔 이미지를 fixture 로 두는 대신, 팩의 깨끗한 텍스트 급여명세서를 렌더해
+    PNG/JPG 로 만든다. 이미지에는 텍스트 레이어가 없으므로 업로드 경로가 스캔본과
+    똑같이 OCR 로 읽어야 한다."""
+    import io as _io
+
+    from PIL import Image
+
+    from core.render import render_page_png
+
+    rendered = render_page_png(str(UPLOADS / pdf_name), 1, 3.0)
+    img = Image.open(_io.BytesIO(rendered.png_bytes)).convert("RGB")
+    buf = _io.BytesIO()
+    img.save(buf, format=fmt)
+    return buf.getvalue()
+
+
+@pytest.fixture(scope="module")
+def pay_stub_png() -> bytes:
+    return _rasterize_to_image("up_003_pay_stub_john_doe.pdf", "PNG")
+
+
+@pytest.fixture(scope="module")
+def pay_stub_jpg() -> bytes:
+    return _rasterize_to_image("up_003_pay_stub_john_doe.pdf", "JPEG")
+
+
+def test_validate_bytes_recognises_png_and_jpeg_magic():
+    """도어의 진짜 검사는 매직바이트다. PNG·JPEG 헤더가 통과해야 한다."""
+    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+    jpg = b"\xff\xd8\xff\xe0" + b"\x00" * 16
+    upload_mod.validate_bytes(png, "image/png")   # 예외가 없어야 한다
+    upload_mod.validate_bytes(jpg, "image/jpeg")
+    # PDF 도 여전히 통과한다
+    upload_mod.validate_bytes(b"%PDF-1.4\n", "application/pdf")
+
+
+def test_a_png_image_is_read_through_the_ocr_path(client, session, pay_stub_png):
+    """PNG 를 올리면 한 장짜리 PDF 로 감싸여 OCR 로 읽힌다 — 스캔 PDF 와 같은 경로."""
+    r = post(client, session, "scan.png", "pay_stub",
+             data=pay_stub_png, content_type="image/png")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["extraction_path"] == "ocr"
+    assert body["text_layer_present"] is False
+    # up_003 을 래스터화한 것이므로 아홉 필드가 전부 읽혀야 한다.
+    got = {f["field"]: f for f in body["fields"] if f["certainty"] != "abstain"}
+    assert body["located_count"] == 9
+    assert got["gross_pay"]["value"] == 1386.00
+    assert got["net_pay"]["value"] == 1121.66
+    assert got["person_name"]["value"] == "John Doe"
+    assert got["pay_date"]["value"] == "2026-07-03"
+    # 값이 있으면 근거 상자가 있고, 페이지는 레터(792pt)로 정규화돼 상자가 얹힌다.
+    assert body["page_size_points"] == [612.0, 792.0]
+    for f in got.values():
+        assert f["bbox"] and len(f["bbox"]) == 4
+
+
+def test_a_jpg_image_is_read_through_the_ocr_path(client, session, pay_stub_jpg):
+    """JPG 도 같은 경로로 읽힌다."""
+    body = post(client, session, "scan.jpg", "pay_stub",
+                data=pay_stub_jpg, content_type="image/jpeg").json()
+    assert body["extraction_path"] == "ocr"
+    got = {f["field"]: f["value"] for f in body["fields"] if f["certainty"] != "abstain"}
+    assert body["located_count"] == 9
+    assert got["gross_pay"] == 1386.00
+    assert got["net_pay"] == 1121.66
+    assert got["person_name"] == "John Doe"
+
+
+def test_an_image_evidence_box_lands_on_the_shown_page(client, session, pay_stub_png):
+    """세입자가 보는 이미지 위에 상자가 얹혀야 한다 — 렌더된 페이지와 좌표가 맞는지 본다.
+
+    overlay 엔드포인트가 내는 픽셀 사각형이 실제로 렌더된 이미지 경계 안에 있어야 한다.
+    감싼 페이지가 레터(792pt)라 OCR 기하 보정이 그대로 성립하므로, 상자는 글자 위에 얹힌다."""
+    body = post(client, session, "scan.png", None,
+                data=pay_stub_png, content_type="image/png").json()
+    upload_id = body["upload_id"]
+    # 세입자가 보는 바로 그 이미지.
+    img = client.get(f"/api/document/{upload_id}/page/1.png",
+                     headers={"X-Session-Id": session})
+    assert img.status_code == 200 and img.content.startswith(b"\x89PNG")
+    img_w = int(img.headers["X-Image-Width"])
+    img_h = int(img.headers["X-Image-Height"])
+    ov = client.get(f"/api/document/{upload_id}/overlay/1",
+                    headers={"X-Session-Id": session}).json()
+    assert ov["rects"], "이미지에서 읽은 필드에는 그릴 상자가 있어야 한다"
+    for rect in ov["rects"]:
+        r = rect["rect"]
+        assert 0 <= r["left"] and r["left"] + r["width"] <= img_w + 1
+        assert 0 <= r["top"] and r["top"] + r["height"] <= img_h + 1
+
+
+def test_an_image_without_a_type_lands_assumed_pay_stub_and_can_be_retyped(
+        client, session, pay_stub_png):
+    """이미지는 텍스트 레이어가 없어 제목을 지명할 수 없다 — 스캔 PDF 와 같은 문제다.
+
+    그래서 종류를 안 주면 item 3 의 보이는 기본값(pay_stub)으로 읽히고 'pay_stub 로
+    가정했습니다' 배너가 붙어야 한다. 종류를 다시 고르면 그 하위 문서만 다시 읽힌다."""
+    body = post(client, session, "scan.png", None,
+                data=pay_stub_png, content_type="image/png").json()
+    assert body["document_type"] == "pay_stub"
+    assert body.get("assumed_type") is True
+    assert body.get("nomination") is None
+    assert any("read it as a pay_stub" in text for text in body["limits"])
+
+    # 종류 다시 고르기: 같은 이미지를 benefit_letter 로 다시 읽는다.
+    upload_id = body["upload_id"]
+    retyped = client.post(f"/api/upload/{upload_id}/retype",
+                          json={"document_type": "benefit_letter"},
+                          headers={"X-Session-Id": session}).json()
+    assert retyped["document_type"] == "benefit_letter"
+    assert retyped.get("assumed_type") is None      # 사람이 골랐으므로 가정이 아니다
+    assert retyped["extraction_path"] == "ocr"      # 여전히 OCR 경로
+
+
+def test_a_corrupt_image_is_a_clean_rejection_not_a_crash(client, session):
+    """PNG 헤더를 달았지만 몸통이 깨진 파일 — 매직은 통과, 열기에서 깨끗이 거절된다."""
+    corrupt = b"\x89PNG\r\n\x1a\n" + b"not a real png body" * 4
+    r = post(client, session, "broken.png", "pay_stub",
+             data=corrupt, content_type="image/png")
+    assert r.status_code == 400
+    assert r.json()["detail"]["code"] == "unreadable_image"
+
+
 def test_uploading_needs_a_session(client):
     r = client.post(
         "/api/upload",

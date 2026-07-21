@@ -54,8 +54,8 @@ const STATES = [
     response: {
       status: 400, contentType: "application/json",
       body: JSON.stringify({ detail: { code: "not_a_pdf",
-        detail: "That file is not a PDF. Its first bytes are not a PDF header, whatever " +
-                "its name or type says." } }),
+        detail: "That file is not a PDF, PNG or JPG. Its first bytes are not one of those " +
+                "headers, whatever its name or type says." } }),
     },
   },
 ];

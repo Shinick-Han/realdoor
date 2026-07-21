@@ -400,7 +400,7 @@ def upload_types() -> dict:
     return {
         "document_types": upload_mod.supported_document_types(),
         "max_bytes": upload_mod.MAX_UPLOAD_BYTES,
-        "accepted": "application/pdf",
+        "accepted": "application/pdf, image/png, image/jpeg",
         "notice": ("Upload synthetic documents only. Everything you upload stays in this "
                    "session's memory, is never written to disk, and is never used to train "
                    "anything."),
@@ -484,13 +484,18 @@ async def upload(file: UploadFile = File(...),
             # 명시적 선택이 페이지별 분절보다 우선한다. validate 가 지원 종류 + 바이트를
             # 함께 검사한다.
             doc_type = upload_mod.validate(data, file_name, file.content_type, chosen_type)
-            response = STORE.add_upload(s, data, file_name, explicit_type=doc_type)
         else:
             # 종류가 오지 않았다. 분절은 PDF 를 실제로 열므로 바이트 검사가 먼저다 —
             # 순서를 바꾸면 10MB 상한이나 매직바이트 검사가 분절 뒤로 밀린다. 페이지별
             # 지명 + item 3 의 보이는 기본값은 add_upload 안(read_document_file)에서 돈다.
             upload_mod.validate_bytes(data, file.content_type)
-            response = STORE.add_upload(s, data, file_name, explicit_type=None)
+        # 바이트 검사를 통과했으면, 이미지(PNG/JPEG)는 여기서 한 장짜리 PDF 로 감싼다.
+        # 이 지점 이후로 저장·분절·OCR·렌더에 흐르는 바이트는 언제나 PDF 라, 이미지용
+        # 분기가 아래 어디에도 생기지 않는다 — 이미지는 스캔본과 똑같은 경로를 탄다.
+        # PDF 는 손대지 않으므로 기존 PDF 업로드는 바이트 단위로 같다.
+        data = upload_mod.normalize_to_pdf(data)
+        response = STORE.add_upload(s, data, file_name,
+                                    explicit_type=doc_type if chosen_type else None)
     except upload_mod.UploadRejected as exc:
         raise HTTPException(400, {"code": exc.code, "detail": exc.message}) from exc
     return response

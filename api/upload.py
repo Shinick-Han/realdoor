@@ -92,10 +92,19 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 #: 로 함께 표시되지, 읽기를 막는 관문이 되지 않는다.
 DEFAULT_DOCUMENT_TYPE = "pay_stub"
 
-#: PDF 만 받는다. 매직바이트가 진짜 검사이고 MIME 은 보조다 — MIME 은 클라이언트가
-#: 자기 마음대로 붙여 보내는 값이라 그것만 믿으면 검사한 척이 된다.
+#: PDF 와 이미지(PNG/JPEG)를 받는다. 매직바이트가 진짜 검사이고 MIME 은 보조다 — MIME 은
+#: 클라이언트가 자기 마음대로 붙여 보내는 값이라 그것만 믿으면 검사한 척이 된다. 이미지는
+#: 도어에서 한 장짜리 PDF 로 감싼 뒤(normalize_to_pdf) 이후 경로가 스캔 PDF 와 **똑같이**
+#: 읽는다 — 텍스트 레이어가 없어 OCR 로 가고, 제목이 없어 item 3 의 보이는 기본값으로 읽힌다.
 PDF_MAGIC = b"%PDF-"
-ACCEPTED_CONTENT_TYPES = frozenset({"application/pdf", "application/x-pdf", "application/octet-stream"})
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+JPEG_MAGIC = b"\xff\xd8\xff"
+IMAGE_MAGICS = (PNG_MAGIC, JPEG_MAGIC)
+ACCEPTED_MAGICS = (PDF_MAGIC, *IMAGE_MAGICS)
+ACCEPTED_CONTENT_TYPES = frozenset({
+    "application/pdf", "application/x-pdf", "application/octet-stream",
+    "image/png", "image/jpeg", "image/jpg",
+})
 
 
 class UploadRejected(ValueError):
@@ -136,15 +145,52 @@ def validate_bytes(data: bytes, content_type: str | None) -> None:
     if content_type and content_type.split(";")[0].strip().lower() not in ACCEPTED_CONTENT_TYPES:
         raise UploadRejected(
             "not_a_pdf",
-            f"This service reads PDF documents only. The browser sent that file as "
-            f"{content_type!r}.",
+            f"This service reads PDF, PNG or JPG documents only. The browser sent that file "
+            f"as {content_type!r}.",
         )
-    if not data.startswith(PDF_MAGIC):
+    if not data.startswith(ACCEPTED_MAGICS):
         raise UploadRejected(
             "not_a_pdf",
-            "That file is not a PDF. Its first bytes are not a PDF header, whatever its "
-            "name or type says.",
+            "That file is not a PDF, PNG or JPG. Its first bytes are not one of those "
+            "headers, whatever its name or type says.",
         )
+
+
+def normalize_to_pdf(data: bytes) -> bytes:
+    """이미지 업로드(PNG/JPEG)를 **한 장짜리 PDF 로 감싼다**. PDF 는 손대지 않는다.
+
+    도어에서 이미지를 한 번 PDF 로 바꿔 두면, 이 지점 이후로 흐르는 바이트는 언제나 PDF 다 —
+    분절(segment_pages)·텍스트 레이어 판정(has_text_layer)·OCR·페이지 렌더가 이미지용 분기를
+    새로 두지 않고 스캔 PDF 와 **똑같은 경로**로 돈다. 이미지는 텍스트 레이어가 없으므로
+    has_text_layer 가 False → `ocr.extract_document_ocr` 로 가고, 인쇄된 제목도 없으므로 지명이
+    실패해 item 3 의 보이는 기본값(pay_stub, 한 클릭으로 고치는 가정)으로 읽힌다. 스캔본을
+    올렸을 때와 한 글자도 다르지 않다.
+
+    페이지 크기는 미국 레터(612×792pt)에 맞춘다. OCR 상자 기하(ocr/ocr_extract.py 의 폰트 크기·
+    베이스라인 보정)는 레터 페이지에서 잰 값이라, 이미지를 레터 높이(11in)로 매핑해야 렌더된
+    페이지 위에서 상자가 글자에 정확히 얹힌다. resolution 을 height/11 로 주면 페이지 높이가 정확히
+    792pt 로 떨어지고 너비는 같은 DPI 로 비례하므로 종횡비는 왜곡 없이 보존된다. PDF 는 감싸지
+    않고 그대로 돌려주므로 **기존 PDF 업로드는 바이트 단위로 같다**.
+    """
+    if not data.startswith(IMAGE_MAGICS):
+        return data
+    from PIL import Image
+
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.load()  # 손상·잘린 이미지는 여기서 드러난다 (지연 로딩이라 open 만으로는 안 잡힌다)
+    except Exception as exc:  # 손상된 이미지는 오류지 기권이 아니다
+        raise UploadRejected(
+            "unreadable_image",
+            f"We could not read that image ({type(exc).__name__}). It may be damaged or "
+            f"truncated.",
+        ) from exc
+    if img.mode not in ("L", "RGB"):
+        # 팔레트·알파(P/RGBA/LA 등)는 PDF 저장이 받지 않으므로 RGB 로 편다.
+        img = img.convert("RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="PDF", resolution=max(img.height, 1) / 11.0)
+    return buf.getvalue()
 
 
 def validate(data: bytes, file_name: str, content_type: str | None,

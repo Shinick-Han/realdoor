@@ -1159,8 +1159,8 @@
     // 바뀌었다. 옛 키도 남겨 둔다 — 걸리지 않는 키는 그냥 지나갈 뿐이다.
     "Choose a PDF": "PDF 고르기",
     "PDF file": "PDF 파일",
-    "PDF only, up to 10 MB. A scanned page is fine — if there is no text in the file we read the picture instead, and say which of the two we did.":
-      "PDF 만, 10 MB 까지. 스캔한 문서도 괜찮습니다. 파일에 글자가 없으면 그림 쪽을 읽고, 둘 중 어느 쪽으로 읽었는지 알려 드립니다.",
+    "PDF, PNG or JPG, up to 10 MB. A scanned page or photo is fine — if there is no text in the file we read the picture instead, and say which of the two we did.":
+      "PDF, PNG 또는 JPG, 10 MB 까지. 스캔한 문서나 사진도 괜찮습니다. 파일에 글자가 없으면 그림 쪽을 읽고, 둘 중 어느 쪽으로 읽었는지 알려 드립니다.",
     "Read this document": "이 문서 읽기",
     "Reading…": "읽는 중…",
     "Reading the document…": "문서를 읽는 중…",
@@ -1351,8 +1351,8 @@
     "Choose what kind of document this is. The kind is never taken from the file name — it comes from the title the page prints at the top, or from your choice here. Without either, there is no kind to read it as.":
       "이 문서가 어떤 종류인지 골라 주세요. 종류는 파일 이름에서 가져오지 않습니다 — 페이지 맨 위에 인쇄된 제목이나, 여기서 하신 선택에서만 옵니다. 둘 다 없으면 어떤 종류로 읽을지 알 수 없습니다.",
     "That file is empty.": "그 파일은 비어 있습니다.",
-    "That file is not a PDF. Its first bytes are not a PDF header, whatever its name or type says.":
-      "그 파일은 PDF 가 아닙니다. 이름이나 형식이 무어라 하든, 첫 바이트가 PDF 헤더가 아닙니다.",
+    "That file is not a PDF, PNG or JPG. Its first bytes are not one of those headers, whatever its name or type says.":
+      "그 파일은 PDF, PNG, JPG 어느 것도 아닙니다. 이름이나 형식이 무어라 하든, 첫 바이트가 그 헤더들 중 하나가 아닙니다.",
 
     // ── app.js — 세션 수명: 삭제와 되돌리기 ────────────────────────────────────
     // ⚠ 이 구역에서 두 가지가 반드시 남아야 한다. ① 되돌릴 수 없다는 것,
@@ -2393,11 +2393,14 @@
         return "그 파일은 " + m[1] + " MB 입니다. 한도는 " + m[2] + " MB 입니다. 올리신 문서는 이번 " +
                "세션의 메모리에만 두고 디스크에 기록하지 않기 때문입니다.";
       }],
-    [/^This service reads PDF documents only\. The browser sent that file as '(.+)'\.$/, function (m) {
-      return "이 서비스는 PDF 문서만 읽습니다. 브라우저는 그 파일을 '" + m[1] + "' 로 보냈습니다.";
+    [/^This service reads PDF, PNG or JPG documents only\. The browser sent that file as '(.+)'\.$/, function (m) {
+      return "이 서비스는 PDF, PNG, JPG 문서만 읽습니다. 브라우저는 그 파일을 '" + m[1] + "' 로 보냈습니다.";
     }],
     [/^We could not open that PDF \((.+?)\)\. It may be damaged or password-protected\.$/, function (m) {
       return "그 PDF 를 열지 못했습니다 (" + m[1] + "). 파일이 손상되었거나 암호가 걸려 있을 수 있습니다.";
+    }],
+    [/^We could not read that image \((.+?)\)\. It may be damaged or truncated\.$/, function (m) {
+      return "그 이미지를 읽지 못했습니다 (" + m[1] + "). 파일이 손상되었거나 잘렸을 수 있습니다.";
     }],
     [/^The server could not accept that file \(HTTP (\d+)\)\.$/, function (m) {
       return "서버가 그 파일을 받아들이지 못했습니다 (HTTP " + m[1] + ").";

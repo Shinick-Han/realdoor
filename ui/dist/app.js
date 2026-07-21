@@ -1790,7 +1790,7 @@
     ));
 
     var fileInput = h("input", {
-      type: "file", id: "upload-file", accept: "application/pdf",
+      type: "file", id: "upload-file", accept: "application/pdf,image/png,image/jpeg",
       disabled: Source.live ? null : true,
       "aria-describedby": "upload-file-hint"
     });
@@ -1846,8 +1846,8 @@
         fileInput,
         h("span", {
           class: "hint", id: "upload-file-hint",
-          text: "PDF only, up to 10 MB. A scanned page is fine — if there is no text in the " +
-                "file we read the picture instead, and say which of the two we did."
+          text: "PDF, PNG or JPG, up to 10 MB. A scanned page or photo is fine — if there is " +
+                "no text in the file we read the picture instead, and say which of the two we did."
         }),
         /* The honest expectation line: the one thing about this panel that surprises
          * people is how long a scan takes, so the panel says it before it happens. */

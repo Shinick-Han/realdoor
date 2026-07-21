@@ -154,7 +154,7 @@ await setSelector(false);
 const OTHERS = [
   ["file_too_large", "That upload is 12.4 MB. The limit is 10 MB, because an uploaded document is held in memory for this session only and never written to disk."],
   ["empty_file", "That file is empty."],
-  ["not_a_pdf", "That file is not a PDF. Its first bytes are not a PDF header, whatever its name or type says."],
+  ["not_a_pdf", "That file is not a PDF, PNG or JPG. Its first bytes are not one of those headers, whatever its name or type says."],
   ["unreadable_pdf", "We could not open that PDF (PDFSyntaxError). It may be damaged or password-protected."],
   ["session_upload_limit", "This session already holds 6 uploaded documents, and they all stay in this session's memory. That is the ceiling."],
 ];
