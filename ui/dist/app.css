@@ -1569,6 +1569,20 @@ body{ line-height:1.5; }
   }
 }
 
+/* ── Lenis momentum scroll (vendored, progressive enhancement) ─────────────────
+ * These are the library's own required rules. They apply ONLY while Lenis is running:
+ * it stamps `lenis` / `lenis-smooth` / `lenis-stopped` onto <html> itself, and adds none
+ * of them when it does not start (reduced motion, or the vendored file missing). So with
+ * no Lenis these selectors match nothing and native scroll — including the
+ * `scroll-behavior: smooth` and its reduced-motion `auto !important` reset above — is
+ * untouched. While Lenis IS active it wants native `scroll-behavior: auto` so the two
+ * smoothings do not fight; `.lenis.lenis-smooth` provides exactly that, scoped to the
+ * running state and outranking the base `html { scroll-behavior: smooth }`. */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+
 /* ── page-level scroll-reveal (progressive enhancement) ────────────────────────
  * Content is fully visible by DEFAULT — the rules below only take effect once app.js
  * has confirmed IntersectionObserver is available AND motion is allowed, and marked

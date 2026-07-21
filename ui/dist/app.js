@@ -7484,6 +7484,40 @@
    * rows or the evidence boxes, which have their own staged reveal (runStagedReveal), so
    * the two mechanisms cannot fight. Each card is revealed once and then unobserved, so a
    * revealed card is never hidden again — including when its screen is toggled off and on. */
+  /* Momentum smooth scroll — vendored Lenis (ui/dist/lenis.js), progressive enhancement
+   * and nothing else. Lenis animates the NATIVE scroll position with requestAnimationFrame;
+   * it does not transform a wrapper, so the sticky #ask-dock and the absolutely-positioned
+   * evidence boxes keep their layout math and never drift. Because scrollTop is the thing
+   * being animated, the IntersectionObserver reveal above still fires normally, and native
+   * keyboard scrolling (space/PageDown/arrows) and element.scrollIntoView() still work.
+   *
+   * Two off-switches, both fail to plain native scroll:
+   *   - reduced motion: Lenis never starts (app.css also resets scroll-behavior to auto here);
+   *   - vendored file absent/failed: window.Lenis is undefined, so nothing starts.
+   * The page is fully scrollable with this function removed. */
+  function setUpSmoothScroll() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (typeof window.Lenis !== "function") return;
+
+    var lenis = new window.Lenis({
+      duration: 1.1,        // a soft ease, not a long floaty lag
+      smoothWheel: true,
+      /* Inner horizontal scrollers stay native. Lenis walks up from each wheel/touch target
+       * and calls this for every ancestor; returning true for a `.table-scroll` (the tables'
+       * sideways strips) hands that gesture back to the browser with no page smoothing — and
+       * without writing any attribute onto the dynamically re-rendered DOM. */
+      prevent: function (node) {
+        return !!(node && node.classList && node.classList.contains("table-scroll"));
+      }
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      window.requestAnimationFrame(raf);
+    }
+    window.requestAnimationFrame(raf);
+  }
+
   function setUpScrollReveal() {
     if (!("IntersectionObserver" in window)) return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -7546,6 +7580,8 @@
     showScreen("screen-file", { focus: false, announce: false });
     // Static page-level cards are all in the DOM by now; opt into scroll-reveal.
     setUpScrollReveal();
+    // Ease wheel/touch scrolling with momentum (guarded; native scroll if declined).
+    setUpSmoothScroll();
 
     Source.selftest().then(function (data) {
       state.selftest = data;

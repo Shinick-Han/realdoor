@@ -354,6 +354,10 @@
      must keep working when a judge opens it straight off disk. -->
 <script src="i18n.js"></script>
 <script src="fixtures.js"></script>
+<!-- Vendored Lenis (MIT), loaded as a plain local file before app.js: it is the smooth-scroll
+     library, not page content. app.js starts it only when motion is allowed and only if this
+     file loaded (window.Lenis defined); otherwise the page scrolls natively. -->
+<script src="lenis.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
