@@ -1262,8 +1262,8 @@ tr.is-active td { background: #fdf0ea; }
 }
 /* The two row actions — Confirm and Fix — sit side by side as a matched, compact pair
    (reconciled from a later duplicate rule that stacked them / only set flex-wrap). */
-.confirm-cell { display: flex; flex-flow: row wrap; align-items: center; gap: .4rem; }
-.confirm-cell .action { padding: .35rem .7rem; white-space: nowrap; }
+.confirm-cell { display: flex; flex-flow: row nowrap; align-items: center; gap: .35rem; }
+.confirm-cell .action { padding: .3rem .55rem; white-space: nowrap; }
 button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
 
 /* 업로드 폼. 새 시각언어를 만들지 않는다 — 컨트롤은 .field-grid 와 같은 계열(2px 테두리,
