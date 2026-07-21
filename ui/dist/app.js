@@ -1501,7 +1501,16 @@
 
     Array.prototype.forEach.call(document.querySelectorAll(".screen"), function (section) {
       section.hidden = section.id !== screenId;
+      section.classList.remove("screen--enter");
     });
+    /* Gentle opacity cross-fade on the incoming screen (CSS: .screen--enter). Re-applied
+     * with a reflow between remove and add so the fade re-fires on every swap, not just the
+     * first. Opacity only, and disabled entirely under reduced motion by the stylesheet. */
+    var shownScreen = byId(screenId);
+    if (shownScreen) {
+      void shownScreen.offsetWidth;   // reflow: let the class removal take effect first
+      shownScreen.classList.add("screen--enter");
+    }
 
     placeFileBanner(screenId);
     renderPageRail();
@@ -1604,8 +1613,60 @@
             onclick: function () { if (!isCurrent) showScreen(page.screen); }
           }, [page.n + ". " + page.short])
         ]);
-      }))
+      })),
+      /* The one decorative, non-content element this feature adds: the sliding gradient
+       * underline. aria-hidden — it carries no meaning of its own (aria-current does), it
+       * is a moving copy of the underline the active tab used to paint on itself. */
+      h("div", { class: "page-rail__indicator", "aria-hidden": "true" })
     ]));
+    // Measure the freshly built active tab and glide the bar to it. The rail is rebuilt on
+    // every showScreen, so the indicator is a new node each time; positionRailIndicator seeds
+    // it at the PREVIOUS tab's box first, then sets the target, so the CSS transition has a
+    // start point to run from (a brand-new element would otherwise snap straight to target).
+    positionRailIndicator(true);
+  }
+
+  /** Place the sliding rail indicator under the active tab.
+   *
+   *  Measured, not hard-coded: left/width come from the active .page-rail__link's
+   *  offsetLeft/offsetWidth (so it matches the old per-tab underline's exact footprint), and
+   *  the vertical edge from the link's own row, so it stays aligned even if the two tabs wrap
+   *  onto separate rows at ~320px. Called on every render (glide=true, from the click and
+   *  showScreen path), once after first paint, and on resize (glide=false, snap in place).
+   *
+   *  Reduced motion needs no branch here: the stylesheet's global reduced-motion reset zeroes
+   *  the transition duration, so the same code path lands the bar instantly. */
+  var railIndicatorMetrics = null;
+
+  function positionRailIndicator(glide) {
+    var host = byId("page-rail-host");
+    if (!host) return;
+    var indicator = host.querySelector(".page-rail__indicator");
+    var active = host.querySelector('.page-rail__link[aria-current="page"]');
+    if (!indicator || !active) return;
+    var left = active.offsetLeft;
+    var width = active.offsetWidth;
+    if (!width) return;   // not laid out yet (pre-paint); a later rAF/resize pass catches it
+    // Sit the 3px bar on the active tab's own row, hugging its bottom edge. Not animated —
+    // the row only changes when the two tabs wrap onto separate lines at very narrow widths.
+    indicator.style.bottom = "auto";
+    indicator.style.top = (active.offsetTop + active.offsetHeight - 3) + "px";
+    var prev = railIndicatorMetrics;
+    // Seed a start point with the transition switched off, force a reflow to commit it, then
+    // restore the stylesheet transition and set the target so it glides start -> target.
+    indicator.style.transition = "none";
+    if (glide && prev) {
+      indicator.style.transform = "translateX(" + prev.left + "px)";
+      indicator.style.width = prev.width + "px";
+    } else {
+      indicator.style.transform = "translateX(" + left + "px)";
+      indicator.style.width = width + "px";
+    }
+    indicator.getBoundingClientRect();   // commit the start point
+    indicator.style.transition = "";     // hand the transition back to the stylesheet
+    indicator.style.transform = "translateX(" + left + "px)";
+    indicator.style.width = width + "px";
+    railIndicatorMetrics = { left: left, width: width };
   }
 
   /** Error summary: top of the main container, above the H1, one link per open item.
@@ -7591,6 +7652,11 @@
       renderUpload();
     }).catch(function () { /* the panel is already on screen with the built-in list */ });
     showScreen("screen-file", { focus: false, announce: false });
+    // The sliding rail indicator measures real pixels. renderPageRail placed it synchronously
+    // already; correct it once more after first paint (fonts/layout settle) and keep it under
+    // the active tab whenever the layout reflows (e.g. the tabs wrapping at ~320px).
+    window.requestAnimationFrame(function () { positionRailIndicator(false); });
+    window.addEventListener("resize", function () { positionRailIndicator(false); });
     // Static page-level cards are all in the DOM by now; opt into scroll-reveal.
     setUpScrollReveal();
     // Ease wheel/touch scrolling with momentum (guarded; native scroll if declined).

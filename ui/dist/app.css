@@ -500,7 +500,9 @@ main:focus { outline: none; }
    bar; they need a way across. Type, not coloured bars: the current page is bold with an
    accent underline, the other is a plain link — the variant-B move of carrying hierarchy
    in weight and space rather than in boxes. */
-.page-rail { margin: 0 0 .5rem; }
+/* position: relative makes the rail the containing block for the sliding indicator
+   (.page-rail__indicator), which is measured off the active tab and glides between them. */
+.page-rail { margin: 0 0 .5rem; position: relative; }
 .page-rail__list {
   display: flex;
   flex-wrap: wrap;
@@ -523,13 +525,34 @@ main:focus { outline: none; }
 .page-rail__link[aria-current="page"] {
   color: var(--ink);
   font-weight: 600;
-  /* The active tab carries the cool SPARK: label is ink, but the underline is the brand
-     gradient — the one quiet identity mark on an otherwise near-monochrome rail. It is
-     painted as a 3px gradient strip in the (transparent) bottom border, so it is a pure
-     graphic (≥ the 3:1 UI floor), never text; AA is unaffected. */
+  /* The active tab keeps its ink + weight cue so state is never carried by the moving bar
+     alone (aria-current already carries it for AT). The cool SPARK — the brand gradient
+     underline — is NO LONGER painted per-tab here: it now lives in a single sliding element
+     (.page-rail__indicator, below) that glides between the two tabs, so there is one
+     underline that moves, never two that blink on and off. */
   border-bottom-color: transparent;
-  background: var(--brand-gradient) border-box bottom / 100% 3px no-repeat;
   cursor: default;
+}
+
+/* The sliding "magic underline": one decorative 3px gradient bar in the rail. app.js
+   measures the active tab's offsetLeft / offsetWidth (and its row's bottom edge) and sets
+   this element's transform: translateX() and width; the transition makes it glide from the
+   old tab to the new one. Pure graphic (≥ the 3:1 UI floor), never text; AA is unaffected.
+   Under reduced motion the global reset (transition-duration: .001ms) makes it jump instead
+   of glide. The CSS default (bottom-anchored, an approximate tab-1 footprint) is only a
+   pre-measure safety net — app.js positions it exactly, synchronously, the moment the rail
+   is built, then again after first paint and on every resize. */
+.page-rail__indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 8.5em;
+  background: var(--brand-gradient);
+  border-radius: 2px;
+  transform: translateX(0);
+  transition: transform .28s var(--ease), width .28s var(--ease);
+  pointer-events: none;
 }
 
 /* ── page 2's in-page wayfinding: jump links, sticky on the way down ──
@@ -1645,6 +1668,19 @@ body{ line-height:1.5; }
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ── page swap: a brief, gentle opacity cross-fade ────────────────────────────
+ * showScreen toggles which .screen is shown; the incoming one fades from 0→1 so the swap
+ * is not a hard cut. Opacity ONLY (no transform) to stay clear of Lenis and the
+ * absolutely-positioned evidence boxes; and the fixed #ask-dock lives on <body>, not inside
+ * a screen, so an opacity animation here never re-anchors it. Motion-gated twice over: this
+ * @media (no-preference) block does not apply under reduced motion, and the global
+ * reduced-motion reset above also pins animation-duration to ~0 — either way, an instant
+ * swap. opacity ends at 1 (fill: both), which creates no stacking context, so nothing lingers. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes page-screen-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .screen.screen--enter { animation: page-screen-fade-in .2s var(--ease) both; }
 }
 
 /* ── Lenis momentum scroll (vendored, progressive enhancement) ─────────────────
