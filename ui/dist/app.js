@@ -6973,117 +6973,119 @@
     var abstentions = state.report.abstentions || [];
     var reasons = state.report.review_reasons || [];
 
-    /* "Abstentions" is a word from measurement, not from anyone's kitchen table. The
-     * product's own Korean for this rail already says the plainer thing — 말하지 않은 것,
-     * "the things we did not say" — and the review found that Korean better than the English
-     * it was translating. So the English follows its own Korean. The count stays; nothing is
-     * hidden or collapsed; only the noun changes. */
-    root.appendChild(h("h3", { text: "Things we did not say (" + abstentions.length + ")" }));
-    if (!abstentions.length) {
-      root.appendChild(h("p", {
-        class: "q-empty",
-        // The meta-sentence that used to close this line ("an empty list means nothing was
-        // withheld, not that nothing was checked") is about how we measure, not about this
-        // household. It now lives on the "How this works" screen.
-        text: "None for this household: every value needed was read from a document and every required " +
-              "item is accounted for."
-      }));
-    }
-    // Pair each abstention with its plain twin first -- that pairing is positional and
-    // cannot survive reordering -- then fold the pairs by the code the plain layer gave
-    // them. `about` is sometimes a checklist id such as CHK-EMPLOYMENT-LETTER, and
-    // `reason` is the logic layer's precise sentence, ids and all. Neither is what a
-    // renter should meet first: the plain layer's wording leads, and both machine strings
-    // stay verbatim under Technical details.
+    /* One list, not two. A blocking problem used to reach this rail in BOTH review_reasons[]
+     * (the NEEDS_REVIEW determination, with its action and its page anchor) AND abstentions[]
+     * (the disclosure). Under two headings — "Reasons this needs review" and "Things we did
+     * not say" — the pack households showed the same sentence twice, because every pack
+     * abstention is also a review reason. To a renter that is one thing: something we could
+     * not settle, and what settles it. So the two are merged. Items a person must act on lead
+     * (they carry the "Go to page" link); anything the system abstained on WITHOUT it becoming
+     * a review reason follows as a plain disclosure. Nothing is hidden or collapsed away: every
+     * machine string still appears verbatim under its item's Technical details, exactly as in
+     * the two-section version this replaces. */
+
+    // Review items: folded by code AND section, so one "Go to…" link is right for the whole
+    // fold (two reasons sharing a code but in different sections stay apart, as before).
+    var reasonGroups = foldByKey(reasons, function (reason) {
+      return reason.code + " @ " + reasonSection(reason);
+    });
+    var reasonHeadlines = {};
+    reasons.forEach(function (r) { reasonHeadlines[reasonHeading(r)] = true; });
+
+    // Disclosures the review list does not already carry (advisory-only abstentions). Pairing
+    // is positional -- abstentions[] carries no code -- so it is done before any folding. The
+    // dedup matches on the RENTER-VISIBLE headline, not the code: a missing employer letter and
+    // a missing pay stub share the code required_document_missing but say different things, so
+    // only items that say the SAME thing fold, and no distinct disclosure is lost.
     var paired = abstentions.map(function (item, index) {
       return { item: item, said: plainForAbstention(index, item) };
     });
-    foldByKey(paired, function (pair) { return pair.said && pair.said.code; })
-      .forEach(function (group) {
-        var said = group[0].said;
-        var lead = group[0].item;
-        root.appendChild(h("div", { class: "q-item" }, [
-          h("h3", { text: (said && said.headline) || abstentionHeading(lead) }),
-          // The rail says what is unsettled and what would settle it. The full
-          // explanation is one disclosure away here and in full view on the step this
-          // item belongs to -- a summary panel that restates every paragraph is not a
-          // summary panel.
-          said && said.action
-            ? h("p", { class: "q-resolve", text: said.action })
-            : h("p", { class: "q-resolve", text: "Resolved by: " + lead.what_would_resolve_it }),
-          group.length > 1 ? foldedNote(group.length) : null,
-          h("details", { class: "tech" }, [
-            h("summary", { text: "Technical details" }),
-            said && said.body ? h("p", { text: said.body }) : null,
-            said && said.code
-              ? h("p", { class: "mono", text: "Code: " + said.code })
-              : null
-          ].concat(group.map(function (pair) {
-            return h("dl", { class: "kv" }, [
-              h("dt", { text: "About" }),
-              h("dd", { class: "mono", text: String(pair.item.about) }),
-              h("dt", { text: "Reason" }),
-              h("dd", { class: "mono", text: String(pair.item.reason) }),
-              h("dt", { text: "Resolved by" }),
-              h("dd", { class: "mono", text: String(pair.item.what_would_resolve_it) })
-            ]);
-          })))
-        ]));
-      });
+    var disclosureOnly = paired.filter(function (pair) {
+      return !(pair.said && pair.said.headline && reasonHeadlines[pair.said.headline]);
+    });
+    var disclosureGroups = foldByKey(disclosureOnly, function (pair) {
+      return pair.said && pair.said.code;
+    });
 
-    root.appendChild(h("h3", { text: "Reasons this needs review (" + reasons.length + ")" }));
-    if (!reasons.length) {
-      root.appendChild(h("p", { class: "q-empty", text: "None recorded for this household." }));
+    var total = reasonGroups.length + disclosureGroups.length;
+    root.appendChild(h("h3", { text: "What we could not settle (" + total + ")" }));
+    if (!total) {
+      root.appendChild(h("p", {
+        class: "q-empty",
+        text: "None for this household: every value needed was read from a document and every " +
+              "required item is accounted for."
+      }));
+      return;
     }
-    // Folded on code *and* section, so a folded item's single "Go to…" link is right
-    // for every entry inside it. Two reasons sharing a code but landing in different
-    // sections stay apart, because one link cannot honestly stand for both.
-    foldByKey(reasons, function (reason) { return reason.code + " @ " + reasonSection(reason); })
-      .forEach(function (group) {
-        var reason = group[0];
-        var section = reasonSection(reason);
-        var pageN = SECTION_PAGE[section];
-        var said = plainForReason(reason);
-        root.appendChild(h("div", { class: "q-item" }, [
-          // A human heading, not the machine code. The code stays available one disclosure away.
-          h("h3", { text: reasonHeading(reason) }),
-          said && said.action ? h("p", { class: "q-resolve", text: said.action }) : null,
-          group.length > 1 ? foldedNote(group.length) : null,
-          // The link is the rail's actual work: it is the only thing here that takes you
-          // to the item. It stays above the disclosure, never inside it.
-          h("p", { style: { marginBottom: "0" } }, [
-            h("button", {
-              type: "button", class: "change-link",
-              onclick: function () {
-                state.returnTo = null;
-                goToPage(pageN, { focus: false });
-                var anchor = byId("reason-" + reason.code);
-                if (anchor) { anchor.scrollIntoView(); anchor.focus(); }
-              }
-            }, [
-              "Go to page " + pageN,
-              h("span", { class: "visually-hidden", text: " to see this item in context" })
-            ])
-          ]),
-          h("details", { class: "tech" }, [
-            h("summary", { text: "Technical details" }),
-            said && said.body ? h("p", { text: said.body }) : null
-          ].concat(group.map(function (entry) {
-            // One block per folded member, each carrying its own check and rule: the
-            // members differ in exactly those fields, so printing the first one's and
-            // calling it the group's would be the quiet loss this fold is meant to avoid.
-            return h("div", null, [
-              // The rule is split out of the run-on mono line so it can carry its own
-              // reference. The code and check either side of it are unchanged.
-              h("p", null, [
-                h("span", { class: "mono", text: entry.code + " · check: " + entry.check + " · rule: " }),
-                ruleRef(entry.rule_id)
-              ]),
-              h("p", { class: "mono", style: { marginBottom: "0" }, text: entry.message })
-            ]);
-          })))
-        ]));
-      });
+
+    // Actionable review items first -- each carries the step the renter goes to.
+    reasonGroups.forEach(function (group) {
+      var reason = group[0];
+      var section = reasonSection(reason);
+      var pageN = SECTION_PAGE[section];
+      var said = plainForReason(reason);
+      root.appendChild(h("div", { class: "q-item" }, [
+        // A human heading, not the machine code. The code stays available one disclosure away.
+        h("h3", { text: reasonHeading(reason) }),
+        said && said.action ? h("p", { class: "q-resolve", text: said.action }) : null,
+        group.length > 1 ? foldedNote(group.length) : null,
+        // The link is the rail's actual work: the only thing here that takes you to the item.
+        h("p", { style: { marginBottom: "0" } }, [
+          h("button", {
+            type: "button", class: "change-link",
+            onclick: function () {
+              state.returnTo = null;
+              goToPage(pageN, { focus: false });
+              var anchor = byId("reason-" + reason.code);
+              if (anchor) { anchor.scrollIntoView(); anchor.focus(); }
+            }
+          }, [
+            "Go to page " + pageN,
+            h("span", { class: "visually-hidden", text: " to see this item in context" })
+          ])
+        ]),
+        h("details", { class: "tech" }, [
+          h("summary", { text: "Technical details" }),
+          said && said.body ? h("p", { text: said.body }) : null
+        ].concat(group.map(function (entry) {
+          // One block per folded member, each carrying its own check and rule.
+          return h("div", null, [
+            h("p", null, [
+              h("span", { class: "mono", text: entry.code + " · check: " + entry.check + " · rule: " }),
+              ruleRef(entry.rule_id)
+            ]),
+            h("p", { class: "mono", style: { marginBottom: "0" }, text: entry.message })
+          ]);
+        })))
+      ]));
+    });
+
+    // Then the plain disclosures that never became a review reason.
+    disclosureGroups.forEach(function (group) {
+      var said = group[0].said;
+      var lead = group[0].item;
+      root.appendChild(h("div", { class: "q-item" }, [
+        h("h3", { text: (said && said.headline) || abstentionHeading(lead) }),
+        said && said.action
+          ? h("p", { class: "q-resolve", text: said.action })
+          : h("p", { class: "q-resolve", text: "Resolved by: " + lead.what_would_resolve_it }),
+        group.length > 1 ? foldedNote(group.length) : null,
+        h("details", { class: "tech" }, [
+          h("summary", { text: "Technical details" }),
+          said && said.body ? h("p", { text: said.body }) : null,
+          said && said.code ? h("p", { class: "mono", text: "Code: " + said.code }) : null
+        ].concat(group.map(function (pair) {
+          return h("dl", { class: "kv" }, [
+            h("dt", { text: "About" }),
+            h("dd", { class: "mono", text: String(pair.item.about) }),
+            h("dt", { text: "Reason" }),
+            h("dd", { class: "mono", text: String(pair.item.reason) }),
+            h("dt", { text: "Resolved by" }),
+            h("dd", { class: "mono", text: String(pair.item.what_would_resolve_it) })
+          ]);
+        })))
+      ]));
+    });
   }
 
   // ── shared bits ─────────────────────────────────────────────────────────────────

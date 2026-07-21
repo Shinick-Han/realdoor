@@ -751,6 +751,9 @@
     "None for this household: every value needed was read from a document and every required item is accounted for. An empty list means nothing was withheld, not that nothing was checked.":
       "이 세대에는 없습니다. 필요한 값은 모두 문서에서 읽었고 필요한 항목도 모두 확인되었습니다. 목록이 비어 있다는 것은 아무것도 숨기지 않았다는 뜻이지, 아무것도 확인하지 않았다는 뜻이 아닙니다.",
     "None recorded for this household.": "이 세대에 기록된 것이 없습니다.",
+    // 통합된 레일의 빈 상태(짧은 형태). 위 긴 형태와 별개로 이 문자열이 화면에 실제로 쓰인다.
+    "None for this household: every value needed was read from a document and every required item is accounted for.":
+      "이 세대에는 없습니다. 필요한 값은 모두 문서에서 읽었고 필요한 항목도 모두 확인되었습니다.",
 
     // ── app.js: 오류 카드와 빈 상태 ────────────────────────────────────────
     "No report is loaded for this household": "이 세대에 불러온 보고서가 없습니다",
@@ -1945,6 +1948,10 @@
       }],
     // U6: 영어 제목이 이 한국어를 따라 "Things we did not say" 로 바뀌었다. 한국어는 그대로.
     [/^Things we did not say \((\d+)\)$/, function (m) { return "말하지 않은 것 (" + m[1] + ")"; }],
+    // 두 레일("말하지 않은 것" + "검토가 필요한 이유")이 한 목록으로 합쳐졌다. 같은 문제가
+    // 두 곳에 중복되던 것을 없앤 결과다. 위 두 규칙은 옛 화면이나 다른 경로에서 아직 쓰일 수
+    // 있어 남겨 둔다.
+    [/^What we could not settle \((\d+)\)$/, function (m) { return "확정하지 못한 것 (" + m[1] + ")"; }],
     // U10: "이 문서에 N개 값이 남았습니다" 카드 본문. N 과 항목 이름은 그대로 둔다.
     // ── 기대 필드의 부재: 문서 관점 안내와 부재 확인 (app.js absenceNotice) ────
     // 문서 종류와 항목 이름은 사전에서 찾아 옮기고, 없으면 영어 그대로 둔다 —
