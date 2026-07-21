@@ -1,0 +1,24 @@
+# Binary files — never apply text/EOL conversion. Without these, git on Windows
+# (core.autocrlf) rewrites LF→CRLF inside binaries on checkout, corrupting PDFs
+# and images. The demo-household PDFs under pack/ are read at runtime, so a
+# CRLF-mangled copy is a live-demo breakage. Mark every binary type explicitly.
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.docx  binary
+*.xlsx  binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.mp3   binary
+*.mp4   binary
+*.wav   binary
+
+# Shell scripts must stay LF or they break in bash (e.g. deploy/push_hf.sh).
+*.sh    text eol=lf
