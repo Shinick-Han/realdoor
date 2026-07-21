@@ -18,20 +18,23 @@
   --line:       #e5e5e7;   /* hairline: card + row separators (decorative) */
   --line-strong:#86868b;   /* control borders — 3.6:1 on white for SC 1.4.11 */
 
-  /* One warm accent — RealPage's signature orange, split into two duties so contrast
-     is never a matter of taste:
-       · --accent-bright (#F2623C, the brand orange) is DECORATIVE ONLY — 3.19:1 on
-         white, which clears the 3:1 UI-component floor but FAILS AA as text. It carries
-         the card left/top rules and other large brand marks and nothing a word rests on.
-       · --accent (a darkened shade of the same hue) is the INTERACTIVE orange — 5.44:1
-         on white, so link text and orange-on-white both pass AA, and white on the fill
-         passes AA for primary buttons. Every text/fill pair below reads --accent. */
-  --accent:      #b8431c;  /* interactive orange — link + primary fill. On white 5.44:1; white on it 5.44:1 */
-  --accent-ink:  #ffffff;  /* white on --accent: 5.44:1 */
-  --accent-strong:#9e3717; /* primary hover, one step darker — on white 6.97:1 */
-  --accent-bright:#f2623c; /* RealPage brand orange — DECORATIVE ONLY (3.19:1): left/top rules, marks. Never text. */
-  --accent-soft:  rgba(242, 98, 60, .10);  /* faint warm wash: ghost / input hover + ring */
-  --accent-softer:rgba(242, 98, 60, .06);  /* fainter still: the inline editor's field */
+  /* Near-monochrome, with RealPage's orange kept as a small SPARK — not the UI's colour.
+     The interactive family is INK, so a screen reads black-on-white and calm; orange
+     survives only where it quietly signals identity/state (the active-tab underline, a
+     thin brand rule). Two duties, so contrast is never a matter of taste:
+       · --accent (graphite, = --ink) is the INTERACTIVE colour — link text and primary
+         fill. 16.9:1 on white and white on it 16.9:1, so links, dark "black-pill" CTAs
+         and filled marks all clear AA with room to spare. Every interactive text/fill
+         pair below reads --accent, so they turn dark together from this one line.
+       · --accent-bright (#F2623C, the brand orange) is the SPARK — the active page-tab
+         underline and the thin brand top/left rules, and nothing a word rests on. It is
+         3.19:1 on white: clears the 3:1 UI-component floor, never used as text. */
+  --accent:      #1d1d1f;  /* interactive INK — link text + primary fill. On white 16.9:1; white on it 16.9:1 */
+  --accent-ink:  #ffffff;  /* white on --accent: 16.9:1 */
+  --accent-strong:#363639; /* primary-button hover — one step LIGHTER (a lift). White on it 12:1 */
+  --accent-bright:#f2623c; /* RealPage brand orange — THE SPARK (3.19:1): active-tab underline + thin brand rules. Never text. */
+  --accent-soft:  rgba(29, 29, 31, .06);   /* neutral hover wash + input focus-ring glow (was warm; now cool/restrained) */
+  --accent-softer:rgba(29, 29, 31, .045);  /* fainter neutral still: the inline editor's field */
   --wash-accent:  #fdf3ef;                 /* solid faint-warm fill for alert/callout — ink-soft on it 4.65:1 */
 
   /* Warm ring, in the same orange family as the accent: it carries BOTH the focus
@@ -485,7 +488,10 @@ main:focus { outline: none; }
 .page-rail__link[aria-current="page"] {
   color: var(--ink);
   font-weight: 600;
-  border-bottom-color: var(--accent);
+  /* The active tab keeps the warm SPARK: label is ink, but the underline is the brand
+     orange — the one quiet identity mark on an otherwise near-monochrome rail. It is a
+     3px graphic (3.19:1 ≥ the 3:1 UI floor), never text, so AA is unaffected. */
+  border-bottom-color: var(--accent-bright);
   cursor: default;
 }
 
