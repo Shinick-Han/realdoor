@@ -1,0 +1,189 @@
+{
+  "iteration": 16,
+  "target": null,
+  "run_at": "2026-07-21T01:42:27+00:00",
+  "head": "239781ca534a397e2efc87abfec2476614a210f2",
+  "accepted_commit": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+  "verdict": "REJECTED_GATE",
+  "failed_gates": [
+    "G6"
+  ],
+  "gate_defects": [],
+  "gates": [
+    {
+      "gate": "G1",
+      "pass": true,
+      "detail": {
+        "pack": 0,
+        "external": 0,
+        "confirm": 0
+      }
+    },
+    {
+      "gate": "G2",
+      "pass": true,
+      "detail": {
+        "correct": 159,
+        "correct_required": 159,
+        "abstained": 0,
+        "abstained_required": 0,
+        "iou_over_05": 159,
+        "iou_over_05_required": 159,
+        "iou_mean": 0.967727,
+        "iou_mean_floor": 0.9672
+      }
+    },
+    {
+      "gate": "G3",
+      "pass": true,
+      "detail": {
+        "regressions": [],
+        "fields_compared": 1340
+      }
+    },
+    {
+      "gate": "G4",
+      "pass": true,
+      "detail": {
+        "passed": 1691,
+        "failed": 0,
+        "baseline_passed": 1644
+      }
+    },
+    {
+      "gate": "G5",
+      "pass": true,
+      "detail": {
+        "flags_off": [],
+        "compared_against": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+        "documents_compared": 77,
+        "identical": true,
+        "documents_differing": [],
+        "documents_differing_total": 0
+      }
+    },
+    {
+      "gate": "G6",
+      "pass": false,
+      "detail": {
+        "allowlist": [],
+        "changed": [
+          "api/app.py",
+          "api/nominate.py",
+          "api/store.py",
+          "loop/backlog.json",
+          "loop/falsification/it-016.json",
+          "loop/falsify/it-016.py",
+          "loop/proposals/it-016.md",
+          "loop/reports/it-016.md"
+        ],
+        "outside_allowlist": [
+          "api/app.py",
+          "api/nominate.py",
+          "api/store.py"
+        ],
+        "forbidden_touched": [],
+        "cache_paths_exempted": 0,
+        "preexisting_dirt_exempted": 59
+      }
+    },
+    {
+      "gate": "G7",
+      "pass": true,
+      "detail": {
+        "mode": "baseline self-check",
+        "observed": [],
+        "requirement": "the unchanged tree must flip nothing"
+      }
+    }
+  ],
+  "measurements": {
+    "pack": {
+      "correct": 159,
+      "of": 159,
+      "wrong": 0,
+      "abstained": 0,
+      "iou_mean": 0.967727,
+      "iou_over_05": 159
+    },
+    "external": {
+      "correct": 23,
+      "of": 44,
+      "wrong": 0,
+      "abstained": 21
+    },
+    "confirm": {
+      "correct": 26,
+      "of": 126,
+      "wrong": 0,
+      "abstained": 100
+    },
+    "pytest": {
+      "passed": 1691,
+      "failed": 0,
+      "exit_code": 0
+    }
+  },
+  "baseline_provenance": {
+    "built_from_commit": "f32b5ba0e1c8a78b081078ebd3a4d4b35acee6c6",
+    "extraction_tree_clean": true,
+    "extraction_tree_dirt": [],
+    "dirty_tree_override_used": false,
+    "paths_checked": [
+      "core/",
+      "api/",
+      "eval/",
+      "logic/",
+      "ocr/",
+      "scripts/",
+      "pack/"
+    ],
+    "note": "a baseline built from uncommitted work is worse than no baseline, because every later gate silently trusts it"
+  },
+  "field_state_census": {
+    "confirm": {
+      "abstain": 2,
+      "correct": 26,
+      "image_only": 13,
+      "masked": 5
+    },
+    "external": {
+      "abstain": 5,
+      "correct": 23
+    },
+    "filled": {
+      "abstain": 5,
+      "correct": 5,
+      "image_only": 1
+    },
+    "holdout": {
+      "abstain": 10,
+      "correct": 24
+    },
+    "pack": {
+      "correct": 159
+    },
+    "scenarios": {
+      "abstain": 378,
+      "correct": 278,
+      "image_only": 50
+    },
+    "uploads": {
+      "abstain": 8,
+      "correct": 136,
+      "image_only": 31
+    }
+  },
+  "field_flips_observed": [],
+  "flag_off_identical": true,
+  "diff_files": [
+    "api/app.py",
+    "api/nominate.py",
+    "api/store.py",
+    "loop/backlog.json",
+    "loop/falsification/it-016.json",
+    "loop/falsify/it-016.py",
+    "loop/proposals/it-016.md",
+    "loop/reports/it-016.md"
+  ]
+}

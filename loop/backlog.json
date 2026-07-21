@@ -449,6 +449,40 @@
       ],
       "done_note": "Mechanism DONE, remainder scoped. it-014 built and proved the leak-free skeleton; it-015 wired it into core/label_llm.model_mapper as CONTEXT (the skeleton rides the user message with every value blanked), unified the caption egress gate through the furniture test (closes T25), added the context digest + timeout fix (closes T26), and re-falsified both outbound channels (loop/falsification/it-015.json: skeleton 0 leaks, caption furniture-only 0 leaks). Deterministic path byte-identical (G5), gate PASS. The EYES are widened without widening the HANDS: the model still nominates one field from the closed set and geometry still reads/type-checks every value. REMAINDER, scoped and measured: (1) safe default-on requires a FRONTIER model -- gpt-4o abstains on the ca_dlse piece-rate table (T27, 0 wrong) but gpt-4o-mini reasons unsafely (3 wrong), so REALDOOR_SKELETON_CONTEXT ships default OFF pending an operator model-cost decision (~$0.05/doc); (2) the T21 position arm that would reach unknown captions leaks 139 values and ships OFF. So T28's product value (T27 closed, T21 lifted) is unrealized in the DEFAULT config; only its safety half (T25/T26) is live by default.",
       "root_cause_note": "Architecture direction chosen with the user. The corner-case patch accretion (option-band, gloss-colon, TABLE_ROW_AXES refusals) exists mostly to compensate for the model's blindfold: model_mapper sees only one <=48-char caption and cannot tell a piece-rate breakdown from a single rate, or a template annotation from a value. Widen the EYES without widening the HANDS: give the model a position-redacted page skeleton (every value slot -- numeric OR personal: name/address/SSN/date -- replaced by a typed placeholder <MONEY>/<HRS>/<NAME>/<DATE>, captions/headers/row-labels and footnote markers preserved), keep the output contract exactly (nominate one field from the closed set, deterministic geometry reads and type-checks the value, runs-last/blanks-only, off by default under pytest). Subsumes T27 (model abstains on piece-rate from structure), T21 (nominates long real-form captions), and T25 (the position-based redactor IS the leak boundary assert_no_values cannot be). Named hazard: a value string -- numeric or personal -- leaves the process inside the skeleton; primary falsification = scan every outbound skeleton across all corpora for any value string, gate the send on it, fall back to deterministic-only on any leak. Security envelope unchanged vs today's caption-only send ONLY if the redactor is position-based and correct (R20: this trades a structural guarantee for a filtered one -- justified because it unlocks frontier reasoning the one-caption path cannot reach). Deterministic headline must stay byte-identical (model off)."
+    },
+    {
+      "id": "T29",
+      "title": "pay period printed as a `<date> to <date>` range on the caption line (ca_dlse)",
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf | ca_dlse_paystub_piecerate.pdf",
+      "fields": [
+        "confirm::ca_dlse_paystub_hourly.pdf::pay_period_start",
+        "confirm::ca_dlse_paystub_hourly.pdf::pay_period_end",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_start",
+        "confirm::ca_dlse_paystub_piecerate.pdf::pay_period_end"
+      ],
+      "category": "date_range_layout",
+      "status": "NO_SAFE_RULE",
+      "attempts": 1,
+      "prior_attempts": [
+        "it-016"
+      ],
+      "expected_yield": 0,
+      "root_cause_note": "Two facts stack (it-016). (a) The period label IS recognised (PAY PERIOD in LABEL_MAP; `Pay Period:` via the colon-folded synonym pass) -- NOT a vocabulary miss. The value is a `<date> to <date>` span on the CAPTION line (below the label). core.extract._period_span_fields already reads this exact span shape but SIDE-BY-SIDE only (via _side_by_side_run); it fires on il_dol (`Pay Period: 8/21/2005 to 8/27/05`, one line, reads pay_period_start=2005-08-21) and misses ca_dlse's below-label geometry, so the field takes no record and the terminal sweep prints the generic 'no label found'. (b) ca_dlse's years are the literal placeholder `XX` (truth itself is `1/7/XX`); both halves fail _parse_date and MUST abstain (T6/MASKED_OUT, constraint 3). Abstaining is the CORRECT terminal answer -- reading the caption span changes nothing.",
+      "closed_note": "NO_SAFE_RULE at extraction, it-016, no core change. Falsification (loop/falsification/it-016.json) over 65 non-raster manifest + 187 filled/scenario docs (252 total): 3 range-lines, ALL conjunction `to`, ALL period-context, ZERO with both years resolvable, ZERO non-period (hazard) hits. So the two candidate extensions both die on measurement: (1) extending the span reader to the caption line fires ONLY on ca_dlse (masked -> abstain/abstain, byte-identical to today; zero yield, zero real-doc witness -- a fitted capability with no consumer); (2) widening the conjunction set to through/thru/dash has ZERO printed witness anywhere (a forbidden fitted constant). The side-by-side `to` range is already read (il_dol); the caption case is unreachable because masked. The real missing link is downstream, filed T30: reading the period does not complete the income because logic/income.py annualizes only from a stated pay_frequency field and refuses to derive frequency from pay dates (its commitment #1); it never reads pay_period_start/end. Proven end-to-end on il_dol: pay_period_start+end+gross all read -> derive_wage_source returns None, trigger pay_frequency_not_stated, household total None."
+    },
+    {
+      "id": "T30",
+      "title": "derive pay_frequency from the pay-period day-span in the annualization layer (income cannot complete without it)",
+      "corpus": "confirm+scenarios",
+      "doc": "il_dol_day_labor_wage_notice_sample.pdf | ca_dlse_paystub_hourly.pdf | ca_dlse_paystub_piecerate.pdf",
+      "category": "annualization_policy",
+      "status": "OPEN",
+      "attempts": 0,
+      "prior_attempts": [],
+      "expected_yield": 0,
+      "root_cause_note": "Filed by it-016. Real published pay stubs express pay frequency as a period RANGE, not a frequency WORD; the pack annualizes only because pack stubs print `biweekly`. logic/income.py::derive_wage_source requires a stated pay_frequency field (line 242) and its docstring commitment #1 explicitly refuses to guess a frequency from pay dates; pay_period_start/end are read NOWHERE in logic/ or pack/starter/. Measured end-to-end on il_dol: with pay_period_start=2005-08-21, pay_period_end=2005-08-27 and gross_pay=440 all present, derive_wage_source returns annual=None (trigger pay_frequency_not_stated, 'it cannot be inferred'), household total None. So reading the period is necessary but NOT sufficient; the missing step is frequency-from-span (1/7->1/13 = 7-day = weekly, computable from month/day even when the year is masked XX).",
+      "design_note": "This is a policy/logic successor, NOT an extraction rule, and NOT emitting pay_frequency as a document field -- pay_frequency is in ca_dlse's expect_absent, so emitting it as an extracted field would be a scored WRONG. The derivation belongs in the annualization layer as a DERIVED quantity (a frequency inferred for scoring from the printed span, distinct from a printed frequency word), and it relaxes a standing design commitment ('refuse to guess one from pay dates') -- an operator/owner decision, with its own falsification. It also must decide how to obtain the span for masked-year docs (from month/day, since the day-count is year-independent) and how to represent a range whose ISO dates abstain (ca_dlse's XX halves never become pay_period_start/end values). CH-INCOME-001 says 'annualize using the EXPLICIT pay frequency' -- so a span-derived frequency may need to be surfaced as a lower-certainty, clearly-labelled inference rather than folded into the explicit-frequency path."
     }
   ]
 }

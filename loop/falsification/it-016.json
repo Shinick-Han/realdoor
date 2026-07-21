@@ -1,0 +1,54 @@
+{
+  "iteration": "it-016",
+  "target": "T29",
+  "predicate": "a run shaped <date> <conj> <date> (conj in {to, through, thru, -, en-dash, em-dash}); period_context = a pay-period label on the same line or the line above",
+  "manifest_swept": 65,
+  "manifest_rasterized_skipped": 12,
+  "dev_swept": 187,
+  "conjunctions_actually_seen": [
+    "to"
+  ],
+  "hits": [
+    {
+      "page": 1,
+      "line": "Johnson, Bob XXX-XX-6789 18.00 regular 1/7/XXto 1/13/XX",
+      "conj": "to",
+      "left": "1/7/XX",
+      "right": "1/13/XX",
+      "both_years_resolvable": false,
+      "period_context": true,
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_hourly.pdf"
+    },
+    {
+      "page": 1,
+      "line": "123 West Street, Smalltown, CA 98705 1/7/XX to 1/13/XX",
+      "conj": "to",
+      "left": "1/7/XX",
+      "right": "1/13/XX",
+      "both_years_resolvable": false,
+      "period_context": true,
+      "corpus": "confirm",
+      "doc": "ca_dlse_paystub_piecerate.pdf"
+    },
+    {
+      "page": 1,
+      "line": "123 First Avenue Pay Period: 8/21/2005 to 8/27/05",
+      "conj": "to",
+      "left": "8/21/2005",
+      "right": "8/27/05",
+      "both_years_resolvable": false,
+      "period_context": true,
+      "corpus": "confirm",
+      "doc": "il_dol_day_labor_wage_notice_sample.pdf"
+    }
+  ],
+  "counts": {
+    "range_lines_total": 3,
+    "period_context_resolvable_year": 0,
+    "period_context_masked_or_two_digit_year": 3,
+    "HAZARD_non_period_context": 0
+  },
+  "hazard_conflicts": [],
+  "verdict": "NO non-period range anywhere (hazard does not materialise); and NO period range with both years resolvable -> zero achievable extraction yield on this corpus (the only period ranges are ca_dlse [masked XX] and il_dol [side-by-side, already read by the existing rule])."
+}
