@@ -7532,7 +7532,10 @@
     if (typeof window.Lenis !== "function") return;
 
     var lenis = new window.Lenis({
-      duration: 1.1,        // a soft ease, not a long floaty lag
+      /* lerp (per-frame interpolation), not duration: a fixed 1.1s ease made the page
+       * feel like it lagged behind the wheel ("답답"). lerp 0.12 keeps the smoothing but
+       * responds to input immediately, which reads as smooth-but-snappy rather than laggy. */
+      lerp: 0.12,
       smoothWheel: true,
       /* Inner horizontal scrollers stay native. Lenis walks up from each wheel/touch target
        * and calls this for every ancestor; returning true for a `.table-scroll` (the tables'
