@@ -52,7 +52,12 @@ STAGE_BRANCH="__hf_stage_$$"
 FLAT_BRANCH="__hf_flat_$$"
 
 cleanup() {
-  git checkout -q "$START_BRANCH" 2>/dev/null || true
+  # -f: the flat/orphan branch stripped tracked files (testdata, screenshots), so a
+  # plain checkout back aborts on "untracked would be overwritten" and strands us on
+  # the temp branch. Force restores START_BRANCH's tree; untracked scratch that no
+  # branch tracks is left untouched. (This same forced checkout will revert any
+  # UNCOMMITTED edit to tracked files, including this script — commit script edits.)
+  git checkout -f -q "$START_BRANCH" 2>/dev/null || git checkout -f -q master 2>/dev/null || true
   git branch -D "$STAGE_BRANCH" 2>/dev/null || true
   git branch -D "$FLAT_BRANCH" 2>/dev/null || true
 }
