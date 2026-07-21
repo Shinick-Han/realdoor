@@ -44,6 +44,15 @@
   --accent-softer:rgba(29, 29, 31, .045);  /* fainter neutral still: the inline editor's field */
   --wash-accent:  #f5f5fd;                 /* solid faint-COOL fill for alert/callout — ink-soft on it 4.68:1 */
 
+  /* Interactive / link colour — a COOL indigo that reads "clickable" the way the web expects,
+     kept DISTINCT from the ink --accent (which is also a fill/border elsewhere, so it must not
+     move). Text links and the quiet outlined (secondary) buttons wear this, keeping their
+     underline. #1e40c8 on --paper is 8.0:1 (white on it likewise), well past the 4.5:1 AA
+     floor; on --shell 7.3:1. It is the CTA gradient's lightest stop, so the whole interactive
+     family stays one calm hue — cool, not loud, never orange. */
+  --link:        #1e40c8;                   /* cool indigo — link text + outlined secondary buttons; 8.0:1 on white */
+  --link-soft:   rgba(30, 64, 200, .08);   /* faint COOL wash — secondary-button hover/focus tint */
+
   /* Cool ring, drawn from the gradient's indigo: it carries BOTH the focus outline AND the
      "active / pointing" highlight on the evidence boxes. A deep indigo (not the brighter
      gradient stops) so the ring stays distinct where it sits beside the cool spark. */
@@ -81,13 +90,15 @@
      full-width-with-padding — max() never lets the gutter drop below --band-pad, and the
      centring term goes negative (and is ignored) long before the layout gets tight. */
   /* Width is tuned around the *main reading column*, not the whole band. With the aside
-     and the 2rem gap subtracted, the shared axis below must leave main wide enough that
-     body text stops over-wrapping: 78rem − 18rem − 2rem = 58rem ≈ 928px of main, which
-     is ~70 characters per line — inside the comfortable 60–75ch reading measure, where
-     the previous 71.25rem left only ~788px (~60ch and fraying). Wider main means fewer
-     wrapped lines, so the page is *shorter*, not just roomier. Still centred: a 1920
-     monitor keeps ~330px of calm on each side, so this is not a return to full-bleed. */
-  --content-max: 78rem;                    /* ~1248px shared content axis */
+     and the 2rem gap subtracted, the shared axis below leaves main = 90rem − 18rem − 2rem
+     = 70rem ≈ 1120px on a wide monitor, so the layout feels expansive rather than narrow.
+     Body prose does NOT stretch to that width: the text blocks keep their own reading caps
+     (24ch headings, 72ch lede/paragraphs/notes), so the extra room goes to tables, images
+     and cards while the measure stays comfortable. Still centred, never full-bleed: a 1920
+     monitor keeps ~240px of calm on each side. Below --content-max the --band-pad floor
+     governs, so the ≤1100px single-column reflow and the 320px full-width-with-padding
+     collapse are unchanged by this width. */
+  --content-max: 90rem;                    /* ~1440px shared content axis */
   --band-pad:   clamp(1rem, 5vw, 2.5rem);  /* 16px … 40px side gutter */
   --band-inset: max(var(--band-pad), calc((100% - var(--content-max)) / 2));
   --layout-gap: var(--space-6);            /* main ↔ aside; the dock reads the same number */
@@ -174,7 +185,7 @@ h3 { font-size: 1.0625rem; margin-top: 1.6em; }        /* 17px */
 h4 { font-size: 1rem; margin-top: 1.2em; }             /* 16px */
 p  { margin: 0 0 .8em; }
 
-a { color: var(--accent); transition: color var(--dur) var(--ease); }
+a { color: var(--link); transition: color var(--dur) var(--ease); }
 a:hover { text-decoration-thickness: 2px; }
 
 :focus-visible {
@@ -251,7 +262,7 @@ a:hover { text-decoration-thickness: 2px; }
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--link);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
@@ -496,7 +507,7 @@ main:focus { outline: none; }
   border: none;
   border-bottom: 3px solid transparent;
   padding: .15rem .1rem .3rem;
-  color: var(--accent);
+  color: var(--link);
   cursor: pointer;
 }
 .page-rail__link:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -548,7 +559,7 @@ main:focus { outline: none; }
 details.fold { margin: 1.1rem 0; }
 details.fold > summary {
   cursor: pointer;
-  color: var(--accent);
+  color: var(--link);
   font-weight: 600;
   font-size: .95rem;
   width: fit-content;
@@ -576,7 +587,7 @@ details.fold > :not(summary) { margin-top: .8rem; }
 details.recorded-questions { margin: 0 0 .2rem; }
 details.recorded-questions > summary {
   cursor: pointer;
-  color: var(--accent);
+  color: var(--link);
   font-weight: 600;
   width: fit-content;
   padding: .2rem 0;
@@ -634,7 +645,7 @@ details.recorded-questions > :not(summary) { margin-top: .6rem; }
 details.tech { font-size: .86rem; }
 details.tech > summary {
   cursor: pointer;
-  color: var(--accent);
+  color: var(--link);
   font-weight: 600;
   width: fit-content;
 }
@@ -743,7 +754,7 @@ details.tech > * { margin-top: .4rem; }
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--link);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
@@ -1027,12 +1038,16 @@ button.action:hover { background: var(--brand-cta-hover); border-color: transpar
 button.action:active { transform: translateY(1px); }
 button.action[aria-disabled="true"],
 button.action:disabled { background: var(--muted-fill); border-color: var(--muted-fill); cursor: not-allowed; }
+/* Secondary / ghost buttons — a QUIET outlined cool button, clearly a button but clearly
+   subordinate to the gradient primary: a 1px --link border and --link label on paper (never a
+   solid fill), with a faint --link-soft tint on hover/focus. --link on --paper is 8.0:1, well
+   past AA; the 1px indigo border is 8.0:1 ≥ the 3:1 UI-boundary floor. */
 button.secondary {
   background: var(--paper);
-  border-color: var(--line-strong);
-  color: var(--accent);
+  border-color: var(--link);
+  color: var(--link);
 }
-button.secondary:hover { background: var(--accent-soft); border-color: var(--accent); }
+button.secondary:hover { background: var(--link-soft); border-color: var(--link); }
 
 /* A switched-off secondary button.
  *
@@ -1154,12 +1169,12 @@ button.action.secondary:disabled:hover { background: var(--paper); }
   background: none;
   border: none;
   padding: .1rem .2rem;
-  color: var(--accent);
+  color: var(--link);
   text-align: left;
   cursor: pointer;
   text-decoration: underline;
 }
-.field-row-btn:hover { background: var(--accent-soft); }
+.field-row-btn:hover { background: var(--link-soft); }
 tr.is-active td { background: #fdf0ea; }
 
 .abstain-cell { color: var(--stop); font-weight: 600; }
@@ -1335,14 +1350,14 @@ button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   background: var(--paper);
-  color: var(--accent);
+  color: var(--link);
   cursor: pointer;
   /* 긴 질문이 320px 에서 컨테이너를 밀지 않도록: 칩 안에서 줄바꿈된다. */
   max-width: 100%;
   overflow-wrap: anywhere;
 }
 .example-chip { transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
-.example-chip:hover { background: var(--accent-soft); border-color: var(--accent); }
+.example-chip:hover { background: var(--link-soft); border-color: var(--link); }
 
 dl.kv { display: grid; grid-template-columns: minmax(9rem, auto) minmax(0, 1fr); gap: .3rem .8rem; margin: 0 0 .8rem; }
 dl.kv dt { font-weight: 600; color: var(--ink-soft); }
@@ -1483,16 +1498,16 @@ body{ line-height:1.5; }
   background: none;
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--accent);
+  color: var(--link);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: background-color .12s ease, color .12s ease;
 }
 .point-link::before { content: "\25CE"; font-size: .95em; text-decoration: none; }
-.point-link:hover { background: var(--accent-soft); text-decoration: none; }
+.point-link:hover { background: var(--link-soft); text-decoration: none; }
 .point-link[aria-pressed="true"] {
-  background: var(--accent);
+  background: var(--link);
   color: var(--accent-ink);
   text-decoration: none;
 }
@@ -1512,14 +1527,14 @@ body{ line-height:1.5; }
 .row-editor .action.secondary,
 .absence-note .action.secondary {
   background: var(--paper);
-  border-color: var(--line-strong);
-  color: var(--accent);
+  border-color: var(--link);
+  color: var(--link);
 }
 .confirm-cell .action.secondary:hover,
 .row-editor .action.secondary:hover,
 .absence-note .action.secondary:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  background: var(--link-soft);
+  border-color: var(--link);
   box-shadow: none;
 }
 /* The absence action reads as the calmer of the two — it is a claim about the document,
