@@ -102,39 +102,22 @@ def _normalize(text: str) -> str:
     return " ".join(str(text).split()).upper()
 
 
-def nominate(data: bytes) -> tuple[dict[str, Any] | None, str]:
-    """올린 PDF 바이트에서 문서 종류 지명을 시도한다.
+def nominate_page(page: Any, page_number: int) -> tuple[dict[str, Any] | None, str]:
+    """한 페이지의 인쇄된 제목에서 종류를 지명한다 — **표 조회도 근거 계약도 그대로.**
 
-    반환: (nomination, reason)
-      nomination  {"document_type", "matched_text", "page", "bbox"} — 근거 포함.
-                  bbox 는 추출 필드와 같은 관례([x0, y0, x1, y1], PDF 포인트,
-                  좌하단 원점)라 화면이 같은 좌표 기계로 다룰 수 있다.
-      reason      지명이 없을 때 왜 없는지:
-                    "matched"             지명 있음
-                    "no_text_layer"       1페이지에 읽을 텍스트가 없다(스캔본).
-                                          OCR 로는 지명하지 않는다 — 인식 오류가
-                                          섞인 문자열의 완전 일치는 측정된 적이
-                                          없고, 이 표는 인쇄된 글자를 전제한다.
-                    "no_title_match"      제목 영역의 어떤 런도 표에 없다
-                    "conflicting_titles"  서로 다른 종류의 문구가 함께 인쇄돼
-                                          있다 — 고르는 것은 추측이므로 묻는다
+    `nominate` 이 페이지 0 에 대해 하던 일을 임의의 페이지 하나로 일반화한 것뿐이다.
+    닫힌 표·완전 일치·제목 영역(상단 28%)·근거 동봉은 한 글자도 달라지지 않는다.
+    다른 것은 지명에 실리는 `page` 가 그 페이지의 실제 번호(1-기반)라는 것 하나다 —
+    결합 문서를 페이지별로 훑을 때 근거가 올바른 페이지를 가리켜야 하기 때문이다
+    (api/upload.py::segment_pages 가 이 함수로 각 페이지를 지명한다).
 
-    호출자는 이미 PDF 매직바이트를 검사했다(api/upload.py). 여기서 열기에
-    실패하면 그건 손상된 파일이고, 그 판정은 업로드 본 경로가 한다 — 지명은
-    조용히 포기하고 사람에게 묻는 쪽으로 떨어진다.
+    반환: `nominate` 과 같은 (nomination, reason) 계약.
     """
-    try:
-        with pdfplumber.open(io.BytesIO(data)) as pdf:
-            if not pdf.pages:
-                return None, "no_text_layer"
-            page = pdf.pages[0]
-            height = float(page.height)
-            words = read_words(page, 1)
-    except Exception:
-        return None, "no_text_layer"
+    words = read_words(page, page_number)
     if not words:
         return None, "no_text_layer"
 
+    height = float(page.height)
     floor = height * (1.0 - TITLE_REGION_FRACTION)
     title_words = [w for w in words if w.baseline >= floor]
     if not title_words:
@@ -149,7 +132,7 @@ def nominate(data: bytes) -> tuple[dict[str, Any] | None, str]:
             matches.append({
                 "document_type": doc_type,
                 "matched_text": _join_run(run),
-                "page": 1,
+                "page": page_number,
                 "bbox": [
                     round(min(w.x0 for w in run), 2),
                     round(min(w.glyph_bottom for w in run), 2),
@@ -169,3 +152,36 @@ def nominate(data: bytes) -> tuple[dict[str, Any] | None, str]:
     # 같은 종류가 여러 번 인쇄됐으면(il_dol 처럼 제목이 두 번 찍히는 문서가 실재한다)
     # 가장 위의 것 — group_lines 가 위에서 아래로 돌므로 첫 번째 — 을 근거로 든다.
     return matches[0], "matched"
+
+
+def nominate(data: bytes) -> tuple[dict[str, Any] | None, str]:
+    """올린 PDF 바이트의 **1페이지**에서 문서 종류 지명을 시도한다.
+
+    반환: (nomination, reason)
+      nomination  {"document_type", "matched_text", "page", "bbox"} — 근거 포함.
+                  bbox 는 추출 필드와 같은 관례([x0, y0, x1, y1], PDF 포인트,
+                  좌하단 원점)라 화면이 같은 좌표 기계로 다룰 수 있다.
+      reason      지명이 없을 때 왜 없는지:
+                    "matched"             지명 있음
+                    "no_text_layer"       1페이지에 읽을 텍스트가 없다(스캔본).
+                                          OCR 로는 지명하지 않는다 — 인식 오류가
+                                          섞인 문자열의 완전 일치는 측정된 적이
+                                          없고, 이 표는 인쇄된 글자를 전제한다.
+                    "no_title_match"      제목 영역의 어떤 런도 표에 없다
+                    "conflicting_titles"  서로 다른 종류의 문구가 함께 인쇄돼
+                                          있다 — 고르는 것은 추측이므로 묻는다
+
+    호출자는 이미 PDF 매직바이트를 검사했다(api/upload.py). 여기서 열기에
+    실패하면 그건 손상된 파일이고, 그 판정은 업로드 본 경로가 한다 — 지명은
+    조용히 포기하고 사람에게 묻는 쪽으로 떨어진다.
+
+    페이지별 지명(결합 문서)은 `nominate_page` 을 직접 부른다 — 이 함수는 1페이지
+    지명이라는 기존 계약(api/test_nominate.py)을 그대로 지킨다.
+    """
+    try:
+        with pdfplumber.open(io.BytesIO(data)) as pdf:
+            if not pdf.pages:
+                return None, "no_text_layer"
+            return nominate_page(pdf.pages[0], 1)
+    except Exception:
+        return None, "no_text_layer"

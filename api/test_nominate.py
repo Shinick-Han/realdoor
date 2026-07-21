@@ -187,18 +187,31 @@ def test_upload_with_an_explicit_type_carries_no_nomination(client, session):
     assert "nomination" not in body
 
 
-def test_a_scan_without_a_type_falls_back_to_asking(client, session):
+def test_a_scan_without_a_type_reads_under_the_visible_default(client, session):
+    """item 3: 첫 페이지가 스스로를 밝히지 못하면(스캔) 질문으로 막지 않고 **보이는
+    기본값**(pay_stub)으로 읽어 곧바로 결과를 보인다. 예전엔 400 type_not_announced 로
+    질문했다 — 사용자가 "읽기"를 눌렀는데 질문을 받던 그 마찰을 없앴다."""
     r = _post(client, session, "up_006_pay_stub_sam_poe_scan.pdf")
-    assert r.status_code == 400
-    detail = r.json()["detail"]
-    assert detail["code"] == "type_not_announced"
-    assert "does not announce" in detail["detail"]
+    assert r.status_code == 200
+    body = r.json()
+    assert body["document_type"] == "pay_stub"
+    assert body["assumed_type"] is True
+    assert "nomination" not in body
+    # 가정은 결과 옆에 **보이게** 실린다(조용한 가정이 아니다).
+    assert any("read it as a pay_stub" in line for line in body["limits"])
 
 
-def test_an_unannounced_page_without_a_type_falls_back_to_asking(client, session):
+def test_an_unannounced_page_without_a_type_reads_under_the_visible_default(client, session):
+    """유틸리티 고지서: 표에 없는 제목. item 3 로 pay_stub 기본값에서 읽되, 제로-오답은
+    그대로다 — pay_stub 규칙에 맞는 라벨이 없으므로 값을 지어내지 않고 기권한다."""
     r = _post(client, session, "up_013_utility_bill_john_doe.pdf")
-    assert r.status_code == 400
-    assert r.json()["detail"]["code"] == "type_not_announced"
+    assert r.status_code == 200
+    body = r.json()
+    assert body["document_type"] == "pay_stub"
+    assert body["assumed_type"] is True
+    # 제로-오답: 맞는 라벨이 없으면 값을 만들지 않는다. 읽힌 값이 있어도 전부 근거가
+    # 있는 것뿐이고, 대부분 기권이다.
+    assert body["located_count"] == 0
 
 
 def test_size_and_pdf_checks_still_run_before_nomination(client, session):

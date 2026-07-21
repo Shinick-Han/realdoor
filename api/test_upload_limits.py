@@ -109,21 +109,22 @@ def test_an_assembly_worth_of_uploads_never_meets_the_limiter(client, limits_on)
 def test_six_real_documents_go_in_without_a_pause(client, limits_on):
     """실제 경로로 한 번 더. 세션 문서 상한까지 채우는 동안 429 는 없다.
 
-    가운데 스캔본 한 장을 섞는다. 그 장은 종류를 밝히지 못해 400 으로 거절되고
-    (텍스트 레이어가 없으므로 OCR 까지 가지 않아 빠르다) **그러면서 토큰을 쓴다** —
-    옛 상한 6 을 그 자리에서 무너뜨리던 바로 그 요청이다.
+    먼저 PDF 가 아닌 바이트로 한 번 두드린다 — 그 요청은 400 으로 거절되지만
+    **그러면서 토큰을 쓴다**(거절도 미들웨어를 지난다). 옛 상한 6 을 그 자리에서
+    무너뜨리던 바로 그 성질이다. (예전엔 스캔본이 type_not_announced 로 이 역할을
+    했지만, item 3 이후 스캔본은 보이는 기본값으로 읽혀 200 을 내고 자리를 차지한다 —
+    그래서 여기서는 자리를 차지하지 않는 값싼 거절로 같은 성질을 잰다.)
     """
     addr = fresh_address()
     session = open_session(client, addr)
     good = (UPLOADS / "up_003_pay_stub_john_doe.pdf").read_bytes()
-    scan = (UPLOADS / "up_006_pay_stub_sam_poe_scan.pdf").read_bytes()
 
     seen = []
-    r = post_upload(client, addr, session=session, payload=scan,
-                    file_name="up_006_pay_stub_sam_poe_scan.pdf")
+    r = post_upload(client, addr, session=session, payload=b"not a pdf at all",
+                    file_name="not_a_pdf.pdf")
     seen.append(r.status_code)
     assert r.status_code == 400
-    assert r.json()["detail"]["code"] == "type_not_announced"
+    assert r.json()["detail"]["code"] == "not_a_pdf"
 
     for _ in range(MAX_SESSION_UPLOADS):
         r = post_upload(client, addr, session=session, payload=good,

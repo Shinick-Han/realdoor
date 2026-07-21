@@ -28,7 +28,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from api import plain
-from core.extract import extract_document, tracking_layered_mapper
+from core.extract import EXPECTED_FIELDS, extract_document, tracking_layered_mapper
 from logic.household import (households_from_views, load_pack_checklists,
                              required_document_types)
 from logic.readiness import build_report
@@ -48,7 +48,18 @@ UPLOADS_HOUSEHOLD_ID = "YOUR-UPLOADS"
 #: 한 세션이 쥘 수 있는 업로드 문서 수. 바이트가 전부 세션 메모리에 살기 때문에 상한이
 #: 있어야 한다(문서당 10MB까지 — api/upload.py). 여섯이면 팩의 가장 큰 세대(5문서)보다
 #: 크고, 인수 데모 한 바퀴를 자기 문서로 걷기에 넉넉하다.
+#:
+#: 결합 문서(한 PDF 안에 여러 종류)는 페이지별로 하위 문서로 쪼개지고(api/upload.py::
+#: segment_pages) **각 하위 문서가 한 자리씩** 차지한다 — "각 페이지를 자기 문서로"가
+#: 사용자의 선택이므로, 3종이 든 결합 PDF 는 세 문서로 세어 목록에도 세 행으로 선다.
 MAX_SESSION_UPLOADS = 6
+
+#: pdfium 직렬화 락(app.py 의 페이지 렌더와 **공유**). pdfium 은 스레드 안전하지 않고,
+#: 네이티브 렌더/문서생성이 겹치면 예외가 아니라 access violation 으로 프로세스를 죽인다
+#: (app.py::_RENDER_LOCK 의 실측 주석 참조). 업로드가 결합 PDF 를 페이지 범위별 하위
+#: PDF 로 쪼갤 때(pypdfium2) 도 pdfium 을 부르므로, 렌더와 **같은 락**을 써야 그 겹침이
+#: 생기지 않는다. 그래서 락은 여기(두 모듈이 함께 import 하는 곳)에 둔다.
+PDFIUM_LOCK = threading.Lock()
 
 
 def uploads_required_types(views: list[dict[str, Any]]) -> tuple[str, ...]:
@@ -307,6 +318,8 @@ EVENT_WORDS = {
     # 문서 하나를 세션에서 걷어낸 기록. 여기에도 값은 없다 — 문서 id 만 남고,
     # 파일 이름도 내용도 남지 않는다(브리프: "not raw document contents").
     "document_removed": "An uploaded document was removed from this session by the renter",
+    # 하위 문서 하나를 사람이 고른 종류로 다시 읽은 기록. 종류만 남고 값은 없다.
+    "document_retyped": "An uploaded document was re-read under a document type the renter chose",
 }
 
 
@@ -575,6 +588,16 @@ class Store:
             doc["fields"] = v.get("fields", [])
             doc["page_count"] = v.get("page_count")
             doc["page_size_points"] = v.get("page_size_points")
+            # 업로드 하위 문서는 자기가 원본의 어느 페이지들을 덮는지 안다(api/upload.py 가
+            # `pages` 에 원본 페이지 번호·크기를 싣는다). 화면이 2페이지에서도 **모든
+            # 페이지**를 그리려면 그 목록이 리포트 문서에도 실려야 한다. 팩 뷰에는 이 키가
+            # 없으므로 None 이 되고, 화면은 page_count 로부터 1..n 을 합성한다 — 팩 리포트는
+            # 이 변경 전과 바이트 단위로 같다(추가 키는 None 일 때 직렬화에 나타나지 않도록
+            # 아래에서 걸러진다).
+            if v.get("pages") is not None:
+                doc["pages"] = v.get("pages")
+                doc["page_start"] = v.get("page_start")
+                doc["page_end"] = v.get("page_end")
             doc["state"] = v.get("state")
             # 업로드 뷰는 어느 경로로 읽었는지를 스스로 안다(api/upload.py 가 "source" 를
             # 싣는다). 팩 뷰에는 그 키가 없으므로 기존 문장이 그대로 남는다 — 팩 리포트는
@@ -687,49 +710,122 @@ class Store:
 
     # ── 업로드 (인수 데모 1단계: 문서를 올리고 추출 근거를 보인다) ─────────
     def add_upload(self, s: Session, data: bytes, file_name: str,
-                   document_type: str,
-                   nomination: dict[str, Any] | None = None) -> dict[str, Any]:
-        """올린 문서를 읽어 **세션 메모리에만** 담는다. 디스크에 닿지 않는다."""
+                   explicit_type: str | None = None) -> dict[str, Any]:
+        """올린 파일을 읽어 **세션 메모리에만** 담는다. 디스크에 닿지 않는다.
+
+        결합 문서(한 PDF 안에 여러 종류)는 페이지별로 하위 문서로 쪼개진다
+        (api/upload.py::read_document_file). "각 페이지를 자기 문서로" 가 사용자의
+        선택이므로, 하위 문서 하나하나가 세션의 업로드 자리 하나씩을 차지하고 팩 세대와
+        같은 기계(리포트·정정·체크리스트)를 각자 탄다. 응답은 화면이 한 번에 그릴 수
+        있도록 첫 하위 문서 + `sub_documents`(전부) 를 함께 싣는다.
+        """
         from api import upload as upload_mod
 
-        # 예전에는 마지막 한 장만 남기고 직전 업로드를 지웠다. 이제 업로드들은 함께
-        # **세션 자신의 파일**(UPLOADS_HOUSEHOLD_ID)을 이루므로 전부 남는다 — 심사위원이
-        # 자기 문서 여러 장으로 2~6단계를 걸을 수 있는 것이 이 파일의 존재 이유다.
-        # 바이트가 세션 메모리에 살기 때문에 개수 상한(MAX_SESSION_UPLOADS)이 자리를
-        # 대신한다. 상한 초과는 조용한 교체가 아니라 이유를 말하는 거절이다: 먼저 올린
-        # 문서가 파일의 일부인 채로 소리 없이 사라지는 쪽이 더 나쁘다.
-        if len(s.uploads) >= MAX_SESSION_UPLOADS:
+        views = upload_mod.read_document_file(data, file_name, explicit_type=explicit_type)
+
+        # 상한은 **하위 문서 개수만큼** 필요하고, 검사는 하나라도 저장하기 전에 원자적으로
+        # 한다 — 세 장 중 두 장만 들어가고 세 번째에서 막히면 파일이 반쪽만 남는다. 상한
+        # 초과는 조용한 교체가 아니라 이유를 말하는 거절이다.
+        if len(s.uploads) + len(views) > MAX_SESSION_UPLOADS:
             raise upload_mod.UploadRejected(
                 "session_upload_limit",
-                f"This session already holds {MAX_SESSION_UPLOADS} uploaded documents, "
-                f"and they all stay in this session's memory. That is the ceiling. "
-                f"You can open the file made of the ones you have, or delete the "
-                f"session at the end of page 2 and start again.",
+                f"This session already holds {len(s.uploads)} of {MAX_SESSION_UPLOADS} "
+                f"uploaded documents, and this file adds {len(views)} more, which is over "
+                f"the ceiling — every one stays in this session's memory. You can open the "
+                f"file made of the ones you have, remove one, or delete the session at the "
+                f"end of page 2 and start again.",
             )
-        view = upload_mod.read_upload(data, file_name, document_type)
-        # 업로드들이 한 파일로 모이려면 같은 household_id 를 말해야 한다. 이 키는 팩
-        # 세대의 id 공간(HH-xxx)과 겹치지 않으므로 팩 세대는 이 문서를 절대 줍지 않는다.
+
+        for view in views:
+            # 업로드들이 한 파일로 모이려면 같은 household_id 를 말해야 한다. 이 키는 팩
+            # 세대의 id 공간(HH-xxx)과 겹치지 않으므로 팩 세대는 이 문서를 절대 줍지 않는다.
+            view["household_id"] = UPLOADS_HOUSEHOLD_ID
+            uid = view["upload_id"]
+            s.uploads[uid] = view
+            # 같은 원본 바이트를 모든 하위 문서가 공유한다 — 페이지 이미지는 언제나 원본을
+            # 원본 페이지 번호로 렌더한다(하위 PDF 는 추출에만 쓰였고 버려졌다). 같은 객체를
+            # 여러 키가 가리킬 뿐이라 메모리는 한 벌이다.
+            s.upload_bytes[uid] = data
+            # 파일 이름도 원문도 남기지 않는다 — 브리프: "log consent, actions, and rule
+            # versions - not raw document contents".
+            s.log("document_uploaded", document_type=view.get("document_type"),
+                  extraction_path=view.get("extraction_path"))
+
+        return self._file_response(s, views[0].get("file_id"))
+
+    def _file_response(self, s: Session, file_id: str | None) -> dict[str, Any] | None:
+        """한 업로드 파일(하위 문서들)의 응답. 화면이 한 번에 그릴 수 있게 첫 하위 문서를
+        top-level 로 펴고 `sub_documents` 로 전부를, `file` 로 파일 단위 집계를 싣는다.
+
+        첫 하위 문서의 **얕은 사본**을 응답으로 삼는 이유는 순환 참조 방지다 —
+        sub_documents[0] 은 원본이라 자기 자신을 담지 않는다.
+        """
+        subs = sorted(
+            (v for v in s.uploads.values() if v.get("file_id") == file_id),
+            key=lambda v: v.get("sub_index", 0),
+        )
+        if not subs:
+            return None
+        primary = dict(subs[0])
+        primary["sub_documents"] = subs
+        primary["file"] = {
+            "file_id": file_id,
+            "sub_count": len(subs),
+            "page_count": sum(int(v.get("page_count") or 0) for v in subs),
+            "located_count": sum(int(v.get("located_count") or 0) for v in subs),
+            "field_count": sum(int(v.get("field_count") or 0) for v in subs),
+            "read_nothing": all(v.get("read_nothing") for v in subs),
+        }
+        return primary
+
+    def retype_upload(self, s: Session, upload_id: str,
+                      document_type: str) -> dict[str, Any] | None:
+        """한 하위 문서를 **사람이 고른 종류로 다시 읽는다** (item 3: 가정/지명 정정).
+
+        그 하위 문서의 페이지 범위만 그 종류로 다시 읽고, 같은 파일의 다른 하위 문서는
+        한 글자도 건드리지 않는다 — 결합 문서에서 한 장의 종류를 바꿔도 나머지 지명이
+        살아 있어야 한다. 종류가 바뀌면 필드가 바뀌므로 그 하위 문서에 걸려 있던 정정·
+        부재 확인은 걷힌다(다른 문서의 것은 그대로). upload_id 는 재사용하므로 바이트
+        매핑도 세대 소속도 유지된다.
+
+        반환: 갱신된 **파일 응답**(다시 그릴 대상). 없는 id 면 None.
+        """
+        from api import upload as upload_mod
+
+        old = s.uploads.get(upload_id)
+        if old is None:
+            return None
+        data = s.upload_bytes.get(upload_id)
+        if data is None:
+            return None
+        doc_type = str(document_type).strip().lower()
+        if doc_type not in EXPECTED_FIELDS:
+            raise upload_mod.UploadRejected(
+                "document_type_unsupported",
+                f"We do not know how to read a document of type {doc_type!r}.",
+            )
+        page_start = int(old.get("page_start") or 1)
+        page_end = int(old.get("page_end") or page_start)
+        page_sizes = upload_mod._page_sizes(data)
+        seg_sizes = page_sizes[page_start - 1:page_end] or None
+        whole = page_start == 1 and page_end == len(page_sizes)
+        sub_data = data if whole else upload_mod._split_pdf(data, page_start, page_end)
+        view = upload_mod.read_upload(
+            sub_data, old.get("file_name") or "upload.pdf", doc_type,
+            upload_id=upload_id, page_offset=page_start - 1, page_sizes=seg_sizes,
+        )
+        # 파일 안에서의 자리는 그대로 이어받는다. 종류는 사람이 골랐으므로 지명도
+        # 가정도 붙이지 않는다 — nomination/assumed 는 자동 판별의 근거일 뿐이다.
+        for key in ("file_id", "sub_index", "sub_count", "page_start", "page_end"):
+            view[key] = old.get(key)
         view["household_id"] = UPLOADS_HOUSEHOLD_ID
-        if nomination is not None:
-            # 종류가 사람의 선택이 아니라 페이지의 인쇄된 제목에서 지명됐다. 근거
-            # (일치한 문구 + 페이지/좌표)를 응답에 그대로 싣는다 — 근거 없는 지명을
-            # 화면이 보여 줄 방법이 없어야 하고, 그래서 근거는 여기서도 분리 불가다.
-            view["nomination"] = dict(nomination)
-            view["limits"].insert(0, (
-                "The kind of document was not chosen by you: the page prints "
-                f"“{nomination.get('matched_text', '')}” at the top, and that "
-                "is the whole reason it was read as this kind. If the page is about "
-                "that kind of document rather than being one, change the kind and "
-                "read it again."
-            ))
-        uid = view["upload_id"]
-        s.uploads[uid] = view
-        s.upload_bytes[uid] = data
-        # 파일 이름도 원문도 남기지 않는다 — 브리프: "log consent, actions, and rule
-        # versions - not raw document contents".
-        s.log("document_uploaded", document_type=document_type,
-              extraction_path=view["extraction_path"])
-        return view
+        s.uploads[upload_id] = view
+        # 종류가 바뀌면 필드가 달라진다 — 이 하위 문서에 걸린 정정/원값/부재만 걷는다.
+        for table in (s.corrections, s.originals, s.absences):
+            for k in [k for k in table if k[0] == upload_id]:
+                table.pop(k, None)
+        s.log("document_retyped", document_id=upload_id, document_type=doc_type)
+        return self._file_response(s, view.get("file_id"))
 
     def remove_upload(self, s: Session, upload_id: str) -> bool:
         """올린 문서 한 장을 세션에서 걷어낸다. **그 문서의 것만, 전부.**

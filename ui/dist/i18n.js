@@ -1247,11 +1247,21 @@
     // 지명 배너의 머리말. 뒤에 <strong>종류</strong>가 별도 노드로 이어지므로,
     // 한국어는 콜론으로 끝나는 명사구가 어순을 지킨다.
     "We read this as a": "기계가 읽은 이 문서의 종류:",
+    // item 3: 페이지가 스스로를 밝히지 못했을 때 보이는 기본값 가정. 한 클릭으로 고칠 수
+    // 있는 **보이는** 가정이라 화면에 이렇게 드러난다.
+    "We assumed this is a": "가정한 이 문서의 종류:",
+    "Not a pay stub? Change the kind": "급여명세서가 아닌가요? 종류 바꾸기",
+    "If that is not what this is, change it here and we will read it again.":
+      "이 문서가 그 종류가 아니라면, 여기서 종류를 바꿔 주시면 다시 읽겠습니다.",
     "You did not have to choose, and nothing is locked in.":
       "직접 고르실 필요가 없었고, 아직 확정된 것도 없습니다.",
     "Not right? Change the kind": "아닌가요? 종류 바꾸기",
     "Read it again as": "이 종류로 다시 읽기",
     "Read this document again": "이 문서 다시 읽기",
+    // 결합 문서(한 파일 안 여러 문서)의 파일 요약과 값 표 캡션.
+    "This file holds more than one document, so each page was read as its own kind. Here is what is where; each is shown in full below.":
+      "이 파일에는 문서가 여러 개 들어 있어, 각 페이지를 저마다의 종류로 읽었습니다. 무엇이 어디에 있는지 아래에 정리했고, 각 문서는 그 아래에 전부 표시됩니다.",
+    "Values read from this document.": "이 문서에서 읽어낸 값입니다.",
     "The page did not announce what kind of document it is. Choose the kind, then read it again.":
       "페이지가 어떤 종류의 문서인지 스스로 밝히지 않았습니다. 종류를 고른 뒤 다시 읽어 주세요.",
     "The file is no longer held by the page. Choose it again above.":
@@ -1337,8 +1347,9 @@
       "여기의 어떤 내용도 승인·거절·부적격을 뜻하지 않습니다. 그 판단은 공인 주택 전문가가 합니다.",
     "This page had no text layer, so it was read by OCR on page 1 only. OCR recovers fewer fields than a text layer does, and what it cannot read it declines to guess.":
       "이 페이지에는 텍스트 레이어가 없어서 1페이지만 OCR 로 읽었습니다. OCR 은 텍스트 레이어보다 적은 항목을 건져 내고, 읽지 못한 것은 짐작하지 않고 답하지 않습니다.",
-    "Choose what kind of document this is. We cannot tell from the file name: our reader only recognises the pack's own naming convention, and anything else is read as an unknown type, which produces no fields at all.":
-      "이 문서가 어떤 종류인지 골라 주세요. 파일 이름으로는 알 수 없습니다. 저희 판독기는 팩의 이름 규칙만 알아보고, 그 밖의 것은 모르는 종류로 읽혀 항목이 하나도 나오지 않습니다.",
+    // item 4: 종류는 파일 이름에서 오지 않는다 — 페이지가 인쇄한 제목이나 사람의 선택에서만.
+    "Choose what kind of document this is. The kind is never taken from the file name — it comes from the title the page prints at the top, or from your choice here. Without either, there is no kind to read it as.":
+      "이 문서가 어떤 종류인지 골라 주세요. 종류는 파일 이름에서 가져오지 않습니다 — 페이지 맨 위에 인쇄된 제목이나, 여기서 하신 선택에서만 옵니다. 둘 다 없으면 어떤 종류로 읽을지 알 수 없습니다.",
     "That file is empty.": "그 파일은 비어 있습니다.",
     "That file is not a PDF. Its first bytes are not a PDF header, whatever its name or type says.":
       "그 파일은 PDF 가 아닙니다. 이름이나 형식이 무어라 하든, 첫 바이트가 PDF 헤더가 아닙니다.",
@@ -2400,6 +2411,65 @@
     [/^Read (\d+) of (\d+) fields from the uploaded document\.$/, function (m) {
       return "올리신 문서에서 " + m[2] + "개 항목 중 " + m[1] + "개를 읽었습니다.";
     }],
+    [/^Read (\d+) of (\d+) fields from (\d+) documents in the uploaded file\.$/, function (m) {
+      return "올리신 파일 안 " + m[3] + "개 문서에서 " + m[2] + "개 항목 중 " + m[1] + "개를 읽었습니다.";
+    }],
+    // 하위 문서 제목: "<종류> · page N" / "<종류> · pages N–M" (종류는 사전에 있다).
+    [/^(.+) · page (\d+)$/, function (m) {
+      var kind = lookup(m[1]);
+      return kind === null ? null : kind + " · " + m[2] + "페이지";
+    }],
+    [/^(.+) · pages (\d+)–(\d+)$/, function (m) {
+      var kind = lookup(m[1]);
+      return kind === null ? null : kind + " · " + m[2] + "–" + m[3] + "페이지";
+    }],
+
+    // ══ 결합 문서: 여러 페이지·여러 하위 문서 (번호·파일명은 데이터) ═══════════
+    // 하위 문서 하나를 사람이 고른 종류로 다시 읽기 시작할 때의 알림.
+    [/^Re-reading this document as (.+)…$/, function (m) {
+      var kind = lookup(m[1]);
+      return kind === null ? null : "이 문서를 " + kind + "(으)로 다시 읽는 중…";
+    }],
+    // 파일 요약 제목: "N documents in one file — 파일명".
+    [/^(\d+) documents in one file — (.+)$/, function (m) {
+      return m[2] + " — 한 파일 안 " + m[1] + "개 문서";
+    }],
+    // 여러 페이지를 그릴 때 각 페이지 표지: "Page N of 파일명".
+    [/^Page (\d+) of (.+\.pdf)$/, function (m) {
+      return m[2] + "의 " + m[1] + "페이지";
+    }],
+    // 페이지 이미지의 대체 텍스트(접근성): "Rendered page N of 파일명".
+    [/^Rendered page (\d+) of (.+)$/, function (m) {
+      return m[2] + "의 " + m[1] + "페이지 (서버가 그린 이미지)";
+    }],
+    // 페이지 캡션(페이지 번호가 박힌다). 기존 "Page 1 as rendered…" DICT 를 모든 N 으로.
+    [/^Page (\d+) as rendered by the server\. Each rectangle is the box the value was read from; the same coordinates are listed as text in the table below\.$/,
+      function (m) {
+        return "서버가 그린 " + m[1] + "페이지입니다. 각 사각형은 값을 읽어낸 근거 위치이고, " +
+               "같은 좌표가 아래 표에 글자로 적혀 있습니다.";
+      }],
+    // item 3: app.js 가정 배너의 설명 문장(종류가 박힌다).
+    [/^This page did not print a title we recognise, so we did not stop to ask what it is — we read it as a (.+), the most common income document, and showed you the result below\.$/,
+      function (m) {
+        var kind = lookup(m[1]) || m[1];
+        return "이 페이지에는 저희가 알아보는 제목이 인쇄되어 있지 않아, 무엇인지 여쭙느라 멈추지 " +
+               "않고 " + kind + "(으)로 읽어 아래에 결과를 보여 드렸습니다. — 가장 흔한 소득 문서입니다.";
+      }],
+    // item 3: api/upload.py 가정 limits 줄(종류는 원문 그대로 pay_stub 등).
+    [/^This page did not print a title we recognise, so we did not ask what it is — we read it as a (\w+), the most common income document, and showed you the result\. If that is not what this is, change the kind above and we will read it again that way\.$/,
+      function (m) {
+        return "이 페이지에는 저희가 알아보는 제목이 인쇄되어 있지 않아, 무엇인지 묻지 않고 " + m[1] +
+               "(으)로 읽어 결과를 보여 드렸습니다 — 가장 흔한 소득 문서입니다. 이 문서가 그 종류가 " +
+               "아니라면 위에서 종류를 바꿔 주시면 그 종류로 다시 읽겠습니다.";
+      }],
+    // 세션 업로드 상한 초과(하위 문서 개수만큼 필요). 숫자 셋은 데이터.
+    [/^This session already holds (\d+) of (\d+) uploaded documents, and this file adds (\d+) more, which is over the ceiling — every one stays in this session's memory\. You can open the file made of the ones you have, remove one, or delete the session at the end of page 2 and start again\.$/,
+      function (m) {
+        return "이 세션은 이미 올린 문서 " + m[2] + "개 중 " + m[1] + "개를 들고 있고, 이 파일이 " +
+               m[3] + "개를 더해 상한을 넘습니다 — 하나하나 모두 이 세션의 메모리에 남습니다. 지금 " +
+               "가진 문서로 이룬 파일을 열거나, 하나를 지우거나, 2페이지 끝에서 세션을 지우고 다시 " +
+               "시작하실 수 있습니다.";
+      }],
     [/^Session (\S+) no longer exists in the API process\. Rather than tell you that and stop, the page then asked the server for this household again using the id it had just destroyed\.$/,
       function (m) {
         return "세션 " + m[1] + " 은 API 프로세스에 더 이상 없습니다. 그 말만 하고 멈추는 대신, 이 " +

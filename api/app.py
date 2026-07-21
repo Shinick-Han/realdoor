@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from api import gate, limits
-from api.store import STORE, DOCS, UPLOADS_HOUSEHOLD_ID, engine_version
+from api.store import PDFIUM_LOCK, STORE, DOCS, UPLOADS_HOUSEHOLD_ID, engine_version
 
 app = FastAPI(
     title="RealDoor — application-readiness copilot",
@@ -412,21 +412,22 @@ async def upload(file: UploadFile = File(...),
                  document_type: str = Form(""),
                  content_length: int | None = Header(default=None),
                  x_session_id: str | None = Header(default=None)) -> dict:
-    """올린 PDF 한 장을 읽고 **근거와 함께** 돌려준다.
+    """올린 PDF 파일을 읽고 **근거와 함께** 돌려준다. 결합 문서면 페이지별로 쪼갠다.
 
-    `document_type` 은 이제 선택이다. 비워서 보내면 서버가 페이지에 **인쇄된
-    제목**에서 종류를 지명하고(`api/nominate.py` — 닫힌 표, 완전 일치), 지명은
-    근거(일치한 인쇄 문구 + 페이지/좌표)와 함께 `nomination` 으로 응답에 실린다.
-    화면은 그 근거를 보여 주고 한 클릭으로 바꿀 수 있게 한다 — 기계가 인쇄된
-    증거에서 지명하고, 사람이 확인한다.
+    `document_type` 은 선택이다. 비워서 보내면 서버가 페이지를 하나씩 훑어 각 페이지의
+    **인쇄된 제목**에서 종류를 지명하고(`api/nominate.py` — 닫힌 표, 완전 일치), 제목이
+    바뀌는 자리에서 하위 문서를 가른다(`api/upload.py::segment_pages`). 제목 없는 페이지는
+    앞 문서를 잇는다 — 제목 없는 2쪽짜리 급여명세서는 한 문서다. 지명은 근거(일치한 인쇄
+    문구 + 페이지/좌표)와 함께 하위 문서마다 `nomination` 으로 실린다.
 
-    페이지가 자신을 선언하지 않으면(스캔본, 표에 없는 제목, 서로 다른 제목이
-    함께 인쇄됨) 400 `type_not_announced` 로 거절하고 사람에게 묻는다 — 오늘까지의
-    동작이 그대로 남는 자리다. 파일 이름에서는 여전히 추측하지 않는다
-    (`core.extract.infer_document_type` 은 팩 명명 규칙 밖에서 항상 `unknown`).
+    첫 페이지가 스스로를 밝히지 못하면(스캔·표에 없는 제목·상충하는 제목) 질문으로 막지
+    않고 **보이는 기본값**(`pay_stub`)으로 읽어 결과를 곧바로 보여 주며, 종류 선택은
+    결과 옆에 "그 종류가 아니면 여기서 바꾸세요"로 함께 둔다(item 3). 사람이 "읽기"를
+    누르면 질문이 아니라 읽기가 돌아 나간다. 파일 이름에서는 여전히 추측하지 않는다.
 
-    결과는 세션 메모리에만 담긴다. 세대 계산에는 합류시키지 않는다 — 그 이유는
-    `api/upload.py` 모듈 문서에 적혀 있다.
+    응답은 첫 하위 문서를 top-level 로 펴고, `sub_documents` 에 전부를, `file` 에 파일
+    단위 집계를 싣는다. 결과는 세션 메모리에만 담긴다 — 그 이유는 `api/upload.py` 모듈
+    문서에 적혀 있다.
     """
     from api import upload as upload_mod
 
@@ -475,22 +476,49 @@ async def upload(file: UploadFile = File(...),
         chunks.append(chunk)
     data = b"".join(chunks)
     chunks.clear()
+    file_name = file.filename or "upload.pdf"
     try:
-        nomination = None
         chosen_type = (document_type or "").strip()
-        if not chosen_type:
-            # 종류가 오지 않았다. 지명은 PDF 를 실제로 열므로 바이트 검사가 먼저다 —
-            # 순서를 바꾸면 10MB 상한이나 매직바이트 검사가 지명 뒤로 밀린다.
+        if chosen_type:
+            # 사람이 종류를 골랐다(또는 "종류 바꾸기"). 파일 전체를 그 한 종류로 읽는다 —
+            # 명시적 선택이 페이지별 분절보다 우선한다. validate 가 지원 종류 + 바이트를
+            # 함께 검사한다.
+            doc_type = upload_mod.validate(data, file_name, file.content_type, chosen_type)
+            response = STORE.add_upload(s, data, file_name, explicit_type=doc_type)
+        else:
+            # 종류가 오지 않았다. 분절은 PDF 를 실제로 열므로 바이트 검사가 먼저다 —
+            # 순서를 바꾸면 10MB 상한이나 매직바이트 검사가 분절 뒤로 밀린다. 페이지별
+            # 지명 + item 3 의 보이는 기본값은 add_upload 안(read_document_file)에서 돈다.
             upload_mod.validate_bytes(data, file.content_type)
-            nomination = upload_mod.nominate_or_ask(data)
-            chosen_type = nomination["document_type"]
-        doc_type = upload_mod.validate(data, file.filename or "upload.pdf",
-                                       file.content_type, chosen_type)
-        view = STORE.add_upload(s, data, file.filename or "upload.pdf", doc_type,
-                                nomination=nomination)
+            response = STORE.add_upload(s, data, file_name, explicit_type=None)
     except upload_mod.UploadRejected as exc:
         raise HTTPException(400, {"code": exc.code, "detail": exc.message}) from exc
-    return view
+    return response
+
+
+@app.post("/api/upload/{upload_id}/retype")
+def retype_upload(upload_id: str, payload: dict,
+                  x_session_id: str | None = Header(default=None)) -> dict:
+    """올린 하위 문서 **한 장**을 사람이 고른 종류로 다시 읽는다 (item 3 의 한 클릭 정정).
+
+    페이지가 스스로를 밝히지 못해 보이는 기본값(pay_stub)으로 읽혔거나, 지명이 틀렸을 때
+    세입자가 결과 옆에서 종류를 골라 그 하위 문서만 다시 읽게 한다. 같은 파일의 다른 하위
+    문서는 건드리지 않는다. 갱신된 파일 응답을 돌려줘 화면이 그대로 다시 그린다.
+    """
+    from api import upload as upload_mod
+
+    s = _session(x_session_id)
+    document_type = payload.get("document_type")
+    if not document_type:
+        raise HTTPException(400, {"code": "document_type_required",
+                                  "detail": "Choose the kind of document to read it as."})
+    try:
+        response = STORE.retype_upload(s, upload_id, str(document_type))
+    except upload_mod.UploadRejected as exc:
+        raise HTTPException(400, {"code": exc.code, "detail": exc.message}) from exc
+    if response is None:
+        raise HTTPException(404, f"unknown upload {upload_id}")
+    return response
 
 
 @app.delete("/api/upload/{upload_id}")
@@ -521,9 +549,10 @@ def remove_upload(upload_id: str,
 #: FPDF_RenderPageBitmap / FPDF_CloseDocument). core/render.py 는 이 프로세스 모델을
 #: 모르는 순수 함수이므로, 동시성이 생기는 이 층에서 렌더 호출을 직렬화한다.
 #: 비용은 이미지 응답의 순차화 하나 — 죽은 서버보다 느린 이미지가 낫다.
-import threading
-
-_RENDER_LOCK = threading.Lock()
+#: 업로드가 결합 PDF 를 페이지 범위별 하위 PDF 로 쪼갤 때(api/upload.py) 도 pdfium 을
+#: 부르므로 그 겹침도 같은 락으로 막아야 한다. 그래서 락은 두 모듈이 함께 import 하는
+#: api/store.py 에 두고, 여기서는 그 하나를 가리킨다.
+_RENDER_LOCK = PDFIUM_LOCK
 
 
 @app.get("/api/upload/{upload_id}/page/{page}.png")

@@ -1125,9 +1125,11 @@
        * server; a bundled "example upload" would be a screenshot of a feature rather than
        * the feature. On the static build the panel stays on the page and says so.
        *
-       * `document_type` is sent because the server cannot infer it: the type is read out of
-       * the pack's file-naming convention, and any other name comes back "unknown", which
-       * produces no fields at all rather than an error. */
+       * `document_type` is optional. Empty means "read the kind off the page": the server
+       * walks the pages, reads each page's kind from the title printed at its top, and
+       * segments a combined file into its documents. The file name is never used to infer
+       * a type. A type is only sent when the renter chose one, and then the whole file is
+       * read as that one kind. */
       uploadTypes: function () {
         if (!live) return Promise.resolve(null);
         return json("/api/upload/types").catch(function () { return null; });
@@ -1142,10 +1144,11 @@
         var form = new FormData();
         form.append("file", file);
         /* Empty means "read the kind off the page": the server nominates the type from
-         * the page's own printed title and sends the nomination back with its evidence.
-         * When the page does not announce itself the server answers 400
-         * `type_not_announced`, and the code on the error is what lets the panel fall
-         * back to asking — today's behaviour — instead of showing a generic failure. */
+         * each page's own printed title, segments a combined file into its documents, and
+         * sends every sub-document back with its evidence. When a page does not announce
+         * itself the server does not stop to ask — it reads it under a visible default and
+         * shows the assumption beside the result, one click to change. The type is only
+         * sent when the renter chose one. */
         form.append("document_type", documentType || "");
         return api("/api/upload", { method: "POST", body: form }).then(function (r) {
           return r.json().catch(function () { return {}; }).then(function (body) {
@@ -1192,6 +1195,32 @@
             "server session's memory."));
         }
         return json("/api/upload/" + encodeURIComponent(uploadId), { method: "DELETE" });
+      },
+
+      /* Re-reading one uploaded sub-document under a type the renter chose. Only this
+       * sub-document is re-read; the other documents in a combined file are untouched.
+       * The server answers with the refreshed file response, the same shape /api/upload
+       * returns, so the panel redraws from it. */
+      retypeUpload: function (uploadId, documentType) {
+        if (!live) {
+          return Promise.reject(new Error(
+            "Changing the kind needs the server, because re-reading the document is done " +
+            "by the extractor rather than by this page."));
+        }
+        return api("/api/upload/" + encodeURIComponent(uploadId) + "/retype", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ document_type: documentType })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (body) {
+            if (r.ok) return body;
+            var detail = body && body.detail;
+            var err = new Error((detail && detail.detail) || (typeof detail === "string" ? detail : "") ||
+                                ("The server could not re-read that document (HTTP " + r.status + ")."));
+            if (detail && detail.code) err.code = detail.code;
+            throw err;
+          });
+        });
       },
 
       uploadPageImage: function (uploadId, page) {
@@ -1680,10 +1709,10 @@
   // The challenge's first acceptance step is "upload a synthetic document and show
   // extracted evidence". This panel is that step. Three things about it are deliberate:
   //
-  //   * It asks what kind of document it is, and will not proceed without an answer. The
-  //     server reads the type from the pack's file-naming convention and answers "unknown"
-  //     for anything else — and "unknown" is not an error, it is an empty field list. A
-  //     silent nothing is the worst of the available failures, so we ask instead.
+  //   * It does not ask what kind of document it is: the server reads the kind from the
+  //     title each page prints at its top (never from the file name), and a page that does
+  //     not announce itself is read under a visible default the renter can change in one
+  //     click, beside the result. Reading happens on the first click, not after a question.
   //   * Reading nothing is presented as a result, not as a breakage. Abstaining is what
   //     this extractor does when it is not sure, and across the 26 documents we measured
   //     it against, every loss was an abstention and none was a wrong value. A screen that
@@ -1889,10 +1918,14 @@
         state.uploadResult = view;
         state.uploadError = null;
         beginStagedReveal(view);
-        announce(view.read_nothing
+        /* File-level counts when the file split into several documents; otherwise the one
+         * document's own counts. `file` is the aggregate the server sends. */
+        var f = view.file || view;
+        var subCount = (view.sub_documents && view.sub_documents.length) || 1;
+        announce(f.read_nothing
           ? "We could not confidently read any field from that document."
-          : "Read " + view.located_count + " of " + view.field_count + " fields from the " +
-            "uploaded document.");
+          : "Read " + f.located_count + " of " + f.field_count + " fields from " +
+            (subCount > 1 ? subCount + " documents in the uploaded file." : "the uploaded document."));
         /* The upload just created — or grew — the session's own file, so the picker has a
          * new row to offer. Refreshing the list is what makes that row exist on screen,
          * and the result panel below wants to see it, so the refresh is waited for. */
@@ -1980,8 +2013,22 @@
    * status line consume stages and do not know the difference. core/ owns the per-
    * request switch that endpoint needs, so it could not ship this run.
    */
+  /* Field names in reading order: page by page, top to bottom within a page. bbox is
+   * [x0, y0, x1, y1] in bottom-left-origin points, so a larger y1 sits higher on the page.
+   * The staged reveal walks this order, so its boxes light up across every page the way a
+   * reader's eye moves down the document, not in the fields table's fixed schema order. */
+  function readingOrder(view) {
+    return renterFields(view).slice().sort(function (a, b) {
+      var pa = a.page || 1, pb = b.page || 1;
+      if (pa !== pb) return pa - pb;
+      var ay = a.bbox ? a.bbox[3] : 0, by = b.bbox ? b.bbox[3] : 0;
+      if (ay !== by) return by - ay;               // higher on the page first
+      return (a.bbox ? a.bbox[0] : 0) - (b.bbox ? b.bbox[0] : 0);
+    }).map(function (f) { return f.field; });
+  }
+
   function stagesFromResponse(view) {
-    var names = renterFields(view).map(function (f) { return f.field; });
+    var names = readingOrder(view);
     if (view.extraction_path === "ocr") {
       return [
         { status: "No text on the page — the text pass came back empty.",
@@ -2043,11 +2090,12 @@
       reveal.done = true;
       reveal.timer = null;
       Object.keys(reveal.pendingSet).forEach(showOne);   // belt and braces
+      var f = view.file || view;
       if (statusLine) {
-        statusLine.textContent = "Done — " + view.located_count + " of " +
-          view.field_count + " fields read, each drawn where it was found.";
+        statusLine.textContent = "Done — " + f.located_count + " of " +
+          f.field_count + " fields read, each drawn where it was found.";
       }
-      announce("Done reading. " + view.located_count + " of " + view.field_count +
+      announce("Done reading. " + f.located_count + " of " + f.field_count +
                " fields are on screen with their boxes.");
     }
 
@@ -2275,140 +2323,48 @@
       return;
     }
 
-    var view = state.uploadResult;
-    if (!view) return;
+    var response = state.uploadResult;
+    if (!response) return;
+    /* One uploaded file can hold several documents: a renter combines a pay stub, an
+     * employment letter and a benefit letter into one PDF, and each page is read as its
+     * own document (server: api/upload.py::segment_pages). `sub_documents` carries them
+     * all; a single-document upload has exactly one. */
+    var subs = (response.sub_documents && response.sub_documents.length)
+      ? response.sub_documents : [response];
+    var multi = subs.length > 1;
+    var revealId = state.uploadReveal && !state.uploadReveal.done
+      ? state.uploadReveal.id : null;
 
-    var readVia = view.extraction_path === "ocr"
-      ? "read as a picture, because the file had no text in it (OCR)"
-      : "read from the text in the file";
+    var block = h("div", { class: "upload-result" });
 
-    var block = h("div", { class: "upload-result" }, [
-      h("h3", { id: "upload-result-heading", tabindex: "-1" },
-        [typeWords(view.document_type) + " — the document you uploaded"]),
-      /* The machine's nomination, with its printed evidence in the same sentence.
-       * The evidence line is mandatory, never decorative: a nomination the renter can
-       * see and change in one click is acceptable, a silent one is not — this banner
-       * is the seeing, the collapsed selector beside it is the one click. */
-      view.nomination ? h("div", { class: "callout", id: "upload-nomination" }, [
-        h("h4", { style: { marginTop: "0" } }, [
-          "We read this as a ",
-          h("strong", { text: typeWords(view.document_type) })
-        ]),
-        h("p", null, [
-          "Because the page prints “" + String(view.nomination.matched_text) +
-          "” at the top (page " + view.nomination.page + ").",
-          " ",
-          "You did not have to choose, and nothing is locked in."
-        ]),
-        h("details", { class: "tech", id: "upload-nomination-change" }, [
-          h("summary", { text: "Not right? Change the kind" }),
-          h("p", { class: "upload-field", style: { marginBottom: "0" } }, [
-            h("label", { for: "upload-nomination-type", text: "Read it again as" }),
-            h("select", { id: "upload-nomination-type" },
-              ((state.uploadTypes && state.uploadTypes.document_types) ||
-               ["application_summary", "benefit_letter", "employment_letter",
-                "gig_statement", "pay_stub"]).map(function (name) {
-                return h("option", { value: name, text: typeWords(name),
-                                     selected: name === view.document_type ? true : null });
-              })),
-            h("button", {
-              type: "button", class: "action secondary",
-              onclick: function () {
-                var pick = byId("upload-nomination-type");
-                if (!state.uploadLastFile) {
-                  announce("The file is no longer held by the page. Choose it again above.");
-                  return;
-                }
-                readUpload(state.uploadLastFile, pick ? pick.value : "");
-              }
-            }, ["Read this document again"])
-          ])
-        ])
-      ]) : null,
-      h("dl", { class: "kv" }, [
-        h("dt", { text: "File" }), h("dd", { class: "mono", text: view.file_name }),
-        h("dt", { text: "Kind of document" }), h("dd", { text: typeWords(view.document_type) }),
-        h("dt", { text: "How we read it" }), h("dd", { text: readVia }),
-        h("dt", { text: "Fields we could read" }),
-        h("dd", { text: view.located_count + " of " + view.field_count }),
-        h("dt", { text: "Document date" }),
-        h("dd", null, view.document_date
-          ? [stateChip(view.state), " ", view.document_date]
-          : uploadDateNotice(view))
-      ])
-    ]);
-
-    if (view.read_nothing) {
-      // Not an error, and it must not look like one. This is the product working.
-      block.appendChild(h("div", { class: "callout" }, [
-        h("h3", { text: "We could not confidently read any field on this document" }),
+    /* When the file split into several documents, name that up front so the sub-document
+     * boundaries are visible: which pages are which document. */
+    if (multi) {
+      block.appendChild(h("div", { class: "callout", id: "upload-file-summary" }, [
+        h("h3", { id: "upload-result-heading", tabindex: "-1" },
+          [subs.length + " documents in one file — " + response.file_name]),
         h("p", {
-          text: "That is an answer, not a failure. We only report a value when we can point " +
-                "at the place on the page it came from, so when we cannot find it we say " +
-                "nothing rather than guess. Nothing here has gone wrong and nothing has " +
-                "been recorded against you."
+          text: "This file holds more than one document, so each page was read as its own " +
+                "kind. Here is what is where; each is shown in full below."
         }),
-        h("p", { text: "Documents we cannot read usually look like one of these:" }),
-        h("ul", { class: "summary-box__list" }, [
-          h("li", { text: "The labels are worded differently from the ones we know — " +
-                          "\"TOTAL EARNINGS\" where we look for \"GROSS PAY\"." }),
-          h("li", { text: "The values sit beside their labels, or in a table, rather than " +
-                          "underneath them." }),
-          h("li", { text: "It is a form we have never seen, or the kind of document chosen " +
-                          "above is not the kind of document this is." }),
-          h("li", { text: "It is a scan that is too faint or too skewed to read." })
-        ]),
-        h("p", {
-          text: "You can try choosing a different kind of document above, or hand this one " +
-                "to a person to read. A housing professional reading it is a normal outcome, " +
-                "not a fallback."
-        })
+        h("ol", { class: "summary-box__list" }, subs.map(function (sd) {
+          return h("li", null, [
+            h("strong", { text: typeWords(sd.document_type) }),
+            " — " + subPageSpan(sd) +
+            (sd.nomination ? " (its page prints “" + String(sd.nomination.matched_text) + "”)"
+             : sd.assumed_type ? " (no title on the page; read as the default kind)" : "")
+          ]);
+        }))
       ]));
-    } else {
-      var revealing = Boolean(state.uploadReveal && !state.uploadReveal.done &&
-                              state.uploadReveal.id === view.upload_id);
-      if (revealing) {
-        /* The visible stage line. runStagedReveal rewrites its text as the stages
-         * replay; announcements to the live region go through announce(), stage by
-         * stage, not row by row — a screen reader hears the stages, not a drum roll. */
-        block.appendChild(h("p", { class: "hint", id: "upload-read-status",
-          text: "Read. Drawing what was found…" }));
-      }
-      var pageHost = h("div");
-      block.appendChild(pageHost);
-      block.appendChild(fieldTable(view, {
-        idPrefix: "upload-",
-        activeField: state.uploadActiveField,
-        setActive: function (name) { state.uploadActiveField = name; },
-        rerender: renderUploadResult,
-        captionLead: "Values read from the document you uploaded.",
-        revealHold: revealing
-          ? function (fieldName) { return revealHolds(view, fieldName); }
-          : null,
-        // An absence round trip on an uploaded document answers with the updated upload
-        // view, not a household report — the upload joins no household.
-        applyAbsence: function (body) {
-          if (body) state.uploadResult = body;
-          renderUploadResult();
-        }
-      }));
-      renderPage(pageHost, view, {
-        loadImage: function () { return Source.uploadPageImage(view.upload_id, 1); },
-        activeField: state.uploadActiveField,
-        revealHold: revealing
-          ? function (fieldName) { return revealHolds(view, fieldName); }
-          : null
-      });
     }
 
-    /* Removing this one document — with a confirming step, because it cannot be
-     * undone from the screen. Session-wide delete already exists at the end of page 2;
-     * this is its per-document half. */
-    block.appendChild(removeDocumentCard(view.upload_id, function () {
-      state.uploadResult = null;
-      state.uploadReveal = null;
-      state.uploadActiveField = null;
-    }));
+    subs.forEach(function (sd, index) {
+      block.appendChild(uploadSubBlock(sd, {
+        multi: multi,
+        headingId: (!multi && index === 0) ? "upload-result-heading" : null,
+        revealing: revealId === sd.upload_id
+      }));
+    });
 
     /* The uploads now form a file of their own, and this is where the renter learns
      * that. The button is the same open the picker offers — one action, two doors. */
@@ -2432,17 +2388,233 @@
       ]));
     }
 
+    host.appendChild(block);
+    runStagedReveal(response, host);
+  }
+
+  /** "page 3" / "pages 2–3" for a sub-document, from its original page range. */
+  function subPageSpan(view) {
+    var a = view.page_start, b = view.page_end;
+    if (!a) return "page 1";
+    return a === b ? ("page " + a) : ("pages " + a + "–" + b);
+  }
+
+  /** The type came from the page's own printed title (nomination) or, when the page did
+   *  not announce itself, from a visible default we assumed. Either way the renter sees
+   *  what happened and can change it in one click — a visible mis-typing they can fix is
+   *  categorically better than a silent one, so this banner is never decorative. When the
+   *  renter chose the type themselves there is nothing to disclose, so no banner. */
+  function typeSourceBanner(view) {
+    if (!view.nomination && !view.assumed_type) return null;
+    var uid = view.upload_id;
+    var selectId = "upload-nomination-type-" + uid;
+    var head = view.nomination
+      ? h("h4", { style: { marginTop: "0" } },
+          ["We read this as a ", h("strong", { text: typeWords(view.document_type) })])
+      : h("h4", { style: { marginTop: "0" } },
+          ["We assumed this is a ", h("strong", { text: typeWords(view.document_type) })]);
+    var why = view.nomination
+      ? h("p", null, [
+          "Because the page prints “" + String(view.nomination.matched_text) +
+          "” at the top (page " + view.nomination.page + ").",
+          " ",
+          "You did not have to choose, and nothing is locked in."
+        ])
+      : h("p", null, [
+          "This page did not print a title we recognise, so we did not stop to ask what it " +
+          "is — we read it as a " + typeWords(view.document_type) + ", the most common income " +
+          "document, and showed you the result below.",
+          " ",
+          "If that is not what this is, change it here and we will read it again."
+        ]);
+    return h("div", { class: "callout", id: "upload-nomination-" + uid }, [
+      head, why,
+      h("details", { class: "tech", open: view.assumed_type ? true : null }, [
+        h("summary", { text: view.nomination ? "Not right? Change the kind"
+                                             : "Not a pay stub? Change the kind" }),
+        h("p", { class: "upload-field", style: { marginBottom: "0" } }, [
+          h("label", { for: selectId, text: "Read it again as" }),
+          h("select", { id: selectId },
+            ((state.uploadTypes && state.uploadTypes.document_types) ||
+             ["application_summary", "benefit_letter", "employment_letter",
+              "gig_statement", "pay_stub"]).map(function (name) {
+              return h("option", { value: name, text: typeWords(name),
+                                   selected: name === view.document_type ? true : null });
+            })),
+          h("button", {
+            type: "button", class: "action secondary",
+            onclick: function () {
+              var pick = byId(selectId);
+              retypeSubDocument(uid, pick ? pick.value : "");
+            }
+          }, ["Read this document again"])
+        ])
+      ])
+    ]);
+  }
+
+  /** One uploaded sub-document: its type-source banner, its facts, and either the
+   *  "read nothing" note or the evidence (every page, its boxes, its values table). */
+  function uploadSubBlock(view, ctx) {
+    var readVia = view.extraction_path === "ocr"
+      ? "read as a picture, because the file had no text in it (OCR)"
+      : "read from the text in the file";
+    var sub = h("div", { class: "upload-subdoc" });
+
+    if (ctx.multi) {
+      sub.appendChild(h("h3", { class: "upload-subdoc__heading" },
+        [typeWords(view.document_type) + " · " + subPageSpan(view)]));
+    } else {
+      sub.appendChild(h("h3", { id: ctx.headingId || null,
+        tabindex: ctx.headingId ? "-1" : null },
+        [typeWords(view.document_type) + " — the document you uploaded"]));
+    }
+
+    var banner = typeSourceBanner(view);
+    if (banner) sub.appendChild(banner);
+
+    sub.appendChild(h("dl", { class: "kv" }, [
+      h("dt", { text: "File" }), h("dd", { class: "mono", text: view.file_name }),
+      h("dt", { text: "Kind of document" }), h("dd", { text: typeWords(view.document_type) }),
+      h("dt", { text: "How we read it" }), h("dd", { text: readVia }),
+      h("dt", { text: "Fields we could read" }),
+      h("dd", { text: view.located_count + " of " + view.field_count }),
+      h("dt", { text: "Document date" }),
+      h("dd", null, view.document_date
+        ? [stateChip(view.state), " ", view.document_date]
+        : uploadDateNotice(view))
+    ]));
+
+    if (view.read_nothing) {
+      // Not an error, and it must not look like one. This is the product working.
+      sub.appendChild(h("div", { class: "callout" }, [
+        h("h4", { style: { marginTop: "0" },
+          text: "We could not confidently read any field on this document" }),
+        h("p", {
+          text: "That is an answer, not a failure. We only report a value when we can point " +
+                "at the place on the page it came from, so when we cannot find it we say " +
+                "nothing rather than guess. Nothing here has gone wrong and nothing has " +
+                "been recorded against you."
+        }),
+        h("p", { text: "Documents we cannot read usually look like one of these:" }),
+        h("ul", { class: "summary-box__list" }, [
+          h("li", { text: "The labels are worded differently from the ones we know — " +
+                          "\"TOTAL EARNINGS\" where we look for \"GROSS PAY\"." }),
+          h("li", { text: "The values sit beside their labels, or in a table, rather than " +
+                          "underneath them." }),
+          h("li", { text: "It is a form we have never seen, or the kind of document chosen " +
+                          "above is not the kind of document this is." }),
+          h("li", { text: "It is a scan that is too faint or too skewed to read." })
+        ]),
+        h("p", {
+          text: "You can try choosing a different kind of document above, or hand this one " +
+                "to a person to read. A housing professional reading it is a normal outcome, " +
+                "not a fallback."
+        })
+      ]));
+    } else {
+      var revealing = Boolean(ctx.revealing);
+      var holdFor = revealing
+        ? function (fieldName) { return revealHolds(view, fieldName); }
+        : null;
+      if (revealing) {
+        /* The visible stage line. runStagedReveal rewrites its text as the stages
+         * replay; announcements to the live region go through announce(), stage by
+         * stage, not row by row — a screen reader hears the stages, not a drum roll. */
+        sub.appendChild(h("p", { class: "hint", id: "upload-read-status",
+          text: "Read. Drawing what was found…" }));
+      }
+      var pageHost = h("div");
+      sub.appendChild(pageHost);
+      sub.appendChild(fieldTable(view, {
+        idPrefix: "upload-",
+        activeField: state.uploadActiveField,
+        setActive: function (name) { state.uploadActiveField = name; },
+        rerender: renderUploadResult,
+        captionLead: "Values read from this document.",
+        revealHold: holdFor,
+        // An absence round trip on an uploaded document answers with the updated sub-
+        // document view, not a household report — the upload joins no household. Merge it
+        // back into the file response so a combined file keeps its other documents.
+        applyAbsence: function (body) {
+          if (body) mergeSubDocument(body);
+          renderUploadResult();
+        }
+      }));
+      renderPage(pageHost, view, {
+        loadImage: function (page) { return Source.uploadPageImage(view.upload_id, page); },
+        activeField: state.uploadActiveField,
+        revealHold: holdFor
+      });
+    }
+
+    /* Removing this one document — with a confirming step, because it cannot be
+     * undone from the screen. Session-wide delete already exists at the end of page 2;
+     * this is its per-document half. */
+    sub.appendChild(removeDocumentCard(view.upload_id, function () {
+      // If this was the last document in the file response, clear the panel; otherwise the
+      // list refresh after removal redraws what is left.
+      var resp = state.uploadResult;
+      var remaining = (resp && resp.sub_documents || []).filter(function (v) {
+        return v.upload_id !== view.upload_id;
+      });
+      if (!remaining.length) {
+        state.uploadResult = null;
+        state.uploadReveal = null;
+        state.uploadActiveField = null;
+      }
+    }));
+
     if ((view.limits || []).length) {
-      block.appendChild(h("div", { class: "callout callout--warn" }, [
-        h("h3", { text: "What this reading does not tell you" }),
+      sub.appendChild(h("div", { class: "callout callout--warn" }, [
+        h("h4", { style: { marginTop: "0" }, text: "What this reading does not tell you" }),
         h("ul", { class: "summary-box__list" }, view.limits.map(function (text) {
           return h("li", { text: text });
         }))
       ]));
     }
+    return sub;
+  }
 
-    host.appendChild(block);
-    runStagedReveal(view, host);
+  /** Replace one sub-document inside the current file response (after an absence round
+   *  trip or a re-read), keeping the other documents in a combined file untouched. */
+  function mergeSubDocument(updated) {
+    var resp = state.uploadResult;
+    if (!resp || !updated) return;
+    var subs = resp.sub_documents || [resp];
+    for (var i = 0; i < subs.length; i += 1) {
+      if (subs[i].upload_id === updated.upload_id) { subs[i] = updated; break; }
+    }
+    resp.sub_documents = subs;
+    if (subs[0] && subs[0].upload_id === updated.upload_id) {
+      // The primary changed: refresh the top-level view fields the panel reads, without
+      // dropping the wrapper keys (sub_documents, file).
+      Object.keys(updated).forEach(function (k) {
+        if (k !== "sub_documents" && k !== "file") resp[k] = updated[k];
+      });
+    }
+  }
+
+  /** Re-read one uploaded sub-document under a type the renter chose (item 3's one-click
+   *  correction). Only this document is re-read; a combined file keeps its others. */
+  function retypeSubDocument(uploadId, chosenType) {
+    if (!chosenType) return;
+    announce("Re-reading this document as " + typeWords(chosenType) + "…");
+    Source.retypeUpload(uploadId, chosenType)
+      .then(function (response) {
+        state.uploadResult = response;
+        state.uploadReveal = null;   // the result is already known; do not re-stagger
+        state.uploadActiveField = null;
+        renderUploadResult();
+        var heading = byId("upload-result-heading");
+        if (heading && heading.focus) heading.focus();
+        return loadHouseholdList();
+      })
+      .then(function () { renderDocuments(); })
+      .catch(function (err) {
+        announce("That document could not be re-read: " +
+                 (err && err.message ? err.message : "the server did not accept it."));
+      });
   }
 
   /* ── remove one uploaded document ──────────────────────────────────────────────────
@@ -2809,13 +2981,60 @@
    *   activeField — which box is lit (uploads track their own, so highlighting an
    *                 uploaded field does not disturb the household document below)
    */
+  /* Every page of the document, each drawn with only the boxes whose field.page is that
+   * page. A document can span several pages — a field found on page 3 has its value in the
+   * table but its box belongs on page 3's image, not page 1's. Uploads carry an explicit
+   * `pages` array (original page numbers + per-page sizes, so a sub-document living on
+   * page 3 of a combined file renders page 3); pack/report documents carry only
+   * page_count + page_size_points, so 1..page_count is synthesised at the single size. */
+  function documentPages(doc) {
+    if (doc.pages && doc.pages.length) {
+      return doc.pages.map(function (p) {
+        return { page: Number(p.page), size: p.size || doc.page_size_points || [612, 792] };
+      });
+    }
+    var n = Number(doc.page_count) || 1;
+    var size = doc.page_size_points || [612, 792];
+    var out = [];
+    for (var i = 1; i <= n; i += 1) out.push({ page: i, size: size });
+    return out;
+  }
+
   function renderPage(host, doc, opts) {
     opts = opts || {};
-    var loadImage = opts.loadImage || function () { return Source.pageImage(doc.document_id, 1); };
-    var activeField = opts.activeField !== undefined ? opts.activeField : state.activeField;
     clear(host);
-    var pageSize = doc.page_size_points || [612, 792];
-    var pageW = Number(pageSize[0]), pageH = Number(pageSize[1]);
+    var pages = documentPages(doc);
+    var multi = pages.length > 1;
+    // The region editor ("point at it") targets the page its field actually lives on, so
+    // pointing at a value read from page 2 records page 2. A field with no page (abstained)
+    // falls to the first page.
+    var editField = (state.rowEdit && state.rowEdit.pointing &&
+                     state.rowEdit.docId === doc.document_id) ? state.rowEdit.field : null;
+    var editPage = null;
+    if (editField) {
+      (doc.fields || []).forEach(function (f) {
+        if (f.field === editField && f.page) editPage = f.page;
+      });
+      if (editPage === null && pages.length) editPage = pages[0].page;
+    }
+    pages.forEach(function (entry) {
+      renderPageFrame(host, doc, opts, entry.page, Number(entry.size[0]),
+                      Number(entry.size[1]), multi, editPage);
+    });
+  }
+
+  function renderPageFrame(host, doc, opts, pageNumber, pageW, pageH, multi, editPage) {
+    var loadImage = opts.loadImage
+      ? function () { return opts.loadImage(pageNumber); }
+      : function () { return Source.pageImage(doc.document_id, pageNumber); };
+    var activeField = opts.activeField !== undefined ? opts.activeField : state.activeField;
+
+    // A quiet page label, only when there is more than one page, so a reader knows which
+    // page of the document each image is.
+    if (multi) {
+      host.appendChild(h("p", { class: "page-label",
+        text: "Page " + pageNumber + " of " + doc.file_name }));
+    }
 
     var frame = h("div", {
       class: "page-frame",
@@ -2826,7 +3045,9 @@
     // The quarantined probe is not drawn as a labelled box on the page image — it is not
     // one of the renter's values, and a box tagged "untrusted_instruction_text" over their
     // own document is the same mispresentation the values table just stopped making.
-    var located = renterFields(doc).filter(function (f) { return f.bbox && f.page === 1; });
+    var located = renterFields(doc).filter(function (f) {
+      return f.bbox && f.page === pageNumber;
+    });
 
     function drawBoxes(container) {
       located.forEach(function (field) {
@@ -2930,16 +3151,18 @@
         clear(frame);
         if (!url) { renderSchematic(); return; }
         state.pageImageUrl = url;
-        frame.appendChild(h("img", { src: url, alt: "Rendered page 1 of " + doc.file_name }));
+        frame.appendChild(h("img", { src: url,
+          alt: "Rendered page " + pageNumber + " of " + doc.file_name }));
         var overlay = h("div", { class: "page-schematic", "aria-hidden": "true" });
         // Appended BEFORE the boxes are drawn: tag placement measures real pixels, and a
         // detached node measures nothing.
         frame.appendChild(overlay);
         drawBoxes(overlay);
-        attachRegionLayer(frame, host, doc, pageW, pageH);
+        // The region editor is armed on the one page its field lives on, not every page.
+        if (editPage === pageNumber) attachRegionLayer(frame, host, doc, pageW, pageH, pageNumber);
         host.appendChild(h("p", {
           class: "page-caption",
-          text: "Page 1 as rendered by the server. Each rectangle is the box the value was read from; " +
+          text: "Page " + pageNumber + " as rendered by the server. Each rectangle is the box the value was read from; " +
                 "the same coordinates are listed as text in the table below."
         }));
       });
@@ -2988,7 +3211,8 @@
    * complete equivalent of this whole tool, and the layer itself takes Enter to place a
    * box, arrows to nudge it, Shift+arrows to resize it, Enter to read, Escape to leave.
    */
-  function attachRegionLayer(frame, host, doc, pageW, pageH) {
+  function attachRegionLayer(frame, host, doc, pageW, pageH, pageNumber) {
+    pageNumber = pageNumber || 1;
     var ed = state.rowEdit;
     if (!ed || !ed.pointing || ed.docId !== doc.document_id) return;
     frame.classList.add("is-pointing");
@@ -3110,12 +3334,12 @@
         Math.round((1 - rect.y) * pageH * 100) / 100
       ];
       announce("Reading the area you pointed at…");
-      Source.readRegion(doc.document_id, { page: 1, box: box, field: current.field })
+      Source.readRegion(doc.document_id, { page: pageNumber, box: box, field: current.field })
         .then(function (body) {
           var still = state.rowEdit;
           if (!still || still.key !== current.key) return;   // the editor moved on
           still.pointing = false;
-          still.region = { page: (body && body.page) || 1, box: (body && body.box) || box };
+          still.region = { page: (body && body.page) || pageNumber, box: (body && body.box) || box };
           still.cropUrl = cropUrl;
           if (body && body.could_read) {
             still.draft = String(body.reading);

@@ -84,6 +84,14 @@ from core.extract import (
 #: 메모리에만 들고 있기 때문이다 — 세션 하나가 프로세스를 굶기면 안 된다.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
+#: 첫 페이지가 스스로를 밝히지 못할 때(제목 없음·스캔·표에 없는 제목·상충하는 제목)
+#: **보이는 기본값**으로 읽는 종류. 가장 흔한 소득 문서인 급여명세서다. 사람이 "읽기"를
+#: 눌렀을 때 질문이 아니라 읽기가 돌아 나가야 한다는 것이 이 제품의 일관된 선호이고
+#: (api/upload.py 상단 철학), 한 클릭으로 고칠 수 있는 **보이는** 가정이 조용한 가정보다
+#: 언제나 낫다. 이 기본값은 결과 옆에 "pay_stub 로 가정했습니다 — 아니면 여기서 바꾸세요"
+#: 로 함께 표시되지, 읽기를 막는 관문이 되지 않는다.
+DEFAULT_DOCUMENT_TYPE = "pay_stub"
+
 #: PDF 만 받는다. 매직바이트가 진짜 검사이고 MIME 은 보조다 — MIME 은 클라이언트가
 #: 자기 마음대로 붙여 보내는 값이라 그것만 믿으면 검사한 척이 된다.
 PDF_MAGIC = b"%PDF-"
@@ -145,9 +153,9 @@ def validate(data: bytes, file_name: str, content_type: str | None,
     if not document_type:
         raise UploadRejected(
             "document_type_required",
-            "Choose what kind of document this is. We cannot tell from the file name: "
-            "our reader only recognises the pack's own naming convention, and anything "
-            "else is read as an unknown type, which produces no fields at all.",
+            "Choose what kind of document this is. The kind is never taken from the file "
+            "name — it comes from the title the page prints at the top, or from your "
+            "choice here. Without either, there is no kind to read it as.",
         )
     doc_type = str(document_type).strip().lower()
     if doc_type not in EXPECTED_FIELDS:
@@ -220,12 +228,186 @@ def has_text_layer(data: bytes) -> bool:
     return False
 
 
+def _page_sizes(data: bytes) -> list[list[float]]:
+    """각 페이지의 (폭, 높이) 포인트. 결합 문서는 페이지마다 크기가 다를 수 있고,
+    화면이 모든 페이지를 그리려면 페이지별 종횡비가 필요하다."""
+    try:
+        with pdfplumber.open(io.BytesIO(data)) as pdf:
+            return [[round(float(p.width), 2), round(float(p.height), 2)] for p in pdf.pages]
+    except Exception:
+        return []
+
+
+def _split_pdf(data: bytes, page_start: int, page_end: int) -> bytes:
+    """원본 PDF 에서 [page_start, page_end] (1-기반, 포함) 페이지만 담은 하위 PDF 바이트.
+
+    페이지 내용 스트림을 그대로 복사하므로 추출 좌표·값이 원본과 **바이트 단위로**
+    같다(측정: api/test_upload.py). 렌더는 이 하위 PDF 를 쓰지 않는다 — 페이지 이미지는
+    언제나 원본 바이트를 원본 페이지 번호로 렌더한다. 하위 PDF 는 오직 추출용이다.
+
+    pdfium 은 스레드 안전하지 않으므로 렌더와 **같은 락**(PDFIUM_LOCK) 아래서 만든다.
+    """
+    import pypdfium2 as pdfium
+
+    from api.store import PDFIUM_LOCK
+
+    with PDFIUM_LOCK:
+        src = pdfium.PdfDocument(data)
+        try:
+            dst = pdfium.PdfDocument.new()
+            try:
+                dst.import_pages(src, list(range(page_start - 1, page_end)))
+                buf = io.BytesIO()
+                dst.save(buf)
+            finally:
+                dst.close()
+        finally:
+            src.close()
+    return buf.getvalue()
+
+
+def segment_pages(data: bytes) -> tuple[list[dict[str, Any]], int, list[list[float]]]:
+    """한 PDF 를 페이지별로 훑어 **하위 문서**로 쪼갠다 — 결합 문서 대응의 핵심.
+
+    규칙(브리프 item 2): 두 경우를 한 규칙으로 가른다.
+      * 인쇄된 제목이 알려진 종류를 지명하는 페이지는 그 종류의 **새 하위 문서를 연다**.
+      * 지명하는 제목이 없는 페이지는 **현재 하위 문서를 잇는다**(같은 종류·같은 문서) —
+        제목 없는 2쪽짜리 급여명세서의 2페이지가 새 문서가 아닌 이유가 이것이다.
+
+    제로-오답(브리프 불변식): 지명도 없고 이을 현재 문서도 없는 페이지(첫 페이지에
+    제목이 없거나 스캔이거나 상충함)는 **추측한 종류로 읽지 않는다** — item 3 의 보이는
+    기본값(DEFAULT_DOCUMENT_TYPE)으로 열되, 그 가정은 결과 옆에 표시되고 한 클릭으로
+    바뀐다(assumed=True). 조용한 오답은 없고, 보이는 가정만 있다.
+
+    반환: (segments, page_count, page_sizes)
+      segment = {"page_start", "page_end", "document_type", "nomination"|None, "assumed"}
+    """
+    from api import nominate as nominate_mod
+
+    noms: list[dict[str, Any] | None] = []
+    page_sizes: list[list[float]] = []
+    with pdfplumber.open(io.BytesIO(data)) as pdf:
+        for i, page in enumerate(pdf.pages, start=1):
+            page_sizes.append([round(float(page.width), 2), round(float(page.height), 2)])
+            nom, _reason = nominate_mod.nominate_page(page, i)
+            noms.append(nom)
+    page_count = len(noms)
+
+    segments: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for i in range(1, page_count + 1):
+        nom = noms[i - 1]
+        if nom is not None:
+            if current is not None:
+                segments.append(current)
+            current = {"page_start": i, "page_end": i,
+                       "document_type": nom["document_type"],
+                       "nomination": nom, "assumed": False}
+        elif current is None:
+            # 제목 없는 선두 페이지(들). 이을 문서가 없으므로 item 3 의 보이는 기본값으로
+            # 하위 문서를 연다 — 이후 제목 없는 페이지는 이 문서를 잇는다.
+            current = {"page_start": i, "page_end": i,
+                       "document_type": DEFAULT_DOCUMENT_TYPE,
+                       "nomination": None, "assumed": True}
+        else:
+            current["page_end"] = i
+    if current is not None:
+        segments.append(current)
+    if not segments:
+        # 페이지가 0장인 PDF — 사실상 없지만, 빈 목록을 내면 호출자가 무너진다.
+        segments = [{"page_start": 1, "page_end": max(page_count, 1),
+                     "document_type": DEFAULT_DOCUMENT_TYPE,
+                     "nomination": None, "assumed": True}]
+    return segments, page_count, page_sizes
+
+
+def read_document_file(data: bytes, file_name: str, *,
+                       explicit_type: str | None = None) -> list[dict[str, Any]]:
+    """올린 파일 하나를 **하위 문서 뷰들**로 읽는다 (결합 문서면 여럿, 보통 하나).
+
+    * `explicit_type` 이 주어지면(사람이 종류를 골랐거나 "종류 바꾸기") 파일 전체를
+      그 한 종류의 **하나의** 하위 문서로 읽는다 — 사람의 명시적 선택이 페이지별
+      분절보다 우선한다.
+    * 아니면 페이지별로 지명해 분절한다(segment_pages). 각 하위 문서의 페이지 범위를
+      **그 자신의 종류로** 읽고, 필드의 페이지 번호는 원본 파일 기준으로 되돌린다 —
+      item 1 의 렌더가 올바른 페이지에 상자를 그리도록.
+
+    각 하위 문서는 팩 문서의 뷰와 같은 모양이라, 화면이 업로드용 시각언어를 새로
+    발명하지 않고 기존 근거 표시(페이지 이미지 위 상자 + 필드 표)를 그대로 쓴다.
+    """
+    if explicit_type:
+        page_sizes = _page_sizes(data)
+        page_count = len(page_sizes) or 1
+        segments = [{"page_start": 1, "page_end": page_count,
+                     "document_type": explicit_type, "nomination": None, "assumed": False}]
+    else:
+        segments, page_count, page_sizes = segment_pages(data)
+
+    file_id = f"UF-{uuid.uuid4().hex[:8].upper()}"
+    single = len(segments) == 1 and segments[0]["page_start"] == 1 \
+        and segments[0]["page_end"] == page_count
+
+    views: list[dict[str, Any]] = []
+    for index, seg in enumerate(segments):
+        start, end = seg["page_start"], seg["page_end"]
+        # 파일 전체를 덮는 하나뿐인 분절이면 원본 바이트를 그대로 쓴다 — 쪼갤 이유가
+        # 없고(단일 문서 업로드는 오늘과 바이트 단위로 같아야 한다), pdfium 도 안 부른다.
+        sub_data = data if single else _split_pdf(data, start, end)
+        seg_sizes = page_sizes[start - 1:end] or None
+        view = read_upload(
+            sub_data, file_name, seg["document_type"],
+            page_offset=start - 1, page_sizes=seg_sizes,
+        )
+        view["file_id"] = file_id
+        view["sub_index"] = index
+        view["sub_count"] = len(segments)
+        view["page_start"] = start
+        view["page_end"] = end
+        _mark_nomination(view, seg["nomination"], seg["assumed"])
+        views.append(view)
+    return views
+
+
+def _mark_nomination(view: dict[str, Any], nomination: dict[str, Any] | None,
+                     assumed: bool) -> None:
+    """하위 문서의 종류 출처를 뷰와 limits 에 실어 화면이 근거/가정을 보이게 한다."""
+    if nomination is not None:
+        # 종류가 사람의 선택이 아니라 페이지의 인쇄된 제목에서 지명됐다. 근거(일치한
+        # 문구 + 페이지/좌표)를 그대로 싣는다 — 근거 없는 지명을 화면이 보여 줄 방법이
+        # 없어야 하고, 그래서 근거는 여기서도 분리 불가다.
+        view["nomination"] = dict(nomination)
+        view["limits"].insert(0, (
+            "The kind of document was not chosen by you: the page prints "
+            f"“{nomination.get('matched_text', '')}” at the top, and that "
+            "is the whole reason it was read as this kind. If the page is about "
+            "that kind of document rather than being one, change the kind and "
+            "read it again."
+        ))
+    elif assumed:
+        # 페이지가 스스로를 밝히지 못했다. item 3: 질문으로 막는 대신 보이는 기본값으로
+        # 읽고, 그 가정을 결과 옆에 표시한다. 한 클릭으로 고칠 수 있는 보이는 가정이
+        # 조용한 것보다 언제나 낫다.
+        view["assumed_type"] = True
+        view["limits"].insert(0, (
+            "This page did not print a title we recognise, so we did not ask what it "
+            f"is — we read it as a {view.get('document_type')}, the most common income "
+            "document, and showed you the result. If that is not what this is, change "
+            "the kind above and we will read it again that way."
+        ))
+
+
 def read_upload(data: bytes, file_name: str, document_type: str,
-                upload_id: str | None = None) -> dict[str, Any]:
+                upload_id: str | None = None, *,
+                page_offset: int = 0,
+                page_sizes: list[list[float]] | None = None) -> dict[str, Any]:
     """올린 바이트 한 덩어리를 `DocumentView` + 업로드 메타데이터로 만든다.
 
     반환값은 팩 문서의 뷰와 **같은 모양**이다. 화면이 업로드용 시각언어를 따로 발명하지
     않고 기존 근거 표시(페이지 이미지 위 상자 + 필드 표)를 그대로 쓸 수 있어야 하기 때문이다.
+
+    `page_offset` 은 결합 문서의 하위 PDF 를 읽을 때 필드의 페이지 번호를 **원본 파일
+    기준**으로 되돌리는 값이다(하위 PDF 의 1페이지가 원본의 3페이지일 수 있다). 기본값
+    0 에서는 아무것도 옮기지 않으므로 단일 문서 업로드는 오늘과 바이트 단위로 같다.
     """
     uid = upload_id or f"UP-{uuid.uuid4().hex[:8].upper()}"
     text_layer = has_text_layer(data)
@@ -310,4 +492,21 @@ def read_upload(data: bytes, file_name: str, document_type: str,
             "This page had no text layer, so it was read by OCR on page 1 only. OCR recovers "
             "fewer fields than a text layer does, and what it cannot read it declines to guess.",
         )
+    # 하위 PDF 의 지역 페이지 번호(1..분절길이)를 원본 파일 기준으로 되돌린다. page_offset
+    # 이 0 이면(단일 문서) 아무것도 옮기지 않으므로 오늘과 바이트 단위로 같다. item 1 의
+    # 렌더가 각 필드를 원본의 올바른 페이지에 그리려면 이 번호가 원본 기준이어야 한다.
+    if page_offset:
+        for f in fields:
+            if isinstance(f.get("page"), int):
+                f["page"] = f["page"] + page_offset
+    # 이 (하위)문서가 덮는 원본 페이지들 — 번호와 크기. 화면이 **모든 페이지**를 그리고
+    # 각 페이지에 그 페이지의 필드만 얹으려면(item 1) 페이지 목록이 뷰에 실려야 한다.
+    seg_len = int(view.get("page_count") or 1)
+    default_size = view.get("page_size_points") or [612, 792]
+    view["pages"] = [
+        {"page": i + page_offset,
+         "size": (page_sizes[i - 1] if page_sizes and i - 1 < len(page_sizes)
+                  else list(default_size))}
+        for i in range(1, seg_len + 1)
+    ]
     return view

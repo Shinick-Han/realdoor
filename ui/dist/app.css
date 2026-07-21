@@ -1095,6 +1095,16 @@ button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
 .upload-form .button-row { margin-bottom: 0; }
 .upload-result { margin-top: 1.2rem; }
 .upload-result h3 { margin-top: 0; }
+/* 하위 문서 경계를 보이게 한다: 결합 문서의 각 문서는 자기 구획을 갖는다. 한 장짜리
+   업로드(하위 문서 하나)면 이 테두리·여백이 눈에 거의 띄지 않도록 첫 구획은 담백하게
+   둔다 — 새 시각언어를 만드는 게 아니라 경계만 드러낸다. */
+.upload-subdoc + .upload-subdoc {
+  margin-top: 1.6rem; padding-top: 1.2rem; border-top: 2px solid var(--line);
+}
+.upload-subdoc__heading { margin-top: 0; }
+/* 여러 페이지를 그릴 때 각 페이지 이미지 위의 조용한 페이지 표지. */
+.page-label { font-size: .9rem; font-weight: 600; color: var(--ink-soft); margin: 1rem 0 .3rem; }
+.page-frame + .page-label { margin-top: 1.4rem; }
 /* 서버 없는 정적 빌드에서 컨트롤이 꺼져 있다는 사실이 눈에 보여야 한다. 숨기지 않는 이유는
    심사위원에게는 숨긴 기능이 곧 없는 기능이기 때문이다. */
 .upload-field select:disabled,
