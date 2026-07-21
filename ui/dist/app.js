@@ -1407,6 +1407,7 @@
     documentId: null,
     activeField: null,
     showBoxCoordinates: false,   // step 1: the Box (pt) column, off until asked for
+    boxToggleDisclosureOpen: false,  // whether the Technical-details fold holding that toggle is open
     pageImageUrl: null,
     // step 1, upload panel. `uploadResult` is one DocumentView from the server, held
     // separately from `report` because an uploaded document is read on its own and joins
@@ -2755,7 +2756,7 @@
       h("p", {
         style: { marginBottom: "0" },
         text: "Each row below shows what we read off this page. If a value is right, " +
-              "choose Confirm. If it is wrong, choose “This is wrong — fix it”: the row " +
+              "choose Confirm. If it is wrong, choose “Fix”: the row " +
               "opens a box where you type what the page really says, or you point at " +
               "the spot on the page and check our reading of it before you save. " +
               "Confirming does not change the value or any number below it; it records " +
@@ -3526,7 +3527,7 @@
 
   /* ── the inline row editor ──────────────────────────────────────────────────────
    *
-   * The row IS the selection. "This is wrong — fix it" opens an editor in place: no
+   * The row IS the selection. "Fix" opens an editor in place: no
    * document picker, no field picker, no other screen. The editor commits through the
    * same correction machinery as everything else (`/api/confirm` decides confirmed vs
    * corrected by comparing), so a fix made here is indistinguishable in the record from
@@ -3890,7 +3891,7 @@
         id: fixItButtonId(tableId, field.field),
         "aria-label": "Fix the value read for " + field.field + " on " + doc.document_id,
         onclick: function () { openRowEditor(doc, field, tableId, opts); }
-      }, ["This is wrong — fix it"]));
+      }, ["Fix"]));
     }
     return h("div", { class: "confirm-cell" }, actions);
   }
@@ -4365,9 +4366,21 @@
         " Choose a field name to highlight its box on the page. ",
         showBoxes
           ? "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1]."
-          : "The box coordinates behind each highlight can be shown as a column."
+          : "The box coordinates behind each highlight can be shown as a column under Technical details."
       ]),
-      toggle,
+      // The raw-coordinate toggle is a verification affordance a renter never asks for, so
+      // it lives folded under the same "Technical details" disclosure used everywhere on
+      // this page — hidden from the default view, one click away for anyone checking the
+      // arithmetic. The fold's open state is remembered so toggling the box (which
+      // re-renders and re-focuses the checkbox) does not slam the disclosure shut.
+      h("details", {
+        class: "tech",
+        open: state.boxToggleDisclosureOpen ? true : null,
+        ontoggle: function (event) { state.boxToggleDisclosureOpen = event.target.open; }
+      }, [
+        h("summary", { text: "Technical details" }),
+        toggle
+      ]),
       h("div", { class: "table-scroll" }, [
       h("table", {
         "aria-labelledby": captionId, role: "table",

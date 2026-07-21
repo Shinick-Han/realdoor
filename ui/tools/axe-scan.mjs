@@ -79,7 +79,7 @@ const SCREENS = [
       await page.locator("#documents-body .field-row-btn").first().click();
     } },
 
-  // The same page with the inline row editor OPEN ("This is wrong — fix it") and the
+  // The same page with the inline row editor OPEN ("Fix") and the
   // picker's Start-over control armed on its confirming step. Both are states a renter
   // actually reaches, and both draw controls that exist in no other state. The
   // drag-to-read layer itself needs the live API (the static origins have no reader), so

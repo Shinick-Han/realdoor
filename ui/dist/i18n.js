@@ -86,8 +86,8 @@
       "RealDoor 는 당신이 준 문서를 읽고, 각 값이 문서의 어느 위치에서 나왔는지 보여 드립니다. 각 값은 그것을 읽어낸 상자와 함께 표시됩니다. 항목 이름을 고르면 그 상자가 켜집니다. 여기에서 사람에 대해 추측한 것은 없습니다.",
     "Choose a PDF and RealDoor reads it, then shows you every value it took out of it and the box on the page each one came from. It is read on its own: nothing else has to be open first, and reading it changes nothing anywhere else.":
       "PDF 를 고르시면 RealDoor 가 읽고, 거기서 뽑아낸 모든 값과 각 값이 나온 문서상의 상자를 보여 드립니다. 이 문서는 따로 읽힙니다: 먼저 열려 있어야 할 것이 없고, 읽어도 다른 어떤 것도 바뀌지 않습니다.",
-    "Each row below shows what we read off this page. If a value is right, choose Confirm. If it is wrong, choose “This is wrong — fix it”: the row opens a box where you type what the page really says, or you point at the spot on the page and check our reading of it before you save. Confirming does not change the value or any number below it; it records that you read it.":
-      "아래의 각 행에는 저희가 이 페이지에서 읽어낸 내용이 표시됩니다. 값이 맞으면 확인을 누르세요. 틀렸으면 “잘못 읽었어요 — 고치기”를 누르세요. 행에 입력칸이 열리고, 페이지가 실제로 말하는 값을 직접 입력하거나, 페이지 위의 그 자리를 가리켜 저희가 읽은 내용을 확인한 뒤 저장할 수 있습니다. 확인은 값이나 그 아래 어떤 숫자도 바꾸지 않습니다. 당신이 그것을 읽었다는 사실을 기록할 뿐입니다.",
+    "Each row below shows what we read off this page. If a value is right, choose Confirm. If it is wrong, choose “Fix”: the row opens a box where you type what the page really says, or you point at the spot on the page and check our reading of it before you save. Confirming does not change the value or any number below it; it records that you read it.":
+      "아래의 각 행에는 저희가 이 페이지에서 읽어낸 내용이 표시됩니다. 값이 맞으면 확인을 누르세요. 틀렸으면 “고치기”를 누르세요. 행에 입력칸이 열리고, 페이지가 실제로 말하는 값을 직접 입력하거나, 페이지 위의 그 자리를 가리켜 저희가 읽은 내용을 확인한 뒤 저장할 수 있습니다. 확인은 값이나 그 아래 어떤 숫자도 바꾸지 않습니다. 당신이 그것을 읽었다는 사실을 기록할 뿐입니다.",
     "If you would rather look around first, this copy carries six made-up household files. They belong to nobody. Everything the six steps do — the evidence boxes, the corrections, the checklist, the packet — works the same on them as on a document of your own.":
       "먼저 둘러보고 싶으시면, 이 사본에는 지어낸 세대 파일 여섯 개가 들어 있습니다. 누구의 것도 아닙니다. 여섯 단계가 하는 모든 것 — 근거 상자, 정정, 점검 목록, 서류 묶음 — 은 당신의 문서에서와 똑같이 그것들에서도 작동합니다.",
     "It also states how many values you checked and lists the actions taken in this session, with the rule versions that applied. That log holds no document contents and none of the values themselves.":
@@ -981,7 +981,7 @@
     // ── app.js — 근거 화면과 남은 물음 ─────────────────────────────────────────────
     "Try one of these": "이 중 하나를 눌러 보세요",
     "Show the box coordinates column": "근거 위치 좌표 열 보기",
-    "The box coordinates behind each highlight can be shown as a column.": "각 강조 표시 뒤에 있는 근거 위치 좌표를 열로 펼쳐 볼 수 있습니다.",
+    "The box coordinates behind each highlight can be shown as a column under Technical details.": "각 강조 표시 뒤에 있는 근거 위치 좌표는 기술 세부사항에서 열로 펼쳐 볼 수 있습니다.",
     "Raised as": "제기된 코드",
     "Resolved by": "이렇게 하면 풀립니다",
     "a housing professional answers this, or the question is rephrased to name the rule it is about":
@@ -1329,7 +1329,7 @@
     "The session could not be cleared": "세션을 비우지 못했습니다",
 
     // ── app.js: 행 안 편집기와 페이지 가리키기 ───────────────────────────────
-    "This is wrong — fix it": "잘못 읽었어요 — 고치기",
+    "Fix": "고치기",
     "Save": "저장",
     "Cancel": "취소",
     "Point at it on the page": "페이지에서 그 자리를 가리키기",
@@ -1550,8 +1550,8 @@
       "과제 설명서는 6단계 수용 데모를 요구합니다. 우리의 진행 과정은 그 목록이 아니라 세입자를 위해 쓴 두 페이지라서, 둘은 1대1로 맞아떨어지지 않습니다. 아래가 그 대응표이며, 각 수용 단계는 여전히 하나씩 따로 시연할 수 있습니다.",
     "— page 1. The upload panel is the front door, and one press opens a prepared example instead; either way every value carries the box on the page it came from. An uploaded document is read on its own; the session's uploads together form a file of their own that both pages can walk.":
       "— 1페이지. 올리기 패널이 정문이고, 한 번의 누름으로 준비된 예시를 대신 열 수도 있습니다. 어느 쪽이든 모든 값은 그것이 나온 문서상의 근거 위치를 달고 있습니다. 올리신 문서는 그 문서 하나만 놓고 읽으며, 세션의 업로드들은 함께 자기 파일을 이루어 두 페이지를 걸을 수 있습니다.",
-    "— page 1. “This is wrong — fix it” opens an editor on the row itself; when the correction commits, the before/after summary — the recomputed figure, the threshold move, or the recorded-but-not-used explanation — appears in place under that document's table.":
-      "— 1페이지. “잘못 읽었어요 — 고치기”가 행 자체에 편집기를 엽니다. 정정이 반영되면 전·후 요약 — 다시 계산된 금액, 기준액의 이동, 또는 기록만 되고 쓰이지 않은 이유 — 이 그 문서의 표 아래, 바로 그 자리에 나타납니다.",
+    "— page 1. “Fix” opens an editor on the row itself; when the correction commits, the before/after summary — the recomputed figure, the threshold move, or the recorded-but-not-used explanation — appears in place under that document's table.":
+      "— 1페이지. “고치기”가 행 자체에 편집기를 엽니다. 정정이 반영되면 전·후 요약 — 다시 계산된 금액, 기준액의 이동, 또는 기록만 되고 쓰이지 않은 이유 — 이 그 문서의 표 아래, 바로 그 자리에 나타납니다.",
     "— the ask box pinned at the foot of every page. Its answers carry the rule id, authority, effective date and source; the recorded questions, including the eligibility refusal, are in the “Recorded questions” list under the same box.":
       "— 모든 페이지 아래에 고정된 질문 상자입니다. 그 답변에는 규칙 id, 근거 기관, 시행일, 출처가 붙습니다. 자격 거부 시연을 포함한 기록된 질문은 같은 상자 아래 “기록된 질문” 목록에 있습니다.",
     "— page 2, “How your yearly figure was worked out”.":
