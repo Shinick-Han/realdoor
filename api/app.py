@@ -1094,7 +1094,24 @@ def overlay(document_id: str, page: int,
 if UI_DIR.is_dir():
     from fastapi.staticfiles import StaticFiles
 
-    app.mount("/", StaticFiles(directory=str(UI_DIR), html=True), name="ui")
+    class _RevalidatingStatic(StaticFiles):
+        """Serve the UI with `Cache-Control: no-cache` so a browser always revalidates.
+
+        The UI is one unversioned `app.js` (+ css/i18n) referenced by a plain
+        `src="app.js"`. Without this, a browser that visited before a deploy keeps
+        serving its cached copy from heuristic freshness and never sees the update —
+        a returning judge would look at stale UI after every push. `no-cache` does not
+        forbid caching; it requires the browser to revalidate with the ETag/Last-Modified
+        the server already sends, so an unchanged file is a cheap 304 and a changed file
+        (new deploy) is fetched fresh. API responses are unaffected (this is UI only).
+        """
+
+        async def get_response(self, path, scope):
+            response = await super().get_response(path, scope)
+            response.headers.setdefault("Cache-Control", "no-cache")
+            return response
+
+    app.mount("/", _RevalidatingStatic(directory=str(UI_DIR), html=True), name="ui")
 else:  # pragma: no cover
     @app.get("/")
     def _no_ui() -> dict:
