@@ -53,6 +53,20 @@
   --space-1: .25rem; --space-2: .5rem;  --space-3: .75rem; --space-4: 1rem;
   --space-5: 1.5rem; --space-6: 2rem;   --space-7: 3rem;   --space-8: 4rem;
 
+  /* Centered-band layout — one shared content axis for the header, the main+aside grid,
+     the ask-dock and the footer. Each band still spans the full viewport for its own
+     background and hairline, but insets its *content* to a centered max-width. The trick
+     is padding, not a wrapper (the DOM is fixed): a side gutter of at least --band-pad on
+     narrow screens that grows to centre the column on wide ones. So a 1920 monitor puts
+     ~400px of calm on either side of the content, while 320px collapses cleanly to
+     full-width-with-padding — max() never lets the gutter drop below --band-pad, and the
+     centring term goes negative (and is ignored) long before the layout gets tight. */
+  --content-max: 71.25rem;                 /* ~1140px — the field table fits inside this */
+  --band-pad:   clamp(1rem, 5vw, 2.5rem);  /* 16px … 40px side gutter */
+  --band-inset: max(var(--band-pad), calc((100% - var(--content-max)) / 2));
+  --layout-gap: var(--space-6);            /* main ↔ aside; the dock reads the same number */
+  --aside-max:  20rem;                     /* the unsure-about rail: secondary, not co-equal */
+
   /* Radius — 8px for controls, 12px for cards. Subtle, never pills (chips excepted). */
   --radius:    8px;
   --radius-sm: 6px;
@@ -163,7 +177,8 @@ a:hover { text-decoration-thickness: 2px; }
 .site-header {
   background: var(--paper);
   border-bottom: 1px solid var(--line);
-  padding: 1rem clamp(1rem, 3vw, 2rem);
+  /* Full-width band, content on the shared centered axis (see --band-inset). */
+  padding: var(--space-4) var(--band-inset);
   display: grid;
   gap: .75rem 2rem;
   grid-template-columns: minmax(12rem, auto) 1fr minmax(12rem, auto);
@@ -293,9 +308,12 @@ a:hover { text-decoration-thickness: 2px; }
 /* ── layout ───────────────────────────────────────────────────────── */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
-  gap: 1rem;
-  padding: 1rem clamp(.5rem, 2vw, 1.5rem);
+  /* Main is the clear focus and takes the free space; the aside settles no wider than
+     --aside-max so it reads as a secondary column rather than a co-equal half. */
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, var(--aside-max));
+  gap: var(--layout-gap);
+  /* Content on the shared centered axis, with roomier vertical breathing above/below. */
+  padding: clamp(1.5rem, 1rem + 1.5vw, 2.5rem) var(--band-inset);
   align-items: start;
 }
 @media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
@@ -308,7 +326,9 @@ main:focus { outline: none; }
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: clamp(1.2rem, 1rem + 1vw, 1.75rem) clamp(.9rem, 2vw, 1.75rem) clamp(1.4rem, 1rem + 1.5vw, 2rem);
+  /* Roomier than before — more air inside the one card the reader is looking at. The
+     horizontal max stays modest so the field table keeps its width in the centered column. */
+  padding: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem) clamp(1rem, 2vw, 2rem) clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
 }
 /* The heading is the first thing on the page and should read as the first thing. The clamp
    floor is the size this heading has always been, so nothing grows at 320px where the space
@@ -353,9 +373,10 @@ main:focus { outline: none; }
   position: sticky;
   bottom: 0;
   z-index: 30;
-  /* A child of <body>, so it inherits none of main's padding. The gutter matches
-     .layout's so the strip lines up with the column above it at every width. */
-  margin: 1rem clamp(.5rem, 2vw, 1.5rem) 0;
+  /* A child of <body>, so it inherits none of main's padding. It reads the same
+     --band-inset as every other band, so the strip lines up on the shared centered axis
+     with the column above it at every width. */
+  margin: 1rem var(--band-inset) 0;
   background: var(--paper);
   border: 1px solid var(--line);
   /* The same 4px accent rule .ask-anywhere carries: this belongs to the whole
@@ -375,7 +396,7 @@ main:focus { outline: none; }
    aside settles at its 24rem maximum at every width past this breakpoint, plus the 1rem
    grid gap, plus the layout's own right padding. */
 @media (min-width: 1101px) {
-  #ask-dock { margin-right: calc(24rem + 1rem + clamp(.5rem, 2vw, 1.5rem)); }
+  #ask-dock { margin-right: calc(var(--aside-max) + var(--layout-gap) + var(--band-inset)); }
 }
 
 #ask-dock #ask-box-body { padding: .55rem clamp(.6rem, 2vw, 1rem) .7rem; }
@@ -589,13 +610,17 @@ details.tech > * { margin-top: .4rem; }
 .rule-ref-list li { margin-bottom: .15rem; }
 
 /* ── USWDS summary box: a short checklist of what to do next ────────── */
+/* Lightened: the pale-blue fill is gone. A filled tint on a large panel — the front-door
+   "Start with a document of your own" box and its siblings — is most of what made the page
+   read busy. White paper + a hairline, with one accent left-rule to mark it and more room
+   inside, carries the same weight while letting the page read mostly white with one accent. */
 .summary-box {
   border: 1px solid var(--line);
   border-left: 4px solid var(--accent);
   border-radius: var(--radius);
-  background: var(--wash-accent);
-  padding: 1rem 1.2rem;
-  margin: 0 0 1.2rem;
+  background: var(--paper);
+  padding: var(--space-5);
+  margin: 0 0 var(--space-6);
 }
 .summary-box h2, .summary-box h3 { font-size: 1.1rem; margin-top: 0; }
 .summary-box__list { margin: 0; padding-left: 1.2rem; }
@@ -702,12 +727,19 @@ details.tech > * { margin-top: .4rem; }
 .step-nav .secondary { order: 1; }
 
 /* ── the always-open questions rail ───────────────────────────────── */
+/* Kept (option a), not removed — it is the deliberate always-on honesty surface. But once
+   the page is centered, a white rail beside white screens reads as a co-equal half. Sitting
+   it on the --shell tint (the same wash the page background uses) lets it recede a step, so
+   the main column is the clear focus and this is plainly the secondary one. The warn-coloured
+   left rule stays — it is what tells you at a glance this is the "unsure about" surface — just
+   a hair thinner, and the whole rail is narrower now (see --aside-max). --ink-soft on --shell
+   is 4.7:1, past the 4.5:1 floor, so nothing here drops below AA. */
 .open-questions {
-  background: var(--paper);
+  background: var(--shell);
   border: 1px solid var(--line);
-  border-left: 4px solid var(--warn);
+  border-left: 3px solid var(--warn);
   border-radius: var(--radius-lg);
-  padding: 1.1rem 1.2rem;
+  padding: var(--space-4) var(--space-5);
   position: sticky;
   top: .5rem;
 }
@@ -1289,7 +1321,8 @@ ul.plain li { margin-bottom: .35rem; }
 .site-footer {
   background: var(--paper);
   border-top: 1px solid var(--line);
-  padding: 1rem clamp(1rem, 3vw, 2rem);
+  /* Full-width band, content on the shared centered axis (see --band-inset). */
+  padding: var(--space-5) var(--band-inset);
   font-size: .85rem;
   color: var(--ink-soft);
 }
@@ -1318,9 +1351,9 @@ body{ line-height:1.5; }
 .callout--warn > *{ color:var(--ink); }
 /* the outer panel carries the frame, and pays for it with room */
 .example-offer{ border:1px solid var(--line); border-radius:var(--radius-lg); padding:1.6rem 1.7rem; }
-/* breathing room between the big moves of the page */
+/* breathing room between the big moves of the page — one larger rest between blocks */
 .screen h1{ margin-bottom:.55em; }
-.screen > * + *{ margin-top:1.25rem; }
+.screen > * + *{ margin-top:1.5rem; }
 /* the step rail stops being a coloured bar and becomes type */
 .steps a[aria-current="step"], .steps [aria-current="step"]{ font-weight:600; }
 
