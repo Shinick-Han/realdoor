@@ -3,23 +3,41 @@
    Contrast targets WCAG 2.2 AA (4.5:1 body text, 3:1 UI boundaries). */
 
 :root {
-  --ink:        #14181d;   /* on --paper: 15.4:1 */
-  --ink-soft:   #4a5560;   /* on --paper:  7.4:1 */
+  /* ── one system, set once ─────────────────────────────────────────────
+     Apple-like minimalism: near-monochrome ink on paper, ONE accent, a 4px space
+     scale, hairline borders, a single soft shadow, calm motion. Every component
+     rule below reads these tokens rather than raw hex, so the whole palette (and a
+     future dark theme) turns on this block alone. Token NAMES are unchanged from the
+     previous system; only their values moved, so nothing downstream had to be renamed. */
+
+  /* Colour — restrained. Text meets WCAG AA on every surface it lands on. */
+  --ink:        #1d1d1f;   /* on --paper: 17.2:1 */
+  --ink-soft:   #6e6e73;   /* on --paper:  5.1:1 · on --shell 4.7:1 (Apple secondary) */
   --paper:      #ffffff;
-  --shell:      #eef1f4;
-  --line:       #b9c1c9;
-  --line-strong:#78838e;
+  --shell:      #f5f5f7;   /* page tint the white cards sit on */
+  --line:       #e5e5e7;   /* hairline: card + row separators (decorative) */
+  --line-strong:#86868b;   /* control borders — 3.6:1 on white for SC 1.4.11 */
 
-  --accent:     #0b4f7a;   /* on white 8.3:1 */
-  --accent-ink: #ffffff;
-  --focus:      #a8380a;
+  --accent:      #0068cc;  /* one accent — link, primary action. On white 5.4:1 */
+  --accent-ink:  #ffffff;  /* white on --accent: 5.4:1 */
+  --accent-strong:#0056ad; /* primary hover, one step darker */
+  --accent-soft:  rgba(0, 104, 204, .08);  /* faint wash: ghost / input hover + ring */
+  --accent-softer:rgba(0, 104, 204, .05);  /* fainter still: the inline editor's field */
+  --wash-accent:  #eef5fc;                 /* solid faint-blue fill for summary/alert */
 
+  /* Warm ring, kept deliberately distinct from --accent: it carries BOTH the focus
+     outline AND the "active / pointing" highlight on the evidence boxes, which are
+     themselves accent-blue — a blue focus ring would collapse that distinction. */
+  --focus:      #a8380a;   /* on white 6.0:1 */
+
+  /* Semantic states — word + glyph always accompany the colour; values AA-tuned. */
   --ok:         #1c5a34;   /* present  */
   --warn:       #8a4a00;   /* missing / undatable */
   --stop:       #9a1f14;   /* expired / unreadable */
   --ok-bg:      #e6f2ea;
   --warn-bg:    #fbf0df;
   --stop-bg:    #fbe9e7;
+  --muted-fill: #6e6e73;   /* disabled filled control — white text on it is 5.1:1 */
 
   /* How much of the bottom of the viewport the pinned question strip is allowed to own.
      Two rules below depend on this being one number: the clearance the page reserves for
@@ -27,27 +45,26 @@
      They must cancel exactly, so they read it from here rather than each spelling it out. */
   --dock-scroll-clearance: 8rem;
 
-  --radius: 6px;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Type — system stack only, no web font is ever loaded. */
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
-  /* ── control design tokens ────────────────────────────────────────────
-     A small shared scale for the interactive controls, kept in one place so radius,
-     spacing and the accent's hover/soft tints are set here rather than as loose hex
-     literals at each call site. Every colour is derived from the existing --accent, so
-     the palette stays one family and cannot drift from the state colours above. These are
-     used today only by the field-row controls the row rebuilt; a later batch can lift
-     them to the whole app. */
-  --accent-strong: #093c5d;                 /* --accent one step darker: primary hover */
-  --accent-soft:   rgba(11, 79, 122, .08);  /* faint accent wash: ghost hover */
-  --accent-softer: rgba(11, 79, 122, .045); /* fainter still: the inline editor's field */
-  --space-1: .25rem;
-  --space-2: .5rem;
-  --space-3: .75rem;
-  --radius-sm: 5px;
-  --radius-lg: 9px;
-  --elevate-1:     0 1px 2px rgba(20, 24, 29, .10), 0 1px 1px rgba(20, 24, 29, .05);
-  --elevate-hover: 0 2px 6px rgba(20, 24, 29, .16);
+  /* Space — 4px scale (4/8/12/16/24/32/48/64). Generous room is a first-class goal. */
+  --space-1: .25rem; --space-2: .5rem;  --space-3: .75rem; --space-4: 1rem;
+  --space-5: 1.5rem; --space-6: 2rem;   --space-7: 3rem;   --space-8: 4rem;
+
+  /* Radius — 8px for controls, 12px for cards. Subtle, never pills (chips excepted). */
+  --radius:    8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+
+  /* Depth — almost flat: one soft shadow, reserved for things that truly float. */
+  --elevate-1:     0 1px 2px rgba(0, 0, 0, .04), 0 1px 3px rgba(0, 0, 0, .06);
+  --elevate-hover: 0 2px 8px rgba(0, 0, 0, .08), 0 1px 3px rgba(0, 0, 0, .06);
+
+  /* Motion — calm and quick. */
+  --ease: cubic-bezier(.4, 0, .2, 1);
+  --dur:  .17s;
 }
 
 * { box-sizing: border-box; }
@@ -99,18 +116,21 @@ body {
   margin: 0;
   font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--ink);
   background: var(--shell);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .4em; }
-h2 { font-size: 1.45rem; }
-h3 { font-size: 1.15rem; margin-top: 1.6em; }
-h4 { font-size: 1rem; margin-top: 1.2em; }
+/* Hierarchy by size and weight only — 600 semibold, never black. */
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .4em; font-weight: 600; }
+h2 { font-size: 1.3125rem; letter-spacing: -.01em; }   /* 21px */
+h3 { font-size: 1.0625rem; margin-top: 1.6em; }        /* 17px */
+h4 { font-size: 1rem; margin-top: 1.2em; }             /* 16px */
 p  { margin: 0 0 .8em; }
 
-a { color: var(--accent); }
+a { color: var(--accent); transition: color var(--dur) var(--ease); }
 a:hover { text-decoration-thickness: 2px; }
 
 :focus-visible {
@@ -142,7 +162,7 @@ a:hover { text-decoration-thickness: 2px; }
 /* ── header ───────────────────────────────────────────────────────── */
 .site-header {
   background: var(--paper);
-  border-bottom: 2px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
   padding: 1rem clamp(1rem, 3vw, 2rem);
   display: grid;
   gap: .75rem 2rem;
@@ -154,7 +174,7 @@ a:hover { text-decoration-thickness: 2px; }
    넘겼다. minmax(0, 1fr) 로 최소값을 0 으로 내려야 컬럼이 실제로 줄어든다. */
 @media (max-width: 860px) { .site-header { grid-template-columns: minmax(0, 1fr); } }
 
-.wordmark { font-size: 1.4rem; font-weight: 700; margin: 0; letter-spacing: .01em; }
+.wordmark { font-size: 1.4rem; font-weight: 600; margin: 0; letter-spacing: .01em; }
 .tagline  { margin: 0; color: var(--ink-soft); font-style: italic; }
 
 /* The standing no-decision notice stays on every screen -- it is the one claim this product
@@ -164,7 +184,7 @@ a:hover { text-decoration-thickness: 2px; }
 .notice--standing {
   margin: 0;
   border-left: 3px solid var(--line-strong);
-  background: #f6f8fa;
+  background: var(--shell);
   padding: .45rem .75rem;
   font-size: .82rem;
   line-height: 1.45;
@@ -257,7 +277,7 @@ a:hover { text-decoration-thickness: 2px; }
 .household-picker select {
   font: inherit;
   padding: .4rem .5rem;
-  border: 2px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
@@ -287,8 +307,8 @@ main:focus { outline: none; }
 .screen {
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1.2rem clamp(.8rem, 2vw, 1.6rem) 1.4rem;
+  border-radius: var(--radius-lg);
+  padding: clamp(1.2rem, 1rem + 1vw, 1.75rem) clamp(.9rem, 2vw, 1.75rem) clamp(1.4rem, 1rem + 1.5vw, 2rem);
 }
 /* The heading is the first thing on the page and should read as the first thing. The clamp
    floor is the size this heading has always been, so nothing grows at 320px where the space
@@ -296,7 +316,7 @@ main:focus { outline: none; }
    System font stack only -- no web font is loaded, here or anywhere. */
 .screen h1 {
   font-size: clamp(1.7rem, 1.25rem + 1.4vw, 2.4rem);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -.012em;
   max-width: 24ch;
   margin-bottom: .5rem;
@@ -422,7 +442,7 @@ main:focus { outline: none; }
 .page-rail__link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .page-rail__link[aria-current="page"] {
   color: var(--ink);
-  font-weight: 700;
+  font-weight: 600;
   border-bottom-color: var(--accent);
   cursor: default;
 }
@@ -502,10 +522,11 @@ details.recorded-questions > :not(summary) { margin-top: .6rem; }
 
 /* ── error summary: top of main, above the H1, links to each item ──── */
 .error-summary {
-  border: 4px solid var(--warn);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warn);
   border-radius: var(--radius);
   background: var(--paper);
-  padding: .9rem 1.1rem;
+  padding: 1rem 1.2rem;
   margin: 0 0 1rem;
 }
 .error-summary h2 { font-size: 1.15rem; }
@@ -516,9 +537,10 @@ details.recorded-questions > :not(summary) { margin-top: .6rem; }
 
 /* ── the inline item the summary points at, with a visual connector ── */
 .reason-block {
-  border: 2px solid var(--warn);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warn);
   border-radius: var(--radius);
-  padding: .9rem 1rem;
+  padding: 1rem 1.1rem;
   margin: 1.2rem 0;
   background: var(--warn-bg);
 }
@@ -532,14 +554,14 @@ details.recorded-questions > :not(summary) { margin-top: .6rem; }
 .reason:last-child { margin-bottom: 0; }
 .reason:focus { outline: none; }
 .reason:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.reason-heading { font-weight: 700; margin: 0 0 .2rem; }
+.reason-heading { font-weight: 600; margin: 0 0 .2rem; }
 .reason-message { margin: 0 0 .4rem; }
 
 /* The action is the thing the reader came to do, so it is the heaviest text in the card
    and the reasoning sits under it. Same treatment everywhere an action appears, so a
    renter learns the shape once. */
 .do-this { margin: 0 0 .4rem; }
-.do-this__label { font-weight: 700; }
+.do-this__label { font-weight: 600; }
 .do-this--lead { font-size: 1.08rem; line-height: 1.45; margin: 0 0 .5rem; }
 .card-why { color: var(--ink-soft); font-size: .92rem; margin: 0 0 .5rem; }
 
@@ -568,10 +590,11 @@ details.tech > * { margin-top: .4rem; }
 
 /* ── USWDS summary box: a short checklist of what to do next ────────── */
 .summary-box {
-  border: 2px solid var(--accent);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
   border-radius: var(--radius);
-  background: #f2f7fb;
-  padding: .9rem 1.1rem;
+  background: var(--wash-accent);
+  padding: 1rem 1.2rem;
   margin: 0 0 1.2rem;
 }
 .summary-box h2, .summary-box h3 { font-size: 1.1rem; margin-top: 0; }
@@ -581,9 +604,9 @@ details.tech > * { margin-top: .4rem; }
 
 /* ── USWDS alert: new information, stated in words ──────────────────── */
 .alert {
-  border-left: 8px solid var(--accent);
-  background: #f2f7fb;
-  padding: .9rem 1.1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--wash-accent);
+  padding: 1rem 1.2rem;
   margin: 0 0 1.2rem;
   border-radius: 0 var(--radius) var(--radius) 0;
 }
@@ -616,7 +639,7 @@ details.tech > * { margin-top: .4rem; }
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
-  font-weight: 700;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -639,7 +662,7 @@ details.tech > * { margin-top: .4rem; }
   padding: .65rem .6rem .65rem 0;
   margin: 0;
 }
-.answer-row__key { font-weight: 700; }
+.answer-row__key { font-weight: 600; }
 .answer-row__action { text-align: right; white-space: nowrap; }
 @media (max-width: 700px) {
   .answer-list { grid-template-columns: minmax(0, 1fr) auto; }
@@ -665,9 +688,9 @@ details.tech > * { margin-top: .4rem; }
   flex-wrap: wrap;
   gap: .6rem;
   align-items: center;
-  margin-top: 1.4rem;
-  padding-top: .9rem;
-  border-top: 2px solid var(--line);
+  margin-top: 1.6rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--line);
 }
 .step-nav:empty { display: none; }
 /* Exactly one control per screen carries this: the thing to do next. */
@@ -681,9 +704,10 @@ details.tech > * { margin-top: .4rem; }
 /* ── the always-open questions rail ───────────────────────────────── */
 .open-questions {
   background: var(--paper);
-  border: 2px solid var(--warn);
-  border-radius: var(--radius);
-  padding: 1rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warn);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.2rem;
   position: sticky;
   top: .5rem;
 }
@@ -707,8 +731,8 @@ details.tech > * { margin-top: .4rem; }
 /* ── generic blocks ───────────────────────────────────────────────── */
 .card {
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: .9rem 1rem;
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.1rem;
   margin: 0 0 1rem;
   background: var(--paper);
 }
@@ -716,7 +740,7 @@ details.tech > * { margin-top: .4rem; }
 
 .callout {
   border-left: 6px solid var(--accent);
-  background: #f2f7fb;
+  background: var(--wash-accent);
   padding: .8rem 1rem;
   margin: 0 0 1rem;
   border-radius: 0 var(--radius) var(--radius) 0;
@@ -742,7 +766,7 @@ details.tech > * { margin-top: .4rem; }
   border-top: 1px solid var(--line-strong);
   border-right: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
-  background: #f2f7fb;
+  background: var(--wash-accent);
 }
 
 /* 그 안에서 "우리가 이렇게 읽었습니다"를 담는 상자. 답 본문과 섞이면 안 된다 —
@@ -756,10 +780,10 @@ details.tech > * { margin-top: .4rem; }
   margin: 0 0 .8rem;
 }
 .read-note > :last-child { margin-bottom: 0; }
-.read-note__label { font-weight: 700; }
+.read-note__label { font-weight: 600; }
 /* 되비친 해석 그 자체. 굵기로만 들어 올린다 — 이탤릭은 긴 문장에서 읽기 어렵고
    이건 세입자가 "내가 물은 게 저거 맞나"를 확인하려고 멈춰 서는 한 조각이다. */
-.read-note__gloss { font-weight: 700; }
+.read-note__gloss { font-weight: 600; }
 .read-note__action { margin-bottom: .5rem; }
 /* 다시 묻기 버튼은 문장 **아래** 자기 줄에 선다. 문장 안에 인라인으로 끼우면 320px
    에서 버튼이 문장을 두 동강 내고, 버튼의 상하 여백이 줄간격을 들쭉날쭉하게 만든다. */
@@ -815,13 +839,26 @@ table { border-collapse: collapse; width: 100%; font-size: .92rem; }
   padding: .3rem 0;
   margin: 0;
 }
+/* Borderless with hairline row separators only — no heavy grid. Roomier cells. */
 th, td {
-  border: 1px solid var(--line);
-  padding: .4rem .55rem;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  padding: .6rem .7rem;
   text-align: left;
   vertical-align: top;
 }
-th { background: #edf1f5; font-weight: 600; }
+/* Column headers read as a quiet caption, not a filled band. */
+thead th {
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: .78rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-bottom-color: var(--line-strong);
+}
+/* Row headers (the field name) stay body-sized emphasis, not tiny uppercase. */
+th[scope="row"] { font-weight: 600; }
 caption { text-align: left; font-weight: 600; padding: .3rem 0; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
@@ -885,7 +922,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 code, .mono { font-family: var(--mono); font-size: .9em; }
 .formula {
   font-family: var(--mono);
-  background: #f0f3f6;
+  background: var(--shell);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: .5rem .7rem;
@@ -896,21 +933,26 @@ code, .mono { font-family: var(--mono); font-size: .9em; }
 button.action, .action {
   font: inherit;
   font-weight: 600;
-  padding: .5rem .9rem;
+  padding: .55rem 1.1rem;
   border-radius: var(--radius);
-  border: 2px solid var(--accent);
+  border: 1px solid var(--accent);
   background: var(--accent);
   color: var(--accent-ink);
   cursor: pointer;
+  transition: background-color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              transform .06s var(--ease);
 }
-button.action:hover { background: var(--accent-strong); }
+button.action:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+button.action:active { transform: translateY(1px); }
 button.action[aria-disabled="true"],
-button.action:disabled { background: #5f6a74; border-color: #5f6a74; cursor: not-allowed; }
+button.action:disabled { background: var(--muted-fill); border-color: var(--muted-fill); cursor: not-allowed; }
 button.secondary {
   background: var(--paper);
+  border-color: var(--line-strong);
   color: var(--accent);
 }
-button.secondary:hover { background: #e6eef4; }
+button.secondary:hover { background: var(--accent-soft); border-color: var(--accent); }
 
 /* A switched-off secondary button.
  *
@@ -934,7 +976,7 @@ button.action.secondary:disabled:hover { background: var(--paper); }
 .chip {
   display: inline-block;
   font-size: .82rem;
-  font-weight: 700;
+  font-weight: 600;
   padding: .1rem .5rem;
   border-radius: 999px;
   border: 2px solid currentColor;
@@ -968,17 +1010,18 @@ button.action.secondary:disabled:hover { background: var(--paper); }
   color: var(--ink);
   cursor: pointer;
 }
-.doc-list button:hover { background: #eef3f7; }
+.doc-list button { transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.doc-list button:hover { background: var(--accent-soft); }
 .doc-list button[aria-current="true"] {
   border-left-color: var(--accent);
-  background: #eaf2f8;
-  font-weight: 700;
+  background: var(--accent-soft);
+  font-weight: 600;
 }
 .doc-list .doc-meta { display: block; font-weight: 400; font-size: .82rem; color: var(--ink-soft); }
 
 .page-frame {
   position: relative;
-  border: 2px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   background: var(--paper);
   margin: 0 auto 1rem;
   overflow: hidden;
@@ -1016,7 +1059,7 @@ button.action.secondary:disabled:hover { background: var(--paper); }
   top: -1.15rem;
   left: -2px;
   font-size: .68rem;
-  font-weight: 700;
+  font-weight: 600;
   background: var(--accent);
   color: var(--accent-ink);
   padding: 0 .25rem;
@@ -1036,17 +1079,17 @@ button.action.secondary:disabled:hover { background: var(--paper); }
   cursor: pointer;
   text-decoration: underline;
 }
-.field-row-btn:hover { background: #e6eef4; }
+.field-row-btn:hover { background: var(--accent-soft); }
 tr.is-active td { background: #fdf0ea; }
 
-.abstain-cell { color: var(--stop); font-weight: 700; }
+.abstain-cell { color: var(--stop); font-weight: 600; }
 
 /* 부재 안내는 .abstain-cell 안에 살지만 통짜 빨강·볼드를 물려받으면 문단 전체가
    경보처럼 읽힌다. 리드 문장만 힘을 주고, 나머지는 본문 색으로 돌린다. 폭은 표의
    Value 칸이 좁아지지 않도록 최소만 확보한다 — 640px 아래에서는 행이 카드로
    쌓이므로(--stack) 그대로 둔다. */
 .absence-note { color: var(--ink); font-weight: 400; min-width: 16rem; }
-.absence-note .absence-lead { font-weight: 700; margin: 0 0 .35rem; }
+.absence-note .absence-lead { font-weight: 600; margin: 0 0 .35rem; }
 .absence-note p { margin: 0 0 .4rem; }
 .absence-note details.tech { margin-top: .3rem; }
 
@@ -1064,12 +1107,29 @@ tr.is-active td { background: #fdf0ea; }
   font: inherit;
   width: 100%;
   padding: .4rem .5rem;
-  border: 2px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
 }
 .hint { font-size: .82rem; color: var(--ink-soft); margin: .2rem 0 0; }
+
+/* One focus affordance for every text/select control: the hairline turns accent and
+   gains a soft ring. The keyboard :focus-visible outline (warm, 3px) still fires on
+   top of this for non-pointer focus, so keyboard visibility is unchanged. */
+.household-picker select,
+.field-grid select, .field-grid input,
+.upload-field select, .upload-field input[type="file"],
+.ask-control textarea {
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.household-picker select:focus,
+.field-grid select:focus, .field-grid input:focus,
+.upload-field select:focus, .upload-field input[type="file"]:focus,
+.ask-control textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 
 /* ── the pre-filled value box and its one button ──────────────────────
    새 시각언어를 만들지 않는다: 입력칸은 .field-grid input 과 같은 계열(2px 테두리,
@@ -1084,7 +1144,7 @@ tr.is-active td { background: #fdf0ea; }
      이 칸은 값이 읽히는 폭을 먼저 가져간다. */
   min-width: 11rem;
   padding: .35rem .45rem;
-  border: 2px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
@@ -1104,7 +1164,7 @@ button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
   width: 100%;
   max-width: 28rem;
   padding: .4rem .5rem;
-  border: 2px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
@@ -1143,7 +1203,7 @@ button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
   width: 100%;
   box-sizing: border-box;
   padding: .4rem .5rem;
-  border: 2px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
@@ -1161,7 +1221,7 @@ button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
  * 읽을 수 있어야 한다. 그래서 테두리는 --line-strong 그대로 두고, 배경만 종이색에서
  * 살짝 내려 "지금은 쓸 수 없다"를 칠한다. 글자색은 --ink-soft (이 배경 위 7.0:1). */
 .ask-control textarea:disabled {
-  background: #f6f8fa;
+  background: var(--shell);
   color: var(--ink-soft);
   border-color: var(--line-strong);
   cursor: not-allowed;
@@ -1201,7 +1261,8 @@ button.confirm-one { padding: .35rem .7rem; white-space: nowrap; }
   max-width: 100%;
   overflow-wrap: anywhere;
 }
-.example-chip:hover { background: var(--shell); border-color: var(--accent); }
+.example-chip { transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.example-chip:hover { background: var(--accent-soft); border-color: var(--accent); }
 
 dl.kv { display: grid; grid-template-columns: minmax(9rem, auto) minmax(0, 1fr); gap: .3rem .8rem; margin: 0 0 .8rem; }
 dl.kv dt { font-weight: 600; color: var(--ink-soft); }
@@ -1219,7 +1280,7 @@ dl.kv dd { margin: 0; overflow-wrap: anywhere; }
 
 .status-line { font-size: .9rem; color: var(--ink-soft); }
 
-.delta-up   { font-weight: 700; }
+.delta-up   { font-weight: 600; }
 .delta-same { color: var(--ink-soft); }
 
 ul.plain { list-style: none; padding: 0; margin: 0 0 1rem; }
@@ -1227,7 +1288,7 @@ ul.plain li { margin-bottom: .35rem; }
 
 .site-footer {
   background: var(--paper);
-  border-top: 2px solid var(--line-strong);
+  border-top: 1px solid var(--line);
   padding: 1rem clamp(1rem, 3vw, 2rem);
   font-size: .85rem;
   color: var(--ink-soft);
@@ -1237,13 +1298,16 @@ ul.plain li { margin-bottom: .35rem; }
   .evidence-box { transition: background-color .12s ease, border-color .12s ease; }
 }
 
-/* ── VARIANT B (trial): A + spatial hierarchy ──────────────────────────────── */
-:root{ --display: Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif; }
-.wordmark{ font-family:var(--display); font-size:1.55rem; font-weight:600; letter-spacing:0; }
-.screen h1{ font-family:var(--display); font-weight:600; letter-spacing:-.012em; line-height:1.18; }
-.screen h2, .example-offer h2, .ask-anywhere h2{ font-family:var(--display); font-weight:600; }
+/* ── spatial hierarchy: type carries the levels, not boxes ───────────────────
+   The display headings are the same system sans as the body — Apple's way is one
+   family, hierarchy by size and weight, negative tracking on the large sizes. No
+   serif, no second typeface, no web font. */
+:root{ --display: var(--sans); }
+.wordmark{ font-family:var(--display); font-size:1.5rem; font-weight:600; letter-spacing:-.01em; }
+.screen h1{ font-family:var(--display); font-weight:600; letter-spacing:-.018em; line-height:1.15; }
+.screen h2, .example-offer h2, .ask-anywhere h2{ font-family:var(--display); font-weight:600; letter-spacing:-.01em; }
 .notice{ font-size:.78rem; color:var(--ink-soft); background:transparent; border:0; border-left:2px solid var(--line); }
-body{ line-height:1.62; }
+body{ line-height:1.5; }
 .lede{ font-size:1.06rem; }
 
 /* nesting: the inner callout loses its box and keeps only its rule */
@@ -1253,12 +1317,12 @@ body{ line-height:1.62; }
 .callout--warn{ color:var(--warn); }
 .callout--warn > *{ color:var(--ink); }
 /* the outer panel carries the frame, and pays for it with room */
-.example-offer{ border:1px solid var(--line); border-radius:var(--radius); padding:1.6rem 1.7rem; }
+.example-offer{ border:1px solid var(--line); border-radius:var(--radius-lg); padding:1.6rem 1.7rem; }
 /* breathing room between the big moves of the page */
 .screen h1{ margin-bottom:.55em; }
-.screen > * + *{ margin-top:1.15rem; }
+.screen > * + *{ margin-top:1.25rem; }
 /* the step rail stops being a coloured bar and becomes type */
-.steps a[aria-current="step"], .steps [aria-current="step"]{ font-weight:700; }
+.steps a[aria-current="step"], .steps [aria-current="step"]{ font-weight:600; }
 
 /* ── inline row editor + drag-to-read + tag behaviour ───────────────────────
  *
@@ -1353,23 +1417,15 @@ body{ line-height:1.62; }
 }
 
 /* Primary (Save / the abstained commit) vs ghost (Confirm / Cancel / Not on this document)
- * actions, scoped to the field row. The filled primary keeps its global accent fill and
- * gains a soft elevation; the ghost is quiet paper until hovered. */
+ * actions, scoped to the field row. These now inherit the app-wide flat button language
+ * (fill, hover darken, active press are set on button.action); the only scoped tweak is a
+ * slightly tighter cell padding so the controls fit the row. Flat, not shadowed — the whole
+ * app speaks one button language. */
 .confirm-cell .action,
 .row-editor .action,
 .absence-note .action {
-  border-radius: var(--radius-lg);
   padding: .45rem 1rem;
-  box-shadow: var(--elevate-1);
-  transition: background-color .12s ease, border-color .12s ease,
-              box-shadow .12s ease, transform .05s ease;
 }
-.confirm-cell .action:hover,
-.row-editor .action:hover,
-.absence-note .action:hover { box-shadow: var(--elevate-hover); }
-.confirm-cell .action:active,
-.row-editor .action:active,
-.absence-note .action:active { transform: translateY(1px); box-shadow: var(--elevate-1); }
 
 .confirm-cell .action.secondary,
 .row-editor .action.secondary,
@@ -1377,7 +1433,6 @@ body{ line-height:1.62; }
   background: var(--paper);
   border-color: var(--line-strong);
   color: var(--accent);
-  box-shadow: none;
 }
 .confirm-cell .action.secondary:hover,
 .row-editor .action.secondary:hover,
@@ -1419,6 +1474,18 @@ body{ line-height:1.62; }
 
 @media (prefers-reduced-motion: reduce) {
   .evidence-box .box-tag { transition: none; }
+}
+
+/* Calm by default, still by request: honour the OS "reduce motion" setting for every
+   transition and animation the polish added (button press, input ring, hover washes,
+   the staged reveal). Nothing here changes what is shown — only whether it eases in. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .001ms !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── upload panel: staged reveal ──────────────────────────────────────────────
