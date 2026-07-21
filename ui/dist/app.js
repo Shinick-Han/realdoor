@@ -7470,6 +7470,44 @@
     renderAll();
   }
 
+  /* Page-level scroll-reveal — progressive enhancement, and nothing but.
+   *
+   * The page is fully readable with this function removed: the reveal styles in app.css
+   * are gated behind a `.js-reveal` marker on <html> that ONLY this function adds, and it
+   * adds it only when both are true — IntersectionObserver exists, and the reader has not
+   * asked for reduced motion. Fail either test and the marker is never set, so the
+   * hidden-until-seen initial state never applies: every card is shown immediately and
+   * stays in the DOM, focusable, the whole time. Interactivity is never gated on a reveal.
+   *
+   * Scope is deliberately narrow: the top-level page cards only — page 2's three sections,
+   * the prepared-example offer, and the ask-anywhere panel. It never touches the field
+   * rows or the evidence boxes, which have their own staged reveal (runStagedReveal), so
+   * the two mechanisms cannot fight. Each card is revealed once and then unobserved, so a
+   * revealed card is never hidden again — including when its screen is toggled off and on. */
+  function setUpScrollReveal() {
+    if (!("IntersectionObserver" in window)) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    var targets = document.querySelectorAll(
+      "#screen-ready .ready-section, .example-offer, #ask-anywhere");
+    if (!targets.length) return;
+
+    var observer = new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-revealed");
+        obs.unobserve(entry.target);   // once only
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
+
+    // Opt in only now that the observer is ready to reveal what is already on screen.
+    document.documentElement.classList.add("js-reveal");
+    Array.prototype.forEach.call(targets, function (el) {
+      el.classList.add("reveal-section");
+      observer.observe(el);
+    });
+  }
+
   function boot() {
     setUpMetaNav();
     renderProcessList();
@@ -7506,6 +7544,8 @@
       renderUpload();
     }).catch(function () { /* the panel is already on screen with the built-in list */ });
     showScreen("screen-file", { focus: false, announce: false });
+    // Static page-level cards are all in the DOM by now; opt into scroll-reveal.
+    setUpScrollReveal();
 
     Source.selftest().then(function (data) {
       state.selftest = data;

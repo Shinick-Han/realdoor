@@ -18,17 +18,27 @@
   --line:       #e5e5e7;   /* hairline: card + row separators (decorative) */
   --line-strong:#86868b;   /* control borders — 3.6:1 on white for SC 1.4.11 */
 
-  --accent:      #0068cc;  /* one accent — link, primary action. On white 5.4:1 */
-  --accent-ink:  #ffffff;  /* white on --accent: 5.4:1 */
-  --accent-strong:#0056ad; /* primary hover, one step darker */
-  --accent-soft:  rgba(0, 104, 204, .08);  /* faint wash: ghost / input hover + ring */
-  --accent-softer:rgba(0, 104, 204, .05);  /* fainter still: the inline editor's field */
-  --wash-accent:  #eef5fc;                 /* solid faint-blue fill for summary/alert */
+  /* One warm accent — RealPage's signature orange, split into two duties so contrast
+     is never a matter of taste:
+       · --accent-bright (#F2623C, the brand orange) is DECORATIVE ONLY — 3.19:1 on
+         white, which clears the 3:1 UI-component floor but FAILS AA as text. It carries
+         the card left/top rules and other large brand marks and nothing a word rests on.
+       · --accent (a darkened shade of the same hue) is the INTERACTIVE orange — 5.44:1
+         on white, so link text and orange-on-white both pass AA, and white on the fill
+         passes AA for primary buttons. Every text/fill pair below reads --accent. */
+  --accent:      #b8431c;  /* interactive orange — link + primary fill. On white 5.44:1; white on it 5.44:1 */
+  --accent-ink:  #ffffff;  /* white on --accent: 5.44:1 */
+  --accent-strong:#9e3717; /* primary hover, one step darker — on white 6.97:1 */
+  --accent-bright:#f2623c; /* RealPage brand orange — DECORATIVE ONLY (3.19:1): left/top rules, marks. Never text. */
+  --accent-soft:  rgba(242, 98, 60, .10);  /* faint warm wash: ghost / input hover + ring */
+  --accent-softer:rgba(242, 98, 60, .06);  /* fainter still: the inline editor's field */
+  --wash-accent:  #fdf3ef;                 /* solid faint-warm fill for alert/callout — ink-soft on it 4.65:1 */
 
-  /* Warm ring, kept deliberately distinct from --accent: it carries BOTH the focus
-     outline AND the "active / pointing" highlight on the evidence boxes, which are
-     themselves accent-blue — a blue focus ring would collapse that distinction. */
-  --focus:      #a8380a;   /* on white 6.0:1 */
+  /* Warm ring, in the same orange family as the accent: it carries BOTH the focus
+     outline AND the "active / pointing" highlight on the evidence boxes. Kept one notch
+     redder/darker than --accent so the active-box highlight stays distinct from the
+     accent-orange border it sits on. */
+  --focus:      #a8380a;   /* on white 6.49:1 — warm rust, in the orange family */
 
   /* Semantic states — word + glyph always accompany the colour; values AA-tuned. */
   --ok:         #1c5a34;   /* present  */
@@ -61,11 +71,18 @@
      ~400px of calm on either side of the content, while 320px collapses cleanly to
      full-width-with-padding — max() never lets the gutter drop below --band-pad, and the
      centring term goes negative (and is ignored) long before the layout gets tight. */
-  --content-max: 71.25rem;                 /* ~1140px — the field table fits inside this */
+  /* Width is tuned around the *main reading column*, not the whole band. With the aside
+     and the 2rem gap subtracted, the shared axis below must leave main wide enough that
+     body text stops over-wrapping: 78rem − 18rem − 2rem = 58rem ≈ 928px of main, which
+     is ~70 characters per line — inside the comfortable 60–75ch reading measure, where
+     the previous 71.25rem left only ~788px (~60ch and fraying). Wider main means fewer
+     wrapped lines, so the page is *shorter*, not just roomier. Still centred: a 1920
+     monitor keeps ~330px of calm on each side, so this is not a return to full-bleed. */
+  --content-max: 78rem;                    /* ~1248px shared content axis */
   --band-pad:   clamp(1rem, 5vw, 2.5rem);  /* 16px … 40px side gutter */
   --band-inset: max(var(--band-pad), calc((100% - var(--content-max)) / 2));
   --layout-gap: var(--space-6);            /* main ↔ aside; the dock reads the same number */
-  --aside-max:  20rem;                     /* the unsure-about rail: secondary, not co-equal */
+  --aside-max:  18rem;                     /* the unsure-about rail: narrowed so main clearly dominates */
 
   /* Radius — 8px for controls, 12px for cards. Subtle, never pills (chips excepted). */
   --radius:    8px;
@@ -97,6 +114,10 @@ html { scroll-padding-bottom: var(--dock-scroll-clearance); }
 /* Page 2's section links are sticky at the top of the viewport, so anything the page
    scrolls to must come to rest below that strip, not under it. */
 html { scroll-padding-top: 3.2rem; }
+
+/* Anchor / step navigation eases to its target rather than jumping. The reduced-motion
+   guard near the end of this file resets this to `auto !important`, so it is honoured. */
+html { scroll-behavior: smooth; }
 
 /* …with one exemption, and it is the reason typing in the question box used to drag the
    page to the bottom of the document.
@@ -350,7 +371,7 @@ main:focus { outline: none; }
 .ask-anywhere {
   background: var(--paper);
   border: 1px solid var(--line);
-  border-top: 4px solid var(--accent);
+  border-top: 4px solid var(--accent-bright);
   border-radius: var(--radius);
   padding: 1.1rem clamp(.8rem, 2vw, 1.6rem) 1.1rem;
   margin-top: .6rem;
@@ -380,8 +401,8 @@ main:focus { outline: none; }
   background: var(--paper);
   border: 1px solid var(--line);
   /* The same 4px accent rule .ask-anywhere carries: this belongs to the whole
-     walkthrough rather than to the step above it. No new colour, no new shape. */
-  border-top: 4px solid var(--accent);
+     walkthrough rather than to the step above it. The bright brand orange, decorative. */
+  border-top: 4px solid var(--accent-bright);
   border-radius: var(--radius) var(--radius) 0 0;
   /* Enough separation to read as "in front of the page" without inventing a surface.
      --ink at 14% on --paper; it is a shadow, never a carrier of meaning. */
@@ -616,7 +637,7 @@ details.tech > * { margin-top: .4rem; }
    inside, carries the same weight while letting the page read mostly white with one accent. */
 .summary-box {
   border: 1px solid var(--line);
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--accent-bright);
   border-radius: var(--radius);
   background: var(--paper);
   padding: var(--space-5);
@@ -629,7 +650,7 @@ details.tech > * { margin-top: .4rem; }
 
 /* ── USWDS alert: new information, stated in words ──────────────────── */
 .alert {
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--accent-bright);
   background: var(--wash-accent);
   padding: 1rem 1.2rem;
   margin: 0 0 1.2rem;
@@ -771,7 +792,7 @@ details.tech > * { margin-top: .4rem; }
 .card > :last-child { margin-bottom: 0; }
 
 .callout {
-  border-left: 6px solid var(--accent);
+  border-left: 6px solid var(--accent-bright);
   background: var(--wash-accent);
   padding: .8rem 1rem;
   margin: 0 0 1rem;
@@ -793,7 +814,7 @@ details.tech > * { margin-top: .4rem; }
    생겨 카드가 닫힌 상자가 된다. 확신 계층 셋은 전부 왼쪽 한 면만 있는 열린 형태다.
    색을 못 보는 사람에게도 이 둘은 다른 모양이고, 그 위에 제목 문구가 또 한 번 말한다. */
 .callout--read {
-  border-left-color: var(--accent);
+  border-left-color: var(--accent-bright);
   border-left-style: dashed;
   border-top: 1px solid var(--line-strong);
   border-right: 1px solid var(--line-strong);
@@ -1077,7 +1098,7 @@ button.action.secondary:disabled:hover { background: var(--paper); }
 .evidence-box {
   position: absolute;
   border: 2px solid var(--accent);
-  background: rgba(11, 79, 122, .10);
+  background: rgba(242, 98, 60, .12);
   border-radius: 2px;
 }
 .evidence-box.is-active {
@@ -1518,6 +1539,33 @@ body{ line-height:1.5; }
     animation-duration: .001ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ── page-level scroll-reveal (progressive enhancement) ────────────────────────
+ * Content is fully visible by DEFAULT — the rules below only take effect once app.js
+ * has confirmed IntersectionObserver is available AND motion is allowed, and marked
+ * <html> with `.js-reveal`. Without that marker (no JS, no IO, or reduced motion)
+ * nothing is ever hidden; the elements stay in the DOM and keyboard-focusable the whole
+ * time. Each targeted card starts a touch low and faded and is revealed ONCE as it
+ * enters the viewport. Scoped in app.js to top-level sections/cards only — never the
+ * field rows or evidence boxes, which run their own staged reveal (runStagedReveal). */
+.js-reveal .reveal-section {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .34s var(--ease), transform .34s var(--ease);
+}
+.js-reveal .reveal-section.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+/* Belt-and-suspenders: even if the marker is somehow present, reduced motion shows
+   everything at once and hides nothing. (app.js also declines to add the marker here.) */
+@media (prefers-reduced-motion: reduce) {
+  .js-reveal .reveal-section {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
 
