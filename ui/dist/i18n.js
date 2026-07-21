@@ -247,10 +247,10 @@
     // 준비도 관행은 빠진 필수 증거를 NEEDS_REVIEW 로 보낸다. 이 문장들은 기계의 자백
     // ("no label ... was found") 대신 문서 관점으로 말한다. 판정 어휘 금지 규율 그대로:
     // "없다"는 서류에 대한 사실이지 사람에 대한 판정이 아니다.
-    "This document does not show this": "이 문서에는 이 값이 없습니다",
+    "Not on this document": "이 문서에는 없음",
     "Checked by you": "직접 확인함",
-    "Not read — type what this should say, then choose Confirm.":
-      "읽지 못함 — 들어가야 할 값을 입력하고 확인을 누르세요.",
+    "Not read — type what this should say, then choose Save.":
+      "읽지 못함 — 들어가야 할 값을 입력하고 저장을 누르세요.",
     "the reader recorded no note": "판독기가 남긴 기록이 없습니다",
     // 발급처 표현 (absenceNotice 의 issuerWords)
     "your employer": "고용주",
@@ -1335,6 +1335,8 @@
     "Point at it on the page": "페이지에서 그 자리를 가리키기",
     "The box holds what we read. Type what the page really shows, then choose Save.":
       "칸에는 저희가 읽은 값이 들어 있습니다. 페이지가 실제로 보여 주는 값을 입력하고 저장을 누르세요.",
+    "Type the value this field should hold, then choose Save.":
+      "이 항목에 들어가야 할 값을 입력한 다음 저장을 누르세요.",
     "This is the area you pointed at, enlarged. The box holds what the machine read there — a suggestion, nothing more. If the picture says something else, type that instead.":
       "가리키신 영역을 확대한 것입니다. 칸에는 기계가 거기서 읽은 값이 들어 있습니다 — 제안일 뿐, 그 이상이 아닙니다. 그림이 다른 값을 말하고 있다면 그 값을 입력하세요.",
     "This is the area you pointed at, enlarged. We could not read it — type what it says.":

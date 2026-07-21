@@ -620,6 +620,24 @@
     var sessionDeleted = false;   // set by deleteSession; only startOver clears it
     var sessionPending = null;    // the one in-flight POST /api/session, shared; see ensureSession
 
+    /* Rendered page images, cached for the life of the open document. A page PNG is a
+     * server rasterisation serialised under a lock (pdfium), so re-fetching one on every
+     * re-render turned a localised action — arming "point at it" — into N fresh
+     * rasterisations that blanked and froze a multi-page view. Keyed by document_id::page,
+     * the stored value is the fetch PROMISE itself, so the SAME object URL is handed back
+     * to every render and no page already in hand is ever fetched twice. A failed fetch
+     * removes its own key so a later render can retry. Entries are evicted (and their
+     * object URLs revoked) when the document is left or the session is torn down — see
+     * evictPageImages / clearPageImages — so nothing leaks. */
+    var pageImageCache = Object.create(null);
+    function pageImageKey(documentId, page) { return String(documentId) + "::" + String(page); }
+    function revokePageImageEntry(key) {
+      var pending = pageImageCache[key];
+      if (!pending) return;
+      delete pageImageCache[key];
+      pending.then(function (url) { if (url) URL.revokeObjectURL(url); }, function () {});
+    }
+
     function headers(extra) {
       var out = Object.assign({}, extra || {});
       if (sessionId) out["X-Session-Id"] = sessionId;
@@ -1110,12 +1128,29 @@
 
       pageImage: function (documentId, page) {
         if (!live) return Promise.resolve(null);
-        return api("/api/document/" + encodeURIComponent(documentId) + "/page/" + page + ".png")
+        var key = pageImageKey(documentId, page);
+        if (pageImageCache[key]) return pageImageCache[key];   // already in hand — never re-fetch
+        var pending = api("/api/document/" + encodeURIComponent(documentId) + "/page/" + page + ".png")
           .then(function (r) {
-            if (!r.ok) return null;
+            if (!r.ok) { delete pageImageCache[key]; return null; }
             return r.blob().then(function (blob) { return URL.createObjectURL(blob); });
           })
-          .catch(function () { return null; });
+          .catch(function () { delete pageImageCache[key]; return null; });
+        pageImageCache[key] = pending;
+        return pending;
+      },
+
+      /** Free the cached page images for one document — revoking each object URL — or, with
+       *  no argument, all of them. Called when a document is left, a document is removed, or
+       *  the session is destroyed, so a long-lived tab never accrues orphaned blob URLs. */
+      evictPageImages: function (documentId) {
+        var prefix = pageImageKey(documentId, "");
+        Object.keys(pageImageCache).forEach(function (k) {
+          if (k.lastIndexOf(prefix, 0) === 0) revokePageImageEntry(k);
+        });
+      },
+      clearPageImages: function () {
+        Object.keys(pageImageCache).forEach(revokePageImageEntry);
       },
 
       /* Uploading a document of your own.
@@ -2564,6 +2599,9 @@
     Source.removeUpload(uploadId)
       .then(function (body) {
         state.removeArmed = null;
+        // The document (and any sub-documents of a combined file) is gone from the server;
+        // drop every cached page blob so nothing outlives what it pictured.
+        Source.clearPageImages();
         if (beforeRefresh) beforeRefresh();
         // Drop the stored upload view for the document that is gone, so nothing tries to
         // draw a header for it (and a combined file's boundary map recounts).
@@ -2654,6 +2692,11 @@
           type: "button",
           "aria-current": isCurrent ? "true" : null,
           onclick: function () {
+            // Leaving this document: free its cached page images (their object URLs) so a
+            // long session that opens many documents never accrues orphaned blobs.
+            if (state.documentId && state.documentId !== d.document_id) {
+              Source.evictPageImages(state.documentId);
+            }
             state.documentId = d.document_id;
             state.activeField = null;
             state.pageImageUrl = null;
@@ -2991,6 +3034,7 @@
 
     var frame = h("div", {
       class: "page-frame",
+      "data-page": String(pageNumber),
       style: { aspectRatio: pageW + " / " + pageH, maxWidth: "44rem" }
     });
     host.appendChild(frame);
@@ -3441,13 +3485,17 @@
         "If you can, ask " + issuerWords(doc.document_type) + " for a version that shows " +
         "it — or confirm below that this document really does not show it."
       ]));
+      /* One of the row's two actions, and the ONLY thing on the row that does not read the
+       * value box: marking absence is a claim about the document, not about a typed value,
+       * so it commits whatever the box holds (empty, half-typed, or a cleared point). It is
+       * the quiet/secondary action beside the primary Save. */
       parts.push(h("button", {
         type: "button",
-        class: "action secondary",
+        class: "action secondary absence-do",
         id: absenceButtonId(tableId, field.field),
-        "aria-label": "Confirm that " + field.field + " is not shown on " + doc.document_id,
+        "aria-label": field.field + " is not shown on " + doc.document_id,
         onclick: function () { submitAbsence(doc, field, tableId, opts); }
-      }, ["This document does not show this"]));
+      }, ["Not on this document"]));
     } else {
       var when = field.absence_confirmed_on
         ? " on " + dateSentence(field.absence_confirmed_on) : "";
@@ -3505,7 +3553,7 @@
       docId: doc.document_id, tableId: tableId, field: field.field,
       draft: undefined, region: null, suggestionShown: false,
       cropUrl: null, note: null, pointing: false,
-      rerender: (opts && opts.rerender) || renderDocuments
+      rerender: (opts && opts.rerender) || rowRerenderFor(doc, field, tableId, opts)
     };
     state.rowEdit.rerender();
     var input = byId(fieldInputId(tableId, field.field));
@@ -3523,6 +3571,88 @@
     if (back) back.focus();
   }
 
+  /* ── surgical row-editor re-render ──────────────────────────────────────────────
+   *
+   * The row editor's state (opening the editor, arming "point at it", disarming, a region
+   * reading landing) used to re-render through `renderDocuments`, which tears down and
+   * rebuilds every page of the document. On a multi-page document that meant re-fetching
+   * and re-rasterising every page PNG for a change that touched ONE row — the blank-and-
+   * freeze the highest-priority fix is about. These two helpers do the same visible update
+   * surgically: rebuild only the affected row's two editable cells, and arm/disarm the
+   * region layer on the ONE page the field lives on, without touching any page image.
+   * They fall back to a full `renderDocuments` only when the row is not on screen (a
+   * structural change the surgical path cannot make) — and even then the image cache keeps
+   * that full render instant and non-blanking. */
+  function fieldById(doc, fieldName) {
+    return (renterFields(doc) || []).filter(function (f) { return f.field === fieldName; })[0];
+  }
+
+  /** Rebuild one field row's Value and action cells in place — the same nodes fieldTable
+   *  builds for that row — leaving the page images and every other row untouched. */
+  function refreshFieldRow(docId, fieldName, tableId, opts) {
+    var doc = currentDocument();
+    if (!doc || doc.document_id !== docId) { renderDocuments(); return; }
+    var field = fieldById(doc, fieldName);
+    var row = document.querySelector("tr[data-field=\"" + fieldName + "\"]");
+    if (!field || !row) { renderDocuments(); return; }   // not on screen — fall back
+    var valueTd = row.querySelector("td[data-label=\"Value\"]");
+    var actionTd = row.querySelector("td[data-label=\"Is this right?\"]");
+    if (valueTd) {
+      clear(valueTd);
+      valueTd.appendChild(valueBox(doc, field, tableId, opts));
+      var nameNote = (field.field === "person_name" && field.certainty === "low")
+        ? h("p", { class: "hint value-uncertain-note" }, [
+            "We may not have read your name correctly. It reads “" + plain(field.value) +
+            "”, but we are not sure. " + ((opts && opts.confirmable)
+              ? "Check this row first, and fix it here if it is wrong."
+              : "Check it against the page shown here. If it is wrong, the person who " +
+                "reviews this document goes by the page, not by our reading.")
+          ])
+        : null;
+      if (nameNote) valueTd.appendChild(nameNote);
+    }
+    if (actionTd) { clear(actionTd); actionTd.appendChild(confirmControl(doc, field, tableId, opts)); }
+    syncRegionLayer(doc, field);
+  }
+
+  /** Arm or disarm the region layer to match `state.rowEdit.pointing`, on the page the
+   *  field lives on, reusing the page image already on screen. Only one row can point at a
+   *  time, so any existing layer/hint is cleared first. */
+  function syncRegionLayer(doc, field) {
+    var pageHost = byId("page-host");
+    if (!pageHost) return;
+    var ed = state.rowEdit;
+    var pointing = Boolean(ed && ed.pointing && ed.docId === doc.document_id &&
+                           ed.field === field.field);
+    // Clear any layer/hint already on the page (a different row, or this one disarming).
+    var oldLayer = pageHost.querySelector(".region-layer");
+    if (oldLayer && oldLayer.parentNode) oldLayer.parentNode.removeChild(oldLayer);
+    var oldHint = pageHost.querySelector(".region-hint");
+    if (oldHint && oldHint.parentNode) oldHint.parentNode.removeChild(oldHint);
+    Array.prototype.forEach.call(pageHost.querySelectorAll(".page-frame.is-pointing"),
+      function (fr) { fr.classList.remove("is-pointing"); });
+    if (!pointing) return;
+    // Which page does this field live on? A field with no page (an abstention) points at
+    // the first page — the same rule renderPage uses.
+    var pages = documentPages(doc);
+    var editPage = null;
+    (doc.fields || []).forEach(function (f) { if (f.field === field.field && f.page) editPage = f.page; });
+    if (editPage === null && pages.length) editPage = pages[0].page;
+    var entry = pages.filter(function (p) { return p.page === editPage; })[0] || pages[0];
+    if (!entry) return;
+    var frame = pageHost.querySelector(".page-frame[data-page=\"" + editPage + "\"]");
+    // The image must already be on screen for the drag/crop to work; if it is not (a very
+    // early arm before first paint), a full render draws it and arms the layer itself.
+    if (!frame || !frame.querySelector("img")) { renderDocuments(); return; }
+    attachRegionLayer(frame, pageHost, doc, Number(entry.size[0]), Number(entry.size[1]), editPage);
+  }
+
+  /** The surgical rerender bound to one row, used as `state.rowEdit.rerender` so the whole
+   *  row-editor lifecycle updates in place instead of redrawing every page. */
+  function rowRerenderFor(doc, field, tableId, opts) {
+    return function () { refreshFieldRow(doc.document_id, field.field, tableId, opts); };
+  }
+
   /** Arm the drag tool for one row. For an absent row this also creates the editor
    *  state, since its input is always on screen and needs somewhere to keep a region. */
   function armPointing(doc, field, tableId, opts) {
@@ -3533,7 +3663,7 @@
         key: key, docId: doc.document_id, tableId: tableId, field: field.field,
         draft: existing ? existing.value : undefined, region: null,
         suggestionShown: false, cropUrl: null, note: null, pointing: true,
-        rerender: (opts && opts.rerender) || renderDocuments
+        rerender: (opts && opts.rerender) || rowRerenderFor(doc, field, tableId, opts)
       };
     } else {
       state.rowEdit.pointing = !state.rowEdit.pointing;
@@ -3581,12 +3711,19 @@
 
   function pointControl(doc, field, tableId, opts) {
     /* Pointer enhancement only where a pointer path exists: the live build renders the
-     * page image; the static build has no server to read a region, so no button. */
+     * page image; the static build has no server to read a region, so no control.
+     *
+     * A helper, not a co-equal action. Typing is the primary path and the two row actions
+     * (Save / Confirm and the absence check) carry the commit; pointing at the page only
+     * FILLS the input. So it is a compact inline affordance — a quiet link beside the box,
+     * not a big filled button competing with the real actions. It stays a real <button>
+     * (it toggles state and takes focus), just styled as a link, and keeps its id and
+     * aria-pressed so the keyboard and the harnesses drive it exactly as before. */
     if (!Source.live) return null;
     var ed = isEditing(tableId, field.field) ? state.rowEdit : null;
     return h("button", {
       type: "button",
-      class: "action secondary point-at-page",
+      class: "point-link",
       id: pointButtonId(tableId, field.field),
       "aria-pressed": ed && ed.pointing ? "true" : "false",
       "aria-label": "Point at " + field.field + " on the page image of " + doc.document_id,
@@ -3643,28 +3780,38 @@
         return h("div", { class: "value-cell" }, read);
       }
       var ed = state.rowEdit;
+      /* The input carries the value; "Point at it on the page" is the inline helper beside
+       * it (it only fills the box), so it sits on the same line as the input rather than in
+       * a button row of its own. The row's two real actions — Save / Cancel — are in the
+       * action cell. */
       return h("div", { class: "row-editor" }, [
         h("p", { class: "hint row-editor__lead" }, [
           "The box holds what we read. Type what the page really shows, then choose Save."
         ]),
-        editorInput(doc, field, tableId,
-                    ed.draft !== undefined ? ed.draft : plain(field.value)),
-        regionCompareBlock(ed),
-        h("p", { class: "button-row row-editor__tools" }, [pointControl(doc, field, tableId, opts)])
+        h("div", { class: "field-input-line" }, [
+          editorInput(doc, field, tableId,
+                      ed.draft !== undefined ? ed.draft : plain(field.value)),
+          pointControl(doc, field, tableId, opts)
+        ]),
+        regionCompareBlock(ed)
       ]);
     }
     /* An expected field with nothing read leads with the document-perspective sentence,
-     * keeps the type-a-value path in the middle — with the drag tool beside it, since an
-     * abstaining field is exactly where pointing earns its keep — and ends with the
-     * absence check. `opts` rides along so the uploads file's table can answer with its
-     * own report. */
+     * keeps the type-a-value path in the middle — with "point at it" as the inline helper
+     * beside the box, since an abstaining field is exactly where pointing earns its keep —
+     * and ends with the absence check. The row's two real actions live in the action cell:
+     * Save (commits the typed/pointed value) and "Not on this document" (the absence path,
+     * which never reads this box). `opts` rides along so the uploads file's table can answer
+     * with its own report. */
     var edAbsent = isEditing(tableId, field.field) ? state.rowEdit : null;
     return absenceNotice(doc, field, tableId, opts, [
-      editorInput(doc, field, tableId,
-                  edAbsent && edAbsent.draft !== undefined ? edAbsent.draft : ""),
+      h("div", { class: "field-input-line" }, [
+        editorInput(doc, field, tableId,
+                    edAbsent && edAbsent.draft !== undefined ? edAbsent.draft : ""),
+        pointControl(doc, field, tableId, opts)
+      ]),
       regionCompareBlock(edAbsent),
-      h("p", { class: "hint", text: "Not read — type what this should say, then choose Confirm." }),
-      h("p", { class: "button-row" }, [pointControl(doc, field, tableId, opts)])
+      h("p", { class: "hint", text: "Not read — type what this should say, then choose Save." })
     ]);
   }
 
@@ -3719,13 +3866,21 @@
         }, ["Cancel"])
       ]);
     }
+    /* Read field: the primary action is Confirm (the value is on the page, this records that
+     * a person read it). Abstained field: nothing was read, so the primary action is Save —
+     * it commits the value the renter typed or pointed at. There is no separate always-on
+     * "Confirm" on an abstained row any more: it folded into Save, and the other action on
+     * that row, "Not on this document", lives beside the box in the absence notice and never
+     * depends on this box's contents. */
+    var isAbstained = !wasRead;
     var actions = [h("button", {
       type: "button",
-      class: "action secondary confirm-one",
+      class: isAbstained ? "action confirm-one" : "action secondary confirm-one",
       id: fieldButtonId(tableId, field.field),
-      "aria-label": "Confirm the value for " + field.field + " on " + doc.document_id,
+      "aria-label": (isAbstained ? "Save the value for " : "Confirm the value for ") +
+                    field.field + " on " + doc.document_id,
       onclick: function () { submitFieldValue(doc, field, tableId, false); }
-    }, ["Confirm"])];
+    }, [isAbstained ? "Save" : "Confirm"])];
     if (wasRead) {
       /* The way into the editor. The row is the selection: no document picker, no field
        * picker — this button and the row it sits on already name both. */
@@ -3756,7 +3911,7 @@
       return Promise.resolve(false);
     }
     if (!raw) {
-      announce("Type the value this field should hold, then choose Confirm.");
+      announce("Type the value this field should hold, then choose Save.");
       if (box) box.focus();
       return Promise.resolve(false);
     }
@@ -6153,6 +6308,7 @@
    * household data is gone. */
   function clearPageAfterDeletion() {
     state.sessionDeleted = true;
+    Source.clearPageImages();   // the documents are gone; free every cached page blob
     state.report = null;
     state.baselineReport = null;
     state.correction = null;
@@ -7298,6 +7454,7 @@
   /** Put the product back to holding nothing. Not a deletion — there is no session to
    *  destroy and nothing is being claimed about privacy here; it is the picker's "none". */
   function closeHousehold() {
+    Source.clearPageImages();   // leaving this file: free its cached page blobs
     state.householdId = null;
     state.report = null;
     state.baselineReport = null;

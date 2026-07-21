@@ -30,6 +30,24 @@
   --radius: 6px;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* ── control design tokens ────────────────────────────────────────────
+     A small shared scale for the interactive controls, kept in one place so radius,
+     spacing and the accent's hover/soft tints are set here rather than as loose hex
+     literals at each call site. Every colour is derived from the existing --accent, so
+     the palette stays one family and cannot drift from the state colours above. These are
+     used today only by the field-row controls the row rebuilt; a later batch can lift
+     them to the whole app. */
+  --accent-strong: #093c5d;                 /* --accent one step darker: primary hover */
+  --accent-soft:   rgba(11, 79, 122, .08);  /* faint accent wash: ghost hover */
+  --accent-softer: rgba(11, 79, 122, .045); /* fainter still: the inline editor's field */
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --radius-sm: 5px;
+  --radius-lg: 9px;
+  --elevate-1:     0 1px 2px rgba(20, 24, 29, .10), 0 1px 1px rgba(20, 24, 29, .05);
+  --elevate-hover: 0 2px 6px rgba(20, 24, 29, .16);
 }
 
 * { box-sizing: border-box; }
@@ -885,7 +903,7 @@ button.action, .action {
   color: var(--accent-ink);
   cursor: pointer;
 }
-button.action:hover { background: #093c5d; }
+button.action:hover { background: var(--accent-strong); }
 button.action[aria-disabled="true"],
 button.action:disabled { background: #5f6a74; border-color: #5f6a74; cursor: not-allowed; }
 button.secondary {
@@ -1277,12 +1295,100 @@ body{ line-height:1.62; }
 .value-cell .value-read { font-variant-numeric: tabular-nums; }
 .row-editor {
   border: 2px solid var(--accent);
-  border-radius: var(--radius);
-  padding: .6rem .7rem;
-  background: rgba(11, 79, 122, .05);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) .8rem;
+  background: var(--accent-softer);
+  box-shadow: var(--elevate-1);
 }
 .row-editor__lead { margin: 0 0 .35rem; }
 .row-editor__tools { margin: .5rem 0 0; }
+
+/* ── field-row controls: modernised, scoped to the row the renter acts on ──────────
+ * The renter called the old controls dated. This gives the field-row buttons, inputs and
+ * the inline "point at it" helper a modern look — rounded corners, comfortable padding, a
+ * subtle elevation, a clear filled-primary vs quiet-ghost split, and hover/active feedback
+ * — WITHOUT touching the rest of the app's buttons: every rule here is scoped to the value
+ * cell, the action cell (.confirm-cell), the inline editor (.row-editor) or the absence
+ * notice (.absence-note). A broader visual pass is a separate future batch. Colours come
+ * from the tokens (all derived from --accent), and focus rings stay the global
+ * :focus-visible outline, so keyboard visibility and the state palette are unchanged. */
+
+/* The input and its inline "point at it" helper share one line; on a narrow card they wrap. */
+.field-input-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin: 0 0 .15rem;
+}
+.field-input-line .value-box { flex: 1 1 11rem; }
+.value-box { transition: border-color .12s ease, box-shadow .12s ease; }
+.value-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* "Point at it on the page" — a helper, not an action: a quiet inline link beside the box.
+ * When armed (aria-pressed) it becomes a small filled pill so its on/off state is obvious. */
+.point-link {
+  font: inherit;
+  font-size: .85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .15rem .4rem;
+  margin: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: background-color .12s ease, color .12s ease;
+}
+.point-link::before { content: "\25CE"; font-size: .95em; text-decoration: none; }
+.point-link:hover { background: var(--accent-soft); text-decoration: none; }
+.point-link[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+/* Primary (Save / the abstained commit) vs ghost (Confirm / Cancel / Not on this document)
+ * actions, scoped to the field row. The filled primary keeps its global accent fill and
+ * gains a soft elevation; the ghost is quiet paper until hovered. */
+.confirm-cell .action,
+.row-editor .action,
+.absence-note .action {
+  border-radius: var(--radius-lg);
+  padding: .45rem 1rem;
+  box-shadow: var(--elevate-1);
+  transition: background-color .12s ease, border-color .12s ease,
+              box-shadow .12s ease, transform .05s ease;
+}
+.confirm-cell .action:hover,
+.row-editor .action:hover,
+.absence-note .action:hover { box-shadow: var(--elevate-hover); }
+.confirm-cell .action:active,
+.row-editor .action:active,
+.absence-note .action:active { transform: translateY(1px); box-shadow: var(--elevate-1); }
+
+.confirm-cell .action.secondary,
+.row-editor .action.secondary,
+.absence-note .action.secondary {
+  background: var(--paper);
+  border-color: var(--line-strong);
+  color: var(--accent);
+  box-shadow: none;
+}
+.confirm-cell .action.secondary:hover,
+.row-editor .action.secondary:hover,
+.absence-note .action.secondary:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: none;
+}
+/* The absence action reads as the calmer of the two — it is a claim about the document,
+ * not a value the renter is asserting — so it sits on its own quiet line under Save. */
+.absence-note .absence-do { margin-top: var(--space-1); }
 
 /* The anchoring defence made visible: the enlarged crop of the area the renter
  * marked sits right beside the value box, framed so it cannot be overlooked. */
