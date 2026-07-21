@@ -53,6 +53,15 @@
   --link:        #1e40c8;                   /* cool indigo — link text + outlined secondary buttons; 8.0:1 on white */
   --link-soft:   rgba(30, 64, 200, .08);   /* faint COOL wash — secondary-button hover/focus tint */
 
+  /* Tier 2 Tonal — a soft indigo tint fill for "accept what the machine offered" (Confirm,
+     Confirm-the-rest, Ask). It repeats down a table of rows without shouting. The --link
+     label (#1e40c8) on --link-tint (#e9edfb) is ≈ 6.8:1, well past AA; the tint itself vs
+     white is ~1.2:1 (below the 3:1 non-text floor) which is COMPLIANT because the 600-weight
+     label identifies the control and state never rides on the tint alone. */
+  --link-tint:        #e9edfb;   /* Tonal fill (rest)   */
+  --link-tint-hover:  #dae1f8;   /* Tonal fill (hover)  */
+  --link-tint-active: #cbd5f4;   /* Tonal fill (active) */
+
   /* Cool ring, drawn from the gradient's indigo: it carries BOTH the focus outline AND the
      "active / pointing" highlight on the evidence boxes. A deep indigo (not the brighter
      gradient stops) so the ring stays distinct where it sits beside the cool spark. */
@@ -1065,6 +1074,33 @@ button.action.secondary[aria-disabled="true"] {
 }
 button.action.secondary:disabled:hover { background: var(--paper); }
 
+/* Tier 2 Tonal — accepting what the machine offered. A soft indigo tint fill with a --link
+   label and NO border, so it reads as a real control that can repeat down a table without the
+   weight of the gradient primary. No shadow, no underline. State is always carried by words /
+   glyphs / aria, never by the tint alone, so the sub-3:1 tint-vs-white is compliant. */
+.action.tonal {
+  background: var(--link-tint);
+  color: var(--link);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-weight: 600;
+  padding: .5rem 1rem;
+  box-shadow: none;
+  text-decoration: none;
+}
+.action.tonal:hover  { background: var(--link-tint-hover);  border-color: transparent; }
+.action.tonal:active { background: var(--link-tint-active); transform: translateY(1px); }
+.action.tonal:disabled,
+.action.tonal[aria-disabled="true"] {
+  background: var(--shell);
+  color: var(--ink-soft);
+  border-color: transparent;
+  cursor: not-allowed;
+}
+/* Row-compact: inside the field row's action cell the tonal chip tightens so Confirm leads
+   its row beside the quiet Fix without dominating it. */
+.confirm-cell .action.tonal { padding: .3rem .7rem; font-size: .92rem; }
+
 .button-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
 
 /* ── state chips: word + glyph, never colour alone ────────────────── */
@@ -1179,19 +1215,28 @@ nav[aria-label="Documents in this household"] > h3 {
 }
 .evidence-box.is-active .box-tag { background: var(--focus); }
 
+/* Tier 4 Quiet — sideways steps, helpers and reversals (Fix, Cancel, Undo, "Not on this
+   document"). The quiet voice: transparent, no border, an underlined --link label. It recedes
+   beside the Tonal chip that leads the row, yet keeps a 32px target and a --link-soft hover
+   wash. NOT a filled box — a filled quiet control would read as a disabled chip. */
 .field-row-btn {
   font: inherit;
   font-weight: 600;
   background: none;
   border: none;
-  padding: .1rem .2rem;
+  padding: .25rem .45rem;
+  min-height: 32px;
   color: var(--link);
   text-align: left;
   cursor: pointer;
   text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 .field-row-btn:hover { background: var(--link-soft); }
-tr.is-active td { background: #fdf0ea; }
+/* Active row: a COOL wash so the highlighted row sits behind the tonal indigo chip without a
+   warm clash (was a warm peach #fdf0ea in an otherwise cool system). */
+tr.is-active td { background: var(--wash-accent); }
 
 .abstain-cell { color: var(--stop); font-weight: 600; }
 
@@ -1513,6 +1558,7 @@ body{ line-height:1.5; }
   align-items: center;
   gap: .3rem;
   padding: .15rem .4rem;
+  min-height: 32px;
   margin: 0;
   background: none;
   border: none;

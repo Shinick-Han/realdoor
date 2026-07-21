@@ -3492,7 +3492,7 @@
        * the quiet/secondary action beside the primary Save. */
       parts.push(h("button", {
         type: "button",
-        class: "action secondary absence-do",
+        class: "field-row-btn absence-do",
         id: absenceButtonId(tableId, field.field),
         "aria-label": field.field + " is not shown on " + doc.document_id,
         onclick: function () { submitAbsence(doc, field, tableId, opts); }
@@ -3856,7 +3856,7 @@
         }, ["Save"]),
         h("button", {
           type: "button",
-          class: "action secondary",
+          class: "field-row-btn",
           id: "cancel-" + tableId + "-" + field.field,
           "aria-label": "Stop editing " + field.field + " on " + doc.document_id +
                         " without changing it",
@@ -3876,7 +3876,7 @@
     var isAbstained = !wasRead;
     var actions = [h("button", {
       type: "button",
-      class: isAbstained ? "action confirm-one" : "action secondary confirm-one",
+      class: isAbstained ? "action confirm-one" : "action tonal confirm-one",
       id: fieldButtonId(tableId, field.field),
       "aria-label": (isAbstained ? "Save the value for " : "Confirm the value for ") +
                     field.field + " on " + doc.document_id,
@@ -3887,7 +3887,7 @@
        * picker — this button and the row it sits on already name both. */
       actions.push(h("button", {
         type: "button",
-        class: "action secondary",
+        class: "field-row-btn",
         id: fixItButtonId(tableId, field.field),
         "aria-label": "Fix the value read for " + field.field + " on " + doc.document_id,
         onclick: function () { openRowEditor(doc, field, tableId, opts); }
@@ -4148,7 +4148,7 @@
       }),
       h("button", {
         type: "button",
-        class: "action secondary",
+        class: "action tonal",
         id: "confirm-remaining",
         onclick: function () {
           // Sequentially, so the log keeps its order and one failure does not hide the rest.
@@ -5276,7 +5276,7 @@
         h("label", { for: "ask-input", class: "ask-label", text: "Ask about a rule" }),
         h("div", { class: "ask-control" }, [
           input,
-          h("button", { type: "submit", class: "action", text: "Ask" })
+          h("button", { type: "submit", class: "action tonal", text: "Ask" })
         ])
       ]));
 
@@ -5366,7 +5366,7 @@
         h("label", { for: "ask-input", class: "ask-label", text: "Ask about a rule" }),
         h("div", { class: "ask-control" }, [
           h("textarea", { id: "ask-input", rows: "2", autocomplete: "off", disabled: true }),
-          h("button", { type: "submit", class: "action", disabled: true, text: "Ask" })
+          h("button", { type: "submit", class: "action tonal", disabled: true, text: "Ask" })
         ])
       ]));
       context.appendChild(h("p", { class: "hint", text: "You do not need to include your name, address or phone number to ask about a rule." }));
