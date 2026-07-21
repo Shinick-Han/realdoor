@@ -941,17 +941,6 @@ table { border-collapse: collapse; width: 100%; font-size: .92rem; }
 .table-block { margin-bottom: 1rem; }
 .table-block .table-scroll { margin-bottom: 0; }
 
-/* One control for the whole table, not one per row. Sits outside .table-scroll so it
-   cannot be pushed off-screen by the very column it governs. */
-.table-toggle {
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-  margin: 0 0 .45rem;
-  font-size: .9rem;
-}
-.table-toggle input { width: 1.05rem; height: 1.05rem; margin: 0; flex: none; }
-.table-toggle label { cursor: pointer; }
 .table-caption {
   text-align: left;
   font-weight: 600;

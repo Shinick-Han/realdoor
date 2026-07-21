@@ -1406,8 +1406,6 @@
     correction: null,       // {document_id, field, value, label}
     documentId: null,
     activeField: null,
-    showBoxCoordinates: false,   // step 1: the Box (pt) column, off until asked for
-    boxToggleDisclosureOpen: false,  // whether the Technical-details fold holding that toggle is open
     pageImageUrl: null,
     // step 1, upload panel. `uploadResult` is one DocumentView from the server, held
     // separately from `report` because an uploaded document is read on its own and joins
@@ -3221,8 +3219,7 @@
         if (editPage === pageNumber) attachRegionLayer(frame, host, doc, pageW, pageH, pageNumber);
         host.appendChild(h("p", {
           class: "page-caption",
-          text: "Page " + pageNumber + " as rendered by the server. Each rectangle is the box the value was read from; " +
-                "the same coordinates are listed as text in the table below."
+          text: "Page " + pageNumber + " as rendered by the server. Each rectangle is the box the value was read from."
         }));
       });
       frame.appendChild(h("p", { class: "page-caption", text: "Loading the page image…" }));
@@ -4282,28 +4279,9 @@
     var setActive = opts.setActive || function (name) { state.activeField = name; };
     var tableId = opts.idPrefix ? opts.idPrefix + doc.document_id : doc.document_id;
     // The raw PDF coordinates are for whoever is checking our arithmetic, not for the
-    // person whose pay stub this is: four numbers per row that a renter cannot act on and
-    // that push the columns they can act on off a narrow screen. So the column is off
-    // until it is asked for, and it is asked for once for the whole table rather than
-    // row by row. The boxes themselves are always drawn on the page above — this hides a
-    // numeric restatement of them, not the evidence.
-    var showBoxes = state.showBoxCoordinates;
-    var toggleId = "show-boxes-" + tableId;
-    var toggle = h("p", { class: "table-toggle" }, [
-      h("input", {
-        type: "checkbox", id: toggleId, checked: showBoxes ? true : null,
-        onchange: function (event) {
-          state.showBoxCoordinates = Boolean(event.target.checked);
-          rerender();
-          var restored = byId("show-boxes-" + tableId);
-          if (restored) restored.focus();
-          announce(state.showBoxCoordinates
-            ? "Box coordinates column shown"
-            : "Box coordinates column hidden");
-        }
-      }),
-      h("label", { for: toggleId, text: "Show the box coordinates column" })
-    ]);
+    // person whose pay stub this is: four numbers per row that a renter cannot act on. The
+    // boxes themselves are always drawn on the page above and the read text stands in its
+    // own column, so a numeric restatement of the boxes earned no place in the table.
 
     var confirmable = Boolean(opts.confirmable);
 
@@ -4401,10 +4379,7 @@
         cell(null, "How we got it", [document.createTextNode(EVIDENCE_WORDS[field.evidence_kind] || field.evidence_kind)]),
         cell(null, "Certainty", [document.createTextNode(CERTAINTY_WORDS[field.certainty] || field.certainty)]),
         cell({ class: "mono" }, "Text on the page", [document.createTextNode(field.source_text === null ? "—" : String(field.source_text))]),
-        cell({ class: "num" }, "Page", [document.createTextNode(String(field.page))]),
-        showBoxes
-          ? cell({ class: "mono num" }, "Box (pt)", [document.createTextNode(field.bbox ? field.bbox.map(function (n) { return Number(n).toFixed(2); }).join(", ") : "no box")])
-          : null
+        cell({ class: "num" }, "Page", [document.createTextNode(String(field.page))])
       ]);
     });
 
@@ -4424,23 +4399,7 @@
          * has to say what kind of thing it is — not repeat the id it used to print. */
         (opts.captionLead || ("Extracted values on this " +
           String(doc.document_type || "document").replace(/_/g, " ") + ".")) +
-        " Choose a field name to highlight its box on the page. ",
-        showBoxes
-          ? "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1]."
-          : "The box coordinates behind each highlight can be shown as a column under Technical details."
-      ]),
-      // The raw-coordinate toggle is a verification affordance a renter never asks for, so
-      // it lives folded under the same "Technical details" disclosure used everywhere on
-      // this page — hidden from the default view, one click away for anyone checking the
-      // arithmetic. The fold's open state is remembered so toggling the box (which
-      // re-renders and re-focuses the checkbox) does not slam the disclosure shut.
-      h("details", {
-        class: "tech",
-        open: state.boxToggleDisclosureOpen ? true : null,
-        ontoggle: function (event) { state.boxToggleDisclosureOpen = event.target.open; }
-      }, [
-        h("summary", { text: "Technical details" }),
-        toggle
+        " Choose a field name to highlight its box on the page."
       ]),
       h("div", { class: "table-scroll" }, [
       h("table", {
@@ -4457,8 +4416,7 @@
           h("th", { scope: "col", role: "columnheader", text: "How we got it" }),
           h("th", { scope: "col", role: "columnheader", text: "Certainty" }),
           h("th", { scope: "col", role: "columnheader", text: "Text on the page" }),
-          h("th", { scope: "col", role: "columnheader", class: "num", text: "Page" }),
-          showBoxes ? h("th", { scope: "col", role: "columnheader", class: "num", text: "Box (pt)" }) : null
+          h("th", { scope: "col", role: "columnheader", class: "num", text: "Page" })
         ])]),
         h("tbody", { role: "rowgroup" }, rows)
       ])

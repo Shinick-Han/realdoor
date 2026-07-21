@@ -326,12 +326,8 @@
     "Certainty": "확실도",
     "Text on the page": "문서상의 글자",
     "Page": "페이지",
-    "Box (pt)": "근거 위치 (pt)",
-    "no box": "근거 위치 없음",
-    "Boxes are in PDF points, bottom-left origin, as [x0, y0, x1, y1].":
-      "근거 위치는 PDF 포인트 단위이며, 좌하단이 원점인 [x0, y0, x1, y1] 형식입니다.",
-    "Page 1 as rendered by the server. Each rectangle is the box the value was read from; the same coordinates are listed as text in the table below.":
-      "서버가 그린 1페이지입니다. 각 사각형은 값을 읽어낸 근거 위치이고, 같은 좌표가 아래 표에 글자로 적혀 있습니다.",
+    "Page 1 as rendered by the server. Each rectangle is the box the value was read from.":
+      "서버가 그린 1페이지입니다. 각 사각형은 값을 읽어낸 근거 위치입니다.",
     "Loading the page image…": "페이지 이미지를 불러오는 중…",
     "No server is running, so the scanned page cannot be rasterised.":
       "서버가 떠 있지 않아 스캔한 페이지를 이미지로 만들 수 없습니다.",
@@ -980,8 +976,6 @@
 
     // ── app.js — 근거 화면과 남은 물음 ─────────────────────────────────────────────
     "Try one of these": "이 중 하나를 눌러 보세요",
-    "Show the box coordinates column": "근거 위치 좌표 열 보기",
-    "The box coordinates behind each highlight can be shown as a column under Technical details.": "각 강조 표시 뒤에 있는 근거 위치 좌표는 기술 세부사항에서 열로 펼쳐 볼 수 있습니다.",
     "Raised as": "제기된 코드",
     "Resolved by": "이렇게 하면 풀립니다",
     "a housing professional answers this, or the question is rephrased to name the rule it is about":
@@ -2448,10 +2442,9 @@
       return m[2] + "의 " + m[1] + "페이지 (서버가 그린 이미지)";
     }],
     // 페이지 캡션(페이지 번호가 박힌다). 기존 "Page 1 as rendered…" DICT 를 모든 N 으로.
-    [/^Page (\d+) as rendered by the server\. Each rectangle is the box the value was read from; the same coordinates are listed as text in the table below\.$/,
+    [/^Page (\d+) as rendered by the server\. Each rectangle is the box the value was read from\.$/,
       function (m) {
-        return "서버가 그린 " + m[1] + "페이지입니다. 각 사각형은 값을 읽어낸 근거 위치이고, " +
-               "같은 좌표가 아래 표에 글자로 적혀 있습니다.";
+        return "서버가 그린 " + m[1] + "페이지입니다. 각 사각형은 값을 읽어낸 근거 위치입니다.";
       }],
     // item 3: app.js 가정 배너의 설명 문장(종류가 박힌다).
     [/^This page did not print a title we recognise, so we did not stop to ask what it is — we read it as a (.+), the most common income document, and showed you the result below\.$/,
