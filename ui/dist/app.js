@@ -1408,6 +1408,14 @@
      * so every later re-render shows everything at once. See runStagedReveal for the
      * honest split between real staging and reveal pacing. */
     uploadReveal: null,
+    /* Upload views the session has seen, so the editable uploads-household view can carry
+     * each document's own header (type-source banner, combined-file boundary map, the
+     * "what this does not tell you" notes) — none of which the readiness report merges
+     * onto its documents. Keyed by upload_id; files keyed by file_id hold the sub-document
+     * boundary map. Populated on every upload/retype/absence round trip, pruned on remove.
+     * The editable view IS the landing now: there is no read-only preview to carry them. */
+    uploadViewsById: {},
+    uploadFilesById: {},
     /* The confirming step of "Remove this document": the upload_id (or pack-panel
      * document_id) whose remove control is armed, or null. One at a time. */
     removeArmed: null,
@@ -1917,6 +1925,7 @@
       .then(function (view) {
         state.uploadResult = view;
         state.uploadError = null;
+        indexUploadViews(view);
         beginStagedReveal(view);
         /* File-level counts when the file split into several documents; otherwise the one
          * document's own counts. `file` is the aggregate the server sends. */
@@ -1984,7 +1993,14 @@
       .then(function () {
         state.uploadBusy = false;
         renderUploadResult();
-        if (state.uploadError || state.uploadResult || state.uploadPause) {
+        /* Success now lands DIRECTLY in the editable uploads-household view — no read-only
+         * preview, no second "Open your uploaded documents" click. The banner, the
+         * combined-file boundary map, the notes and the staged reveal all render there.
+         * Error and pause keep their own cards in the panel above, so focus goes to the
+         * card there; only success navigates. */
+        if (state.uploadResult && !state.uploadError && !state.uploadPause) {
+          landInUploadsEditable(state.uploadResult);
+        } else if (state.uploadError || state.uploadPause) {
           var heading = byId("upload-result-heading");
           if (heading) heading.focus();
         }
@@ -2059,6 +2075,45 @@
     };
     state.uploadReveal.stages.forEach(function (stage) {
       stage.fields.forEach(function (name) { state.uploadReveal.pendingSet[name] = true; });
+    });
+  }
+
+  /** Record every sub-document of an upload response so the editable uploads view can
+   *  find each document's own header material by upload_id, and the combined-file
+   *  boundary map by file_id. Called on upload, retype and absence — anywhere a fresh
+   *  or changed view arrives. */
+  function indexUploadViews(response) {
+    if (!response) return;
+    var subs = (response.sub_documents && response.sub_documents.length)
+      ? response.sub_documents : [response];
+    subs.forEach(function (sd) {
+      if (sd && sd.upload_id) state.uploadViewsById[sd.upload_id] = sd;
+    });
+    var fileId = response.file_id || (subs[0] && subs[0].file_id);
+    if (fileId) {
+      state.uploadFilesById[fileId] = {
+        subs: subs,
+        file_name: response.file_name || (subs[0] && subs[0].file_name)
+      };
+    }
+  }
+  /** The stored upload view for one uploaded document, or null (pack documents have none). */
+  function uploadViewFor(documentId) {
+    return state.uploadViewsById[documentId] || null;
+  }
+
+  /** After a successful upload, land the renter directly in the editable uploads-household
+   *  view with the just-uploaded document in focus — the same view "Open your uploaded
+   *  documents" reaches, now the landing itself. The staged reveal plays here, against this
+   *  view's own evidence host (see renderDocuments), not a separate read-only preview. */
+  function landInUploadsEditable(view) {
+    var select = byId("household-select");
+    if (select) select.value = UPLOADS_HOUSEHOLD_ID;
+    return loadHousehold(UPLOADS_HOUSEHOLD_ID, view && view.upload_id).then(function () {
+      announce("Opened the file of your uploaded documents. " +
+        (state.report ? READINESS[state.report.readiness_status].title : ""));
+      var heading = byId("doc-detail-heading");
+      if (heading && heading.focus) heading.focus();
     });
   }
 
@@ -2160,65 +2215,10 @@
     return "straddles";
   }
 
-  /* The upload's date line, when no usable date was read.
-   *
-   * It used to stop at the confession — "✕ Unreadable · no date we could read on this
-   * document" — which is a verdict with no way forward, and for a statement dated to the
-   * month it also named the wrong problem: the document was read fine (up_011 reads 4 of
-   * 4 fields), what cannot be worked out is the 60-day window, because that needs a day.
-   * This is the same honesty split step 1's "Still current?" row already makes for pack
-   * documents; the machine `state` on the view is untouched, and each sentence is its
-   * own text node so the i18n layer can carry it. */
-  function uploadDateNotice(view) {
-    var monthValue = null;
-    (view.fields || []).forEach(function (f) {
-      var value = String(f.value === null || f.value === undefined ? "" : f.value);
-      if (!monthValue && /^\d{4}-\d{2}$/.test(value)) monthValue = value;
-    });
-    if (monthValue) {
-      /* Month-only, honestly three-way. The machine state on this view is unchanged —
-       * core owns it and it stays `undatable`, because no day is recorded. What changes
-       * is only what this sentence may claim: when every day of the printed month sits
-       * on one side of the frozen 60-day window, saying the window "cannot be applied"
-       * asserts an ignorance we do not have. The three cases are computed client-side
-       * from the printed month and the frozen reference date the server sends with the
-       * view; only the straddling month keeps the genuinely-undatable wording. */
-      var position = monthWindowPosition(monthValue, view.reference_date);
-      var chip = h("span", { class: "chip chip--undatable" }, [
-        h("span", { "aria-hidden": "true", text: "? " }), "No day in the date"
-      ]);
-      if (position === "inside") {
-        return [chip, " ",
-          "Current — any day in " + monthWords(monthValue) + " falls inside the 60-day " +
-          "window. The exact day is still not recorded.",
-          " ",
-          "Ask " + issuerWords(view.document_type) + " for a copy dated to the day, or tell " +
-          "the person who reviews it the exact date."
-        ];
-      }
-      if (position === "outside") {
-        return [chip, " ",
-          "Out of date — every day in " + monthWords(monthValue) + " falls outside the " +
-          "60-day window.",
-          " ",
-          "Ask " + issuerWords(view.document_type) + " for a recent copy dated to the day."
-        ];
-      }
-      return [chip, " ",
-        "The date shows a month but no day, so we cannot count the 60-day window from it.",
-        " ",
-        "Ask " + issuerWords(view.document_type) + " for a copy dated to the day, or tell " +
-        "the person who reviews it the exact date."
-      ];
-    }
-    return [
-      stateChip(view.state), " ",
-      "no date we could read on this document.",
-      " ",
-      "Ask " + issuerWords(view.document_type) + " for a copy that shows the date, or " +
-      "hand this one to a person to read."
-    ];
-  }
+  /* (The upload panel's own "no usable date" line was removed with the read-only preview:
+   * an uploaded document now shows its date and 60-day-window status through the same
+   * `documentSummary` "Still current?" row a pack document uses — one document view, one
+   * date treatment. The month-window helpers above are shared by that row.) */
 
   /* The one live timer the upload panel owns: the countdown on a paused upload. Held at
    * module scope and cleared on every re-render, so a panel that has moved on to another
@@ -2323,73 +2323,17 @@
       return;
     }
 
-    var response = state.uploadResult;
-    if (!response) return;
-    /* One uploaded file can hold several documents: a renter combines a pay stub, an
-     * employment letter and a benefit letter into one PDF, and each page is read as its
-     * own document (server: api/upload.py::segment_pages). `sub_documents` carries them
-     * all; a single-document upload has exactly one. */
-    var subs = (response.sub_documents && response.sub_documents.length)
-      ? response.sub_documents : [response];
-    var multi = subs.length > 1;
-    var revealId = state.uploadReveal && !state.uploadReveal.done
-      ? state.uploadReveal.id : null;
-
-    var block = h("div", { class: "upload-result" });
-
-    /* When the file split into several documents, name that up front so the sub-document
-     * boundaries are visible: which pages are which document. */
-    if (multi) {
-      block.appendChild(h("div", { class: "callout", id: "upload-file-summary" }, [
-        h("h3", { id: "upload-result-heading", tabindex: "-1" },
-          [subs.length + " documents in one file — " + response.file_name]),
-        h("p", {
-          text: "This file holds more than one document, so each page was read as its own " +
-                "kind. Here is what is where; each is shown in full below."
-        }),
-        h("ol", { class: "summary-box__list" }, subs.map(function (sd) {
-          return h("li", null, [
-            h("strong", { text: typeWords(sd.document_type) }),
-            " — " + subPageSpan(sd) +
-            (sd.nomination ? " (its page prints “" + String(sd.nomination.matched_text) + "”)"
-             : sd.assumed_type ? " (no title on the page; read as the default kind)" : "")
-          ]);
-        }))
-      ]));
-    }
-
-    subs.forEach(function (sd, index) {
-      block.appendChild(uploadSubBlock(sd, {
-        multi: multi,
-        headingId: (!multi && index === 0) ? "upload-result-heading" : null,
-        revealing: revealId === sd.upload_id
-      }));
-    });
-
-    /* The uploads now form a file of their own, and this is where the renter learns
-     * that. The button is the same open the picker offers — one action, two doors. */
-    var uploadsRow = (state.households || []).filter(function (r) {
-      return r.file_kind === "uploads";
-    })[0];
-    if (Source.live && uploadsRow) {
-      block.appendChild(h("div", { class: "callout" }, [
-        h("h4", { style: { marginTop: "0" }, text: "Walk both pages with your own documents" }),
-        h("p", {
-          text: "Everything you upload in this session is kept together as one file. " +
-                "Open it and both pages read your documents — you can fix values, " +
-                "see the numbers, check the list, and take the packet."
-        }),
-        h("p", { class: "button-row", style: { marginBottom: "0" } }, [
-          h("button", {
-            type: "button", class: "action action--lead",
-            onclick: function () { openUploadsFile(); }
-          }, ["Open your uploaded documents (" + uploadsRow.document_count + ")"])
-        ])
-      ]));
-    }
-
-    host.appendChild(block);
-    runStagedReveal(response, host);
+    /* A successful upload no longer renders a read-only preview here. There used to be
+     * THREE renderings of "a document with its fields" — this preview, the editable
+     * uploads view, and the editable example view — and the preview duplicated the
+     * editable view without its per-field controls, splitting one flow into two. A
+     * success now lands the renter straight in the editable uploads-household view
+     * (landInUploadsEditable → renderDocuments), where the type-source banner, the
+     * combined-file boundary map, the "what this does not tell you" notes and the staged
+     * reveal all render around the very same field table that carries Confirm, "This is
+     * wrong — fix it" and "Point at it on the page". The panel above keeps only the states
+     * that are NOT a document with its fields: the in-flight line, the pause, the refusal.
+     * On success it stays empty (host was cleared above); there is nothing to strand. */
   }
 
   /** "page 3" / "pages 2–3" for a sub-document, from its original page range. */
@@ -2453,146 +2397,83 @@
     ]);
   }
 
-  /** One uploaded sub-document: its type-source banner, its facts, and either the
-   *  "read nothing" note or the evidence (every page, its boxes, its values table). */
-  function uploadSubBlock(view, ctx) {
-    var readVia = view.extraction_path === "ocr"
-      ? "read as a picture, because the file had no text in it (OCR)"
-      : "read from the text in the file";
-    var sub = h("div", { class: "upload-subdoc" });
+  /* ── the uploaded document's own header, inside the editable view ──────────────────
+   *
+   * These three pieces were the read-only preview's only unique content. They are not a
+   * second rendering of the document — they are what an UPLOADED document has and an
+   * example document does not: a type we chose or read (correctable in one click), a
+   * combined-file boundary map, and the honest limits of this particular reading. They
+   * now render around the editable field table for the uploaded document, so the renter
+   * meets them with the per-field controls, not before them on a dead-end panel. Each
+   * reads from the stored upload view (uploadViewFor); a pack document has none and gets
+   * nothing here, so the example households are untouched. */
 
-    if (ctx.multi) {
-      sub.appendChild(h("h3", { class: "upload-subdoc__heading" },
-        [typeWords(view.document_type) + " · " + subPageSpan(view)]));
-    } else {
-      sub.appendChild(h("h3", { id: ctx.headingId || null,
-        tabindex: ctx.headingId ? "-1" : null },
-        [typeWords(view.document_type) + " — the document you uploaded"]));
-    }
-
-    var banner = typeSourceBanner(view);
-    if (banner) sub.appendChild(banner);
-
-    sub.appendChild(h("dl", { class: "kv" }, [
-      h("dt", { text: "File" }), h("dd", { class: "mono", text: view.file_name }),
-      h("dt", { text: "Kind of document" }), h("dd", { text: typeWords(view.document_type) }),
-      h("dt", { text: "How we read it" }), h("dd", { text: readVia }),
-      h("dt", { text: "Fields we could read" }),
-      h("dd", { text: view.located_count + " of " + view.field_count }),
-      h("dt", { text: "Document date" }),
-      h("dd", null, view.document_date
-        ? [stateChip(view.state), " ", view.document_date]
-        : uploadDateNotice(view))
-    ]));
-
-    if (view.read_nothing) {
-      // Not an error, and it must not look like one. This is the product working.
-      sub.appendChild(h("div", { class: "callout" }, [
-        h("h4", { style: { marginTop: "0" },
-          text: "We could not confidently read any field on this document" }),
-        h("p", {
-          text: "That is an answer, not a failure. We only report a value when we can point " +
-                "at the place on the page it came from, so when we cannot find it we say " +
-                "nothing rather than guess. Nothing here has gone wrong and nothing has " +
-                "been recorded against you."
-        }),
-        h("p", { text: "Documents we cannot read usually look like one of these:" }),
-        h("ul", { class: "summary-box__list" }, [
-          h("li", { text: "The labels are worded differently from the ones we know — " +
-                          "\"TOTAL EARNINGS\" where we look for \"GROSS PAY\"." }),
-          h("li", { text: "The values sit beside their labels, or in a table, rather than " +
-                          "underneath them." }),
-          h("li", { text: "It is a form we have never seen, or the kind of document chosen " +
-                          "above is not the kind of document this is." }),
-          h("li", { text: "It is a scan that is too faint or too skewed to read." })
-        ]),
-        h("p", {
-          text: "You can try choosing a different kind of document above, or hand this one " +
-                "to a person to read. A housing professional reading it is a normal outcome, " +
-                "not a fallback."
-        })
-      ]));
-    } else {
-      var revealing = Boolean(ctx.revealing);
-      var holdFor = revealing
-        ? function (fieldName) { return revealHolds(view, fieldName); }
-        : null;
-      if (revealing) {
-        /* The visible stage line. runStagedReveal rewrites its text as the stages
-         * replay; announcements to the live region go through announce(), stage by
-         * stage, not row by row — a screen reader hears the stages, not a drum roll. */
-        sub.appendChild(h("p", { class: "hint", id: "upload-read-status",
-          text: "Read. Drawing what was found…" }));
-      }
-      var pageHost = h("div");
-      sub.appendChild(pageHost);
-      sub.appendChild(fieldTable(view, {
-        idPrefix: "upload-",
-        activeField: state.uploadActiveField,
-        setActive: function (name) { state.uploadActiveField = name; },
-        rerender: renderUploadResult,
-        captionLead: "Values read from this document.",
-        revealHold: holdFor,
-        // An absence round trip on an uploaded document answers with the updated sub-
-        // document view, not a household report — the upload joins no household. Merge it
-        // back into the file response so a combined file keeps its other documents.
-        applyAbsence: function (body) {
-          if (body) mergeSubDocument(body);
-          renderUploadResult();
-        }
-      }));
-      renderPage(pageHost, view, {
-        loadImage: function (page) { return Source.uploadPageImage(view.upload_id, page); },
-        activeField: state.uploadActiveField,
-        revealHold: holdFor
-      });
-    }
-
-    /* Removing this one document — with a confirming step, because it cannot be
-     * undone from the screen. Session-wide delete already exists at the end of page 2;
-     * this is its per-document half. */
-    sub.appendChild(removeDocumentCard(view.upload_id, function () {
-      // If this was the last document in the file response, clear the panel; otherwise the
-      // list refresh after removal redraws what is left.
-      var resp = state.uploadResult;
-      var remaining = (resp && resp.sub_documents || []).filter(function (v) {
-        return v.upload_id !== view.upload_id;
-      });
-      if (!remaining.length) {
-        state.uploadResult = null;
-        state.uploadReveal = null;
-        state.uploadActiveField = null;
-      }
-    }));
-
-    if ((view.limits || []).length) {
-      sub.appendChild(h("div", { class: "callout callout--warn" }, [
-        h("h4", { style: { marginTop: "0" }, text: "What this reading does not tell you" }),
-        h("ul", { class: "summary-box__list" }, view.limits.map(function (text) {
-          return h("li", { text: text });
-        }))
-      ]));
-    }
-    return sub;
+  /** The combined-file boundary map: "N documents in one file — which pages are which".
+   *  File-level, so it shows for every sub-document of a file that split into several. */
+  function uploadBoundaryMap(uv) {
+    var fileId = uv && uv.file_id;
+    var file = fileId ? state.uploadFilesById[fileId] : null;
+    var subs = file && file.subs;
+    if (!subs || subs.length <= 1) return null;
+    return h("div", { class: "callout", id: "upload-file-summary" }, [
+      h("h3", { style: { marginTop: "0" } },
+        [subs.length + " documents in one file — " + (file.file_name || uv.file_name)]),
+      h("p", {
+        text: "This file holds more than one document, so each page was read as its own " +
+              "kind. Here is what is where; each is shown in full below."
+      }),
+      h("ol", { class: "summary-box__list" }, subs.map(function (sd) {
+        return h("li", null, [
+          h("strong", { text: typeWords(sd.document_type) }),
+          " — " + subPageSpan(sd) +
+          (sd.nomination ? " (its page prints “" + String(sd.nomination.matched_text) + "”)"
+           : sd.assumed_type ? " (no title on the page; read as the default kind)" : "")
+        ]);
+      }))
+    ]);
   }
 
-  /** Replace one sub-document inside the current file response (after an absence round
-   *  trip or a re-read), keeping the other documents in a combined file untouched. */
-  function mergeSubDocument(updated) {
-    var resp = state.uploadResult;
-    if (!resp || !updated) return;
-    var subs = resp.sub_documents || [resp];
-    for (var i = 0; i < subs.length; i += 1) {
-      if (subs[i].upload_id === updated.upload_id) { subs[i] = updated; break; }
-    }
-    resp.sub_documents = subs;
-    if (subs[0] && subs[0].upload_id === updated.upload_id) {
-      // The primary changed: refresh the top-level view fields the panel reads, without
-      // dropping the wrapper keys (sub_documents, file).
-      Object.keys(updated).forEach(function (k) {
-        if (k !== "sub_documents" && k !== "file") resp[k] = updated[k];
-      });
-    }
+  /** The "read nothing" note: an answer, not a failure. When a document read no field at
+   *  all, the editable table below is all abstentions, so this says why in plain words. */
+  function uploadReadNothingNote(uv) {
+    if (!uv || !uv.read_nothing) return null;
+    return h("div", { class: "callout" }, [
+      h("h4", { style: { marginTop: "0" },
+        text: "We could not confidently read any field on this document" }),
+      h("p", {
+        text: "That is an answer, not a failure. We only report a value when we can point " +
+              "at the place on the page it came from, so when we cannot find it we say " +
+              "nothing rather than guess. Nothing here has gone wrong and nothing has " +
+              "been recorded against you."
+      }),
+      h("p", { text: "Documents we cannot read usually look like one of these:" }),
+      h("ul", { class: "summary-box__list" }, [
+        h("li", { text: "The labels are worded differently from the ones we know — " +
+                        "\"TOTAL EARNINGS\" where we look for \"GROSS PAY\"." }),
+        h("li", { text: "The values sit beside their labels, or in a table, rather than " +
+                        "underneath them." }),
+        h("li", { text: "It is a form we have never seen, or the kind of document chosen " +
+                        "above is not the kind of document this is." }),
+        h("li", { text: "It is a scan that is too faint or too skewed to read." })
+      ]),
+      h("p", {
+        text: "You can try choosing a different kind of document above, or hand this one " +
+              "to a person to read. A housing professional reading it is a normal outcome, " +
+              "not a fallback."
+      })
+    ]);
+  }
+
+  /** The honest limits of this reading ("read on its own", a model-named label, two stubs
+   *  that disagree, …). Rendered below the field table, as it was in the preview. */
+  function uploadLimitsNote(uv) {
+    if (!uv || !(uv.limits || []).length) return null;
+    return h("div", { class: "callout callout--warn" }, [
+      h("h4", { style: { marginTop: "0" }, text: "What this reading does not tell you" }),
+      h("ul", { class: "summary-box__list" }, uv.limits.map(function (text) {
+        return h("li", { text: text });
+      }))
+    ]);
   }
 
   /** Re-read one uploaded sub-document under a type the renter chose (item 3's one-click
@@ -2602,15 +2483,21 @@
     announce("Re-reading this document as " + typeWords(chosenType) + "…");
     Source.retypeUpload(uploadId, chosenType)
       .then(function (response) {
+        /* The re-read result is already known, so do not re-stagger it — the banner and
+         * the table just redraw. Refresh the stored views so this document's relocated
+         * header reflects the new kind, then re-fetch the file's report and stay on this
+         * document in the editable view (no read-only preview to return to). */
         state.uploadResult = response;
-        state.uploadReveal = null;   // the result is already known; do not re-stagger
+        state.uploadReveal = null;
         state.uploadActiveField = null;
-        renderUploadResult();
-        var heading = byId("upload-result-heading");
-        if (heading && heading.focus) heading.focus();
+        indexUploadViews(response);
         return loadHouseholdList();
       })
-      .then(function () { renderDocuments(); })
+      .then(function () { return loadHousehold(UPLOADS_HOUSEHOLD_ID, uploadId); })
+      .then(function () {
+        var heading = byId("doc-detail-heading");
+        if (heading && heading.focus) heading.focus();
+      })
       .catch(function (err) {
         announce("That document could not be re-read: " +
                  (err && err.message ? err.message : "the server did not accept it."));
@@ -2678,6 +2565,14 @@
       .then(function (body) {
         state.removeArmed = null;
         if (beforeRefresh) beforeRefresh();
+        // Drop the stored upload view for the document that is gone, so nothing tries to
+        // draw a header for it (and a combined file's boundary map recounts).
+        delete state.uploadViewsById[uploadId];
+        Object.keys(state.uploadFilesById).forEach(function (fid) {
+          var f = state.uploadFilesById[fid];
+          f.subs = (f.subs || []).filter(function (sd) { return sd.upload_id !== uploadId; });
+          if (!f.subs.length) delete state.uploadFilesById[fid];
+        });
         if (state.uploadResult && state.uploadResult.upload_id === uploadId) {
           state.uploadResult = null;
           state.uploadReveal = null;
@@ -2738,6 +2633,20 @@
     if (!doc) { root.appendChild(h("p", { text: "This household has no documents in this report." })); return; }
     state.documentId = doc.document_id;
 
+    /* An uploaded document brings its own header (banner, boundary map, notes) and, right
+     * after upload, its staged reveal — none of which a pack document has. `uv` is the
+     * stored upload view for this document (null for a pack document, so the example
+     * households render exactly as before). The reveal is active only for the just-
+     * uploaded document (its id === the reveal's id === the current file response's id),
+     * and it plays against THIS view's evidence host, not a separate preview. */
+    var uv = (state.householdId === UPLOADS_HOUSEHOLD_ID) ? uploadViewFor(doc.document_id) : null;
+    var revealActive = Boolean(uv && state.uploadReveal && !state.uploadReveal.done &&
+      state.uploadReveal.id === doc.document_id &&
+      state.uploadResult && state.uploadResult.upload_id === doc.document_id);
+    var uploadHold = revealActive
+      ? function (name) { return revealHolds(state.uploadResult, name); }
+      : null;
+
     var list = h("ul", { class: "doc-list" }, (state.report.documents || []).map(function (d) {
       var isCurrent = d.document_id === doc.document_id;
       return h("li", null, [
@@ -2768,8 +2677,34 @@
       documentSummary(doc)
     ]);
 
+    /* The uploaded document's own header, relocated here from the old read-only preview:
+     * the combined-file boundary map first (which pages are which), then the type-source
+     * banner — "we assumed / we read this as a …, change it here" — which stays one click
+     * from a re-read. Both sit above the page image, so the renter meets them before the
+     * evidence. A pack document has no `uv` and gets neither, so examples are unchanged. */
+    if (uv) {
+      var boundary = uploadBoundaryMap(uv);
+      if (boundary) detail.appendChild(boundary);
+      var banner = typeSourceBanner(uv);
+      if (banner) detail.appendChild(banner);
+    }
+
+    /* The staged reveal's visible stage line. runStagedReveal rewrites it as the stages
+     * replay and queries for it inside documents-body, so it must be in the DOM before the
+     * reveal runs. Only present for the freshly-uploaded document. */
+    if (revealActive) {
+      detail.appendChild(h("p", { class: "hint", id: "upload-read-status",
+        text: "Read. Drawing what was found…" }));
+    }
+
     var pageHost = h("div", { id: "page-host" });
     detail.appendChild(pageHost);
+    /* When a document read no field at all, the table below is all abstentions — this says
+     * why, in plain words, above it. Relocated from the preview; only for uploads. */
+    if (uv) {
+      var readNothing = uploadReadNothingNote(uv);
+      if (readNothing) detail.appendChild(readNothing);
+    }
     // The instruction sits between the page image and the boxes it is about, because that
     // is the order the work happens in: look at the page, then check the box under it.
     detail.appendChild(h("div", { class: "callout" }, [
@@ -2786,14 +2721,19 @@
       confirmationSummary(state.report)
     ]));
     var tableOpts = { confirmable: true };
+    if (revealActive) tableOpts.revealHold = uploadHold;
     if (state.householdId === UPLOADS_HOUSEHOLD_ID) {
-      /* The absence endpoint answers with the updated upload view (the upload panel's
-       * contract). This screen reads the file's report, so it re-fetches that instead of
-       * pouring a view into `state.report` — and it keeps the panel's copy in step. */
+      /* The absence endpoint answers with the updated upload view (an upload sub-document,
+       * not a household report). This screen reads the file's report, so it re-fetches that
+       * instead of pouring a view into `state.report` — and it keeps the stored upload view
+       * (the source of this document's banner and notes) in step so a re-render shows the
+       * post-absence state. */
       tableOpts.applyAbsence = function (body) {
-        if (body && state.uploadResult && body.upload_id === state.uploadResult.upload_id) {
-          state.uploadResult = body;
-          renderUploadResult();
+        if (body && body.upload_id) {
+          state.uploadViewsById[body.upload_id] = body;
+          if (state.uploadResult && body.upload_id === state.uploadResult.upload_id) {
+            state.uploadResult = body;
+          }
         }
         Source.report(UPLOADS_HOUSEHOLD_ID).then(function (report) {
           if (report) state.report = report;
@@ -2832,6 +2772,12 @@
     }
 
     detail.appendChild(fieldTable(doc, tableOpts));
+    /* The honest limits of this particular reading, relocated from the preview, below the
+     * table it qualifies. Only for uploads; a pack document carries no such notes. */
+    if (uv) {
+      var limitsNote = uploadLimitsNote(uv);
+      if (limitsNote) detail.appendChild(limitsNote);
+    }
     var note = downstreamNoteBlock(doc);
     if (note) detail.appendChild(note);
     var rest = confirmRemaining(doc, doc.document_id);
@@ -2859,7 +2805,14 @@
     var openItems = sectionReasonBlock("correct");
     if (openItems) root.appendChild(openItems);
 
-    renderPage(pageHost, doc);
+    renderPage(pageHost, doc, revealActive ? { revealHold: uploadHold } : undefined);
+    /* Play the staged reveal against THIS editable view's evidence host — image first,
+     * then rows and boxes one at a time in reading order across every page. The host is
+     * documents-body (a stable element across re-renders); runStagedReveal no-ops if the
+     * reveal already ran or a newer upload took over, so a mid-reveal re-render (a confirm,
+     * an absence) never double-reveals or strands a timer. See the honesty contract above
+     * runStagedReveal: this paces the display of genuine results, it does not invent them. */
+    if (revealActive) runStagedReveal(state.uploadResult, root);
   }
 
   /** One recorded correction, replayed through the same Source.confirm the editor uses,
@@ -7120,7 +7073,7 @@
   }
 
   // ── boot ────────────────────────────────────────────────────────────────────────
-  function loadHousehold(householdId) {
+  function loadHousehold(householdId, preferredDocId) {
     state.householdId = householdId;
     state.baselineReport = null;
     state.correction = null;
@@ -7139,6 +7092,13 @@
     renderAskAnswerEmpty();
     return Source.report(householdId).then(function (report) {
       state.report = report;
+      /* Land on a specific document when asked (the just-uploaded one, after an upload or a
+       * re-type), rather than the report's first document. Only honoured if it exists in
+       * this report, so a stale id quietly falls back to the default. */
+      if (preferredDocId && report &&
+          (report.documents || []).some(function (d) { return d.document_id === preferredDocId; })) {
+        state.documentId = preferredDocId;
+      }
       /* Step 3 depends on the household — which recorded answers can honestly be shown is a
        * function of who is selected — so a household change has to redraw it. */
       renderAsk();
